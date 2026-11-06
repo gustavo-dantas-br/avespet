@@ -52,6 +52,7 @@ function emptyAve() {
     sexo: "Indefinido",
     corMutacao: "",
     portadores: [],
+    pesos: [],
     corAnilha: "",
     anilha: "",
     nascimento: "",
@@ -1170,29 +1171,100 @@ function AppInner({ user, onLogout }) {
     link.click();
   }
 
+  // Backup completo: todas as tabelas do criador num unico arquivo ("versao: 2").
+  // O formato antigo (so uma lista de aves) continua sendo aceito na importacao.
   function handleExport() {
-    const blob = new Blob([JSON.stringify(aves, null, 2)], { type: "application/json" });
+    const backup = {
+      app: "avespet",
+      versao: 2,
+      exportadoEm: new Date().toISOString(),
+      dados: {
+        aves: aves.map(semSynced),
+        despesas: despesas.map(semSynced),
+        mutacoes: mutacoes.map(semSynced),
+        clientes: clientes.map(semSynced),
+        fornecedores: fornecedores.map(semSynced),
+        indicacoes: indicacoes.map(semSynced),
+        posturas: posturas.map(semSynced),
+        anuncios: anuncios.map(semSynced),
+        perdidas: perdidas.map(semSynced),
+        perfil: Object.values(semSynced(perfil)).some(Boolean) ? semSynced(perfil) : null,
+      },
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `backup_criatorio_dantas_${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `backup_avespet_${hojeLocalISO()}.json`;
     link.click();
     URL.revokeObjectURL(url);
   }
 
+  // Restaura GRAVANDO no banco (antes so ia pra tela do aparelho). Mescla por id:
+  // registros com o mesmo id sao sobrescritos pelos do arquivo, nada e apagado.
+  // Pode importar o mesmo arquivo de novo sem duplicar.
   async function handleImport(e) {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const text = await file.text();
-      const imported = JSON.parse(text);
-      if (!Array.isArray(imported)) throw new Error("arquivo invalido");
-      setAves((prev) => {
-        const byId = new Map(prev.map((a) => [a.id, a]));
-        imported.forEach((a) => { if (a.id) byId.set(a.id, { ...a, synced: false }); });
-        return Array.from(byId.values()).sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
-      });
-      setError("Backup importado neste aparelho. Sincronize os cards marcados como pendentes quando puder.");
+      const imported = JSON.parse(await file.text());
+      const dados = Array.isArray(imported) ? { aves: imported } : imported?.dados;
+      if (!dados || typeof dados !== "object") throw new Error("arquivo invalido");
+      const lista = (nome) => (Array.isArray(dados[nome]) ? dados[nome].filter((r) => r && r.id) : []);
+      const perfilImp = dados.perfil && typeof dados.perfil === "object" && !Array.isArray(dados.perfil) ? dados.perfil : null;
+
+      const rotulos = {
+        aves: "aves", despesas: "despesas", mutacoes: "mutacoes", clientes: "clientes", fornecedores: "fornecedores",
+        indicacoes: "indicacoes", posturas: "posturas", anuncios: "anuncios", perdidas: "aves perdidas",
+      };
+      const resumo = Object.keys(rotulos).map((k) => [rotulos[k], lista(k).length]).filter(([, n]) => n > 0);
+      if (!resumo.length && !perfilImp) throw new Error("backup vazio");
+      const linhas = resumo.map(([nome, n]) => `- ${n} ${nome}`).concat(perfilImp ? ["- seu perfil de criador"] : []).join("\n");
+      if (!confirm(`Restaurar este backup?\n\n${linhas}\n\nRegistros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`)) return;
+
+      const tarefas = [];
+      ["aves", "despesas", "mutacoes", "clientes", "fornecedores", "indicacoes", "posturas"].forEach((tabela) =>
+        lista(tabela).forEach((r) => tarefas.push({ chave: `${tabela}:${r.id}`, run: () => saveRow(tabela, user.id, semSynced(r)) }))
+      );
+      lista("anuncios").forEach((r) => tarefas.push({ chave: `anuncios:${r.id}`, run: () => saveAnuncio(user.id, semSynced(r)) }));
+      lista("perdidas").forEach((r) => tarefas.push({ chave: `perdidas:${r.id}`, run: () => savePerdida(user.id, semSynced(r)) }));
+      if (perfilImp) tarefas.push({ chave: "perfil", run: () => savePerfil(user.id, semSynced(perfilImp)) });
+
+      const gravados = new Set();
+      let falhas = 0;
+      for (let i = 0; i < tarefas.length; i += 5) {
+        const lote = tarefas.slice(i, i + 5);
+        const resultados = await Promise.allSettled(lote.map((tarefa) => tarefa.run()));
+        resultados.forEach((r, j) => {
+          if (r.status === "fulfilled") gravados.add(lote[j].chave);
+          else falhas++;
+        });
+      }
+
+      const mesclar = (tabela, prev) => {
+        const porId = new Map(prev.map((r) => [r.id, r]));
+        lista(tabela).forEach((r) => porId.set(r.id, { ...r, synced: gravados.has(`${tabela}:${r.id}`) }));
+        return Array.from(porId.values());
+      };
+      const porNome = (a, b) => (a.nome || "").localeCompare(b.nome || "");
+      setAves((p) => mesclar("aves", p).sort(porNome));
+      setDespesas((p) => mesclar("despesas", p).sort((a, b) => (a.data || "").localeCompare(b.data || "")));
+      setMutacoes((p) => mesclar("mutacoes", p).sort(porNome));
+      setClientes((p) => mesclar("clientes", p).sort(porNome));
+      setFornecedores((p) => mesclar("fornecedores", p).sort(porNome));
+      setIndicacoes((p) => mesclar("indicacoes", p).sort((a, b) => (b.data || "").localeCompare(a.data || "")));
+      setPosturas((p) => mesclar("posturas", p));
+      setPerdidas((p) => mesclar("perdidas", p));
+      if (perfilImp) setPerfil({ ...emptyPerfilCriador(), ...perfilImp, synced: gravados.has("perfil") });
+      // anuncios: o banco decide o status (criador comum volta pra analise), entao recarrega de la
+      if (lista("anuncios").length) await loadAnuncios();
+
+      const gravadosOk = tarefas.length - falhas;
+      setError(
+        falhas === 0
+          ? `Backup restaurado: ${gravadosOk} ${gravadosOk === 1 ? "registro gravado" : "registros gravados"} no banco.${lista("anuncios").length && !isAdminUser ? " Os anuncios voltam para analise." : ""}`
+          : `Backup restaurado em parte: ${gravadosOk} de ${tarefas.length} gravados no banco, ${falhas} ${falhas === 1 ? "falhou" : "falharam"}. Importe o mesmo arquivo de novo para tentar outra vez (nada e duplicado).`
+      );
     } catch {
       setError("Nao consegui ler esse arquivo de backup.");
     } finally {
@@ -2083,6 +2155,10 @@ function FormTab({ form, setForm, onSave, onPhoto, saving, machoOptions, femeaOp
           </Field>
           <Field label="Identificacao do casal"><input style={inputStyle} value={form.casalLabel} onChange={set("casalLabel")} placeholder="ex: Casal 04" /></Field>
         </div>
+
+        <div className="my-5 h-px" style={{ background: "#e3d3b4" }} />
+        <div className="ui-mono text-xs mb-3" style={{ color: "#8a7a63" }}>HISTORICO DE PESO</div>
+        <PesoHistorico pesos={form.pesos} onChange={(pesos) => setForm((f) => ({ ...f, pesos }))} />
 
         <div className="flex gap-3 mt-6">
           <button onClick={onSave} disabled={saving} className="ui-sans flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
@@ -4108,6 +4184,11 @@ const OVO_ATIVO = ["Incubando", "Fertil"];
 const DIAS_INCUBACAO_PADRAO = { "Ring Neck": 24, Calopsita: 20 };
 const OVO_TONS = { Incubando: "#f0dab0", Fertil: "#c8dcb8", Infertil: "#e3d3b4", Perdido: "#f0c9c0", Nasceu: "#c9dcee" };
 
+function semSynced(obj) {
+  const { synced, ...resto } = obj;
+  return resto;
+}
+
 function emptyPostura() {
   return { id: null, paiId: "", maeId: "", casalLabel: "", viveiro: "", diasIncubacao: 24, observacoes: "", ovos: [], criadoEm: "" };
 }
@@ -4197,6 +4278,103 @@ function casaisDetectados(aves) {
 }
 
 // ----- componentes -----
+// ----- historico de peso (guardado dentro da propria ave: ave.pesos) -----
+function normalizarPesos(pesos) {
+  return (pesos || [])
+    .filter((p) => p && p.data && Number(p.gramas) > 0)
+    .map((p) => ({ data: p.data, gramas: Number(p.gramas) }))
+    .sort((a, b) => a.data.localeCompare(b.data));
+}
+
+function fmtGramas(n) {
+  return (Math.round(n * 10) / 10).toString().replace(".", ",");
+}
+
+function GraficoPeso({ pontos }) {
+  const W = 320, H = 130, padX = 34, padY = 22;
+  const xs = pontos.map((p) => dataLocal(p.data).getTime());
+  const ys = pontos.map((p) => p.gramas);
+  const xMin = Math.min(...xs), xMax = Math.max(...xs);
+  let yMin = Math.min(...ys), yMax = Math.max(...ys);
+  if (yMax === yMin) { yMin -= 1; yMax += 1; }
+  const sx = (x) => (xMax === xMin ? W / 2 : padX + ((x - xMin) / (xMax - xMin)) * (W - padX - 10));
+  const sy = (y) => H - padY - ((y - yMin) / (yMax - yMin)) * (H - 2 * padY);
+  const coords = pontos.map((p, i) => [sx(xs[i]), sy(ys[i])]);
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-md" role="img" aria-label="Grafico do peso ao longo do tempo">
+      <polyline points={coords.map((c) => c.join(",")).join(" ")} fill="none" stroke="#556b3f" strokeWidth="2" />
+      {coords.map((c, i) => <circle key={i} cx={c[0]} cy={c[1]} r="3" fill="#C69A2E" />)}
+      <text x="2" y={sy(yMax) + 4} fontSize="9" fill="#8a7a63">{fmtGramas(Math.max(...ys))} g</text>
+      <text x="2" y={sy(yMin) + 4} fontSize="9" fill="#8a7a63">{fmtGramas(Math.min(...ys))} g</text>
+      <text x={padX} y={H - 4} fontSize="9" fill="#8a7a63">{formatarDataBR(pontos[0].data).slice(0, 5)}</text>
+      <text x={W - 10} y={H - 4} fontSize="9" fill="#8a7a63" textAnchor="end">{formatarDataBR(pontos[pontos.length - 1].data).slice(0, 5)}</text>
+    </svg>
+  );
+}
+
+function PesoHistorico({ pesos, onChange }) {
+  const [data, setData] = useState(hojeLocalISO());
+  const [gramas, setGramas] = useState("");
+  const lista = normalizarPesos(pesos);
+  const ultimo = lista[lista.length - 1];
+  const anterior = lista[lista.length - 2];
+  const delta = ultimo && anterior ? ultimo.gramas - anterior.gramas : null;
+
+  function adicionar() {
+    const g = Number(String(gramas).replace(",", "."));
+    if (!data || !(g > 0)) return;
+    // uma pesagem por dia: se ja existe nessa data, o valor novo substitui
+    onChange(normalizarPesos([...lista.filter((p) => p.data !== data), { data, gramas: g }]));
+    setGramas("");
+  }
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-end gap-2 mb-3">
+        <label className="flex flex-col gap-1">
+          <span className="text-[10px] uppercase font-semibold ui-sans" style={{ color: "#8a7a63" }}>Data da pesagem</span>
+          <input style={inputStyle} type="date" value={data} onChange={(e) => setData(e.target.value)} />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-[10px] uppercase font-semibold ui-sans" style={{ color: "#8a7a63" }}>Peso (g)</span>
+          <input style={{ ...inputStyle, width: 110 }} inputMode="decimal" value={gramas} onChange={(e) => setGramas(e.target.value)} placeholder="ex: 38,5" />
+        </label>
+        <button type="button" onClick={adicionar} className="ui-sans text-xs px-3 py-2 rounded-lg font-semibold flex items-center gap-1" style={{ background: "#C69A2E", color: "#2B1D14" }}>
+          <Plus size={13} /> Adicionar peso
+        </button>
+      </div>
+
+      {ultimo ? (
+        <div className="ui-sans text-sm mb-3" style={{ color: "#2B241C" }}>
+          Ultimo peso: <strong>{fmtGramas(ultimo.gramas)} g</strong> em {formatarDataBR(ultimo.data)}
+          {delta !== null && (
+            <span style={{ color: delta < 0 ? "#a6402b" : "#556b3f" }}>
+              {" "}({delta > 0 ? "+" : delta < 0 ? "-" : ""}{fmtGramas(Math.abs(delta))} g desde {formatarDataBR(anterior.data).slice(0, 5)})
+            </span>
+          )}
+        </div>
+      ) : (
+        <div className="ui-sans text-xs mb-3" style={{ color: "#8a7a63" }}>Nenhuma pesagem registrada ainda. Lembre de clicar em Salvar no fim do formulario.</div>
+      )}
+
+      {lista.length >= 2 && <div className="mb-3"><GraficoPeso pontos={lista} /></div>}
+
+      {lista.length > 0 && (
+        <div className="max-h-44 overflow-y-auto rounded-lg" style={{ border: "1px solid #e3d3b4" }}>
+          {[...lista].reverse().map((p) => (
+            <div key={p.data} className="ui-sans flex items-center justify-between text-sm px-3 py-1.5" style={{ background: "#fff", borderBottom: "1px solid #f0e6d2", color: "#2B241C" }}>
+              <span>{formatarDataBR(p.data)} - {fmtGramas(p.gramas)} g</span>
+              <button type="button" onClick={() => onChange(lista.filter((x) => x.data !== p.data))} className="p-1 rounded" style={{ background: "#f0dad4" }} title="Remover pesagem">
+                <Trash2 size={11} color="#a6402b" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PosturaForm({ inicial, aves, onSave, onCancel }) {
   const [f, setF] = useState(inicial);
   const [error, setError] = useState("");
