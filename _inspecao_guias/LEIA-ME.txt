@@ -1,0 +1,21 @@
+PACOTE: GUIAS, VIDEOS, CONTEUDO E VISITAS (Avespet)
+================================================
+
+1) SUPABASE (SQL Editor)
+   a) rode supabase/schema_fase_conteudo.sql
+   b) rode supabase/teste_conteudo.sql  -> a tabela deve mostrar OK nas 19 linhas
+      (ele desfaz tudo no final, nao deixa nada no banco)
+
+2) CODIGO
+   git pull
+   extraia este zip na RAIZ do projeto (mantem as pastas). Ele:
+     - SUBSTITUI: src/App.jsx, src/lib/db.js, src/components/AuthPage.jsx
+     - CRIA:      src/publico/, src/conteudo/, src/components/ui.jsx
+     - CRIA:      vercel.json  (se voce ja tem um, NAO sobrescreva: junte o bloco "rewrites")
+   npm run dev   e teste: /guias, /videos, /aves-a-venda, /achei-uma-ave
+   git add . / git commit / git push
+
+3) DEPOIS DO DEPLOY
+   - abra https://SEU-SITE/guias DIRETO numa aba nova (sem passar pela home). Se der 404,
+     o vercel.json nao foi aplicado.
+   - entre como admin -> aba "Conteudo" -> "Novo guia" -> Salvar -> Publicar.
