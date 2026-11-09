@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Bird, Plus, Search, GitBranch, Tag, Upload, Trash2, X, Loader2, Save,
-  Download, Feather, DollarSign, LogOut, LayoutDashboard, Dna, Users, Phone, Pencil, ClipboardCheck, Truck, MessageCircle, Handshake, Megaphone, UserCircle, ShieldCheck, Check, Bell, Eye, MousePointerClick, Egg,
+  Download, Feather, DollarSign, LogOut, LayoutDashboard, Dna, Users, Phone, Pencil, ClipboardCheck, Truck, MessageCircle, Handshake, Megaphone, UserCircle, ShieldCheck, Check, Bell, Eye, MousePointerClick, Egg, BookOpen,
 } from "lucide-react";
 
 import { supabase } from "./supabaseClient";
@@ -14,6 +14,8 @@ import {
 } from "./lib/db";
 
 import AuthPage from "./components/AuthPage";
+import ConteudoAdmin from "./conteudo/ConteudoAdmin";
+import { usePath } from "./publico/roteador";
 
 // ---------------------------------------------------------------------------
 // Design tokens
@@ -1352,6 +1354,7 @@ function AppInner({ user, onLogout }) {
             { id: "perfil", label: "Perfil", icon: UserCircle },
             ...(isAdminUser ? [{ id: "aprovacoes", label: "Aprovacoes", icon: ShieldCheck }] : []),
             ...(isAdminUser ? [{ id: "achados", label: "Achados", icon: Bell }] : []),
+            ...(isAdminUser ? [{ id: "conteudo", label: "Conteudo", icon: BookOpen }] : []),
 
 
             { id: "mutacoes", label: "Genetica", icon: Dna },
@@ -1482,6 +1485,8 @@ function AppInner({ user, onLogout }) {
             {tab === "achados" && isAdminUser && (
               <AchadosTab achados={achados} perfis={perfisPublicos} onAtualizar={handleAtualizarAchado} />
             )}
+
+            {tab === "conteudo" && isAdminUser && <ConteudoAdmin />}
           </>
         )}
       </main>
@@ -4738,6 +4743,7 @@ function SuporteWhatsApp() {
 
 export default function App() {
   const [session, setSession] = useState(undefined);
+  const caminho = usePath();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -4754,10 +4760,12 @@ export default function App() {
   }
 
  
-if (!session) {
+// Visitante ve a area publica; quem esta logado tambem, mas so quando abre um guia/video (links compartilhados).
+const emConteudo = /^\/(guias|videos)(\/|$)/.test(caminho);
+if (!session || emConteudo) {
   return (
     <>
-      <AuthPage />
+      <AuthPage logado={!!session} />
       <SuporteWhatsApp />
     </>
   );

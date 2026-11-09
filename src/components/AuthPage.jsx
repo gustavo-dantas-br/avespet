@@ -3,8 +3,11 @@ import { Feather, Loader2, Search, Phone, ArrowLeft, MessageCircle, X } from "lu
 import { supabase } from "../supabaseClient";
 import {
   buscarPerdidaPorAnilha, getPerfil, listAnunciosPublicos, listPerfisPublicos,
-  incrementarVisualizacaoAnuncio, incrementarCliqueAnuncio, registrarAchadoAnilha,
+  incrementarVisualizacaoAnuncio, incrementarCliqueAnuncio, registrarAchadoAnilha, registrarVisita,
 } from "../lib/db";
+import { Link, usePath, navegar } from "../publico/roteador";
+import { useSEO } from "../publico/seo";
+import { PaginaGuias, PaginaGuia, PaginaVideos, GuiasEmDestaque } from "../publico/PaginasConteudo";
 
 const inputStyle = { background: "#fff", border: "1px solid #e3d3b4", color: "#2B241C", borderRadius: 8, padding: "10px 12px", fontSize: 14, outline: "none", width: "100%" };
 
@@ -331,32 +334,39 @@ function LoginModal({ onFechar }) {
 // Pagina publica principal
 // ---------------------------------------------------------------------------
 
-export default function AuthPage() {
-  const [mostrarLogin, setMostrarLogin] = useState(false);
+const MENU = [
+  ["/", "Inicio"],
+  ["/aves-a-venda", "Aves a venda"],
+  ["/guias", "Guias"],
+  ["/videos", "Videos"],
+  ["/achei-uma-ave", "Achei uma ave"],
+];
 
+const SEO_FIXO = {
+  "/aves-a-venda": { titulo: "Aves a venda", descricao: "Ring Neck e Calopsita de criadores cadastrados, com contato direto." },
+  "/achei-uma-ave": { titulo: "Achei uma ave", descricao: "Encontrou uma ave? Informe a anilha e ajudamos a devolver ao criador." },
+};
+
+function SeoFixo({ caminho }) {
+  useSEO({ ...SEO_FIXO[caminho], caminho });
+  return null;
+}
+
+// Conta 1 visita por pagina por sessao do navegador (sem cookie, sem dado pessoal).
+function contarVisita(caminho) {
+  try {
+    const chave = `visita:${caminho}`;
+    if (window.sessionStorage.getItem(chave)) return;
+    window.sessionStorage.setItem(chave, "1");
+  } catch {
+    // sem sessionStorage: conta mesmo assim
+  }
+  registrarVisita(caminho).catch(() => {});
+}
+
+function Inicio() {
   return (
-    <div className="min-h-screen w-full" style={{ background: "#2B1D14", fontFamily: "'Fraunces', serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap');
-        .ui-sans { font-family: 'Inter', sans-serif; }
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-      `}</style>
-
-      {/* Cabecalho - marca a esquerda, login discreto no canto */}
-      <header className="flex items-center justify-between px-5 py-4 max-w-6xl mx-auto">
-        <div className="flex items-center gap-2">
-          <Feather size={22} color="#C69A2E" />
-          <div style={{ color: "#F1E6D2", fontWeight: 700, fontSize: 18, fontFamily: "'Fraunces', serif" }}>Avespet</div>
-        </div>
-        <button
-          onClick={() => setMostrarLogin(true)}
-          className="ui-sans text-sm px-5 py-3 rounded-lg font-semibold"
-          style={{ background: "#3a2314", color: "#C69A2E" }}
-        >
-          Entrar / Criar conta
-        </button>
-      </header>
-
+    <>
       {/* Hero principal */}
       <section className="px-5 pt-10 pb-8 md:pt-16 md:pb-10 max-w-5xl mx-auto text-center">
         <div className="ui-sans mb-3" style={{ color: "#C69A2E", fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>
@@ -418,12 +428,10 @@ export default function AuthPage() {
         </div>
       </section>
 
-      {/* Busca por anilha */}
       <section className="px-5 py-8 md:py-12">
         <BuscaAnilha />
       </section>
 
-      {/* Vitrine publica de anuncios */}
       <section className="px-5 pb-16 max-w-6xl mx-auto">
         <h2 className="ui-sans text-center mb-6" style={{ color: "#F1E6D2", fontSize: 22, fontWeight: 700 }}>
           Aves disponiveis agora
@@ -431,14 +439,107 @@ export default function AuthPage() {
         <VitrinePublica />
       </section>
 
+      <GuiasEmDestaque />
+    </>
+  );
+}
+
+function NaoEncontrada() {
+  return (
+    <section className="px-5 pb-16 max-w-3xl mx-auto text-center ui-sans">
+      <h1 className="mb-3" style={{ color: "#F1E6D2", fontSize: 26, fontWeight: 700 }}>Pagina nao encontrada</h1>
+      <Link para="/" style={{ color: "#C69A2E", textDecoration: "underline" }}>Voltar para o inicio</Link>
+    </section>
+  );
+}
+
+function ConteudoDaRota({ caminho, onEntrar }) {
+  const guia = caminho.match(/^\/guias\/([a-z0-9-]+)$/);
+  if (caminho === "/") return <Inicio />;
+  if (caminho === "/aves-a-venda") {
+    return (
+      <section className="px-5 pb-16 max-w-6xl mx-auto">
+        <SeoFixo caminho={caminho} />
+        <h1 className="ui-sans mb-6" style={{ color: "#F1E6D2", fontFamily: "'Fraunces', serif", fontSize: 32, fontWeight: 700 }}>Aves disponiveis agora</h1>
+        <VitrinePublica />
+      </section>
+    );
+  }
+  if (caminho === "/achei-uma-ave") {
+    return (
+      <section className="px-5 py-8">
+        <SeoFixo caminho={caminho} />
+        <BuscaAnilha />
+      </section>
+    );
+  }
+  if (caminho === "/guias") return <PaginaGuias />;
+  if (guia) return <PaginaGuia slug={guia[1]} onEntrar={onEntrar} />;
+  if (caminho === "/videos") return <PaginaVideos />;
+  return <NaoEncontrada />;
+}
+
+// logado = o criador abriu um guia estando dentro do sistema (so troca o botao do canto)
+export default function AuthPage({ logado = false }) {
+  const [mostrarLogin, setMostrarLogin] = useState(false);
+  const caminho = usePath();
+
+  useEffect(() => {
+    if (!logado) contarVisita(caminho);
+  }, [caminho, logado]);
+
+  const onEntrar = logado ? () => navegar("/") : () => setMostrarLogin(true);
+
+  return (
+    <div className="min-h-screen w-full" style={{ background: "#2B1D14", fontFamily: "'Fraunces', serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap');
+        .ui-sans { font-family: 'Inter', sans-serif; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      `}</style>
+
+      <header className="px-5 pt-4 pb-2 max-w-6xl mx-auto">
+        <div className="flex items-center justify-between gap-3">
+          <Link para="/" className="flex items-center gap-2">
+            <Feather size={22} color="#C69A2E" />
+            <span style={{ color: "#F1E6D2", fontWeight: 700, fontSize: 18, fontFamily: "'Fraunces', serif" }}>Avespet</span>
+          </Link>
+          <button
+            onClick={logado ? () => navegar("/") : onEntrar}
+            className="ui-sans text-sm px-5 py-3 rounded-lg font-semibold"
+            style={{ background: "#3a2314", color: "#C69A2E" }}
+          >
+            {logado ? "Voltar ao sistema" : "Entrar / Criar conta"}
+          </button>
+        </div>
+        <nav className="flex flex-wrap gap-x-5 gap-y-2 mt-3 ui-sans text-sm" aria-label="Menu principal">
+          {MENU.map(([para, nome]) => {
+            const ativo = para === "/" ? caminho === "/" : caminho === para || caminho.startsWith(para + "/");
+            return (
+              <Link key={para} para={para} style={{ color: ativo ? "#C69A2E" : "#b09a78", fontWeight: ativo ? 600 : 400 }}>
+                {nome}
+              </Link>
+            );
+          })}
+        </nav>
+      </header>
+
+      <main className="pt-6">
+        <ConteudoDaRota caminho={caminho} onEntrar={onEntrar} />
+      </main>
+
       <footer className="text-center ui-sans text-xs py-6" style={{ color: "#6b5638" }}>
-        Criador de aves? <button onClick={() => setMostrarLogin(true)} className="underline" style={{ color: "#C69A2E" }}>Cadastre seu plantel gratuitamente</button>
+        {!logado && (
+          <div>
+            Criador de aves? <button onClick={onEntrar} className="underline" style={{ color: "#C69A2E" }}>Cadastre seu plantel gratuitamente</button>
+          </div>
+        )}
         <div className="mt-2">
           Precisa de ajuda? <a href={SUPORTE_WHATSAPP} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#C69A2E" }}>Fale com o suporte</a>
         </div>
       </footer>
 
-      {mostrarLogin && <LoginModal onFechar={() => setMostrarLogin(false)} />}
+      {mostrarLogin && !logado && <LoginModal onFechar={() => setMostrarLogin(false)} />}
     </div>
   );
 }
