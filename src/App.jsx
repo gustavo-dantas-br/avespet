@@ -1330,9 +1330,16 @@ function AppInner({ user, onLogout }) {
         style={{ background: "#241609", borderBottom: "1px solid #4a2c18", borderRight: "1px solid #4a2c18" }}
       >
         <div className="flex items-center gap-2 mb-0 md:mb-8 px-1 shrink-0">
+        <Feather size={20} color="#C69A2E" />
+  <div className="hidden sm:block">
+    <div style={{ color: "#F1E6D2", fontWeight: 700, fontSize: 16, lineHeight: 1.1 }}>
+      Aves<span style={{ color: "#C69A2E" }}>pet</span>
+    </div>
+  </div>
+</div><div className="flex items-center gap-2 mb-0 md:mb-8 px-1 shrink-0">
           <Feather size={20} color="#C69A2E" />
           <div className="hidden sm:block">
-            <div style={{ color: "#F1E6D2", fontWeight: 700, fontSize: 16, lineHeight: 1.1 }}>Criatorio Dantas</div>
+            <div style={{ color: "#F1E6D2", fontWeight: 700, fontSize: 16, lineHeight: 1.1 }}>Gestao inteligente para seu criatorio</div>
             <div className="ui-mono" style={{ color: "#8a6f4a", fontSize: 10, letterSpacing: 1 }}>CADASTRO DE AVES</div>
           </div>
         </div>
@@ -3854,7 +3861,7 @@ function PerfilTab({ perfil, onSave }) {
       </p>
       <Card className="p-4 sm:p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <Field label="Nome do criatorio"><input style={inputStyle} value={form.nomeCriatorio} onChange={set("nomeCriatorio")} placeholder="ex: Criatorio Dantas" /></Field>
+          <Field label="Nome do criatório"><input style={inputStyle} value={form.nomeCriatorio} onChange={set("nomeCriatorio")} placeholder="ex: Criatório Avespet" /></Field>
           <Field label="WhatsApp de contato"><input style={inputStyle} value={form.whatsapp} onChange={set("whatsapp")} placeholder="ex: (11) 99999-9999" /></Field>
           <Field label="Cidade"><input style={inputStyle} value={form.cidade} onChange={set("cidade")} placeholder="ex: Barueri" /></Field>
           <Field label="UF">
