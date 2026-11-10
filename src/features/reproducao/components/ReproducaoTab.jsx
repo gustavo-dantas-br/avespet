@@ -40,7 +40,7 @@ function addDiasISO(iso, dias) {
 function diffDiasISO(deIso, ateIso) {
   return Math.round((dataLocal(ateIso) - dataLocal(deIso)) / 86400000);
 }
-function helpers.formatarDataBR(iso) {
+function formatarDataBR(iso) {
   if (!iso) return "";
   const { y, m, d } = partesISO(iso);
   return `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
@@ -355,8 +355,6 @@ export default function ReproducaoTab({ aves, posturas, onSave, onDelete, onNasc
   const lista = Array.from(grupos.entries())
     .map(([k, ps]) => ({ k, ps: [...ps].sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || "")) }))
     .sort((a, b) => (b.ps[0].criadoEm || "").localeCompare(a.ps[0].criadoEm || ""));
-
-  const helpers = REPRODUCAO_HELPERS;
 
   function salvarForm(postura) {
     onSave(postura);
