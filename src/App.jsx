@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from "react";
+import { compressPhoto } from "./features/plantel/utils/comprimirFoto";
 import { emptyAve, emptyDespesa, emptyMutacao, emptyIndicacao, emptyAnuncio, emptyPerfilCriador, emptyCliente, emptyFornecedor } from "./lib/modelos";
 import { hojeISO, primeiroDiaMesISO, ultimoDiaMesISO, primeiroDiaAnoISO, money } from "./lib/formatadores";
 import { normalizeTelefone, whatsappUrl } from "./lib/telefone";
@@ -74,42 +75,6 @@ const TIPOS_HERANCA = [
 const STATUS_INDICACAO = ["Nova", "Em atendimento", "Venda realizada", "Nao converteu"];
 
 // ---------- Compressao de foto ----------
-function compressPhoto(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const maxDim = 480;
-        let { width, height } = img;
-        if (width > height && width > maxDim) {
-          height = Math.round((height * maxDim) / width);
-          width = maxDim;
-        } else if (height > maxDim) {
-          width = Math.round((width * maxDim) / height);
-          height = maxDim;
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, width, height);
-        let quality = 0.72;
-        let dataUrl = canvas.toDataURL("image/jpeg", quality);
-        while (dataUrl.length > 900000 && quality > 0.35) {
-          quality -= 0.12;
-          dataUrl = canvas.toDataURL("image/jpeg", quality);
-        }
-        resolve(dataUrl);
-      };
-      img.onerror = reject;
-      img.src = reader.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 // Historico do cliente e sempre CALCULADO na hora, cruzando pelo telefone com
 // as aves ja vendidas. Nao grava nada de novo nas aves, nao duplica dado.
 // Historico do fornecedor: espelha historicoCliente, so que olhando pro lado
