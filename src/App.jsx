@@ -17,6 +17,7 @@ import {
 import AuthPage from "./components/AuthPage";
 import ConteudoAdmin from "./conteudo/ConteudoAdmin";
 import { AdminCampanhas } from "./features/campanhas";
+import ModeracaoAvesPerdidasTab from "./features/aves-perdidas/components/ModeracaoAvesPerdidasTab";
 import { usePath } from "./publico/roteador";
 
 // ---------------------------------------------------------------------------
@@ -4210,46 +4211,6 @@ function AchadosTab({ achados, perfis, onAtualizar }) {
     </div>
   );
 }
-const STATUS_AVES_PERDIDAS = { pendente: "EM ANÁLISE", aprovado: "PUBLICADO", rejeitado: "REJEITADO", encerrado: "ENCERRADO" };
-
-function ModeracaoAvesPerdidasTab({ anuncios, onModerar }) {
-  const [filtro, setFiltro] = useState("pendente");
-  const filtrados = anuncios.filter((a) => a.status === filtro);
-  return (
-    <div>
-      <SectionTitle>Moderação — aves perdidas</SectionTitle>
-      <p className="ui-sans text-sm mb-5" style={{ color: "#F1E6D2" }}>Revise os anúncios enviados gratuitamente. Só os aprovados aparecem na página pública.</p>
-      <div className="flex flex-wrap gap-2 mb-5">
-        {Object.keys(STATUS_AVES_PERDIDAS).map((s) => (
-          <button key={s} onClick={() => setFiltro(s)} className="ui-sans text-xs px-3 py-2 rounded-lg font-semibold" style={{ background: filtro === s ? "#C69A2E" : "#3a2314", color: filtro === s ? "#2B1D14" : "#b09a78" }}>
-            {STATUS_AVES_PERDIDAS[s]} ({anuncios.filter((a) => a.status === s).length})
-          </button>
-        ))}
-      </div>
-      {filtrados.length === 0 ? <Card className="p-8 text-center ui-sans" style={{ color: "#8a7a63" }}>Nenhum anúncio neste status.</Card> :
-        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
-          {filtrados.map((a) => {
-            const d = a.data || {};
-            return <Card key={a.id} className="p-4 ui-sans">
-              {d.foto && <img src={d.foto} alt={d.nomeAve || "Ave perdida"} className="w-full aspect-video object-cover rounded-lg mb-3" />}
-              <div className="font-semibold" style={{ color: "#2B241C" }}>{d.nomeAve || d.especie || "Ave sem nome"}</div>
-              <div className="text-xs mt-1" style={{ color: "#8a7a63" }}>{d.especie || "Espécie não informada"} {d.cor ? `• ${d.cor}` : ""}</div>
-              <div className="text-sm mt-2" style={{ color: "#2B241C" }}>{d.cidade || "Cidade não informada"}{d.uf ? `/${d.uf}` : ""} {d.dataPerda ? `• ${new Date(d.dataPerda + "T12:00:00").toLocaleDateString("pt-BR")}` : ""}</div>
-              {d.descricao && <p className="text-xs mt-2 whitespace-pre-wrap" style={{ color: "#7a6a52" }}>{d.descricao}</p>}
-              <div className="text-xs mt-3" style={{ color: "#8a7a63" }}>Contato: {d.contatoNome || "—"} • WhatsApp: {d.whatsapp || "—"}</div>
-              <div className="flex flex-wrap gap-2 mt-4">
-                {a.status !== "aprovado" && <button onClick={() => onModerar(a.id, "aprovado")} className="text-xs px-3 py-2 rounded-lg font-semibold" style={{ background: "#556b3f", color: "#fff" }}>Aprovar e publicar</button>}
-                {a.status !== "rejeitado" && <button onClick={() => onModerar(a.id, "rejeitado")} className="text-xs px-3 py-2 rounded-lg" style={{ background: "#f0dad4", color: "#a6402b" }}>Rejeitar</button>}
-                {a.status !== "encerrado" && <button onClick={() => onModerar(a.id, "encerrado")} className="text-xs px-3 py-2 rounded-lg" style={{ background: "#e3d3b4", color: "#2B241C" }}>Encerrar</button>}
-                {a.status !== "pendente" && <button onClick={() => onModerar(a.id, "pendente")} className="text-xs px-3 py-2 rounded-lg" style={{ background: "#f0dab0", color: "#2B241C" }}>Voltar à análise</button>}
-              </div>
-            </Card>;
-          })}
-        </div>}
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Reproducao: posturas, ovos e nascimentos
 // ---------------------------------------------------------------------------
