@@ -1394,10 +1394,16 @@ function AppInner({ user, onLogout }) {
               {isAdminUser && <div className="my-8 h-px" style={{ background: "#e3d3b4" }} />}
 
               <MutacoesTab
-              mutacoes={mutacoes}
-            onSave={handleSaveMutacao}
-      onDelete={handleDeleteMutacao}
-    />
+                mutacoes={mutacoes}
+                onSave={handleSaveMutacao}
+                onDelete={handleDeleteMutacao}
+                emptyMutacao={emptyMutacao}
+                TIPOS_HERANCA={TIPOS_HERANCA}
+                SectionTitle={SectionTitle}
+                Field={Field}
+                inputStyle={inputStyle}
+                Card={Card}
+              />
   </>
             )}
 
