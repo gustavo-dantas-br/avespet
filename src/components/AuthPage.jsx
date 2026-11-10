@@ -7,6 +7,7 @@ import {
 } from "../lib/db";
 import { Link, usePath, navegar } from "../publico/roteador";
 import { useSEO } from "../publico/seo";
+import { comprimirImagemPublica } from "../features/aves-perdidas/utils/comprimirImagem";
 import { PaginaGuias, PaginaGuia, PaginaVideos, GuiasEmDestaque } from "../publico/PaginasConteudo";
 import { PerdiUmaAve, AvesPerdidas } from "../features/aves-perdidas";
 
@@ -46,36 +47,15 @@ function BuscaAnilha() {
     const file = e.target.files?.[0];
     if (!file) return;
     setError("");
-    if (!file.type.startsWith("image/")) { setError("Selecione uma imagem válida."); e.target.value = ""; return; }
     try {
-      const bitmap = await createImageBitmap(file);
-      let width = bitmap.width, height = bitmap.height;
-      const maxDim = 640;
-      const scale = Math.min(1, maxDim / Math.max(width, height));
-      width = Math.max(1, Math.round(width * scale));
-      height = Math.max(1, Math.round(height * scale));
-      const canvas = document.createElement("canvas");
-      canvas.width = width; canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas indisponível");
-      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, width, height);
-      ctx.drawImage(bitmap, 0, 0, width, height);
-      bitmap.close();
-      let blob = null;
-      for (const quality of [0.72, 0.58, 0.45, 0.35]) {
-        blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
-        if (blob && blob.size <= 250 * 1024) break;
-      }
-      if (!blob) throw new Error("Falha na compressão");
-      const reader = new FileReader();
-      reader.onload = () => setFormAchado((f) => ({ ...f, foto: reader.result }));
-      reader.onerror = () => setError("Não foi possível carregar a foto.");
-      reader.readAsDataURL(blob);
-    } catch {
-      setError("Não foi possível processar essa imagem. Tente outra foto.");
+      const foto = await comprimirImagemPublica(file);
+      setFormAchado((f) => ({ ...f, foto }));
+    } catch (err) {
+      setError(err?.message || "Não foi possível processar essa foto.");
       e.target.value = "";
     }
   }
+
   async function buscar(e) {
     e.preventDefault();
     if (!anilha.trim()) return;
