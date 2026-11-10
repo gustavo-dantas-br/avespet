@@ -470,8 +470,8 @@ function ConteudoDaRota({ caminho, onEntrar }) {
       </section>
     );
   }
-  if (caminho === "/perdi-uma-ave") return <PerdiUmaAve />;
-  if (caminho === "/aves-perdidas") return <AvesPerdidas />;
+  if (caminho === "/perdi-uma-ave") return <><SeoFixo caminho={caminho} /><PerdiUmaAve /></>;
+  if (caminho === "/aves-perdidas") return <><SeoFixo caminho={caminho} /><AvesPerdidas /></>;
   if (caminho === "/achei-uma-ave") {
     return (
       <section className="px-5 py-8">
