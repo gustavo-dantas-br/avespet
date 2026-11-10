@@ -8,6 +8,7 @@ import {
 import { Link, usePath, navegar } from "../publico/roteador";
 import { useSEO } from "../publico/seo";
 import { PaginaGuias, PaginaGuia, PaginaVideos, GuiasEmDestaque } from "../publico/PaginasConteudo";
+import { PerdiUmaAve, AvesPerdidas } from "../features/aves-perdidas";
 
 const inputStyle = { background: "#fff", border: "1px solid #e3d3b4", color: "#2B241C", borderRadius: 8, padding: "10px 12px", fontSize: 14, outline: "none", width: "100%" };
 
@@ -340,6 +341,8 @@ const MENU = [
   ["/guias", "Guias"],
   ["/videos", "Videos"],
   ["/achei-uma-ave", "Achei uma ave"],
+  ["/perdi-uma-ave", "Perdi uma ave"],
+  ["/aves-perdidas", "Aves perdidas"],
 ];
 
 const SEO_FIXO = {
@@ -465,6 +468,8 @@ function ConteudoDaRota({ caminho, onEntrar }) {
       </section>
     );
   }
+  if (caminho === "/perdi-uma-ave") return <PerdiUmaAve />;
+  if (caminho === "/aves-perdidas") return <AvesPerdidas />;
   if (caminho === "/achei-uma-ave") {
     return (
       <section className="px-5 py-8">
