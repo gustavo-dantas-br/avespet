@@ -258,3 +258,24 @@ export async function listVisitas(dias = 30) {
   if (error) throw error;
   return data || [];
 }
+
+
+// ---------- Anuncios publicos de aves perdidas (moderacao admin) ----------
+export async function listAnunciosAvesPerdidasAdmin() {
+  const { data, error } = await supabase
+    .from("anuncios_aves_perdidas")
+    .select("id, data, status, created_at")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function atualizarStatusAnuncioAvePerdida(id, status) {
+  const permitidos = ["pendente", "aprovado", "rejeitado", "encerrado"];
+  if (!permitidos.includes(status)) throw new Error("Status inválido.");
+  const { error } = await supabase
+    .from("anuncios_aves_perdidas")
+    .update({ status })
+    .eq("id", id);
+  if (error) throw error;
+}
