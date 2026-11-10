@@ -1442,6 +1442,7 @@ function AppInner({ user, onLogout }) {
                 onSync={handleSync} onExport={handleExport} onImport={handleImport}
                 statusFilter={statusFilter} setStatusFilter={setStatusFilter}
                 casaisAgrupados={casaisAgrupados}
+                Card={Card} SectionTitle={SectionTitle} AveCard={AveCard} FILTER_LABELS={FILTER_LABELS}
               />
             )}
 
