@@ -31,9 +31,23 @@ export default function PerdiUmaAve() {
   function fotoSelecionada(e) {
     const arquivo = e.target.files?.[0];
     if (!arquivo) return;
-    if (arquivo.size > 5 * 1024 * 1024) { setErro("A foto deve ter no máximo 5 MB."); return; }
+    if (!arquivo.type.startsWith("image/")) { setErro("Selecione uma imagem válida."); return; }
+    if (arquivo.size > 5 * 1024 * 1024) { setErro("A foto original deve ter no máximo 5 MB."); return; }
     const leitor = new FileReader();
-    leitor.onload = () => alterar("foto", leitor.result);
+    leitor.onload = () => {
+      const imagem = new Image();
+      imagem.onload = () => {
+        const limite = 1000;
+        const escala = Math.min(1, limite / Math.max(imagem.width, imagem.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(imagem.width * escala));
+        canvas.height = Math.max(1, Math.round(imagem.height * escala));
+        canvas.getContext("2d").drawImage(imagem, 0, 0, canvas.width, canvas.height);
+        alterar("foto", canvas.toDataURL("image/jpeg", 0.7));
+      };
+      imagem.onerror = () => setErro("Não foi possível processar essa foto.");
+      imagem.src = leitor.result;
+    };
     leitor.readAsDataURL(arquivo);
   }
 
