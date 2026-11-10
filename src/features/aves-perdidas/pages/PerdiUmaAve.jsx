@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "../../../publico/roteador";
 import { criarAnuncioPerdida } from "../services/avesPerdidasService";
+import { comprimirImagemPublica } from "../utils/comprimirImagem";
 
 const input = { width: "100%", padding: "12px", borderRadius: 8, border: "1px solid #e3d3b4", background: "#fff", color: "#2B241C" };
 
@@ -32,31 +33,11 @@ export default function PerdiUmaAve() {
     const arquivo = e.target.files?.[0];
     if (!arquivo) return;
     setErro("");
-    if (!arquivo.type.startsWith("image/")) { setErro("Selecione uma imagem válida."); e.target.value = ""; return; }
     try {
-      const bitmap = await createImageBitmap(arquivo);
-      const escala = Math.min(1, 800 / Math.max(bitmap.width, bitmap.height));
-      const largura = Math.max(1, Math.round(bitmap.width * escala));
-      const altura = Math.max(1, Math.round(bitmap.height * escala));
-      const canvas = document.createElement("canvas");
-      canvas.width = largura; canvas.height = altura;
-      const contexto = canvas.getContext("2d");
-      if (!contexto) throw new Error("Canvas indisponível");
-      contexto.fillStyle = "#fff"; contexto.fillRect(0, 0, largura, altura);
-      contexto.drawImage(bitmap, 0, 0, largura, altura);
-      bitmap.close();
-      let blob = null;
-      for (const qualidade of [0.72, 0.58, 0.45, 0.35]) {
-        blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", qualidade));
-        if (blob && blob.size <= 300 * 1024) break;
-      }
-      if (!blob) throw new Error("Falha na compressão");
-      const leitor = new FileReader();
-      leitor.onload = () => alterar("foto", leitor.result);
-      leitor.onerror = () => setErro("Não foi possível carregar a foto.");
-      leitor.readAsDataURL(blob);
-    } catch {
-      setErro("Não foi possível processar essa imagem. Tente outra foto.");
+      const foto = await comprimirImagemPublica(arquivo);
+      alterar("foto", foto);
+    } catch (err) {
+      setErro(err?.message || "Não foi possível processar essa foto.");
       e.target.value = "";
     }
   }
