@@ -175,7 +175,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
 
         {form.origemTipo === "Comprada" && (
           <div className="mt-4">
-            <SeletorFornecedor form={form} setForm={setForm} fornecedores={fornecedores} />
+            <SeletorFornecedor form={form} setForm={setForm} fornecedores={fornecedores} inputStyle={inputStyle} />
             {form.fornecedorId && (
               <div className="ui-sans text-xs mt-2 mb-2 px-3 py-1.5 rounded-lg inline-block" style={{ background: "#e4ead9", color: "#556b3f" }}>
                 ✓ Vinculado ao cadastro do fornecedor
@@ -196,7 +196,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
 
         {form.status === "Vendida" ? (
           <div>
-            <SeletorComprador form={form} setForm={setForm} clientes={clientes} />
+            <SeletorComprador form={form} setForm={setForm} clientes={clientes} inputStyle={inputStyle} />
             {form.clienteId && (
               <div className="ui-sans text-xs mt-2 px-3 py-1.5 rounded-lg inline-block" style={{ background: "#e4ead9", color: "#556b3f" }}>
                 ✓ Vinculado ao cadastro do cliente
@@ -243,7 +243,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
 
         <div className="my-5 h-px" style={{ background: "#e3d3b4" }} />
         <div className="ui-mono text-xs mb-3" style={{ color: "#8a7a63" }}>HISTORICO DE PESO</div>
-        <PesoHistorico pesos={form.pesos} onChange={(pesos) => setForm((f) => ({ ...f, pesos }))} />
+        <PesoHistorico inputStyle={inputStyle} pesos={form.pesos} onChange={(pesos) => setForm((f) => ({ ...f, pesos }))} />
 
         <div className="flex gap-3 mt-6">
           <button onClick={onSave} disabled={saving} className="ui-sans flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
