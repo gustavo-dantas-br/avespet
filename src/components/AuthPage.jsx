@@ -164,10 +164,12 @@ function BuscaAnilha() {
         </div>
       )}
 
-      {mostrarFormAchado && !enviado && (
+      {(mostrarFormAchado || (resultadosPerdidas && resultadosPerdidas.length > 0)) && !enviado && (
         <form onSubmit={enviarAchado} className="flex flex-col gap-3 max-w-md mx-auto text-left rounded-lg p-4" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
           <div className="text-sm" style={{ color: "#2B241C" }}>
-            Essa anilha nao apareceu como perdida ainda, mas se voce achou essa ave, deixa seu contato que a gente verifica e retorna.
+            {resultadosPerdidas && resultadosPerdidas.length > 0
+              ? "Encontramos um cadastro relacionado a essa anilha. Se esta com a ave, informe os dados abaixo para ajudarmos na devolucao."
+              : "Essa anilha nao apareceu como perdida. Mesmo assim, se voce encontrou essa ave, informe os dados abaixo para ajudarmos a localizar o responsavel."}
           </div>
 
           <label className="ui-sans flex flex-col gap-1.5">
