@@ -10,6 +10,7 @@ import { useSEO } from "../publico/seo";
 import { comprimirEEnviarImagemPublica } from "../features/aves-perdidas/utils/comprimirImagem";
 import { PaginaGuias, PaginaGuia, PaginaVideos, GuiasEmDestaque } from "../publico/PaginasConteudo";
 import { PerdiUmaAve, AvesPerdidas } from "../features/aves-perdidas";
+import { SolicitarCampanha } from "../features/campanhas";
 
 const inputStyle = { background: "#fff", border: "1px solid #e3d3b4", color: "#2B241C", borderRadius: 8, padding: "10px 12px", fontSize: 14, outline: "none", width: "100%" };
 
@@ -342,6 +343,7 @@ const MENU = [
   ["/achei-uma-ave", "Achei uma ave"],
   ["/perdi-uma-ave", "Perdi uma ave"],
   ["/aves-perdidas", "Aves perdidas"],
+  ["/campanha-ave-perdida", "Divulgar minha busca"],
 ];
 
 const SEO_FIXO = {
@@ -349,6 +351,7 @@ const SEO_FIXO = {
   "/achei-uma-ave": { titulo: "Achei uma ave", descricao: "Encontrou uma ave? Informe a anilha e ajudamos a devolver ao criador." },
   "/perdi-uma-ave": { titulo: "Perdi minha ave", descricao: "Publique gratuitamente o desaparecimento da sua ave e ajude-a a voltar para casa." },
   "/aves-perdidas": { titulo: "Aves perdidas", descricao: "Veja anúncios de aves perdidas e ajude a reunir aves e suas famílias." },
+  "/campanha-ave-perdida": { titulo: "Divulgação regional de ave perdida", descricao: "Solicite orçamento para ampliar a divulgação regional da busca pela sua ave." },
 };
 
 function SeoFixo({ caminho }) {
@@ -471,6 +474,7 @@ function ConteudoDaRota({ caminho, onEntrar }) {
   }
   if (caminho === "/perdi-uma-ave") return <><SeoFixo caminho={caminho} /><PerdiUmaAve /></>;
   if (caminho === "/aves-perdidas") return <><SeoFixo caminho={caminho} /><AvesPerdidas /></>;
+  if (caminho === "/campanha-ave-perdida") return <><SeoFixo caminho={caminho} /><SolicitarCampanha /></>;
   if (caminho === "/achei-uma-ave") {
     return (
       <section className="px-5 py-8">
