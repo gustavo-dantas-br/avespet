@@ -46,8 +46,6 @@ function NovoAnuncioForm({ ave, onSave, onCancel, Card, Field, inputStyle, empty
 }
 
 
-       const STATUS_ANUNCIO_TONS = { pendente: "#f0dab0", aprovado: "#c8dcb8", rejeitado: "#f0c9c0" };
-       const STATUS_ANUNCIO_LABEL = { pendente: "EM ANALISE", aprovado: "APROVADO", rejeitado: "REJEITADO" };
 
  function AnuncioCard({ anuncio, onToggleAtivo, onDelete, Card, money }) {
        const status = anuncio.status || "pendente";
