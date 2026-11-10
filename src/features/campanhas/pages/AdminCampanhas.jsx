@@ -42,6 +42,7 @@ export default function AdminCampanhas() {
       <div className="grid gap-4">
         {filtrados.map((item) => <article key={item.id} className="rounded-xl p-4 ui-sans" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4", color: "#2B241C" }}>
           <div className="flex flex-wrap justify-between gap-2"><strong>{PACOTES_CAMPANHA.find((p) => p.id === item.pacote)?.nome || item.pacote}</strong><span className="text-xs">{new Date(item.created_at).toLocaleString("pt-BR")}</span></div>
+          <div className="text-xs mt-1" style={{ color: "#8a7a63" }}>Anúncio vinculado: {item.anuncio_id || "Solicitação sem anúncio vinculado"}</div>
           <div className="text-sm mt-2">{item.nome_contato} • {item.whatsapp} {item.email ? "• "+item.email : ""}</div>
           <div className="text-sm mt-1"><strong>Região:</strong> {item.cidade}/{item.uf} — {item.area_alvo}</div>
           {item.descricao_ave && <p className="text-sm mt-2 whitespace-pre-wrap">{item.descricao_ave}</p>}
