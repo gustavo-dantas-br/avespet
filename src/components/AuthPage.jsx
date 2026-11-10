@@ -348,6 +348,8 @@ const MENU = [
 const SEO_FIXO = {
   "/aves-a-venda": { titulo: "Aves a venda", descricao: "Ring Neck e Calopsita de criadores cadastrados, com contato direto." },
   "/achei-uma-ave": { titulo: "Achei uma ave", descricao: "Encontrou uma ave? Informe a anilha e ajudamos a devolver ao criador." },
+  "/perdi-uma-ave": { titulo: "Perdi minha ave", descricao: "Publique gratuitamente o desaparecimento da sua ave e ajude-a a voltar para casa." },
+  "/aves-perdidas": { titulo: "Aves perdidas", descricao: "Veja anúncios de aves perdidas e ajude a reunir aves e suas famílias." },
 };
 
 function SeoFixo({ caminho }) {
