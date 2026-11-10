@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-function SeletorComprador({ form, setForm, clientes }) {
+function SeletorComprador({ form, setForm, clientes, inputStyle }) {
   const [modo, setModo] = useState("existente"); // "existente" | "novo"
   const [busca, setBusca] = useState("");
 
@@ -76,7 +76,7 @@ function SeletorComprador({ form, setForm, clientes }) {
   );
 }
 
-function SeletorFornecedor({ form, setForm, fornecedores }) {
+function SeletorFornecedor({ form, setForm, fornecedores, inputStyle }) {
   const [modo, setModo] = useState("existente");
   const [busca, setBusca] = useState("");
 
