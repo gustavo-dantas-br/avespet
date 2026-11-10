@@ -1430,7 +1430,7 @@ function AppInner({ user, onLogout }) {
           </div>
         ) : (
           <>
-            {tab === "dashboard" && <DashboardTab aves={aves} despesas={despesas} clientes={clientes} indicacoes={indicacoes} posturas={posturas} setTab={setTab} goToLista={goToLista} />}
+            {tab === "dashboard" && <DashboardTab aves={aves} despesas={despesas} clientes={clientes} indicacoes={indicacoes} posturas={posturas} setTab={setTab} goToLista={goToLista} STATUS_PLANTEL={STATUS_PLANTEL} SectionTitle={SectionTitle} StatCard={StatCard} money={money} Card={Card} />}
 
             {tab === "reproducao" && (
               <ReproducaoTab aves={aves} posturas={posturas} onSave={handleSavePostura} onDelete={handleDeletePostura} onNascimento={handleRegistrarNascimento} />
