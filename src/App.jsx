@@ -16,6 +16,7 @@ import {
 
 import AuthPage from "./components/AuthPage";
 import ConteudoAdmin from "./conteudo/ConteudoAdmin";
+import { AdminCampanhas } from "./features/campanhas";
 import { usePath } from "./publico/roteador";
 
 // ---------------------------------------------------------------------------
@@ -1376,7 +1377,7 @@ function AppInner({ user, onLogout }) {
             { id: "perfil", label: "Perfil", icon: UserCircle },
             ...(isAdminUser ? [{ id: "aprovacoes", label: "Aprovacoes", icon: ShieldCheck }] : []),
             ...(isAdminUser ? [{ id: "achados", label: "Achados", icon: Bell }] : []),
-            ...(isAdminUser ? [{ id: "aves-perdidas-admin", label: "Aves perdidas", icon: Bird }] : []),
+            ...(isAdminUser ? [{ id: "aves-perdidas-admin", label: "Aves perdidas", icon: Bird }, { id: "campanhas-admin", label: "Campanhas", icon: Megaphone }] : []),
             ...(isAdminUser ? [{ id: "conteudo", label: "Conteudo", icon: BookOpen }] : []),
 
 
