@@ -32,6 +32,10 @@ import IndicacoesTab from "./features/indicacoes/IndicacoesTab";
 import PerfilTab from "./features/perfil/PerfilTab";
 import AnunciosTab from "./features/anuncios/AnunciosTab";
 import FormTab from "./features/plantel/FormTab";
+import PesoHistorico from "./features/plantel/PesoHistorico";
+import ArvoreTab from "./features/plantel/ArvoreTab";
+import PlacaTab from "./features/plantel/PlacaTab";
+import MutacoesTab from "./features/genetica/MutacoesTab";
 import { usePath } from "./publico/roteador";
 
 // ---------------------------------------------------------------------------
@@ -1373,11 +1377,11 @@ function AppInner({ user, onLogout }) {
             )}
 
             {tab === "arvore" && (
-              <ArvoreTab aves={aves} arvoreId={arvoreId} setArvoreId={setArvoreId} arvoreAve={arvoreAve} pai={pai} mae={mae} parceiro={parceiro} filhos={filhos} />
+              <ArvoreTab aves={aves} arvoreId={arvoreId} setArvoreId={setArvoreId} arvoreAve={arvoreAve} pai={pai} mae={mae} parceiro={parceiro} filhos={filhos} SectionTitle={SectionTitle} Field={Field} inputStyle={inputStyle} Card={Card} />
             )}
 
             {tab === "placa" && (
-              <PlacaTab aves={aves} placaId={placaId} setPlacaId={setPlacaId} canvasRef={canvasRef} onDownload={downloadPlaca} />
+              <PlacaTab aves={aves} placaId={placaId} setPlacaId={setPlacaId} canvasRef={canvasRef} onDownload={downloadPlaca} SectionTitle={SectionTitle} Field={Field} inputStyle={inputStyle} Card={Card} />
             )}
 
             {tab === "financeiro" && (
@@ -1713,84 +1717,9 @@ function TreeCard({ ave }) {
   );
 }
 
-function ArvoreTab({ aves, arvoreId, setArvoreId, arvoreAve, pai, mae, parceiro, filhos }) {
-  return (
-    <div>
-      <SectionTitle>Arvore Genealogica</SectionTitle>
-      <Field label="Escolha a ave">
-        <select style={{ ...inputStyle, maxWidth: 320 }} value={arvoreId} onChange={(e) => setArvoreId(e.target.value)}>
-          <option value="">-- selecione --</option>
-          {aves.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
-        </select>
-      </Field>
-
-      {arvoreAve && (
-        <Card className="p-8 mt-6">
-          <div className="flex flex-col items-center gap-6 ui-sans">
-            <div className="ui-mono text-xs" style={{ color: "#8a7a63" }}>PAIS</div>
-            <div className="flex gap-4 flex-wrap justify-center">
-              <TreeCard ave={pai} />
-              {!pai && arvoreAve.paiExterno && <TreeCard ave={{ nome: arvoreAve.paiExterno, especie: "externo", sexo: "Macho" }} />}
-              <TreeCard ave={mae} />
-              {!mae && arvoreAve.maeExterno && <TreeCard ave={{ nome: arvoreAve.maeExterno, especie: "externo", sexo: "Femea" }} />}
-            </div>
-
-            <div className="h-6 w-px" style={{ background: "#e3d3b4" }} />
-
-            <div className="flex gap-4 items-center">
-              <div className="rounded-lg px-5 py-3 text-center" style={{ background: "#C69A2E", color: "#2B1D14" }}>
-                <div className="font-bold">{arvoreAve.nome}</div>
-                <div className="text-[11px]">{arvoreAve.especie} - {arvoreAve.sexo}</div>
-              </div>
-              {parceiro && (<><span className="text-xs" style={{ color: "#8a7a63" }}>x</span><TreeCard ave={parceiro} /></>)}
-            </div>
-
-            {filhos.length > 0 && (
-              <>
-                <div className="h-6 w-px" style={{ background: "#e3d3b4" }} />
-                <div className="ui-mono text-xs" style={{ color: "#8a7a63" }}>FILHOS ({filhos.length})</div>
-                <div className="flex flex-wrap gap-3 justify-center">{filhos.map((f) => <TreeCard key={f.id} ave={f} />)}</div>
-              </>
-            )}
-          </div>
-        </Card>
-      )}
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Placa
 // ---------------------------------------------------------------------------
-
-function PlacaTab({ aves, placaId, setPlacaId, canvasRef, onDownload }) {
-  return (
-    <div>
-      <SectionTitle>Gerar Placa</SectionTitle>
-      <div className="flex flex-wrap items-end gap-4 mb-6">
-        <Field label="Escolha a ave">
-          <select style={{ ...inputStyle, minWidth: 200, maxWidth: "100%" }} value={placaId} onChange={(e) => setPlacaId(e.target.value)}>
-            <option value="">-- selecione --</option>
-            {aves.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
-          </select>
-        </Field>
-        {placaId && (
-          <button onClick={onDownload} className="ui-sans flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
-            <Download size={16} /> Baixar PNG
-          </button>
-        )}
-      </div>
-
-      {placaId ? (
-        <div className="rounded-xl overflow-hidden w-full" style={{ border: "3px solid #4a2c18", maxWidth: 720 }}>
-          <canvas ref={canvasRef} style={{ width: "100%", height: "auto", display: "block" }} />
-        </div>
-      ) : (
-        <Card className="p-8 ui-sans" style={{ color: "#8a7a63" }}>Selecione uma ave pra ver a previa da placa.</Card>
-      )}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Financeiro
@@ -1806,88 +1735,6 @@ function PlacaTab({ aves, placaId, setPlacaId, canvasRef, onDownload }) {
 // padrao usada em calculadoras de criadores - nao modela ligacao fisica
 // entre genes no mesmo cromossomo).
 // ---------------------------------------------------------------------------
-
-function MutacoesTab({ mutacoes, onSave, onDelete }) {
-  const [nova, setNova] = useState(emptyMutacao());
-  const [editId, setEditId] = useState(null);
-
-  function submit() {
-    if (!nova.nome.trim()) return;
-    onSave({ ...nova, id: editId });
-    setNova(emptyMutacao());
-    setEditId(null);
-  }
-
-  function editar(m) {
-    setNova(m);
-    setEditId(m.id);
-  }
-
-  return (
-    <div>
-      <SectionTitle>Banco de Genetica</SectionTitle>
-      <p className="ui-sans text-sm mb-5" style={{ color: "#F1E6D2" }}>
-        Cadastro das mutacoes que voce trabalha. Essa base vai alimentar a calculadora genetica na proxima fase.
-      </p>
-
-      <Card className="p-4 sm:p-6 mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <Field label="Nome da mutacao"><input style={inputStyle} value={nova.nome} onChange={(e) => setNova((m) => ({ ...m, nome: e.target.value }))} placeholder="ex: Pallid Azul Turquesa" /></Field>
-          <Field label="Nome alternativo"><input style={inputStyle} value={nova.nomeAlternativo} onChange={(e) => setNova((m) => ({ ...m, nomeAlternativo: e.target.value }))} placeholder="opcional" /></Field>
-          <Field label="Gene (locus)"><input style={inputStyle} value={nova.gene} onChange={(e) => setNova((m) => ({ ...m, gene: e.target.value }))} placeholder="ex: bl (blue)" /></Field>
-          <Field label="Serie/Cor base"><input style={inputStyle} value={nova.serie} onChange={(e) => setNova((m) => ({ ...m, serie: e.target.value }))} placeholder="ex: serie Azul" /></Field>
-          <Field label="Tipo de heranca">
-            <select style={inputStyle} value={nova.tipoHeranca} onChange={(e) => setNova((m) => ({ ...m, tipoHeranca: e.target.value }))}>{TIPOS_HERANCA.map((t) => <option key={t}>{t}</option>)}</select>
-          </Field>
-          <Field label="Combina com (outras mutacoes)"><input style={inputStyle} value={nova.combinaCom} onChange={(e) => setNova((m) => ({ ...m, combinaCom: e.target.value }))} placeholder="ex: Azul, Turquesa, Violeta (possivel)" /></Field>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <Field label="Como identificar visualmente"><input style={inputStyle} value={nova.comoIdentificar} onChange={(e) => setNova((m) => ({ ...m, comoIdentificar: e.target.value }))} placeholder="ex: penas com tom diluido, olhos claros" /></Field>
-          <Field label="Observacoes"><input style={inputStyle} value={nova.observacoes} onChange={(e) => setNova((m) => ({ ...m, observacoes: e.target.value }))} placeholder="opcional" /></Field>
-        </div>
-        <div className="flex gap-3">
-          <button onClick={submit} className="ui-sans flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
-            <Plus size={15} /> {editId ? "Salvar edicao" : "Adicionar mutacao"}
-          </button>
-          {editId && (
-            <button onClick={() => { setNova(emptyMutacao()); setEditId(null); }} className="ui-sans px-4 py-2 rounded-lg text-sm" style={{ background: "#e3d3b4", color: "#2B241C" }}>
-              Cancelar
-            </button>
-          )}
-        </div>
-      </Card>
-
-      {mutacoes.length === 0 ? (
-        <Card className="p-6 text-center ui-sans" style={{ color: "#8a7a63" }}>Nenhuma mutacao cadastrada ainda.</Card>
-      ) : (
-        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))" }}>
-          {mutacoes.map((m) => (
-            <Card key={m.id} className="p-4 ui-sans">
-              <div className="flex items-start justify-between gap-2 mb-1">
-                <div className="font-semibold" style={{ color: "#2B241C" }}>{m.nome}</div>
-                {m.synced === false && <span className="text-[10px] font-semibold shrink-0" style={{ color: "#a6402b" }}>NAO SINCRONIZADO</span>}
-              </div>
-              {m.nomeAlternativo && <div className="text-xs mb-1" style={{ color: "#8a7a63" }}>tambem chamada: {m.nomeAlternativo}</div>}
-              {(m.gene || m.serie) && (
-                <div className="text-xs mb-1 ui-mono" style={{ color: "#7a6a52" }}>
-                  {m.gene && `Gene: ${m.gene}`}{m.gene && m.serie ? " · " : ""}{m.serie && `Serie: ${m.serie}`}
-                </div>
-              )}
-              <div className="text-xs mb-1 ui-mono" style={{ color: "#a6402b" }}>{m.tipoHeranca}</div>
-              {m.combinaCom && <div className="text-xs mb-1" style={{ color: "#556b3f" }}>Combina com: {m.combinaCom}</div>}
-              {m.comoIdentificar && <div className="text-xs mb-1" style={{ color: "#7a6a52" }}>{m.comoIdentificar}</div>}
-              {m.observacoes && <div className="text-xs italic mb-2" style={{ color: "#7a6a52" }}>{m.observacoes}</div>}
-              <div className="flex gap-2 mt-2">
-                <button onClick={() => editar(m)} className="text-xs px-2 py-1 rounded" style={{ background: "#e3d3b4", color: "#2B241C" }}>Editar</button>
-                <button onClick={() => onDelete(m.id)} className="text-xs px-2 py-1 rounded flex items-center gap-1" style={{ background: "#f0dad4", color: "#a6402b" }}><Trash2 size={12} /> Remover</button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Clientes (Fase 1)
