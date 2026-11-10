@@ -66,7 +66,7 @@ export default function PerdiUmaAve() {
         </div>
       </div>
       {erro && <p role="alert" className="text-sm" style={{color:"#a6402b"}}>{erro}</p>}
-      {mensagem && <p role="status" className="text-sm p-3 rounded-lg" style={{background:"#e4ead9",color:"#405331"}}>{mensagem}</p>}
+      {mensagem && <div role="status" className="text-sm p-3 rounded-lg" style={{background:"#e4ead9",color:"#405331"}}><p>{mensagem}</p><Link para="/campanha-ave-perdida" className="inline-block mt-2 font-semibold underline" style={{color:"#405331"}}>Quero ampliar a divulgação da minha busca</Link></div>}
       <button disabled={enviando} className="rounded-lg py-3 font-semibold disabled:opacity-60" style={{background:"#C69A2E",color:"#2B1D14"}}>{enviando ? "Enviando..." : "Publicar anúncio gratuito"}</button>
       <p className="text-xs" style={{color:"#8a7a63"}}>Seu anúncio passará por análise. O impulsionamento regional será opcional e contratado separadamente.</p>
     </form>
