@@ -40,7 +40,7 @@ function addDiasISO(iso, dias) {
 function diffDiasISO(deIso, ateIso) {
   return Math.round((dataLocal(ateIso) - dataLocal(deIso)) / 86400000);
 }
-function formatarDataBR(iso) {
+function helpers.formatarDataBR(iso) {
   if (!iso) return "";
   const { y, m, d } = partesISO(iso);
   return `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
@@ -114,7 +114,7 @@ function PosturaForm({ inicial, aves, onSave, onCancel, Card, Field, inputStyle,
   const novo = !inicial.id;
 
   function diasPara(especie, atual) {
-    return novo && helpers.DIAS_INCUBACAO_PADRAO[especie] ? DIAS_INCUBACAO_PADRAO[especie] : atual;
+    return novo && helpers.DIAS_INCUBACAO_PADRAO[especie] ? helpers.DIAS_INCUBACAO_PADRAO[especie] : atual;
   }
   function escolherCasal(idx) {
     if (idx === "") return;
@@ -201,7 +201,7 @@ function OvoRow({ postura, ovo, ave, onChange, onRemove, onNascimento, inputStyl
     <div className="rounded-lg p-3 mb-2 ui-sans" style={{ background: "#fff", border: "1px solid #e3d3b4" }}>
       <div className="flex flex-wrap items-center gap-2 mb-2">
         <span className="ui-mono text-xs font-semibold" style={{ color: "#2B241C" }}>Ovo {ovo.n}</span>
-        <span className="text-xs" style={{ color: "#8a7a63" }}>posto em {formatarDataBR(ovo.dataPostura) || "-"}</span>
+        <span className="text-xs" style={{ color: "#8a7a63" }}>posto em {helpers.formatarDataBR(ovo.dataPostura) || "-"}</span>
         <span className="text-[10px] px-2 py-0.5 rounded ui-mono" style={{ background: helpers.OVO_TONS[ovo.status] || "#e3d3b4", color: "#2B241C" }}>{(ovo.status || "").toUpperCase()}</span>
         <button
           onClick={() => { if (confirm(nasceu ? "Remover esse ovo da lista? O filhote ja cadastrado continua no seu plantel." : "Remover esse ovo?")) onRemove(); }}
@@ -214,7 +214,7 @@ function OvoRow({ postura, ovo, ave, onChange, onRemove, onNascimento, inputStyl
       {nasceu ? (
         <div className="text-sm" style={{ color: "#2B241C" }}>
           Filhote: <strong>{ave ? ave.nome : "(ave removida do cadastro)"}</strong>
-          {ovo.dataEclosao ? ` - nasceu em ${formatarDataBR(ovo.dataEclosao)}` : ""}
+          {ovo.dataEclosao ? ` - nasceu em ${helpers.formatarDataBR(ovo.dataEclosao)}` : ""}
           {ovo.peso ? ` - ovo pesava ${ovo.peso} g` : ""}
         </div>
       ) : (
@@ -264,7 +264,7 @@ function OvoRow({ postura, ovo, ave, onChange, onRemove, onNascimento, inputStyl
 }
 
 function PosturaCard({ postura, aves, onSave, onDelete, onNascimento, onEditar, Card, inputStyle, helpers }) {
-  const [novaData, setNovaData] = useState(hojeLocalISO());
+  const [novaData, setNovaData] = useState(helpers.hojeLocalISO());
   const [novoPeso, setNovoPeso] = useState("");
   const r = helpers.resumoPostura(postura);
   const ovos = [...(postura.ovos || [])].sort((a, b) => a.n - b.n);
@@ -292,7 +292,7 @@ function PosturaCard({ postura, aves, onSave, onDelete, onNascimento, onEditar, 
     <Card className="p-4 mb-3 ui-sans">
       <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
         <div className="text-sm" style={{ color: "#2B241C" }}>
-          <strong>Postura{primeira ? ` de ${formatarDataBR(primeira)}` : ""}</strong>
+          <strong>Postura{primeira ? ` de ${helpers.formatarDataBR(primeira)}` : ""}</strong>
           <span className="text-xs" style={{ color: "#8a7a63" }}>
             {postura.viveiro ? ` - ${postura.viveiro}` : ""} - incubacao de {postura.diasIncubacao || 24} dias
           </span>
@@ -341,6 +341,7 @@ function PosturaCard({ postura, aves, onSave, onDelete, onNascimento, onEditar, 
 }
 
 export default function ReproducaoTab({ aves, posturas, onSave, onDelete, onNascimento, Card, Field, inputStyle, SectionTitle }) {
+  const helpers = REPRODUCAO_HELPERS;
   const [form, setForm] = useState(null);
   const sumario = helpers.resumoReproducao(posturas);
   const temCasalPossivel = aves.some((a) => a.sexo === "Macho") && aves.some((a) => a.sexo === "Femea");
