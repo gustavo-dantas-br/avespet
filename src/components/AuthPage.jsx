@@ -39,12 +39,14 @@ function BuscaAnilha() {
   const [resultadosPerdidas, setResultadosPerdidas] = useState(null);
   const [perfisPorUser, setPerfisPorUser] = useState({});
   const [mostrarFormAchado, setMostrarFormAchado] = useState(false);
-  const [formAchado, setFormAchado] = useState({ nome: "", telefone: "", endereco: "", mensagem: "", foto: "" });
+  const [formAchado, setFormAchado] = useState({ nome: "", telefone: "", endereco: "", dataEncontrada: new Date().toISOString().slice(0, 10), mensagem: "", foto: "" });
   const [enviado, setEnviado] = useState(false);
 
   function handleFotoAchado(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!file.type.startsWith("image/")) { setError("Selecione uma imagem válida."); return; }
+    if (file.size > 5 * 1024 * 1024) { setError("A foto original deve ter no máximo 5 MB."); return; }
     const reader = new FileReader();
     reader.onload = () => {
       const img = new Image();
@@ -103,8 +105,9 @@ function BuscaAnilha() {
     setLoading(true);
     setError("");
     try {
+      const detalhes = [formAchado.dataEncontrada ? `Data em que encontrou: ${new Date(formAchado.dataEncontrada + "T12:00:00").toLocaleDateString("pt-BR")}` : "", formAchado.mensagem.trim()].filter(Boolean).join("\n");
       await registrarAchadoAnilha(
-        anilha, formAchado.nome, formAchado.telefone, formAchado.mensagem, formAchado.endereco, formAchado.foto
+        anilha, formAchado.nome, formAchado.telefone, detalhes, formAchado.endereco, formAchado.foto
       );
       setEnviado(true);
     } catch {
@@ -177,7 +180,11 @@ function BuscaAnilha() {
 
           <input style={inputStyle} value={formAchado.nome} onChange={(e) => setFormAchado((f) => ({ ...f, nome: e.target.value }))} placeholder="Seu nome" required />
           <input style={inputStyle} value={formAchado.telefone} onChange={(e) => setFormAchado((f) => ({ ...f, telefone: e.target.value }))} placeholder="Seu telefone/WhatsApp" required />
-          <input style={inputStyle} value={formAchado.endereco} onChange={(e) => setFormAchado((f) => ({ ...f, endereco: e.target.value }))} placeholder="Onde encontrou (endereco/bairro/cidade)" />
+          <label className="ui-sans flex flex-col gap-1.5 text-left">
+            <span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Data em que encontrou</span>
+            <input type="date" style={inputStyle} value={formAchado.dataEncontrada} onChange={(e) => setFormAchado((f) => ({ ...f, dataEncontrada: e.target.value }))} required />
+          </label>
+          <input style={inputStyle} value={formAchado.endereco} onChange={(e) => setFormAchado((f) => ({ ...f, endereco: e.target.value }))} placeholder="Onde encontrou (endereco/bairro/cidade)" required />
           <input style={inputStyle} value={formAchado.mensagem} onChange={(e) => setFormAchado((f) => ({ ...f, mensagem: e.target.value }))} placeholder="Observacoes (opcional)" />
 
           <button type="submit" disabled={loading} className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
