@@ -9,6 +9,7 @@ export default function PerdiUmaAve() {
   const [form, setForm] = useState({ nomeAve: "", especie: "Ring Neck", cor: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", foto: "" });
   const [enviando, setEnviando] = useState(false);
   const [mensagem, setMensagem] = useState("");
+  const [anuncioCriadoId, setAnuncioCriadoId] = useState("");
   const [erro, setErro] = useState("");
   const alterar = (campo, valor) => setForm((atual) => ({ ...atual, [campo]: valor }));
 
@@ -21,7 +22,8 @@ export default function PerdiUmaAve() {
     }
     setEnviando(true);
     try {
-      await criarAnuncioPerdida({ ...form, criadoEm: new Date().toISOString() });
+      const novoId = await criarAnuncioPerdida({ ...form, criadoEm: new Date().toISOString() });
+      setAnuncioCriadoId(novoId);
       setMensagem("Recebemos seu anúncio! Ele será analisado antes de aparecer publicamente. A publicação gratuita não exige assinatura.");
       setForm({ nomeAve: "", especie: "Ring Neck", cor: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", foto: "" });
     } catch (e) {
@@ -66,7 +68,7 @@ export default function PerdiUmaAve() {
         </div>
       </div>
       {erro && <p role="alert" className="text-sm" style={{color:"#a6402b"}}>{erro}</p>}
-      {mensagem && <div role="status" className="text-sm p-3 rounded-lg" style={{background:"#e4ead9",color:"#405331"}}><p>{mensagem}</p><Link para="/campanha-ave-perdida" className="inline-block mt-2 font-semibold underline" style={{color:"#405331"}}>Quero ampliar a divulgação da minha busca</Link></div>}
+      {mensagem && <div role="status" className="text-sm p-3 rounded-lg" style={{background:"#e4ead9",color:"#405331"}}><p>{mensagem}</p><a href={anuncioCriadoId ? `/campanha-ave-perdida?anuncio=${anuncioCriadoId}` : "/campanha-ave-perdida"} className="inline-block mt-2 font-semibold underline" style={{color:"#405331"}}>Quero ampliar a divulgação da minha busca</a></div>}
       <button disabled={enviando} className="rounded-lg py-3 font-semibold disabled:opacity-60" style={{background:"#C69A2E",color:"#2B1D14"}}>{enviando ? "Enviando..." : "Publicar anúncio gratuito"}</button>
       <p className="text-xs" style={{color:"#8a7a63"}}>Seu anúncio passará por análise. O impulsionamento regional será opcional e contratado separadamente.</p>
     </form>
