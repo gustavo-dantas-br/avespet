@@ -21,7 +21,7 @@ export async function solicitarCampanha(dados) {
 export async function listarCampanhasAdmin() {
   const { data, error } = await supabase
     .from(TABELA)
-    .select("id, pacote, nome_contato, whatsapp, email, cidade, uf, area_alvo, descricao_ave, status, valor, observacoes_admin, created_at, atualizado_em")
+    .select("id, anuncio_id, pacote, nome_contato, whatsapp, email, cidade, uf, area_alvo, descricao_ave, status, valor, observacoes_admin, created_at, atualizado_em")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data || [];
