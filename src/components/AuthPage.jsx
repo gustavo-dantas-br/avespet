@@ -42,30 +42,40 @@ function BuscaAnilha() {
   const [formAchado, setFormAchado] = useState({ nome: "", telefone: "", endereco: "", dataEncontrada: new Date().toISOString().slice(0, 10), mensagem: "", foto: "" });
   const [enviado, setEnviado] = useState(false);
 
-  function handleFotoAchado(e) {
+  async function handleFotoAchado(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) { setError("Selecione uma imagem válida."); return; }
-    if (file.size > 5 * 1024 * 1024) { setError("A foto original deve ter no máximo 5 MB."); return; }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const maxDim = 480;
-        let { width, height } = img;
-        if (width > height && width > maxDim) { height = Math.round((height * maxDim) / width); width = maxDim; }
-        else if (height > maxDim) { width = Math.round((width * maxDim) / height); height = maxDim; }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-        setFormAchado((f) => ({ ...f, foto: canvas.toDataURL("image/jpeg", 0.75) }));
-      };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
+    setError("");
+    if (!file.type.startsWith("image/")) { setError("Selecione uma imagem válida."); e.target.value = ""; return; }
+    try {
+      const bitmap = await createImageBitmap(file);
+      let width = bitmap.width, height = bitmap.height;
+      const maxDim = 640;
+      const scale = Math.min(1, maxDim / Math.max(width, height));
+      width = Math.max(1, Math.round(width * scale));
+      height = Math.max(1, Math.round(height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas indisponível");
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(bitmap, 0, 0, width, height);
+      bitmap.close();
+      let blob = null;
+      for (const quality of [0.72, 0.58, 0.45, 0.35]) {
+        blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+        if (blob && blob.size <= 250 * 1024) break;
+      }
+      if (!blob) throw new Error("Falha na compressão");
+      const reader = new FileReader();
+      reader.onload = () => setFormAchado((f) => ({ ...f, foto: reader.result }));
+      reader.onerror = () => setError("Não foi possível carregar a foto.");
+      reader.readAsDataURL(blob);
+    } catch {
+      setError("Não foi possível processar essa imagem. Tente outra foto.");
+      e.target.value = "";
+    }
   }
-
   async function buscar(e) {
     e.preventDefault();
     if (!anilha.trim()) return;
