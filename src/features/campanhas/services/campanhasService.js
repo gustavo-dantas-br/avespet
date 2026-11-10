@@ -4,6 +4,7 @@ const TABELA = "solicitacoes_campanhas_aves";
 
 export async function solicitarCampanha(dados) {
   const { error } = await supabase.from(TABELA).insert({
+    anuncio_id: dados.anuncioId || null,
     pacote: dados.pacote,
     nome_contato: dados.nome.trim(),
     whatsapp: dados.whatsapp.trim(),
