@@ -56,7 +56,7 @@ function clientesCandidatosDeVendas(aves, clientes) {
 }
 
 
-function ClienteCard({ c, historico, onOpen, onEdit }) {
+function ClienteCard({ c, historico, onOpen, onEdit, Card, money }) {
   return (
     <Card className="p-4 ui-sans">
       <div className="cursor-pointer" onClick={() => onOpen(c.id)}>
@@ -86,7 +86,7 @@ function ClienteCard({ c, historico, onOpen, onEdit }) {
   );
 }
 
-function ClienteForm({ inicial, onSave, onCancel, error }) {
+function ClienteForm({ inicial, onSave, onCancel, error, Card, Field, inputStyle }) {
   const [c, setC] = useState(inicial);
   const set = (k) => (e) => setC((f) => ({ ...f, [k]: e.target.value }));
   return (
@@ -110,7 +110,7 @@ function ClienteForm({ inicial, onSave, onCancel, error }) {
   );
 }
 
-function ClienteDetalhe({ cliente, historico, onBack, onEdit, onDelete }) {
+function ClienteDetalhe({ cliente, historico, onBack, onEdit, onDelete, Card, SummaryCard, money, whatsappUrl }) {
   const [mostrarIndicacao, setMostrarIndicacao] = useState(false);
 
   const primeiroNome = (cliente.nome || "").trim().split(" ")[0] || cliente.nome;
@@ -264,6 +264,7 @@ export default function ClientesTab({ clientes, aves, onSave, onDelete, onImport
           onBack={() => setDetalheId(null)}
           onEdit={(c) => { setDetalheId(null); setEditando(c); setShowForm(true); setFormError(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
           onDelete={(id) => { onDelete(id); setDetalheId(null); }}
+          Card={Card} SummaryCard={SummaryCard} money={money} whatsappUrl={whatsappUrl}
         />
       </div>
     );
@@ -290,6 +291,7 @@ export default function ClientesTab({ clientes, aves, onSave, onDelete, onImport
           onSave={salvar}
           onCancel={() => { setShowForm(false); setEditando(null); setFormError(""); }}
           error={formError}
+          Card={Card} Field={Field} inputStyle={inputStyle}
         />
       )}
 
@@ -338,6 +340,7 @@ export default function ClientesTab({ clientes, aves, onSave, onDelete, onImport
               historico={historicoCliente(c, aves)}
               onOpen={setDetalheId}
               onEdit={(cli) => { setEditando(cli); setShowForm(true); setFormError(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+              Card={Card} money={money}
             />
           ))}
         </div>
