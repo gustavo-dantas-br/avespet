@@ -7,7 +7,7 @@ import {
 } from "../lib/db";
 import { Link, usePath, navegar } from "../publico/roteador";
 import { useSEO } from "../publico/seo";
-import { comprimirImagemPublica } from "../features/aves-perdidas/utils/comprimirImagem";
+import { comprimirEEnviarImagemPublica } from "../features/aves-perdidas/utils/comprimirImagem";
 import { PaginaGuias, PaginaGuia, PaginaVideos, GuiasEmDestaque } from "../publico/PaginasConteudo";
 import { PerdiUmaAve, AvesPerdidas } from "../features/aves-perdidas";
 
@@ -48,7 +48,7 @@ function BuscaAnilha() {
     if (!file) return;
     setError("");
     try {
-      const foto = await comprimirImagemPublica(file);
+      const foto = await comprimirEEnviarImagemPublica(file, "achados", 160 * 1024);
       setFormAchado((f) => ({ ...f, foto }));
     } catch (err) {
       setError(err?.message || "Não foi possível processar essa foto.");
