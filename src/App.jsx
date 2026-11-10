@@ -1514,6 +1514,8 @@ function AppInner({ user, onLogout }) {
               <ModeracaoAvesPerdidasTab anuncios={anunciosPerdidasAdmin} onModerar={handleModerarAvePerdida} />
             )}
 
+            {tab === "campanhas-admin" && isAdminUser && <AdminCampanhas />}
+
             {tab === "conteudo" && isAdminUser && <ConteudoAdmin />}
           </>
         )}
