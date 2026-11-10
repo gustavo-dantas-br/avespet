@@ -7,6 +7,7 @@ const input = { width: "100%", background: "#fff", border: "1px solid #e3d3b4", 
 const label = { display: "block", color: "#8a7a63", fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 6 };
 
 export default function SolicitarCampanha() {
+  const anuncioId = new URLSearchParams(window.location.search).get("anuncio") || "";
   const [form, setForm] = useState({ pacote: "cidade", nome: "", whatsapp: "", email: "", cidade: "", uf: "SP", areaAlvo: "", descricaoAve: "" });
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
@@ -18,7 +19,7 @@ export default function SolicitarCampanha() {
     setErro("");
     setLoading(true);
     try {
-      await solicitarCampanha(form);
+      await solicitarCampanha({ ...form, anuncioId });
       setEnviado(true);
     } catch (err) {
       setErro(err?.message || "Não foi possível enviar a solicitação. Tente novamente.");
