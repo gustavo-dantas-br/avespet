@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "../../../publico/roteador";
 import { criarAnuncioPerdida } from "../services/avesPerdidasService";
-import { comprimirImagemPublica } from "../utils/comprimirImagem";
+import { comprimirEEnviarImagemPublica } from "../utils/comprimirImagem";
 
 const input = { width: "100%", padding: "12px", borderRadius: 8, border: "1px solid #e3d3b4", background: "#fff", color: "#2B241C" };
 
@@ -34,7 +34,7 @@ export default function PerdiUmaAve() {
     if (!arquivo) return;
     setErro("");
     try {
-      const foto = await comprimirImagemPublica(arquivo);
+      const foto = await comprimirEEnviarImagemPublica(arquivo, "perdidas", 160 * 1024);
       alterar("foto", foto);
     } catch (err) {
       setErro(err?.message || "Não foi possível processar essa foto.");
