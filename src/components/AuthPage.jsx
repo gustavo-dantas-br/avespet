@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Feather, Loader2, Search, Phone, ArrowLeft, MessageCircle, X } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import {
-  buscarPerdidaPorAnilha, getPerfil, listAnunciosPublicos, listPerfisPublicos,
+  buscarPerdidaPorAnilha, listAnunciosPublicos, listPerfisPublicos,
   incrementarVisualizacaoAnuncio, incrementarCliqueAnuncio, registrarAchadoAnilha, registrarVisita,
 } from "../lib/db";
 import { Link, usePath, navegar } from "../publico/roteador";
@@ -39,7 +39,6 @@ function BuscaAnilha() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [resultadosPerdidas, setResultadosPerdidas] = useState(null);
-  const [perfisPorUser, setPerfisPorUser] = useState({});
   const [mostrarFormAchado, setMostrarFormAchado] = useState(false);
   const [formAchado, setFormAchado] = useState({ nome: "", telefone: "", endereco: "", dataEncontrada: new Date().toISOString().slice(0, 10), mensagem: "", foto: "" });
   const [enviado, setEnviado] = useState(false);
@@ -68,19 +67,7 @@ function BuscaAnilha() {
     try {
       const achados = await buscarPerdidaPorAnilha(anilha);
       setResultadosPerdidas(achados);
-      if (achados.length > 0) {
-        const perfis = {};
-        await Promise.all(
-          [...new Set(achados.map((a) => a.userId))].map(async (uidUser) => {
-            try {
-              perfis[uidUser] = await getPerfil(uidUser);
-            } catch {
-              // segue sem contato desse criador se der erro
-            }
-          })
-        );
-        setPerfisPorUser(perfis);
-      } else {
+      if (achados.length === 0) {
         setMostrarFormAchado(true);
       }
     } catch {
@@ -128,9 +115,7 @@ function BuscaAnilha() {
 
       {resultadosPerdidas && resultadosPerdidas.length > 0 && (
         <div className="flex flex-col gap-3 max-w-md mx-auto text-left">
-          {resultadosPerdidas.map((r) => {
-            const perfil = perfisPorUser[r.userId];
-            return (
+          {resultadosPerdidas.map((r) => (
               <div key={r.id} className="rounded-lg p-3" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0" style={{ background: "#3a2a1c" }}>
@@ -144,14 +129,13 @@ function BuscaAnilha() {
                 <div className="text-[10px] px-2 py-0.5 rounded ui-mono inline-block mb-2" style={{ background: r.status === "perdida" ? "#f0dab0" : "#c8dcb8", color: "#2B241C" }}>
                   {r.status === "perdida" ? "AINDA PERDIDA" : "JA FOI ENCONTRADA"}
                 </div>
-                {perfil?.whatsapp && (
-                  <a href={whatsappUrl(perfil.whatsapp)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-semibold px-3 py-2 rounded-lg justify-center" style={{ background: "#556b3f", color: "#F1E6D2" }}>
-                    <Phone size={14} /> Falar com {perfil.nomeCriatorio || "o criador"}
+                {r.whatsapp && whatsappUrl(r.whatsapp) && (
+                  <a href={whatsappUrl(r.whatsapp)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-semibold px-3 py-2 rounded-lg justify-center" style={{ background: "#556b3f", color: "#F1E6D2" }}>
+                    <Phone size={14} /> Falar com {r.nomeCriatorio || "o criador"}
                   </a>
                 )}
               </div>
-            );
-          })}
+          ))}
         </div>
       )}
 
