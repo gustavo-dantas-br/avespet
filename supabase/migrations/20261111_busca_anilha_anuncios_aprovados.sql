@@ -1,3 +1,43 @@
+-- A busca publica informa apenas se existe uma ave cadastrada como perdida.
+-- A identificacao do titular e feita exclusivamente pela equipe administrativa.
+CREATE OR REPLACE FUNCTION public.buscar_perdida_por_anilha(p_anilha text)
+RETURNS TABLE (
+  id uuid,
+  status text,
+  nome_ave text,
+  especie text,
+  cor_mutacao text,
+  anilha text,
+  foto text,
+  nome_criatorio text,
+  whatsapp text
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+  SELECT
+    p.id,
+    p.status,
+    p.data ->> 'nomeAve',
+    p.data ->> 'especie',
+    p.data ->> 'corMutacao',
+    p.data ->> 'anilha',
+    p.data ->> 'foto',
+    NULL::text,
+    NULL::text
+  FROM public.perdidas AS p
+  WHERE p.status = 'perdida'
+    AND p_anilha IS NOT NULL
+    AND pg_catalog.btrim(p_anilha) <> ''
+    AND pg_catalog.regexp_replace(pg_catalog.upper(COALESCE(p.data ->> 'anilha', '')), '[^A-Z0-9]', '', 'g')
+      = pg_catalog.regexp_replace(pg_catalog.upper(pg_catalog.btrim(p_anilha)), '[^A-Z0-9]', '', 'g');
+$function$;
+
+REVOKE ALL ON FUNCTION public.buscar_perdida_por_anilha(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.buscar_perdida_por_anilha(text) TO anon, authenticated;
+
 -- Busca anuncios novos de aves perdidas aprovados pelo numero da anilha.
 -- A resposta publica nao inclui dados de contato sem autorizacao expressa.
 CREATE OR REPLACE FUNCTION public.buscar_anuncio_perdido_por_anilha(p_anilha text)
