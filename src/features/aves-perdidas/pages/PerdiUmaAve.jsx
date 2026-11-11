@@ -22,7 +22,10 @@ export default function PerdiUmaAve() {
     }
     setEnviando(true);
     try {
-      const novoId = await criarAnuncioPerdida({ ...form, criadoEm: new Date().toISOString() });
+      // UUID criado antes do INSERT: o ID pode ser usado na campanha sem
+      // precisar consultar o anuncio pendente, que o RLS mantem privado.
+      const novoId = globalThis.crypto.randomUUID();
+      await criarAnuncioPerdida({ ...form, id: novoId, criadoEm: new Date().toISOString() });
       setAnuncioCriadoId(novoId);
       setMensagem("Recebemos seu anúncio! Ele será analisado antes de aparecer publicamente. A publicação gratuita não exige assinatura.");
       setForm({ nomeAve: "", especie: "Ring Neck", cor: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", foto: "" });
