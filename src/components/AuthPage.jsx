@@ -322,6 +322,11 @@ function LoginModal({ onFechar }) {
         <h2 className="text-center ui-sans font-semibold mb-5" style={{ color: "#2B241C" }}>{mode === "login" ? "Entrar na sua conta" : mode === "forgot" ? "Recuperar senha" : "Criar conta gratuita"}</h2>
         {error && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#f0dad4", color: "#a6402b" }}>{error}</div>}
         {message && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#e4ead9", color: "#556b3f" }}>{message}</div>}
+        {message ? (
+          <button type="button" onClick={onConcluir} className="ui-sans w-full px-4 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
+            Voltar para entrar
+          </button>
+        ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>E-mail</span><input style={inputStyle} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
           {mode !== "forgot" && <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Senha</span><input style={inputStyle} type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></label>}
@@ -372,7 +377,6 @@ function RedefinirSenha({ onConcluir }) {
       if (error) throw error;
       setMessage("Senha alterada com sucesso! Voce ja pode entrar com a nova senha.");
       await supabase.auth.signOut();
-      onConcluir?.();
     } catch (err) {
       setError(err.message || "Nao foi possivel alterar a senha. Solicite um novo link.");
     } finally {
@@ -403,6 +407,7 @@ function RedefinirSenha({ onConcluir }) {
             {loading && <Loader2 className="animate-spin" size={16} />} Salvar nova senha
           </button>
         </form>
+        )}
       </div>
     </div>
   );
