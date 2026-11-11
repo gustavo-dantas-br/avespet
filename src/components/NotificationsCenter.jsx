@@ -46,11 +46,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate }) {
           if (!novo.lida_em && !novo.arquivada_em) {
             setNaoLidasCount((n) => n + 1);
             setAlerta(novo);
-            if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-              try {
-                new Notification(novo.titulo || "Avespet", { body: novo.mensagem || "Há uma nova atualização.", tag: novo.id });
-              } catch {}
-            }
+            // A entrega nativa fica a cargo do push enviado pelo servidor.
           }
           setItens((prev) => [novo, ...prev.filter((n) => n.id !== novo.id)].slice(0, PAGE_SIZE));
         } else {
