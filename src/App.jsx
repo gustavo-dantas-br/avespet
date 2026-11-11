@@ -1101,7 +1101,7 @@ function AppInner({ user, onLogout }) {
             )}
 
             {tab === "achados" && isAdminUser && (
-              <AchadosTab achados={achados} perfis={perfisPublicos} onAtualizar={handleAtualizarAchado} />
+              <AchadosTab achados={achados} perfis={perfisPublicos} anuncios={anunciosPerdidasAdmin} onAtualizar={handleAtualizarAchado} />
             )}
 
             {tab === "aves-perdidas-admin" && isAdminUser && (
