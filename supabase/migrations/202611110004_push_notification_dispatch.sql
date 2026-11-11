@@ -1,4 +1,5 @@
 -- Encaminha novas notificacoes para a Edge Function via pg_net.
+create extension if not exists pg_net;
 -- Os dois segredos abaixo devem ser cadastrados no Supabase Vault:
 -- push_service_role_key e push_webhook_secret.
 create or replace function public.encaminhar_notificacao_push()
