@@ -32,14 +32,6 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate }) {
 
   useEffect(() => { carregar(); }, [carregar]);
 
-  useEffect(() => {
-    if (!userId) return;
-    const channel = supabase.channel("notificacoes-" + userId)
-      .on("postgres_changes", { event: "*", schema: "public", table: "notificacoes", filter: "user_id=eq." + userId }, () => carregar())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [userId, carregar]);
-
   const naoLidas = itens.filter((n) => !n.lida_em).length;
 
   async function marcarLida(id) {
