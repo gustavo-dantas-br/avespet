@@ -1151,11 +1151,15 @@ const FILTER_LABELS = {
 
 export default function App() {
   const [session, setSession] = useState(undefined);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
   const caminho = usePath();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => setSession(newSession));
+    const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
+      setSession(newSession);
+      if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
+    });
     return () => listener.subscription.unsubscribe();
   }, []);
 
@@ -1167,7 +1171,10 @@ export default function App() {
     );
   }
 
- 
+  if (passwordRecovery) {
+    return <AuthPage logado={!!session} redefinirSenha onSenhaAtualizada={() => setPasswordRecovery(false)} />;
+  }
+
 // Visitante ve a area publica; quem esta logado tambem, mas so quando abre um guia/video (links compartilhados).
 const emConteudo = /^\/(guias|videos)(\/|$)/.test(caminho);
 if (!session || emConteudo) {
