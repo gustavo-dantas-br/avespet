@@ -11,7 +11,7 @@ const STATUS = {
 };
 
 export default function PerdiUmaAve({ userId }) {
-  const [form, setForm] = useState({ nomeAve: "", especie: "Ring Neck", cor: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", autorizaContatoPublico: false, foto: "" });
+  const [form, setForm] = useState({ nomeAve: "", especie: "Ring Neck", cor: "", anilha: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", autorizaContatoPublico: false, foto: "" });
   const [anuncios, setAnuncios] = useState([]);
   const [enviando, setEnviando] = useState(false);
   const [carregando, setCarregando] = useState(true);
@@ -50,7 +50,7 @@ export default function PerdiUmaAve({ userId }) {
       await criarAnuncioPerdida(userId, { ...form, id: novoId, criadoEm: new Date().toISOString() });
       setAnuncioCriadoId(novoId);
       setMensagem("Recebemos seu anúncio! Ele ficará aguardando análise e só aparecerá na página pública depois da aprovação.");
-      setForm({ nomeAve: "", especie: "Ring Neck", cor: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", autorizaContatoPublico: false, foto: "" });
+      setForm({ nomeAve: "", especie: "Ring Neck", cor: "", anilha: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", autorizaContatoPublico: false, foto: "" });
       await carregarAnuncios();
     } catch (e) {
       setErro(e?.message || "Não foi possível enviar. Tente novamente.");
@@ -78,6 +78,7 @@ export default function PerdiUmaAve({ userId }) {
         <label className="text-sm">Nome da ave<input style={input} value={form.nomeAve} onChange={e=>alterar("nomeAve",e.target.value)} placeholder="Ex.: Mel" /></label>
         <label className="text-sm">Espécie<select style={input} value={form.especie} onChange={e=>alterar("especie",e.target.value)}><option>Ring Neck</option><option>Calopsita</option><option>Agapornis</option><option>Papagaio</option><option>Outra</option></select></label>
         <label className="text-sm">Cor / mutação<input style={input} value={form.cor} onChange={e=>alterar("cor",e.target.value)} /></label>
+        <label className="text-sm">Número da anilha (opcional)<input style={input} value={form.anilha} onChange={e=>alterar("anilha",e.target.value)} placeholder="Ex.: FOB 0080" /></label>
         <label className="text-sm">Data em que desapareceu<input type="date" style={input} value={form.dataPerda} onChange={e=>alterar("dataPerda",e.target.value)} /></label>
         <label className="text-sm">Cidade<input required style={input} value={form.cidade} onChange={e=>alterar("cidade",e.target.value)} /></label>
         <label className="text-sm">Estado<input maxLength="2" style={input} value={form.uf} onChange={e=>alterar("uf",e.target.value.toUpperCase())} /></label>
