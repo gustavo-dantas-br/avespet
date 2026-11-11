@@ -1239,6 +1239,8 @@ export default function App() {
   const [session, setSession] = useState(undefined);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [masterAccess, setMasterAccess] = useState(null);
+  const [masterAccessError, setMasterAccessError] = useState(false);
+  const [masterRetry, setMasterRetry] = useState(0);
   const caminho = usePath();
 
   useEffect(() => {
@@ -1260,12 +1262,21 @@ export default function App() {
 
     let active = true;
     setMasterAccess(null);
+    setMasterAccessError(false);
     checkIsMaster(session.user.id)
-      .then((allowed) => { if (active) setMasterAccess(allowed); })
-      .catch(() => { if (active) setMasterAccess(false); });
+      .then((allowed) => {
+        if (active) setMasterAccess(allowed);
+      })
+      .catch(() => {
+        // Falha na consulta nunca deve liberar o painel de criador por engano.
+        if (active) {
+          setMasterAccess(null);
+          setMasterAccessError(true);
+        }
+      });
 
     return () => { active = false; };
-  }, [session?.user?.id]);
+  }, [session?.user?.id, masterRetry]);
 
   if (session === undefined) {
     return (
@@ -1287,6 +1298,33 @@ if (!session || emConteudo) {
       <AuthPage logado={!!session} />
       <SuporteWhatsApp />
     </>
+  );
+}
+
+if (masterAccessError) {
+  return (
+    <div className="min-h-screen flex items-center justify-center px-5" style={{ background: "#2B1D14" }}>
+      <div className="w-full max-w-md rounded-2xl p-6 text-center" style={{ background: "#FAF3E6", color: "#2B241C" }}>
+        <ShieldCheck size={30} className="mx-auto mb-3" color="#A6402B" />
+        <h1 className="text-xl font-bold">Não foi possível validar suas permissões</h1>
+        <p className="mt-2 text-sm">Por segurança, o acesso ao painel ficará bloqueado até que a verificação seja concluída.</p>
+        <button
+          type="button"
+          onClick={() => setMasterRetry((value) => value + 1)}
+          className="w-full mt-5 rounded-lg px-4 py-3 font-semibold"
+          style={{ background: "#2B1D14", color: "#FAF3E6" }}
+        >
+          Tentar novamente
+        </button>
+        <button
+          type="button"
+          onClick={() => supabase.auth.signOut()}
+          className="w-full mt-2 rounded-lg px-4 py-3 text-sm"
+        >
+          Sair da conta
+        </button>
+      </div>
+    </div>
   );
 }
 
