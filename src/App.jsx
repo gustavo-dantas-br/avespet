@@ -77,6 +77,8 @@ const TIPOS_HERANCA = [
   "Nao definido / em estudo",
 ];
 const STATUS_INDICACAO = ["Nova", "Em atendimento", "Venda realizada", "Nao converteu"];
+const STATUS_ANUNCIO_TONS = { pendente: "#f0dab0", aprovado: "#c8dcb8", rejeitado: "#f0c9c0" };
+const STATUS_ANUNCIO_LABEL = { pendente: "EM ANALISE", aprovado: "APROVADO", rejeitado: "REJEITADO" };
 
 // ---------- Compressao de foto ----------
 // Historico do cliente e sempre CALCULADO na hora, cruzando pelo telefone com
