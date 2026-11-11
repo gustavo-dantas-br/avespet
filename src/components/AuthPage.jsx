@@ -170,6 +170,15 @@ function BuscaAnilha() {
         </form>
       )}
 
+      {resultadosPerdidas?.length > 0 && resultadosPerdidas.every((r) => r.status !== "perdida") && (
+        <div className="text-sm px-4 py-4 rounded-lg max-w-md mx-auto text-left" style={{ background: "#e4ead9", color: "#405735", border: "1px solid #c8dcb8" }}>
+          <div className="font-semibold text-base mb-2">Que atitude bonita! 💚</div>
+          <p className="mb-2">A ave deste cadastro já foi encontrada. Mesmo assim, queremos agradecer por você se importar.</p>
+          <p className="mb-2">Devolver um animal ao seu responsável é um gesto de empatia, respeito e amor. Para quem espera por esse reencontro, receber seu companheiro de volta significa muito mais do que palavras conseguem expressar.</p>
+          <p>Obrigado por fazer o bem e por mostrar que ainda existem pessoas de bom coração. Sua atitude faz a diferença na vida de uma família e de seu pequeno pet. 🐦</p>
+        </div>
+      )}
+
       {enviado && (
         <div className="text-sm px-4 py-4 rounded-lg max-w-md mx-auto text-left" style={{ background: "#e4ead9", color: "#405735", border: "1px solid #c8dcb8" }}>
           <div className="font-semibold text-base mb-2">Seu gesto pode transformar uma história! 💚</div>
