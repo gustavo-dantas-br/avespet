@@ -1,5 +1,6 @@
 import React from "react";
 import { resumoReproducao } from "../../reproducao/components/ReproducaoTab";
+import { computeFinanceiro } from "../../financeiro/utils/calcularFinanceiro";
 
 export default function DashboardTab({ aves, despesas, clientes = [], indicacoes = [], posturas = [], setTab, goToLista, STATUS_PLANTEL, SectionTitle, StatCard, money, Card }) {
   const total = aves.length;
