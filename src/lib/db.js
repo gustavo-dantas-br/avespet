@@ -138,6 +138,8 @@ export async function buscarPerdidaPorAnilha(anilha) {
     corMutacao: r.cor_mutacao,
     anilha: r.anilha,
     foto: r.foto,
+    nomeCriatorio: r.nome_criatorio,
+    whatsapp: r.whatsapp,
   }));
 }
 
