@@ -166,6 +166,17 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
           </Field>
         </div>
 
+        {form.status === "A venda" && !form.id && (
+          <div className="mt-4 rounded-lg p-4" style={{ background: "#f5e9c8", border: "1px solid #d6c39a" }}>
+            <div className="ui-sans text-sm font-semibold mb-3" style={{ color: "#2B241C" }}>Dados do anuncio</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="Preco anunciado (R$)"><input style={inputStyle} type="number" min="0.01" step="0.01" value={form.anuncioPreco || ""} onChange={set("anuncioPreco")} placeholder="Ex.: 1500" /></Field>
+              <Field label="Descricao para o anuncio"><input style={inputStyle} value={form.anuncioDescricao || ""} onChange={set("anuncioDescricao")} placeholder="Informacoes para interessados" /></Field>
+            </div>
+            <p className="ui-sans text-xs mt-2" style={{ color: "#725b32" }}>Ao salvar a ave, o anuncio sera criado separadamente e enviado para aprovacao.</p>
+          </div>
+        )}
+
         <div className="my-5 h-px" style={{ background: "#e3d3b4" }} />
         <div className="ui-mono text-xs mb-3" style={{ color: "#8a7a63" }}>AQUISICAO (COMPRA)</div>
 
