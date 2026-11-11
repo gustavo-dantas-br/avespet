@@ -1,73 +1,72 @@
 # Criatorio Dantas - Cadastro de Aves
 
-Sistema de cadastro de aves com foto, arvore genealogica, controle de casais,
-geracao de placa de identificacao e controle financeiro (compras, vendas e
-despesas do plantel). Multi-usuario: cada pessoa que criar conta ve e edita
-somente o proprio cadastro.
+Sistema web de gerenciamento de criatório, com cadastro e acompanhamento de aves, genealogia, reprodução, genética, anúncios, aves perdidas/encontradas, clientes, fornecedores e financeiro.
 
-## 1. Criar o banco de dados (Supabase - gratuito)
+## Documentação do projeto
 
-1. Cria uma conta em https://supabase.com e um novo projeto.
-2. No painel do projeto, abre **SQL Editor** > **New query**, cola o
-   conteudo do arquivo `supabase/schema.sql` deste projeto e roda (RUN).
-   Isso cria as tabelas `aves` e `despesas` ja com seguranca por usuario.
-3. Em **Authentication > Providers**, confirma que "Email" esta habilitado
-   (vem habilitado por padrao). Se quiser pular a confirmacao por e-mail
-   durante os testes, va em **Authentication > Settings** e desative
-   "Confirm email".
-4. Em **Project Settings > API**, copia a **Project URL** e a chave
-   **anon public**.
+- **[Arquitetura e organização do código](docs/ARQUITETURA.md)** — estrutura atual, responsabilidades, arquitetura-alvo, regras de desenvolvimento e checklist obrigatório.
+- **[Schema inicial do Supabase](supabase/schema.sql)** — estrutura inicial do banco. O banco em produção pode ter evoluído além deste arquivo; confira as migrações e o projeto Supabase antes de alterar dados.
 
-## 2. Rodar localmente
+> Regra de manutenção: toda alteração estrutural ou funcional relevante deve atualizar a documentação correspondente. Mudanças no banco devem ser registradas em migrações SQL versionadas.
+
+## Stack
+
+- React 18 + Vite 5
+- Supabase (Auth e PostgreSQL)
+- Tailwind CSS
+- Vite PWA
+- Deploy na Vercel
+
+## Executar localmente
 
 ```bash
 npm install
 cp .env.example .env
-# edita o .env e cola a URL e a anon key do passo 1
+```
+
+Configure no arquivo `.env`:
+
+```env
+VITE_SUPABASE_URL=sua_url_do_projeto
+VITE_SUPABASE_ANON_KEY=sua_chave_anon_public
+```
+
+Depois execute:
+
+```bash
 npm run dev
 ```
 
-Abre o endereco que o Vite mostrar (geralmente http://localhost:5173).
-Cria uma conta pela tela de login pra comecar a usar.
-
-## 3. Subir pro GitHub
+Para validar a compilação de produção:
 
 ```bash
-git init
-git add .
-git commit -m "Sistema de cadastro de aves"
-git branch -M main
-git remote add origin https://github.com/SEU_USUARIO/NOME_DO_REPO.git
-git push -u origin main
+npm run build
 ```
 
-O `.env` nao vai junto (esta no `.gitignore`) - suas chaves ficam seguras.
+## Estrutura em alto nível
 
-## 4. Publicar online (Vercel, gratuito)
+- `src/features/` — funcionalidades organizadas por domínio.
+- `src/components/` — componentes compartilhados.
+- `src/lib/` — modelos e utilitários; o acesso a dados ainda está centralizado em parte em `db.js`.
+- `src/App.jsx` — composição e orquestração principal; ainda precisa de extração incremental de responsabilidades.
+- `src/supabaseClient.js` — cliente Supabase.
+- `supabase/` — schema e, conforme evoluirmos, migrações SQL versionadas.
 
-1. Entra em https://vercel.com, conecta sua conta do GitHub.
-2. "Add New Project" > escolhe o repositorio que voce acabou de subir.
-3. Em **Environment Variables**, adiciona:
-   - `VITE_SUPABASE_URL` = a URL do seu projeto Supabase
-   - `VITE_SUPABASE_ANON_KEY` = a anon key
-4. Deploy. Em 1-2 minutos voce tem uma URL publica (tipo
-   `seu-projeto.vercel.app`) que qualquer pessoa pode acessar, criar conta
-   e usar o proprio cadastro.
+Para detalhes e decisões, consulte **[docs/ARQUITETURA.md](docs/ARQUITETURA.md)**.
 
-Toda vez que voce der `git push`, a Vercel atualiza o site sozinha.
+## Segurança
 
-## Estrutura do projeto
+- Nunca versionar `.env` ou credenciais privadas.
+- A chave anon/public do Supabase no frontend exige políticas RLS corretas em todas as tabelas.
+- Dados privados de criadores não devem ser expostos em consultas públicas.
+- Toda mudança de schema ou política deve ser revisada, versionada e testada.
 
-- `src/App.jsx` - toda a interface (lista, cadastro, arvore genealogica,
-  gerador de placa, financeiro)
-- `src/lib/db.js` - camada que fala com o Supabase (salvar/listar/remover)
-- `src/components/AuthPage.jsx` - tela de login/criar conta
-- `supabase/schema.sql` - script que cria as tabelas no banco
+## Qualidade e manutenção
 
-## Sobre as fotos
+Antes de concluir uma alteração:
+1. Validar imports e dependências afetadas.
+2. Executar `npm run build`.
+3. Testar o fluxo alterado e as permissões correspondentes.
+4. Atualizar a documentação e registrar migrações, quando aplicável.
 
-As fotos sao comprimidas no navegador e guardadas junto com o resto dos
-dados da ave (coluna `data`, em base64). Isso funciona bem para uso normal.
-Se no futuro o cadastro crescer muito (centenas de aves com foto), vale a
-pena migrar as fotos pro **Supabase Storage** (bucket dedicado) em vez de
-guardar em base64 - isso deixa o carregamento da lista mais rapido.
+O projeto está em evolução: a presença de pastas por domínio não significa que todas as responsabilidades já estejam totalmente desacopladas. A situação real e os próximos passos ficam registrados em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
