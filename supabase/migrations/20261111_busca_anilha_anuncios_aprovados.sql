@@ -39,3 +39,52 @@ $function$;
 
 REVOKE ALL ON FUNCTION public.buscar_anuncio_perdido_por_anilha(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.buscar_anuncio_perdido_por_anilha(text) TO anon, authenticated;
+
+
+-- Quando o titular cadastrar e tiver o anuncio aprovado depois do achado,
+-- vincula o registro pendente ao usuario para a equipe administrativa intermediar.
+CREATE OR REPLACE FUNCTION public.vincular_achados_anilha_ao_anuncio_aprovado()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+DECLARE
+  v_anilha text;
+BEGIN
+  IF NEW.status <> 'aprovado' THEN
+    RETURN NEW;
+  END IF;
+
+  v_anilha := pg_catalog.regexp_replace(
+    pg_catalog.upper(pg_catalog.coalesce(NEW.data ->> 'anilha', '')),
+    '[^A-Z0-9]', '', 'g'
+  );
+
+  IF v_anilha = '' THEN
+    RETURN NEW;
+  END IF;
+
+  UPDATE public.achados_anilha AS achado
+  SET owner_user_id = NEW.user_id,
+      ave_nome = COALESCE(NULLIF(NEW.data ->> 'nomeAve', ''), NEW.data ->> 'especie')
+  WHERE achado.owner_user_id IS NULL
+    AND pg_catalog.regexp_replace(
+      pg_catalog.upper(COALESCE(achado.anilha_buscada, '')),
+      '[^A-Z0-9]', '', 'g'
+    ) = v_anilha;
+
+  RETURN NEW;
+END;
+$function$;
+
+DROP TRIGGER IF EXISTS trg_vincular_achados_anilha_anuncio_aprovado
+  ON public.anuncios_aves_perdidas;
+
+CREATE TRIGGER trg_vincular_achados_anilha_anuncio_aprovado
+AFTER INSERT OR UPDATE OF status, data
+ON public.anuncios_aves_perdidas
+FOR EACH ROW
+EXECUTE FUNCTION public.vincular_achados_anilha_ao_anuncio_aprovado();
+
+REVOKE ALL ON FUNCTION public.vincular_achados_anilha_ao_anuncio_aprovado() FROM PUBLIC;
