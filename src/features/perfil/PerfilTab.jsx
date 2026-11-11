@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Save } from "lucide-react";
 const UF_LISTA = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
@@ -6,7 +6,7 @@ export default function PerfilTab({ perfil, privado, email, onSave, onSavePrivad
   const [form, setForm] = useState(perfil);
   const [endereco, setEndereco] = useState(privado);
   const [novoEmail, setNovoEmail] = useState(email || "");
-  const [salvo, setSalvo] = useState(false);
+  const [salvo, setSalvo] = useState(false);\n  useEffect(() => setForm(perfil), [perfil]);\n  useEffect(() => setEndereco(privado || {}), [privado]);\n  useEffect(() => setNovoEmail(email || ""), [email]);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   function submit() {
@@ -30,7 +30,7 @@ export default function PerfilTab({ perfil, privado, email, onSave, onSavePrivad
           <Field label="Nome do criatório"><input style={inputStyle} value={form.nomeCriatorio} onChange={set("nomeCriatorio")} placeholder="ex: Criatório Avespet" /></Field>
           <Field label="WhatsApp de contato"><input style={inputStyle} value={form.whatsapp} onChange={set("whatsapp")} placeholder="ex: (11) 99999-9999" /></Field>
           <Field label="Cidade"><input style={inputStyle} value={form.cidade} onChange={set("cidade")} placeholder="ex: Barueri" /></Field>
-          <Field label="UF">
+          <Field label="E-mail da conta (privado)"><input style={inputStyle} type="email" value={novoEmail} onChange={(e) => setNovoEmail(e.target.value)} /></Field>\n          <Field label="UF">
             <select style={inputStyle} value={form.uf} onChange={set("uf")}>
               <option value="">--</option>
               {UF_LISTA.map((u) => <option key={u}>{u}</option>)}
