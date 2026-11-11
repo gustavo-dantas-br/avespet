@@ -1,34 +1,57 @@
-import React, { useState } from "react";
-import { Link } from "../../../publico/roteador";
-import { criarAnuncioPerdida } from "../services/avesPerdidasService";
+import React, { useCallback, useEffect, useState } from "react";
+import { criarAnuncioPerdida, listarMinhasAvesPerdidas } from "../services/avesPerdidasService";
 import { comprimirEEnviarImagemPublica } from "../utils/comprimirImagem";
 
 const input = { width: "100%", padding: "12px", borderRadius: 8, border: "1px solid #e3d3b4", background: "#fff", color: "#2B241C" };
+const STATUS = {
+  pendente: { label: "Aguardando aprovação", cor: "#8a5a12", fundo: "#f0dab0" },
+  aprovado: { label: "Publicado", cor: "#405331", fundo: "#e4ead9" },
+  rejeitado: { label: "Não aprovado", cor: "#a6402b", fundo: "#f0dad4" },
+  encerrado: { label: "Busca encerrada", cor: "#6b5638", fundo: "#e3d3b4" },
+};
 
-export default function PerdiUmaAve() {
+export default function PerdiUmaAve({ userId }) {
   const [form, setForm] = useState({ nomeAve: "", especie: "Ring Neck", cor: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", autorizaContatoPublico: false, foto: "" });
+  const [anuncios, setAnuncios] = useState([]);
   const [enviando, setEnviando] = useState(false);
+  const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState("");
   const [anuncioCriadoId, setAnuncioCriadoId] = useState("");
   const [erro, setErro] = useState("");
   const alterar = (campo, valor) => setForm((atual) => ({ ...atual, [campo]: valor }));
 
+  const carregarAnuncios = useCallback(async () => {
+    try {
+      const lista = await listarMinhasAvesPerdidas(userId);
+      setAnuncios(lista);
+    } catch (e) {
+      setErro(e?.message || "Não foi possível carregar seus anúncios.");
+    } finally {
+      setCarregando(false);
+    }
+  }, [userId]);
+
+  useEffect(() => { carregarAnuncios(); }, [carregarAnuncios]);
+
   async function enviar(e) {
     e.preventDefault();
     setErro(""); setMensagem("");
+    if (!userId) {
+      setErro("Entre na sua conta para cadastrar uma ave perdida.");
+      return;
+    }
     if (!form.contatoNome.trim() || !form.whatsapp.trim() || !form.cidade.trim()) {
       setErro("Preencha nome, WhatsApp e cidade para publicar.");
       return;
     }
     setEnviando(true);
     try {
-      // UUID criado antes do INSERT: o ID pode ser usado na campanha sem
-      // precisar consultar o anuncio pendente, que o RLS mantem privado.
       const novoId = globalThis.crypto.randomUUID();
-      await criarAnuncioPerdida({ ...form, id: novoId, criadoEm: new Date().toISOString() });
+      await criarAnuncioPerdida(userId, { ...form, id: novoId, criadoEm: new Date().toISOString() });
       setAnuncioCriadoId(novoId);
-      setMensagem("Recebemos seu anúncio! Ele será analisado antes de aparecer publicamente. A publicação gratuita não exige assinatura.");
+      setMensagem("Recebemos seu anúncio! Ele ficará aguardando análise e só aparecerá na página pública depois da aprovação.");
       setForm({ nomeAve: "", especie: "Ring Neck", cor: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", autorizaContatoPublico: false, foto: "" });
+      await carregarAnuncios();
     } catch (e) {
       setErro(e?.message || "Não foi possível enviar. Tente novamente.");
     } finally { setEnviando(false); }
@@ -47,10 +70,9 @@ export default function PerdiUmaAve() {
     }
   }
 
-  return <section className="px-5 py-8 max-w-2xl mx-auto ui-sans">
-    <Link para="/" style={{ color: "#C69A2E" }}>← Voltar</Link>
-    <h1 className="mt-4 mb-2" style={{ color: "#F1E6D2", fontFamily: "'Fraunces',serif", fontSize: 32, fontWeight: 700 }}>Perdi minha ave</h1>
-    <p className="mb-6" style={{ color: "#b09a78" }}>Publique gratuitamente para divulgar o desaparecimento. Não precisa ter cadastro ou assinatura no Avespet.</p>
+  return <section className="ui-sans max-w-3xl">
+    <h1 className="mb-2" style={{ color: "#F1E6D2", fontFamily: "'Fraunces',serif", fontSize: 28, fontWeight: 700 }}>Cadastrar ave perdida</h1>
+    <p className="mb-6" style={{ color: "#b09a78" }}>Este cadastro é exclusivo para usuários conectados. Seu anúncio será analisado pela equipe antes de aparecer na página pública.</p>
     <form onSubmit={enviar} className="rounded-xl p-5 flex flex-col gap-3" style={{ background: "#FAF3E6" }}>
       <div className="grid sm:grid-cols-2 gap-3">
         <label className="text-sm">Nome da ave<input style={input} value={form.nomeAve} onChange={e=>alterar("nomeAve",e.target.value)} placeholder="Ex.: Mel" /></label>
@@ -71,14 +93,32 @@ export default function PerdiUmaAve() {
         </div>
         <label className="flex items-start gap-2 text-sm mt-3" style={{color:"#405331"}}>
           <input type="checkbox" className="mt-1" checked={form.autorizaContatoPublico} onChange={e=>alterar("autorizaContatoPublico",e.target.checked)} />
-          <span>Autorizo que meu nome e WhatsApp sejam exibidos publicamente neste anúncio para facilitar o contato de quem encontrar minha ave. Sei que posso retirar o anúncio ou pedir a remoção dessas informações.</span>
+          <span>Autorizo que meu nome e WhatsApp sejam exibidos publicamente neste anúncio para facilitar o contato de quem encontrar minha ave. Sei que posso pedir a remoção dessas informações.</span>
         </label>
-        <p className="text-xs mt-2" style={{color:"#8a7a63"}}>Se não marcar, seu WhatsApp não será exibido no anúncio público. A equipe poderá ajudar a intermediar o contato.</p>
+        <p className="text-xs mt-2" style={{color:"#8a7a63"}}>Se não marcar, seu WhatsApp não será exibido. A equipe poderá intermediar o contato.</p>
       </div>
       {erro && <p role="alert" className="text-sm" style={{color:"#a6402b"}}>{erro}</p>}
       {mensagem && <div role="status" className="text-sm p-3 rounded-lg" style={{background:"#e4ead9",color:"#405331"}}><p>{mensagem}</p><a href={anuncioCriadoId ? `/campanha-ave-perdida?anuncio=${anuncioCriadoId}` : "/campanha-ave-perdida"} className="inline-block mt-2 font-semibold underline" style={{color:"#405331"}}>Quero ampliar a divulgação da minha busca</a></div>}
-      <button disabled={enviando} className="rounded-lg py-3 font-semibold disabled:opacity-60" style={{background:"#C69A2E",color:"#2B1D14"}}>{enviando ? "Enviando..." : "Publicar anúncio gratuito"}</button>
-      <p className="text-xs" style={{color:"#8a7a63"}}>Seu anúncio passará por análise. O impulsionamento regional será opcional e contratado separadamente.</p>
+      <button disabled={enviando} className="rounded-lg py-3 font-semibold disabled:opacity-60" style={{background:"#C69A2E",color:"#2B1D14"}}>{enviando ? "Enviando..." : "Enviar para análise"}</button>
+      <p className="text-xs" style={{color:"#8a7a63"}}>O anúncio gratuito passa por análise. A divulgação regional ampliada é opcional.</p>
     </form>
+
+    <div className="mt-8">
+      <h2 className="text-lg font-bold mb-3" style={{color:"#F1E6D2"}}>Meus anúncios de aves perdidas</h2>
+      {carregando ? <p style={{color:"#b09a78"}}>Carregando seus anúncios...</p> : anuncios.length === 0 ? <p style={{color:"#b09a78"}}>Você ainda não cadastrou nenhuma ave perdida.</p> : <div className="grid gap-3">
+        {anuncios.map((anuncio) => {
+          const dados = anuncio.data || {};
+          const status = STATUS[anuncio.status] || STATUS.pendente;
+          return <article key={anuncio.id} className="rounded-lg p-3 flex gap-3 items-start" style={{background:"#FAF3E6",color:"#2B241C"}}>
+            {dados.foto && <img src={dados.foto} alt="" className="w-20 h-20 rounded-lg object-cover" />}
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold">{dados.nomeAve || dados.especie}</div>
+              <div className="text-xs mt-1">{dados.cidade}{dados.uf ? "/"+dados.uf : ""}</div>
+              <span className="inline-block text-xs rounded px-2 py-1 mt-2" style={{background:status.fundo,color:status.cor}}>{status.label}</span>
+            </div>
+          </article>;
+        })}
+      </div>}
+    </div>
   </section>;
 }
