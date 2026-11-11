@@ -25,6 +25,8 @@ import {
 } from "./lib/db";
 
 import AuthPage from "./components/AuthPage";
+import MasterApp from "./features/master/MasterApp";
+import { checkIsMaster } from "./lib/masterAccess";
 import NotificationsCenter from "./components/NotificationsCenter";
 import { PerdiUmaAve } from "./features/aves-perdidas";
 import ConteudoAdmin from "./conteudo/ConteudoAdmin";
@@ -1236,6 +1238,7 @@ const FILTER_LABELS = {
 export default function App() {
   const [session, setSession] = useState(undefined);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
+  const [masterAccess, setMasterAccess] = useState(null);
   const caminho = usePath();
 
   useEffect(() => {
@@ -1246,6 +1249,23 @@ export default function App() {
     });
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  // Verifica o entitlement Master no banco antes de montar qualquer tela de criador.
+  useEffect(() => {
+    if (session === undefined) return;
+    if (!session?.user?.id) {
+      setMasterAccess(false);
+      return;
+    }
+
+    let active = true;
+    setMasterAccess(null);
+    checkIsMaster(session.user.id)
+      .then((allowed) => { if (active) setMasterAccess(allowed); })
+      .catch(() => { if (active) setMasterAccess(false); });
+
+    return () => { active = false; };
+  }, [session?.user?.id]);
 
   if (session === undefined) {
     return (
@@ -1270,7 +1290,17 @@ if (!session || emConteudo) {
   );
 }
 
+if (masterAccess === null) {
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center" style={{ background: "#2B1D14" }}>
+      <Loader2 className="animate-spin" color="#C69A2E" size={28} />
+    </div>
+  );
+}
 
+if (masterAccess) {
+  return <MasterApp user={session.user} onLogout={() => supabase.auth.signOut()} />;
+}
 
 return (
   <>
