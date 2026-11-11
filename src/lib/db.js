@@ -284,7 +284,7 @@ export async function listVisitas(dias = 30) {
 export async function listAnunciosAvesPerdidasAdmin() {
   const { data, error } = await supabase
     .from("anuncios_aves_perdidas")
-    .select("id, data, status, created_at")
+    .select("id, user_id, data, status, created_at")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data || [];
