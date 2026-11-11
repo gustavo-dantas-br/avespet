@@ -33,9 +33,32 @@ export async function getPerfil(userId) {
 }
 
 export async function savePerfil(userId, perfilData) {
+  const { nomeCriatorio = "", nome = "", sobrenome = "", nomeCompleto = "", whatsapp = "", cidade = "", uf = "" } = perfilData || {};
+  const dataPublica = { nomeCriatorio, nome, sobrenome, nomeCompleto, whatsapp, cidade, uf };
   const { error } = await supabase.from("perfil_criador").upsert({
     user_id: userId,
-    data: perfilData,
+    data: dataPublica,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) throw error;
+}
+
+export async function getPerfilPrivado(userId) {
+  const { data, error } = await supabase.from("perfil_criador_privado").select("endereco, numero, complemento, bairro, cidade, uf, cep").eq("user_id", userId).maybeSingle();
+  if (error) throw error;
+  return data || {};
+}
+
+export async function savePerfilPrivado(userId, dados) {
+  const { error } = await supabase.from("perfil_criador_privado").upsert({
+    user_id: userId,
+    endereco: dados.endereco || "",
+    numero: dados.numero || "",
+    complemento: dados.complemento || "",
+    bairro: dados.bairro || "",
+    cidade: dados.cidade || "",
+    uf: dados.uf || "",
+    cep: dados.cep || "",
     updated_at: new Date().toISOString(),
   });
   if (error) throw error;
