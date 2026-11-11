@@ -14,8 +14,8 @@ create policy "master consulta sua propria permissao"
   to authenticated
   using (user_id = (select auth.uid()));
 
-revoke all on table public.master_admins from anon, authenticated;
-grant select on table public.master_admins to authenticated;
+revoke all on table public.master_admins from public, anon, authenticated;
+grant select on table public.master_admins to authenticated, service_role;
 
 comment on table public.master_admins is
   'Lista de identidades autorizadas ao painel Master. Gerenciada somente por operações administrativas confiáveis; nunca pelo cliente.';
