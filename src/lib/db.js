@@ -125,13 +125,20 @@ export async function buscarPerdidaPorAnilha(anilha) {
   const termo = (anilha || "").trim();
   if (!termo) return [];
 
-  const consultas = await Promise.all([
+  const consultas = await Promise.allSettled([
     supabase.rpc("buscar_perdida_por_anilha", { p_anilha: termo }),
     supabase.rpc("buscar_anuncio_perdido_por_anilha", { p_anilha: termo }),
   ]);
-  const erro = consultas.find((r) => r.error);
-  if (erro) throw erro.error;
-  const data = consultas.flatMap((r) => r.data || []);
+  const resultados = consultas
+    .filter((r) => r.status === "fulfilled" && !r.value.error)
+    .flatMap((r) => r.value.data || []);
+  if (resultados.length === 0 && consultas.every(
+    (r) => r.status === "rejected" || r.value?.error
+  )) {
+    const falha = consultas.find((r) => r.status === "rejected" || r.value?.error);
+    throw falha?.reason || falha?.value?.error || new Error("Não foi possível pesquisar a anilha.");
+  }
+  const data = resultados;
 
   return data.map((r) => ({
     id: r.id,
