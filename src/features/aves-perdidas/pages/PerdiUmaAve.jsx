@@ -6,7 +6,7 @@ import { comprimirEEnviarImagemPublica } from "../utils/comprimirImagem";
 const input = { width: "100%", padding: "12px", borderRadius: 8, border: "1px solid #e3d3b4", background: "#fff", color: "#2B241C" };
 
 export default function PerdiUmaAve() {
-  const [form, setForm] = useState({ nomeAve: "", especie: "Ring Neck", cor: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", foto: "" });
+  const [form, setForm] = useState({ nomeAve: "", especie: "Ring Neck", cor: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", autorizaContatoPublico: false, foto: "" });
   const [enviando, setEnviando] = useState(false);
   const [mensagem, setMensagem] = useState("");
   const [anuncioCriadoId, setAnuncioCriadoId] = useState("");
@@ -28,7 +28,7 @@ export default function PerdiUmaAve() {
       await criarAnuncioPerdida({ ...form, id: novoId, criadoEm: new Date().toISOString() });
       setAnuncioCriadoId(novoId);
       setMensagem("Recebemos seu anúncio! Ele será analisado antes de aparecer publicamente. A publicação gratuita não exige assinatura.");
-      setForm({ nomeAve: "", especie: "Ring Neck", cor: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", foto: "" });
+      setForm({ nomeAve: "", especie: "Ring Neck", cor: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", autorizaContatoPublico: false, foto: "" });
     } catch (e) {
       setErro(e?.message || "Não foi possível enviar. Tente novamente.");
     } finally { setEnviando(false); }
@@ -68,6 +68,12 @@ export default function PerdiUmaAve() {
         <div className="grid sm:grid-cols-2 gap-3">
           <label className="text-sm">Seu nome<input required style={input} value={form.contatoNome} onChange={e=>alterar("contatoNome",e.target.value)} /></label>
           <label className="text-sm">WhatsApp<input required style={input} value={form.whatsapp} onChange={e=>alterar("whatsapp",e.target.value)} placeholder="DDD + número" /></label>
+        </div>
+        <label className="flex items-start gap-2 text-sm mt-3" style={{color:"#405331"}}>
+          <input type="checkbox" className="mt-1" checked={form.autorizaContatoPublico} onChange={e=>alterar("autorizaContatoPublico",e.target.checked)} />
+          <span>Autorizo que meu nome e WhatsApp sejam exibidos publicamente neste anúncio para facilitar o contato de quem encontrar minha ave. Sei que posso retirar o anúncio ou pedir a remoção dessas informações.</span>
+        </label>
+        <p className="text-xs mt-2" style={{color:"#8a7a63"}}>Se não marcar, seu WhatsApp não será exibido no anúncio público. A equipe poderá ajudar a intermediar o contato.</p>
         </div>
       </div>
       {erro && <p role="alert" className="text-sm" style={{color:"#a6402b"}}>{erro}</p>}
