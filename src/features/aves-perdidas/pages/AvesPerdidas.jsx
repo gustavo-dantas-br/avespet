@@ -23,8 +23,13 @@ export default function AvesPerdidas() {
           <p className="text-sm mt-2">{data.cidade}{data.uf ? "/"+data.uf : ""}</p>
           {data.dataPerda && <p className="text-xs mt-1">Desapareceu em {new Date(data.dataPerda+"T12:00:00").toLocaleDateString("pt-BR")}</p>}
           {data.descricao && <p className="text-sm mt-2 whitespace-pre-wrap">{data.descricao}</p>}
-          <p className="text-xs mt-3">Contato: {data.contatoNome}</p>
-          {linkWhatsApp(data.whatsapp,data.nomeAve) && <a className="block text-center rounded-lg mt-3 py-2 font-semibold" style={{background:"#556b3f",color:"#fff"}} href={linkWhatsApp(data.whatsapp,data.nomeAve)} target="_blank" rel="noopener noreferrer">Falar pelo WhatsApp</a>}
+          {data.autorizaContatoPublico === true && (
+            <>
+              <p className="text-xs mt-3">Contato: {data.contatoNome}</p>
+              {linkWhatsApp(data.whatsapp,data.nomeAve) && <a className="block text-center rounded-lg mt-3 py-2 font-semibold" style={{background:"#556b3f",color:"#fff"}} href={linkWhatsApp(data.whatsapp,data.nomeAve)} target="_blank" rel="noopener noreferrer">Falar pelo WhatsApp</a>}
+            </>
+          )}
+          {data.autorizaContatoPublico !== true && <p className="text-xs mt-3">Contato intermediado pelo Avespet.</p>}
         </div></article>)}</div>}
   </section>;
 }
