@@ -139,11 +139,11 @@ function BuscaAnilha() {
         </div>
       )}
 
-      {(mostrarFormAchado || (resultadosPerdidas && resultadosPerdidas.length > 0)) && !enviado && (
+      {(mostrarFormAchado || resultadosPerdidas?.some((r) => r.status === "perdida")) && !enviado && (
         <form onSubmit={enviarAchado} className="flex flex-col gap-3 max-w-md mx-auto text-left rounded-lg p-4" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
           <div className="text-sm" style={{ color: "#2B241C" }}>
-            {resultadosPerdidas && resultadosPerdidas.length > 0
-              ? "Encontramos um cadastro relacionado a essa anilha. Se esta com a ave, informe os dados abaixo para ajudarmos na devolucao."
+            {resultadosPerdidas?.some((r) => r.status === "perdida")
+              ? "Encontramos um cadastro de ave ainda desaparecida. Se ela está com você, muito obrigado por ajudar! Informe os dados abaixo para facilitarmos o reencontro com sua família."
               : "Essa anilha nao apareceu como perdida. Mesmo assim, se voce encontrou essa ave, informe os dados abaixo para ajudarmos a localizar o responsavel."}
           </div>
 
@@ -171,9 +171,12 @@ function BuscaAnilha() {
       )}
 
       {enviado && (
-        <div className="text-sm px-4 py-3 rounded-lg max-w-md mx-auto text-left" style={{ background: "#e4ead9", color: "#556b3f" }}>
-          Muito obrigado por se importar! 💚 Sabemos que uma ave é um animal de estimação, e muita gente tem um carinho enorme pelo seu bichinho —
-          o seu cuidado em tentar devolver faz toda a diferença. Vamos verificar essa anilha e entrar em contato pelo telefone informado assim que possível.
+        <div className="text-sm px-4 py-4 rounded-lg max-w-md mx-auto text-left" style={{ background: "#e4ead9", color: "#405735", border: "1px solid #c8dcb8" }}>
+          <div className="font-semibold text-base mb-2">Seu gesto pode transformar uma história! 💚</div>
+          <p className="mb-2">Muito obrigado por ter um coração disposto a ajudar. Sabemos o quanto uma ave é especial para sua família e como é angustiante ficar longe dela.</p>
+          <p className="mb-2">Ao se preocupar em devolver esse pequeno companheiro, você está oferecendo esperança e a oportunidade de um reencontro cheio de alegria.</p>
+          <p>Que sua atitude inspire outras pessoas. O bem que você está fazendo tem um valor enorme!</p>
+          <p className="mt-2">Nossa equipe vai verificar as informações e entrar em contato pelo telefone informado.</p>
         </div>
       )}
     </div>
