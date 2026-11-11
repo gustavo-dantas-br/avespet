@@ -18,6 +18,7 @@ create index if not exists master_audit_log_actor_created_at_idx
 alter table public.master_audit_log enable row level security;
 revoke all on table public.master_audit_log from public, anon, authenticated, service_role;
 grant insert on table public.master_audit_log to service_role;
+revoke all on sequence public.master_audit_log_id_seq from public, anon, authenticated, service_role;
 grant usage on sequence public.master_audit_log_id_seq to service_role;
 
 comment on table public.master_audit_log is
