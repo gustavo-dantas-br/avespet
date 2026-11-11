@@ -46,6 +46,7 @@ export async function ativarPushDoDispositivo(userId) {
     device_label: deviceLabel,
     platform,
     last_seen_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     revoked_at: null,
   }, { onConflict: "endpoint" });
 
