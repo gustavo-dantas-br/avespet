@@ -851,8 +851,7 @@ function AppInner({ user, onLogout }) {
       };
       const resumo = Object.keys(rotulos).map((k) => [rotulos[k], lista(k).length]).filter(([, n]) => n > 0);
       if (!resumo.length && !perfilImp) throw new Error("backup vazio");
-      const linhas = resumo.map(([nome, n]) => `- ${n} ${nome}`).concat(perfilImp ? ["- seu perfil de criador"] : []).join("
-");
+      const linhas = resumo.map(([nome, n]) => `- ${n} ${nome}`).concat(perfilImp ? ["- seu perfil de criador"] : []).join("\\n");
       if (!confirm(`Restaurar este backup?
 
 ${linhas}
