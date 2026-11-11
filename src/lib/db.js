@@ -33,9 +33,32 @@ export async function getPerfil(userId) {
 }
 
 export async function savePerfil(userId, perfilData) {
+  const { nomeCriatorio = "", nome = "", sobrenome = "", nomeCompleto = "", whatsapp = "", cidade = "", uf = "" } = perfilData || {};
+  const dataPublica = { nomeCriatorio, nome, sobrenome, nomeCompleto, whatsapp, cidade, uf };
   const { error } = await supabase.from("perfil_criador").upsert({
     user_id: userId,
-    data: perfilData,
+    data: dataPublica,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) throw error;
+}
+
+export async function getPerfilPrivado(userId) {
+  const { data, error } = await supabase.from("perfil_criador_privado").select("endereco, numero, complemento, bairro, cidade, uf, cep").eq("user_id", userId).maybeSingle();
+  if (error) throw error;
+  return data || {};
+}
+
+export async function savePerfilPrivado(userId, dados) {
+  const { error } = await supabase.from("perfil_criador_privado").upsert({
+    user_id: userId,
+    endereco: dados.endereco || "",
+    numero: dados.numero || "",
+    complemento: dados.complemento || "",
+    bairro: dados.bairro || "",
+    cidade: dados.cidade || "",
+    uf: dados.uf || "",
+    cep: dados.cep || "",
     updated_at: new Date().toISOString(),
   });
   if (error) throw error;
@@ -120,17 +143,37 @@ export async function deletePerdida(id) {
   if (error) throw error;
 }
 
-// Busca publica por anilha - funciona sem login, ve registros de QUALQUER
-// criador (a policy de leitura publica da tabela 'perdidas' permite isso).
+// Busca publica por anilha usando RPC segura; nao consulta a tabela diretamente.
 export async function buscarPerdidaPorAnilha(anilha) {
   const termo = (anilha || "").trim();
   if (!termo) return [];
-  const { data, error } = await supabase
-    .from("perdidas")
-    .select("id, user_id, status, data")
-    .ilike("data->>anilha", `%${termo}%`);
-  if (error) throw error;
-  return (data || []).map((r) => ({ ...r.data, id: r.id, userId: r.user_id, status: r.status }));
+
+  const consultas = await Promise.allSettled([
+    supabase.rpc("buscar_perdida_por_anilha", { p_anilha: termo }),
+    supabase.rpc("buscar_anuncio_perdido_por_anilha", { p_anilha: termo }),
+  ]);
+  const resultados = consultas
+    .filter((r) => r.status === "fulfilled" && !r.value.error)
+    .flatMap((r) => r.value.data || []);
+  if (resultados.length === 0 && consultas.every(
+    (r) => r.status === "rejected" || r.value?.error
+  )) {
+    const falha = consultas.find((r) => r.status === "rejected" || r.value?.error);
+    throw falha?.reason || falha?.value?.error || new Error("Não foi possível pesquisar a anilha.");
+  }
+  const data = resultados;
+
+  return data.map((r) => ({
+    id: r.id,
+    status: r.status,
+    nomeAve: r.nome_ave,
+    especie: r.especie,
+    corMutacao: r.cor_mutacao,
+    anilha: r.anilha,
+    foto: r.foto,
+    nomeCriatorio: r.nome_criatorio,
+    whatsapp: r.whatsapp,
+  }));
 }
 
 // ---------- Vitrine publica de anuncios + metricas (Fase 8F) ----------
@@ -257,4 +300,25 @@ export async function listVisitas(dias = 30) {
   const { data, error } = await supabase.from("visitas_diarias").select("dia, caminho, total").gte("dia", desde);
   if (error) throw error;
   return data || [];
+}
+
+
+// ---------- Anuncios publicos de aves perdidas (moderacao admin) ----------
+export async function listAnunciosAvesPerdidasAdmin() {
+  const { data, error } = await supabase
+    .from("anuncios_aves_perdidas")
+    .select("id, user_id, data, status, created_at")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function atualizarStatusAnuncioAvePerdida(id, status) {
+  const permitidos = ["pendente", "aprovado", "rejeitado", "encerrado"];
+  if (!permitidos.includes(status)) throw new Error("Status inválido.");
+  const { error } = await supabase
+    .from("anuncios_aves_perdidas")
+    .update({ status })
+    .eq("id", id);
+  if (error) throw error;
 }

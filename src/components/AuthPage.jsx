@@ -2,12 +2,15 @@ import React, { useState, useEffect, useRef } from "react";
 import { Feather, Loader2, Search, Phone, ArrowLeft, MessageCircle, X } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import {
-  buscarPerdidaPorAnilha, getPerfil, listAnunciosPublicos, listPerfisPublicos,
+  buscarPerdidaPorAnilha, listAnunciosPublicos, listPerfisPublicos,
   incrementarVisualizacaoAnuncio, incrementarCliqueAnuncio, registrarAchadoAnilha, registrarVisita,
 } from "../lib/db";
 import { Link, usePath, navegar } from "../publico/roteador";
 import { useSEO } from "../publico/seo";
+import { comprimirEEnviarImagemPublica } from "../features/aves-perdidas/utils/comprimirImagem";
 import { PaginaGuias, PaginaGuia, PaginaVideos, GuiasEmDestaque } from "../publico/PaginasConteudo";
+import { AvesPerdidas } from "../features/aves-perdidas";
+import { SolicitarCampanha } from "../features/campanhas";
 
 const inputStyle = { background: "#fff", border: "1px solid #e3d3b4", color: "#2B241C", borderRadius: 8, padding: "10px 12px", fontSize: 14, outline: "none", width: "100%" };
 
@@ -36,31 +39,21 @@ function BuscaAnilha() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [resultadosPerdidas, setResultadosPerdidas] = useState(null);
-  const [perfisPorUser, setPerfisPorUser] = useState({});
   const [mostrarFormAchado, setMostrarFormAchado] = useState(false);
-  const [formAchado, setFormAchado] = useState({ nome: "", telefone: "", endereco: "", mensagem: "", foto: "" });
+  const [formAchado, setFormAchado] = useState({ nome: "", telefone: "", endereco: "", dataEncontrada: new Date().toISOString().slice(0, 10), mensagem: "", foto: "" });
   const [enviado, setEnviado] = useState(false);
 
-  function handleFotoAchado(e) {
+  async function handleFotoAchado(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const maxDim = 480;
-        let { width, height } = img;
-        if (width > height && width > maxDim) { height = Math.round((height * maxDim) / width); width = maxDim; }
-        else if (height > maxDim) { width = Math.round((width * maxDim) / height); height = maxDim; }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-        setFormAchado((f) => ({ ...f, foto: canvas.toDataURL("image/jpeg", 0.75) }));
-      };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
+    setError("");
+    try {
+      const foto = await comprimirEEnviarImagemPublica(file, "achados", 160 * 1024);
+      setFormAchado((f) => ({ ...f, foto }));
+    } catch (err) {
+      setError(err?.message || "Não foi possível processar essa foto.");
+      e.target.value = "";
+    }
   }
 
   async function buscar(e) {
@@ -74,19 +67,7 @@ function BuscaAnilha() {
     try {
       const achados = await buscarPerdidaPorAnilha(anilha);
       setResultadosPerdidas(achados);
-      if (achados.length > 0) {
-        const perfis = {};
-        await Promise.all(
-          [...new Set(achados.map((a) => a.userId))].map(async (uidUser) => {
-            try {
-              perfis[uidUser] = await getPerfil(uidUser);
-            } catch {
-              // segue sem contato desse criador se der erro
-            }
-          })
-        );
-        setPerfisPorUser(perfis);
-      } else {
+      if (achados.length === 0) {
         setMostrarFormAchado(true);
       }
     } catch {
@@ -102,8 +83,9 @@ function BuscaAnilha() {
     setLoading(true);
     setError("");
     try {
+      const detalhes = [formAchado.dataEncontrada ? `Data em que encontrou: ${new Date(formAchado.dataEncontrada + "T12:00:00").toLocaleDateString("pt-BR")}` : "", formAchado.mensagem.trim()].filter(Boolean).join("\n");
       await registrarAchadoAnilha(
-        anilha, formAchado.nome, formAchado.telefone, formAchado.mensagem, formAchado.endereco, formAchado.foto
+        anilha, formAchado.nome, formAchado.telefone, detalhes, formAchado.endereco, formAchado.foto
       );
       setEnviado(true);
     } catch {
@@ -119,7 +101,7 @@ function BuscaAnilha() {
         Encontrou uma ave?
       </h1>
       <p style={{ color: "#b09a78" }} className="text-base mb-6">
-        Digite o numero da anilha. Vamos verificar e, se for de algum criador cadastrado, entramos em contato pra devolver.
+        Digite o número da anilha. Se houver um anúncio de ave perdida aprovado, mostramos o resultado. Se não houver, você poderá registrar a ave encontrada para nossa equipe fazer a intermediação.
       </p>
 
       <form onSubmit={buscar} className="flex flex-col sm:flex-row gap-3 mb-6 max-w-md mx-auto">
@@ -133,9 +115,7 @@ function BuscaAnilha() {
 
       {resultadosPerdidas && resultadosPerdidas.length > 0 && (
         <div className="flex flex-col gap-3 max-w-md mx-auto text-left">
-          {resultadosPerdidas.map((r) => {
-            const perfil = perfisPorUser[r.userId];
-            return (
+          {resultadosPerdidas.map((r) => (
               <div key={r.id} className="rounded-lg p-3" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0" style={{ background: "#3a2a1c" }}>
@@ -149,21 +129,18 @@ function BuscaAnilha() {
                 <div className="text-[10px] px-2 py-0.5 rounded ui-mono inline-block mb-2" style={{ background: r.status === "perdida" ? "#f0dab0" : "#c8dcb8", color: "#2B241C" }}>
                   {r.status === "perdida" ? "AINDA PERDIDA" : "JA FOI ENCONTRADA"}
                 </div>
-                {perfil?.whatsapp && (
-                  <a href={whatsappUrl(perfil.whatsapp)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-semibold px-3 py-2 rounded-lg justify-center" style={{ background: "#556b3f", color: "#F1E6D2" }}>
-                    <Phone size={14} /> Falar com {perfil.nomeCriatorio || "o criador"}
-                  </a>
-                )}
+                <p className="text-xs mt-2" style={{ color: "#8a7a63" }}>O Avespet fará a intermediação do contato para proteger as duas partes.</p>
               </div>
-            );
-          })}
+          ))}
         </div>
       )}
 
-      {mostrarFormAchado && !enviado && (
+      {(mostrarFormAchado || resultadosPerdidas?.some((r) => r.status === "perdida")) && !enviado && (
         <form onSubmit={enviarAchado} className="flex flex-col gap-3 max-w-md mx-auto text-left rounded-lg p-4" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
           <div className="text-sm" style={{ color: "#2B241C" }}>
-            Essa anilha nao apareceu como perdida ainda, mas se voce achou essa ave, deixa seu contato que a gente verifica e retorna.
+            {resultadosPerdidas?.some((r) => r.status === "perdida")
+              ? "Encontramos um cadastro de ave ainda desaparecida. Se ela está com você, muito obrigado por ajudar! Informe os dados abaixo para facilitarmos o reencontro com sua família."
+              : "Não encontramos anúncio aprovado com essa anilha. Registre a ave encontrada; nossa equipe ficará responsável por analisar o caso e fazer a ponte com o titular se ele cadastrar a perda posteriormente."}
           </div>
 
           <label className="ui-sans flex flex-col gap-1.5">
@@ -176,7 +153,11 @@ function BuscaAnilha() {
 
           <input style={inputStyle} value={formAchado.nome} onChange={(e) => setFormAchado((f) => ({ ...f, nome: e.target.value }))} placeholder="Seu nome" required />
           <input style={inputStyle} value={formAchado.telefone} onChange={(e) => setFormAchado((f) => ({ ...f, telefone: e.target.value }))} placeholder="Seu telefone/WhatsApp" required />
-          <input style={inputStyle} value={formAchado.endereco} onChange={(e) => setFormAchado((f) => ({ ...f, endereco: e.target.value }))} placeholder="Onde encontrou (endereco/bairro/cidade)" />
+          <label className="ui-sans flex flex-col gap-1.5 text-left">
+            <span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Data em que encontrou</span>
+            <input type="date" style={inputStyle} value={formAchado.dataEncontrada} onChange={(e) => setFormAchado((f) => ({ ...f, dataEncontrada: e.target.value }))} required />
+          </label>
+          <input style={inputStyle} value={formAchado.endereco} onChange={(e) => setFormAchado((f) => ({ ...f, endereco: e.target.value }))} placeholder="Onde encontrou (endereco/bairro/cidade)" required />
           <input style={inputStyle} value={formAchado.mensagem} onChange={(e) => setFormAchado((f) => ({ ...f, mensagem: e.target.value }))} placeholder="Observacoes (opcional)" />
 
           <button type="submit" disabled={loading} className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
@@ -185,10 +166,22 @@ function BuscaAnilha() {
         </form>
       )}
 
+      {resultadosPerdidas?.length > 0 && resultadosPerdidas.every((r) => r.status !== "perdida") && (
+        <div className="text-sm px-4 py-4 rounded-lg max-w-md mx-auto text-left" style={{ background: "#e4ead9", color: "#405735", border: "1px solid #c8dcb8" }}>
+          <div className="font-semibold text-base mb-2">Que atitude bonita! 💚</div>
+          <p className="mb-2">A ave deste cadastro já foi encontrada. Mesmo assim, queremos agradecer por você se importar.</p>
+          <p className="mb-2">Devolver um animal ao seu responsável é um gesto de empatia, respeito e amor. Para quem espera por esse reencontro, receber seu companheiro de volta significa muito mais do que palavras conseguem expressar.</p>
+          <p>Obrigado por fazer o bem e por mostrar que ainda existem pessoas de bom coração. Sua atitude faz a diferença na vida de uma família e de seu pequeno pet. 🐦</p>
+        </div>
+      )}
+
       {enviado && (
-        <div className="text-sm px-4 py-3 rounded-lg max-w-md mx-auto text-left" style={{ background: "#e4ead9", color: "#556b3f" }}>
-          Muito obrigado por se importar! 💚 Sabemos que uma ave é um animal de estimação, e muita gente tem um carinho enorme pelo seu bichinho —
-          o seu cuidado em tentar devolver faz toda a diferença. Vamos verificar essa anilha e entrar em contato pelo telefone informado assim que possível.
+        <div className="text-sm px-4 py-4 rounded-lg max-w-md mx-auto text-left" style={{ background: "#e4ead9", color: "#405735", border: "1px solid #c8dcb8" }}>
+          <div className="font-semibold text-base mb-2">Seu gesto pode transformar uma história! 💚</div>
+          <p className="mb-2">Muito obrigado por ter um coração disposto a ajudar. Sabemos o quanto uma ave é especial para sua família e como é angustiante ficar longe dela.</p>
+          <p className="mb-2">Ao se preocupar em devolver esse pequeno companheiro, você está oferecendo esperança e a oportunidade de um reencontro cheio de alegria.</p>
+          <p>Que sua atitude inspire outras pessoas. O bem que você está fazendo tem um valor enorme!</p>
+          <p className="mt-2">Nossa equipe administrativa vai conferir o registro e, se o titular cadastrar a ave perdida posteriormente, fará a ligação entre as partes. O contato não será divulgado publicamente.</p>
         </div>
       )}
     </div>
@@ -281,6 +274,9 @@ function LoginModal({ onFechar }) {
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [nome, setNome] = useState("");
+  const [sobrenome, setSobrenome] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -289,13 +285,27 @@ function LoginModal({ onFechar }) {
     e.preventDefault();
     setError(""); setMessage(""); setLoading(true);
     try {
-      if (mode === "login") {
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+        });
+        if (error) throw error;
+        setMessage("Se esse e-mail estiver cadastrado, enviaremos um link para redefinir sua senha. Confira também o spam.");
+      } else if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        if (!nome.trim() || !sobrenome.trim() || !telefone.trim()) {
+          throw new Error("Preencha nome, sobrenome e telefone para criar sua conta.");
+        }
+        const nomeCompleto = nome.trim() + " " + sobrenome.trim();
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { nome: nome.trim(), sobrenome: sobrenome.trim(), nomeCompleto, telefone: telefone.trim(), whatsapp: telefone.trim() } },
+        });
         if (error) throw error;
-        setMessage("Conta criada! Verifica seu e-mail pra confirmar antes de entrar.");
+        setMessage("Conta criada! Enviamos os dados de confirmação para seu e-mail. Depois de confirmar e entrar, seu perfil de criador será criado automaticamente.");
       }
     } catch (err) {
       setError(err.message || "Nao foi possivel completar essa acao.");
@@ -312,19 +322,110 @@ function LoginModal({ onFechar }) {
           <Feather size={20} color="#A6402B" />
           <div style={{ color: "#2B241C", fontWeight: 700, fontSize: 16, fontFamily: "'Fraunces', serif" }}>Avespet</div>
         </div>
-        <h2 className="text-center ui-sans font-semibold mb-5" style={{ color: "#2B241C" }}>{mode === "login" ? "Entrar na sua conta" : "Criar conta gratuita"}</h2>
+        <h2 className="text-center ui-sans font-semibold mb-5" style={{ color: "#2B241C" }}>{mode === "login" ? "Entrar na sua conta" : mode === "forgot" ? "Recuperar senha" : "Criar conta gratuita"}</h2>
         {error && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#f0dad4", color: "#a6402b" }}>{error}</div>}
         {message && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#e4ead9", color: "#556b3f" }}>{message}</div>}
+        {message ? (
+          <button type="button" onClick={onFechar} className="ui-sans w-full px-4 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
+            Voltar para entrar
+          </button>
+        ) : (
+          <>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>E-mail</span><input style={inputStyle} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
-          <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Senha</span><input style={inputStyle} type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+          {mode === "signup" && (
+            <>
+              <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Nome</span><input style={inputStyle} autoComplete="given-name" required value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Seu nome" /></label>
+              <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Sobrenome</span><input style={inputStyle} autoComplete="family-name" required value={sobrenome} onChange={(e) => setSobrenome(e.target.value)} placeholder="Seu sobrenome" /></label>
+              <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Telefone de contato / WhatsApp</span><input style={inputStyle} type="tel" autoComplete="tel" required value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 99999-9999" /></label>
+            </>
+          )}
+          <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>E-mail</span><input style={inputStyle} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+          {mode !== "forgot" && <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Senha</span><input style={inputStyle} type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></label>}
           <button type="submit" disabled={loading} className="ui-sans flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold mt-1" style={{ background: "#C69A2E", color: "#2B1D14" }}>
-            {loading && <Loader2 className="animate-spin" size={16} />}{mode === "login" ? "Entrar" : "Criar conta"}
+            {loading && <Loader2 className="animate-spin" size={16} />}{mode === "login" ? "Entrar" : mode === "forgot" ? "Enviar link de recuperação" : "Criar conta"}
           </button>
         </form>
-        <button onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setMessage(""); }} className="ui-sans text-xs mt-5 w-full text-center underline" style={{ color: "#8a7a63" }}>
-          {mode === "login" ? "Nao tem conta? Criar uma gratuita" : "Ja tem conta? Entrar"}
+        {mode === "login" && (
+          <button type="button" onClick={() => { setMode("forgot"); setError(""); setMessage(""); }} className="ui-sans text-xs mt-4 w-full text-center underline" style={{ color: "#8a7a63" }}>
+            Esqueceu sua senha?
+          </button>
+        )}
+        <button type="button" onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setMessage(""); }} className="ui-sans text-xs mt-5 w-full text-center underline" style={{ color: "#8a7a63" }}>
+          {mode === "login" ? "Nao tem conta? Criar uma gratuita" : "Voltar para entrar"}
         </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Redefinicao de senha apos o link enviado pelo Supabase Auth
+// ---------------------------------------------------------------------------
+
+function RedefinirSenha({ onConcluir }) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+    if (password.length < 6) {
+      setError("A senha precisa ter pelo menos 6 caracteres.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("As senhas nao conferem.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      setMessage("Senha alterada com sucesso! Voce ja pode entrar com a nova senha.");
+      await supabase.auth.signOut();
+    } catch (err) {
+      setError(err.message || "Nao foi possivel alterar a senha. Solicite um novo link.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "#2B1D14" }}>
+      <div className="w-full max-w-sm rounded-xl p-6 sm:p-8" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
+        <div className="flex items-center gap-2 mb-5 justify-center">
+          <Feather size={20} color="#A6402B" />
+          <div style={{ color: "#2B241C", fontWeight: 700, fontSize: 16, fontFamily: "'Fraunces', serif" }}>Avespet</div>
+        </div>
+        <h1 className="text-center ui-sans font-semibold mb-5" style={{ color: "#2B241C" }}>Criar nova senha</h1>
+        {error && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#f0dad4", color: "#a6402b" }}>{error}</div>}
+        {message && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#e4ead9", color: "#556b3f" }}>{message}</div>}
+        {message ? (
+          <button type="button" onClick={onConcluir} className="ui-sans w-full px-4 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
+            Voltar para entrar
+          </button>
+        ) : (
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <label className="ui-sans flex flex-col gap-1.5">
+            <span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Nova senha</span>
+            <input style={inputStyle} type="password" autoComplete="new-password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+          </label>
+          <label className="ui-sans flex flex-col gap-1.5">
+            <span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Confirmar nova senha</span>
+            <input style={inputStyle} type="password" autoComplete="new-password" required minLength={6} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+          </label>
+          <button type="submit" disabled={loading} className="ui-sans flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
+            {loading && <Loader2 className="animate-spin" size={16} />} Salvar nova senha
+          </button>
+        </form>
+        )}
       </div>
     </div>
   );
@@ -340,11 +441,15 @@ const MENU = [
   ["/guias", "Guias"],
   ["/videos", "Videos"],
   ["/achei-uma-ave", "Achei uma ave"],
+  ["/aves-perdidas", "Aves perdidas"],
+  ["/campanha-ave-perdida", "Divulgar minha busca"],
 ];
 
 const SEO_FIXO = {
   "/aves-a-venda": { titulo: "Aves a venda", descricao: "Ring Neck e Calopsita de criadores cadastrados, com contato direto." },
   "/achei-uma-ave": { titulo: "Achei uma ave", descricao: "Encontrou uma ave? Informe a anilha e ajudamos a devolver ao criador." },
+  "/aves-perdidas": { titulo: "Aves perdidas", descricao: "Veja anúncios de aves perdidas e ajude a reunir aves e suas famílias." },
+  "/campanha-ave-perdida": { titulo: "Divulgação regional de ave perdida", descricao: "Solicite orçamento para ampliar a divulgação regional da busca pela sua ave." },
 };
 
 function SeoFixo({ caminho }) {
@@ -465,6 +570,8 @@ function ConteudoDaRota({ caminho, onEntrar }) {
       </section>
     );
   }
+  if (caminho === "/aves-perdidas") return <><SeoFixo caminho={caminho} /><AvesPerdidas /></>;
+  if (caminho === "/campanha-ave-perdida") return <><SeoFixo caminho={caminho} /><SolicitarCampanha /></>;
   if (caminho === "/achei-uma-ave") {
     return (
       <section className="px-5 py-8">
@@ -480,13 +587,15 @@ function ConteudoDaRota({ caminho, onEntrar }) {
 }
 
 // logado = o criador abriu um guia estando dentro do sistema (so troca o botao do canto)
-export default function AuthPage({ logado = false }) {
+export default function AuthPage({ logado = false, redefinirSenha = false, onSenhaAtualizada }) {
   const [mostrarLogin, setMostrarLogin] = useState(false);
   const caminho = usePath();
 
   useEffect(() => {
     if (!logado) contarVisita(caminho);
   }, [caminho, logado]);
+
+  if (redefinirSenha) return <RedefinirSenha onConcluir={onSenhaAtualizada} />;
 
   const onEntrar = logado ? () => navegar("/") : () => setMostrarLogin(true);
 
@@ -498,7 +607,7 @@ export default function AuthPage({ logado = false }) {
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
       `}</style>
 
-      <header className="px-5 pt-4 pb-2 max-w-6xl mx-auto">
+      <header className="px-5 pb-2 max-w-6xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
         <div className="flex items-center justify-between gap-3">
           <Link para="/" className="flex items-center gap-2">
             <Feather size={22} color="#C69A2E" />

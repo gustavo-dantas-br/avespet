@@ -40,7 +40,7 @@ function addDiasISO(iso, dias) {
 function diffDiasISO(deIso, ateIso) {
   return Math.round((dataLocal(ateIso) - dataLocal(deIso)) / 86400000);
 }
-function helpers.formatarDataBR(iso) {
+function formatarDataBR(iso) {
   if (!iso) return "";
   const { y, m, d } = partesISO(iso);
   return `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
@@ -58,7 +58,7 @@ function resumoPostura(postura) {
   return { total: ovos.length, incubando: c("Incubando"), ferteis: c("Fertil"), inferteis: c("Infertil"), nasceram: c("Nasceu"), perdidos: c("Perdido") };
 }
 
-function resumoReproducao(posturas, hoje = hojeLocalISO()) {
+export function resumoReproducao(posturas, hoje = hojeLocalISO()) {
   let incubando = 0, previstos7 = 0, atrasados = 0;
   posturas.forEach((p) =>
     (p.ovos || []).forEach((o) => {
@@ -193,7 +193,7 @@ function OvoRow({ postura, ovo, ave, onChange, onRemove, onNascimento, inputStyl
   let previsaoCor = "#8a7a63";
   if (prev) {
     const quando = dias > 0 ? `em ${dias} dia${dias === 1 ? "" : "s"}` : dias === 0 ? "hoje" : `${Math.abs(dias)} dia${Math.abs(dias) === 1 ? "" : "s"} de atraso`;
-    previsaoTxt = `Previsto ${helpers.helpers.formatarDataBR(prev)} (${quando})`;
+    previsaoTxt = `Previsto ${helpers.formatarDataBR(prev)} (${quando})`;
     previsaoCor = dias < 0 ? "#a6402b" : dias <= 3 ? "#8a6f2e" : "#8a7a63";
   }
 
@@ -341,8 +341,8 @@ function PosturaCard({ postura, aves, onSave, onDelete, onNascimento, onEditar, 
 }
 
 export default function ReproducaoTab({ aves, posturas, onSave, onDelete, onNascimento, Card, Field, inputStyle, SectionTitle }) {
-  const [form, setForm] = useState(null);
   const helpers = REPRODUCAO_HELPERS;
+  const [form, setForm] = useState(null);
   const sumario = helpers.resumoReproducao(posturas);
   const temCasalPossivel = aves.some((a) => a.sexo === "Macho") && aves.some((a) => a.sexo === "Femea");
 

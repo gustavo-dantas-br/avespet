@@ -46,8 +46,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate }) {
           if (!novo.lida_em && !novo.arquivada_em) {
             setNaoLidasCount((n) => n + 1);
             setAlerta(novo);
-            // O push nativo é enviado pelo servidor; aqui mantemos apenas o alerta interno.
-
+            // A entrega nativa fica a cargo do push enviado pelo servidor.
           }
           setItens((prev) => [novo, ...prev.filter((n) => n.id !== novo.id)].slice(0, PAGE_SIZE));
         } else {
