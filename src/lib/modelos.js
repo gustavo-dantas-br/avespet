@@ -98,7 +98,11 @@ function emptyAnuncio() {
 }
 
 function emptyPerfilCriador() {
-  return { nomeCriatorio: "", cidade: "", uf: "", whatsapp: "" };
+  return { nomeCriatorio: "", nome: "", sobrenome: "", nomeCompleto: "", cidade: "", uf: "", whatsapp: "", email: "" };
+}
+
+function emptyPerfilPrivado() {
+  return { endereco: "", numero: "", complemento: "", bairro: "", cidade: "", uf: "", cep: "" };
 }
 
 function emptyCliente() {
@@ -109,4 +113,4 @@ function emptyFornecedor() {
   return { id: null, nome: "", telefone: "", endereco: "", observacoes: "", criadoEm: "" };
 }
 
-export { emptyAve, emptyDespesa, emptyMutacao, emptyIndicacao, emptyAnuncio, emptyPerfilCriador, emptyCliente, emptyFornecedor };
+export { emptyAve, emptyDespesa, emptyMutacao, emptyIndicacao, emptyAnuncio, emptyPerfilCriador, emptyPerfilPrivado, emptyCliente, emptyFornecedor };
