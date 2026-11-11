@@ -25,6 +25,7 @@ import {
 } from "./lib/db";
 
 import AuthPage from "./components/AuthPage";
+import NotificationsCenter from "./components/NotificationsCenter";
 import { PerdiUmaAve } from "./features/aves-perdidas";
 import ConteudoAdmin from "./conteudo/ConteudoAdmin";
 import { AdminCampanhas } from "./features/campanhas";
@@ -989,6 +990,7 @@ function AppInner({ user, onLogout }) {
       </aside>
 
       <main className="flex-1 p-4 md:p-8 overflow-y-auto w-full min-w-0" style={{ minHeight: "60vh" }}>
+        <NotificationsCenter userId={user.id} isAdmin={isAdminUser} onNavigate={setTab} />
         {error && (
           <div className="ui-sans mb-4 px-4 py-2.5 rounded-lg flex items-center justify-between" style={{ background: "#4a2018", color: "#f2c9c0", border: "1px solid #7a3226" }}>
             <span className="text-sm">{error}</span>
