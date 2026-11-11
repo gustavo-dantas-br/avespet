@@ -3,12 +3,16 @@ import { supabase } from "../../../supabaseClient";
 const TABELA = "anuncios_aves_perdidas";
 
 export async function criarAnuncioPerdida(dados) {
-  const { data, error } = await supabase.from(TABELA).insert({
+  const { error } = await supabase.from(TABELA).insert({
     data: dados,
     status: "pendente",
-  }).select("id").single();
+  });
+
   if (error) throw error;
-  return data.id;
+
+  // Não solicitamos o retorno do registro: anúncios pendentes não podem
+  // ser lidos pela política pública de SELECT.
+  return null;
 }
 
 export async function listarAvesPerdidas() {
