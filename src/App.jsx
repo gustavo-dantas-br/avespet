@@ -188,11 +188,32 @@ function AppInner({ user, onLogout }) {
     const loadPerfil = useCallback(async () => {
     try {
       const p = await getPerfil(user.id);
-      if (p) setPerfil({ ...emptyPerfilCriador(), ...p, synced: true });
+      if (p) {
+        setPerfil({ ...emptyPerfilCriador(), ...p, synced: true });
+        return;
+      }
+
+      // Dados do cadastro ficam no Auth metadata ate o primeiro acesso.
+      const metadata = user.user_metadata || {};
+      const nome = (metadata.nome || "").trim();
+      const sobrenome = (metadata.sobrenome || "").trim();
+      const telefone = (metadata.telefone || metadata.whatsapp || "").trim();
+      if (nome || sobrenome || telefone) {
+        const perfilInicial = {
+          ...emptyPerfilCriador(),
+          nome,
+          sobrenome,
+          nomeCompleto: [nome, sobrenome].filter(Boolean).join(" "),
+          telefone,
+          whatsapp: telefone,
+        };
+        await savePerfil(user.id, perfilInicial);
+        setPerfil({ ...perfilInicial, synced: true });
+      }
     } catch {
-      // silencioso - se a tabela ainda nao existir no banco, fica com o perfil vazio
+      // Mantem o cadastro funcional mesmo se a tabela de perfil estiver indisponivel.
     }
-  }, [user.id]);
+  }, [user.id, user.user_metadata]);
 
   const loadAdminStatus = useCallback(async () => {
     try {
