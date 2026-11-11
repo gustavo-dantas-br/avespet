@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { Save } from "lucide-react";
 const UF_LISTA = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
-export default function PerfilTab({ perfil, onSave, Card, Field, SectionTitle, inputStyle }) {
-  const [form, setForm] = useState(perfil);
+export default function PerfilTab({ perfil, privado, email, onSave, onSavePrivado, onUpdateEmail, Card, Field, SectionTitle, inputStyle }) {
+  const [form, setForm] = useState(perfil);\n  const [endereco, setEndereco] = useState(privado);\n  const [novoEmail, setNovoEmail] = useState(email || "");
   const [salvo, setSalvo] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   function submit() {
-    onSave(form);
+    onSave({ ...form, email: novoEmail });\n    onSavePrivado(endereco);\n    if (novoEmail.trim() && novoEmail.trim() !== email) onUpdateEmail(novoEmail.trim());
     setSalvo(true);
     setTimeout(() => setSalvo(false), 2500);
   }
@@ -17,11 +17,11 @@ export default function PerfilTab({ perfil, onSave, Card, Field, SectionTitle, i
     <div className="max-w-xl">
       <SectionTitle>Perfil do Criador</SectionTitle>
       <p className="ui-sans text-sm mb-5" style={{ color: "#F1E6D2" }}>
-        Essas informacoes aparecem publicamente em todos os seus anuncios, pra quem se interessar saber quem e voce e como falar com voce.
+        Nome do criatorio, cidade, UF e WhatsApp podem aparecer nos anuncios. Seu endereco completo e seu e-mail ficam privados.
       </p>
       <Card className="p-4 sm:p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <Field label="Nome do criatório"><input style={inputStyle} value={form.nomeCriatorio} onChange={set("nomeCriatorio")} placeholder="ex: Criatório Avespet" /></Field>
+          <Field label="Nome"><input style={inputStyle} value={form.nome || ""} onChange={set("nome")} /></Field>\n          <Field label="Sobrenome"><input style={inputStyle} value={form.sobrenome || ""} onChange={set("sobrenome")} /></Field>\n          <Field label="Nome do criatório"><input style={inputStyle} value={form.nomeCriatorio} onChange={set("nomeCriatorio")} placeholder="ex: Criatório Avespet" /></Field>
           <Field label="WhatsApp de contato"><input style={inputStyle} value={form.whatsapp} onChange={set("whatsapp")} placeholder="ex: (11) 99999-9999" /></Field>
           <Field label="Cidade"><input style={inputStyle} value={form.cidade} onChange={set("cidade")} placeholder="ex: Barueri" /></Field>
           <Field label="UF">
