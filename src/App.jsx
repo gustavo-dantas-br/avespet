@@ -4,7 +4,7 @@ import AveCard from "./features/plantel/components/AveCard";
 import { Card, SectionTitle, inputStyle, Field } from "./components/ui/SharedUI";
 import SuporteWhatsApp from "./components/SuporteWhatsApp";
 import { compressPhoto } from "./features/plantel/utils/comprimirFoto";
-import { emptyAve, emptyDespesa, emptyMutacao, emptyIndicacao, emptyAnuncio, emptyPerfilCriador, emptyCliente, emptyFornecedor } from "./lib/modelos";
+import { emptyAve, emptyDespesa, emptyMutacao, emptyIndicacao, emptyAnuncio, emptyPerfilCriador, emptyPerfilPrivado, emptyCliente, emptyFornecedor } from "./lib/modelos";
 import { hojeISO, primeiroDiaMesISO, ultimoDiaMesISO, primeiroDiaAnoISO, money } from "./lib/formatadores";
 import { normalizeTelefone, whatsappUrl } from "./lib/telefone";
 import { computeFinanceiro, computeFinanceiroPeriodo } from "./features/financeiro/utils/calcularFinanceiro";
@@ -17,7 +17,7 @@ import {
 import { supabase } from "./supabaseClient";
 
 import {
-  listRows, saveRow, deleteRow, uid, getPerfil, savePerfil, listAnuncios, saveAnuncio, deleteAnuncio,
+  listRows, saveRow, deleteRow, uid, getPerfil, savePerfil, getPerfilPrivado, savePerfilPrivado, listAnuncios, saveAnuncio, deleteAnuncio,
   checkIsAdmin, listTodosAnunciosParaAdmin, updateAnuncioStatus, listPerfisPublicos,
   listPerdidas, savePerdida, deletePerdida, buscarPerdidaPorAnilha,
   listAchadosAnilha, atualizarStatusAchado,
@@ -98,7 +98,7 @@ function AppInner({ user, onLogout }) {
   const [indicacoes, setIndicacoes] = useState([]);
   const [posturas, setPosturas] = useState([]);
   const [anuncios, setAnuncios] = useState([]);
-  const [perfil, setPerfil] = useState(emptyPerfilCriador());
+  const [perfil, setPerfil] = useState(emptyPerfilCriador());\n  const [perfilPrivado, setPerfilPrivado] = useState(emptyPerfilPrivado());
   const [isAdminUser, setIsAdminUser] = useState(false);
   const [anunciosAprovacao, setAnunciosAprovacao] = useState([]);
   const [perfisPublicos, setPerfisPublicos] = useState([]);
@@ -187,7 +187,7 @@ function AppInner({ user, onLogout }) {
 
     const loadPerfil = useCallback(async () => {
     try {
-      const p = await getPerfil(user.id);
+      const [p, privado] = await Promise.all([getPerfil(user.id), getPerfilPrivado(user.id)]);\n      setPerfilPrivado({ ...emptyPerfilPrivado(), ...privado });
       if (p) {
         setPerfil({ ...emptyPerfilCriador(), ...p, synced: true });
         return;
@@ -723,6 +723,22 @@ function AppInner({ user, onLogout }) {
       ));
   }
 
+  async function handleSavePerfilPrivado(dados) {
+    setPerfilPrivado(dados);
+    try {
+      await savePerfilPrivado(user.id, dados);
+      setError("");
+    } catch (e) {
+      setError("Nao foi possivel salvar o endereco privado (" + (e?.message || "erro desconhecido") + ").");
+    }
+  }
+
+  async function handleUpdateEmail(novoEmail) {
+    const { error: authError } = await supabase.auth.updateUser({ email: novoEmail });
+    if (authError) setError("Nao foi possivel solicitar a troca de e-mail: " + authError.message);
+    else setError("Solicitacao enviada. Confirme o novo e-mail pelo link enviado pelo Supabase para concluir a alteracao.");
+  }
+
   async function handleModerarAnuncio(id, novoStatus) {
     setAnunciosAprovacao((prev) => prev.map((a) => (a.id === id ? { ...a, status: novoStatus } : a)));
     try {
@@ -1113,7 +1129,7 @@ function AppInner({ user, onLogout }) {
             )}
 
             {tab === "perfil" && (
-              <PerfilTab perfil={perfil} onSave={handleSavePerfil} Card={Card} Field={Field} SectionTitle={SectionTitle} inputStyle={inputStyle} />
+              <PerfilTab perfil={perfil} privado={perfilPrivado} email={user.email} onSave={handleSavePerfil} onSavePrivado={handleSavePerfilPrivado} onUpdateEmail={handleUpdateEmail} Card={Card} Field={Field} SectionTitle={SectionTitle} inputStyle={inputStyle} />
             )}
 
 
