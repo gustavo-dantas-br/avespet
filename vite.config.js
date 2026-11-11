@@ -12,9 +12,9 @@ export default defineConfig({
       injectRegister: "auto",
       registerType: "autoUpdate",
       manifest: {
-        name: "Criatório Dantas",
-        short_name: "Criatório Dantas",
-        description: "Sistema de gerenciamento do Criatório Dantas",
+        name: "Avespet",
+        short_name: "Avespet",
+        description: "Plataforma de gestão para criadores de aves",
         theme_color: "#2B241C",
         background_color: "#F5EFE4",
         display: "standalone",
