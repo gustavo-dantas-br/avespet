@@ -323,10 +323,11 @@ function LoginModal({ onFechar }) {
         {error && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#f0dad4", color: "#a6402b" }}>{error}</div>}
         {message && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#e4ead9", color: "#556b3f" }}>{message}</div>}
         {message ? (
-          <button type="button" onClick={onConcluir} className="ui-sans w-full px-4 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
+          <button type="button" onClick={onFechar} className="ui-sans w-full px-4 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
             Voltar para entrar
           </button>
         ) : (
+          <>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>E-mail</span><input style={inputStyle} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
           {mode !== "forgot" && <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Senha</span><input style={inputStyle} type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></label>}
@@ -342,6 +343,8 @@ function LoginModal({ onFechar }) {
         <button type="button" onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setMessage(""); }} className="ui-sans text-xs mt-5 w-full text-center underline" style={{ color: "#8a7a63" }}>
           {mode === "login" ? "Nao tem conta? Criar uma gratuita" : "Voltar para entrar"}
         </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -394,6 +397,11 @@ function RedefinirSenha({ onConcluir }) {
         <h1 className="text-center ui-sans font-semibold mb-5" style={{ color: "#2B241C" }}>Criar nova senha</h1>
         {error && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#f0dad4", color: "#a6402b" }}>{error}</div>}
         {message && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#e4ead9", color: "#556b3f" }}>{message}</div>}
+        {message ? (
+          <button type="button" onClick={onConcluir} className="ui-sans w-full px-4 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
+            Voltar para entrar
+          </button>
+        ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="ui-sans flex flex-col gap-1.5">
             <span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Nova senha</span>
