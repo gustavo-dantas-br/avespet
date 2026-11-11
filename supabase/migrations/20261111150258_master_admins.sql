@@ -14,7 +14,7 @@ create policy "master consulta sua propria permissao"
   to authenticated
   using (user_id = (select auth.uid()));
 
-revoke all on table public.master_admins from public, anon, authenticated;
+revoke all on table public.master_admins from public, anon, authenticated, service_role;
 grant select on table public.master_admins to authenticated, service_role;
 
 comment on table public.master_admins is
