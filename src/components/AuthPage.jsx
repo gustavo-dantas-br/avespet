@@ -274,6 +274,9 @@ function LoginModal({ onFechar }) {
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [nome, setNome] = useState("");
+  const [sobrenome, setSobrenome] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -292,9 +295,17 @@ function LoginModal({ onFechar }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        if (!nome.trim() || !sobrenome.trim() || !telefone.trim()) {
+          throw new Error("Preencha nome, sobrenome e telefone para criar sua conta.");
+        }
+        const nomeCompleto = nome.trim() + " " + sobrenome.trim();
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { nome: nome.trim(), sobrenome: sobrenome.trim(), nomeCompleto, telefone: telefone.trim(), whatsapp: telefone.trim() } },
+        });
         if (error) throw error;
-        setMessage("Conta criada! Verifica seu e-mail pra confirmar antes de entrar.");
+        setMessage("Conta criada! Enviamos os dados de confirmação para seu e-mail. Depois de confirmar e entrar, seu perfil de criador será criado automaticamente.");
       }
     } catch (err) {
       setError(err.message || "Nao foi possivel completar essa acao.");
@@ -321,8 +332,15 @@ function LoginModal({ onFechar }) {
         ) : (
           <>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>E-mail</span><input style={inputStyle} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
-          {mode !== "forgot" && <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Senha</span><input style={inputStyle} type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></label>}
+          {mode === "signup" && (
+            <>
+              <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Nome</span><input style={inputStyle} autoComplete="given-name" required value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Seu nome" /></label>
+              <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Sobrenome</span><input style={inputStyle} autoComplete="family-name" required value={sobrenome} onChange={(e) => setSobrenome(e.target.value)} placeholder="Seu sobrenome" /></label>
+              <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Telefone de contato / WhatsApp</span><input style={inputStyle} type="tel" autoComplete="tel" required value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 99999-9999" /></label>
+            </>
+          )}
+          <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>E-mail</span><input style={inputStyle} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+          {mode !== "forgot" && <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Senha</span><input style={inputStyle} type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></label>
           <button type="submit" disabled={loading} className="ui-sans flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold mt-1" style={{ background: "#C69A2E", color: "#2B1D14" }}>
             {loading && <Loader2 className="animate-spin" size={16} />}{mode === "login" ? "Entrar" : mode === "forgot" ? "Enviar link de recuperação" : "Criar conta"}
           </button>
