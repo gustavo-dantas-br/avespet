@@ -290,7 +290,13 @@ function LoginModal({ onFechar }) {
     e.preventDefault();
     setError(""); setMessage(""); setLoading(true);
     try {
-      if (mode === "login") {
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+        });
+        if (error) throw error;
+        setMessage("Se esse e-mail estiver cadastrado, enviaremos um link para redefinir sua senha. Confira também o spam.");
+      } else if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       } else {
@@ -313,19 +319,90 @@ function LoginModal({ onFechar }) {
           <Feather size={20} color="#A6402B" />
           <div style={{ color: "#2B241C", fontWeight: 700, fontSize: 16, fontFamily: "'Fraunces', serif" }}>Avespet</div>
         </div>
-        <h2 className="text-center ui-sans font-semibold mb-5" style={{ color: "#2B241C" }}>{mode === "login" ? "Entrar na sua conta" : "Criar conta gratuita"}</h2>
+        <h2 className="text-center ui-sans font-semibold mb-5" style={{ color: "#2B241C" }}>{mode === "login" ? "Entrar na sua conta" : mode === "forgot" ? "Recuperar senha" : "Criar conta gratuita"}</h2>
         {error && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#f0dad4", color: "#a6402b" }}>{error}</div>}
         {message && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#e4ead9", color: "#556b3f" }}>{message}</div>}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>E-mail</span><input style={inputStyle} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
-          <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Senha</span><input style={inputStyle} type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+          {mode !== "forgot" && <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Senha</span><input style={inputStyle} type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></label>}
           <button type="submit" disabled={loading} className="ui-sans flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold mt-1" style={{ background: "#C69A2E", color: "#2B1D14" }}>
-            {loading && <Loader2 className="animate-spin" size={16} />}{mode === "login" ? "Entrar" : "Criar conta"}
+            {loading && <Loader2 className="animate-spin" size={16} />}{mode === "login" ? "Entrar" : mode === "forgot" ? "Enviar link de recuperação" : "Criar conta"}
           </button>
         </form>
-        <button onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setMessage(""); }} className="ui-sans text-xs mt-5 w-full text-center underline" style={{ color: "#8a7a63" }}>
-          {mode === "login" ? "Nao tem conta? Criar uma gratuita" : "Ja tem conta? Entrar"}
+        {mode === "login" && (
+          <button type="button" onClick={() => { setMode("forgot"); setError(""); setMessage(""); }} className="ui-sans text-xs mt-4 w-full text-center underline" style={{ color: "#8a7a63" }}>
+            Esqueceu sua senha?
+          </button>
+        )}
+        <button type="button" onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setMessage(""); }} className="ui-sans text-xs mt-5 w-full text-center underline" style={{ color: "#8a7a63" }}>
+          {mode === "login" ? "Nao tem conta? Criar uma gratuita" : "Voltar para entrar"}
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Redefinicao de senha apos o link enviado pelo Supabase Auth
+// ---------------------------------------------------------------------------
+
+function RedefinirSenha({ onConcluir }) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+    if (password.length < 6) {
+      setError("A senha precisa ter pelo menos 6 caracteres.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("As senhas nao conferem.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      setMessage("Senha alterada com sucesso! Voce ja pode entrar com a nova senha.");
+      await supabase.auth.signOut();
+      onConcluir?.();
+    } catch (err) {
+      setError(err.message || "Nao foi possivel alterar a senha. Solicite um novo link.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "#2B1D14" }}>
+      <div className="w-full max-w-sm rounded-xl p-6 sm:p-8" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
+        <div className="flex items-center gap-2 mb-5 justify-center">
+          <Feather size={20} color="#A6402B" />
+          <div style={{ color: "#2B241C", fontWeight: 700, fontSize: 16, fontFamily: "'Fraunces', serif" }}>Avespet</div>
+        </div>
+        <h1 className="text-center ui-sans font-semibold mb-5" style={{ color: "#2B241C" }}>Criar nova senha</h1>
+        {error && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#f0dad4", color: "#a6402b" }}>{error}</div>}
+        {message && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#e4ead9", color: "#556b3f" }}>{message}</div>}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <label className="ui-sans flex flex-col gap-1.5">
+            <span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Nova senha</span>
+            <input style={inputStyle} type="password" autoComplete="new-password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+          </label>
+          <label className="ui-sans flex flex-col gap-1.5">
+            <span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Confirmar nova senha</span>
+            <input style={inputStyle} type="password" autoComplete="new-password" required minLength={6} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+          </label>
+          <button type="submit" disabled={loading} className="ui-sans flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
+            {loading && <Loader2 className="animate-spin" size={16} />} Salvar nova senha
+          </button>
+        </form>
       </div>
     </div>
   );
@@ -490,13 +567,15 @@ function ConteudoDaRota({ caminho, onEntrar }) {
 }
 
 // logado = o criador abriu um guia estando dentro do sistema (so troca o botao do canto)
-export default function AuthPage({ logado = false }) {
+export default function AuthPage({ logado = false, redefinirSenha = false, onSenhaAtualizada }) {
   const [mostrarLogin, setMostrarLogin] = useState(false);
   const caminho = usePath();
 
   useEffect(() => {
     if (!logado) contarVisita(caminho);
   }, [caminho, logado]);
+
+  if (redefinirSenha) return <RedefinirSenha onConcluir={onSenhaAtualizada} />;
 
   const onEntrar = logado ? () => navegar("/") : () => setMostrarLogin(true);
 
