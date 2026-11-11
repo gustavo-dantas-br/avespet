@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Archive, Bell, CheckCheck, Loader2, RotateCcw, X } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { ativarPushDoDispositivo } from "../lib/pushNotifications";
 
 const PAGE_SIZE = 30;
 const dataHora = (valor) => valor ? new Date(valor).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "";
@@ -22,6 +23,8 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate }) {
   const [naoLidasCount, setNaoLidasCount] = useState(0);
   const [alerta, setAlerta] = useState(null);
   const [permissao, setPermissao] = useState(() => (typeof Notification !== "undefined" ? Notification.permission : "unsupported"));
+  const [ativandoPush, setAtivandoPush] = useState(false);
+  const [statusPush, setStatusPush] = useState("");
 
   const atualizarContagem = useCallback(async () => {
     if (!userId) return;
@@ -66,9 +69,18 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate }) {
   }, [alerta]);
 
   async function ativarAlertasDispositivo() {
-    if (typeof Notification === "undefined") return;
-    const resultado = await Notification.requestPermission();
-    setPermissao(resultado);
+    setAtivandoPush(true);
+    setStatusPush("");
+    try {
+      await ativarPushDoDispositivo(userId);
+      setPermissao("granted");
+      setStatusPush("Este dispositivo está inscrito para receber notificações.");
+    } catch (e) {
+      setPermissao(typeof Notification !== "undefined" ? Notification.permission : "unsupported");
+      setStatusPush(e?.message || "Não foi possível ativar as notificações.");
+    } finally {
+      setAtivandoPush(false);
+    }
   }
 
   const carregar = useCallback(async (reset = true) => {
@@ -151,8 +163,9 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate }) {
   return (
     <div className="relative ui-sans flex justify-end mb-4">
       {alerta && <button onClick={() => { setAberto(true); setAlerta(null); if (alerta.referencia_tipo === "anuncio") onNavigate?.(isAdmin ? "aprovacoes" : "anuncios"); }} className="fixed right-4 top-4 z-[80] max-w-sm rounded-xl p-4 text-left shadow-2xl" style={{ background: "#FAF3E6", color: "#2B241C", border: "2px solid #C69A2E" }}><strong className="block text-sm">{alerta.titulo}</strong><span className="block text-xs mt-1">{alerta.mensagem}</span><span className="block text-[10px] mt-2 underline">Abrir agora</span></button>}
-      {permissao === "default" && <button onClick={ativarAlertasDispositivo} className="mr-2 rounded-lg px-2 py-2 text-xs font-semibold" style={{ background: "#e8d8b9", color: "#2B241C" }}>Ativar alertas no dispositivo</button>}
+      {permissao !== "unsupported" && permissao !== "denied" && <button onClick={ativarAlertasDispositivo} disabled={ativandoPush} className="mr-2 rounded-lg px-2 py-2 text-xs font-semibold disabled:opacity-60" style={{ background: "#e8d8b9", color: "#2B241C" }}>{ativandoPush ? "Ativando..." : permissao === "granted" ? "Ativar push neste dispositivo" : "Ativar alertas no dispositivo"}</button>}
       {permissao === "denied" && <span className="mr-2 self-center text-[10px]" style={{ color: "#b09a78" }}>Alertas do dispositivo bloqueados</span> }
+      {statusPush && <span role="status" className="mr-2 self-center max-w-[220px] text-[10px]" style={{ color: statusPush.startsWith("Este dispositivo") ? "#556b3f" : "#a6402b" }}>{statusPush}</span>}
       <button onClick={() => setAberto((v) => !v)}
         className="relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold"
         style={{ background: "#3a2314", color: "#F1E6D2", border: "1px solid #6b4b25" }}>
