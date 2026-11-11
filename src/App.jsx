@@ -98,7 +98,8 @@ function AppInner({ user, onLogout }) {
   const [indicacoes, setIndicacoes] = useState([]);
   const [posturas, setPosturas] = useState([]);
   const [anuncios, setAnuncios] = useState([]);
-  const [perfil, setPerfil] = useState(emptyPerfilCriador());\n  const [perfilPrivado, setPerfilPrivado] = useState(emptyPerfilPrivado());
+  const [perfil, setPerfil] = useState(emptyPerfilCriador());
+  const [perfilPrivado, setPerfilPrivado] = useState(emptyPerfilPrivado());
   const [isAdminUser, setIsAdminUser] = useState(false);
   const [anunciosAprovacao, setAnunciosAprovacao] = useState([]);
   const [perfisPublicos, setPerfisPublicos] = useState([]);
@@ -187,7 +188,8 @@ function AppInner({ user, onLogout }) {
 
     const loadPerfil = useCallback(async () => {
     try {
-      const [p, privado] = await Promise.all([getPerfil(user.id), getPerfilPrivado(user.id)]);\n      setPerfilPrivado({ ...emptyPerfilPrivado(), ...privado });
+      const [p, privado] = await Promise.all([getPerfil(user.id), getPerfilPrivado(user.id)]);
+      setPerfilPrivado({ ...emptyPerfilPrivado(), ...privado });
       if (p) {
         setPerfil({ ...emptyPerfilCriador(), ...p, synced: true });
         return;
@@ -290,6 +292,10 @@ function AppInner({ user, onLogout }) {
       setError("Da um nome pra ave antes de salvar.");
       return;
     }
+    if (!form.id && form.status === "A venda" && !(Number(form.anuncioPreco) > 0)) {
+      setError("Informe o preco do anuncio para cadastrar uma ave ja a venda.");
+      return;
+    }
     setSaving(true);
     setError("");
     const id = form.id || uid();
@@ -377,6 +383,13 @@ function AppInner({ user, onLogout }) {
     try {
       await saveRow("aves", user.id, toSave);
       setAves((prev) => prev.map((a) => (a.id === id ? { ...a, synced: true } : a)));
+      if (!form.id && toSave.status === "A venda" && Number(toSave.anuncioPreco) > 0) {
+        handleSaveAnuncio({
+          ...emptyAnuncio(), aveId: id, nomeAve: toSave.nome, especie: toSave.especie,
+          corMutacao: toSave.corMutacao, sexo: toSave.sexo, nascimento: toSave.nascimento,
+          foto: toSave.foto, preco: toSave.anuncioPreco, descricao: toSave.anuncioDescricao || "",
+        });
+      }
     } catch (e) {
       setError(
         `"${form.nome}" ficou na tela, mas nao salvou no banco (${e?.message || "erro desconhecido"}). ` +
@@ -715,7 +728,7 @@ function AppInner({ user, onLogout }) {
 
   function handleSavePerfil(novoPerfil) {
     setPerfil({ ...novoPerfil, synced: false });
-    savePerfil(user.id, novoPerfil)
+    savePerfil(user.id, (() => { const { email, ...publico } = novoPerfil; return publico; })())
       .then(() => setPerfil({ ...novoPerfil, synced: true }))
       .catch((e) => setError(
         `Perfil ficou na tela, mas nao salvou no banco (${e?.message || "erro desconhecido"}). ` +
@@ -838,8 +851,13 @@ function AppInner({ user, onLogout }) {
       };
       const resumo = Object.keys(rotulos).map((k) => [rotulos[k], lista(k).length]).filter(([, n]) => n > 0);
       if (!resumo.length && !perfilImp) throw new Error("backup vazio");
-      const linhas = resumo.map(([nome, n]) => `- ${n} ${nome}`).concat(perfilImp ? ["- seu perfil de criador"] : []).join("\n");
-      if (!confirm(`Restaurar este backup?\n\n${linhas}\n\nRegistros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`)) return;
+      const linhas = resumo.map(([nome, n]) => `- ${n} ${nome}`).concat(perfilImp ? ["- seu perfil de criador"] : []).join("
+");
+      if (!confirm(`Restaurar este backup?
+
+${linhas}
+
+Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`)) return;
 
       const tarefas = [];
       ["aves", "despesas", "mutacoes", "clientes", "fornecedores", "indicacoes", "posturas"].forEach((tabela) =>
