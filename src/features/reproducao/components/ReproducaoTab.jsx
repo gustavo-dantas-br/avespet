@@ -58,7 +58,7 @@ function resumoPostura(postura) {
   return { total: ovos.length, incubando: c("Incubando"), ferteis: c("Fertil"), inferteis: c("Infertil"), nasceram: c("Nasceu"), perdidos: c("Perdido") };
 }
 
-function resumoReproducao(posturas, hoje = hojeLocalISO()) {
+export function resumoReproducao(posturas, hoje = hojeLocalISO()) {
   let incubando = 0, previstos7 = 0, atrasados = 0;
   posturas.forEach((p) =>
     (p.ovos || []).forEach((o) => {
