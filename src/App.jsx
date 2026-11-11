@@ -18,7 +18,7 @@ import {
 import { supabase } from "./supabaseClient";
 
 import {
-  listRows, saveRow, deleteRow, uid, getPerfil, savePerfil, getPerfilPrivado, savePerfilPrivado, listAnuncios, saveAnuncio, deleteAnuncio,
+  listRows, saveRow, deleteRow, uid, savePerfil, savePerfilPrivado, listAnuncios, saveAnuncio, deleteAnuncio,
   checkIsAdmin, listTodosAnunciosParaAdmin, updateAnuncioStatus, listPerfisPublicos,
   listPerdidas, savePerdida, deletePerdida, buscarPerdidaPorAnilha,
   listAchadosAnilha, atualizarStatusAchado,
@@ -43,6 +43,7 @@ import FornecedoresTab from "./features/fornecedores/FornecedoresTab";
 import PosVendaTab from "./features/pos-venda/PosVendaTab";
 import IndicacoesTab from "./features/indicacoes/IndicacoesTab";
 import PerfilTab from "./features/perfil/PerfilTab";
+import { carregarDadosPerfil } from "./features/perfil/services/perfilService";
 import AnunciosTab from "./features/anuncios/AnunciosTab";
 import FormTab from "./features/plantel/FormTab";
 import { SeletorComprador, SeletorFornecedor } from "./features/plantel/components/SeletoresCadastro";
@@ -168,31 +169,12 @@ function AppInner({ user, onLogout }) {
     }
   }, [user.id]);
 
-    const loadPerfil = useCallback(async () => {
+  const loadPerfil = useCallback(async () => {
     try {
-      const [p, privado] = await Promise.all([getPerfil(user.id), getPerfilPrivado(user.id)]);
-      setPerfilPrivado({ ...emptyPerfilPrivado(), ...privado });
-      if (p) {
-        setPerfil({ ...emptyPerfilCriador(), ...p, synced: true });
-        return;
-      }
-
-      // Dados do cadastro ficam no Auth metadata ate o primeiro acesso.
-      const metadata = user.user_metadata || {};
-      const nome = (metadata.nome || "").trim();
-      const sobrenome = (metadata.sobrenome || "").trim();
-      const telefone = (metadata.telefone || metadata.whatsapp || "").trim();
-      if (nome || sobrenome || telefone) {
-        const perfilInicial = {
-          ...emptyPerfilCriador(),
-          nome,
-          sobrenome,
-          nomeCompleto: [nome, sobrenome].filter(Boolean).join(" "),
-          telefone,
-          whatsapp: telefone,
-        };
-        await savePerfil(user.id, perfilInicial);
-        setPerfil({ ...perfilInicial, synced: true });
+      const { perfil: dadosPerfil, perfilPrivado: dadosPrivados } = await carregarDadosPerfil(user);
+      setPerfilPrivado({ ...emptyPerfilPrivado(), ...dadosPrivados });
+      if (dadosPerfil) {
+        setPerfil({ ...emptyPerfilCriador(), ...dadosPerfil, synced: true });
       }
     } catch {
       // Mantem o cadastro funcional mesmo se a tabela de perfil estiver indisponivel.
