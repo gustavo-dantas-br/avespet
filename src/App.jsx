@@ -904,25 +904,39 @@ function AppInner({ user, onLogout }) {
       `}</style>
 
       <aside
-        className="w-full md:w-60 shrink-0 flex flex-row md:flex-col items-center md:items-stretch py-3 md:py-6 px-3 md:px-4 gap-2 md:gap-0"
+        className="w-full md:w-60 shrink-0 flex flex-col items-stretch py-3 md:py-6 px-3 md:px-4 gap-2 md:gap-0"
         style={{ background: "#241609", borderBottom: "1px solid #4a2c18", borderRight: "1px solid #4a2c18" }}
       >
-        <div className="flex items-center gap-2 mb-0 md:mb-8 px-1 shrink-0">
-        <Feather size={20} color="#C69A2E" />
-  <div className="hidden sm:block">
-    <div style={{ color: "#F1E6D2", fontWeight: 700, fontSize: 16, lineHeight: 1.1 }}>
-      Aves<span style={{ color: "#C69A2E" }}>pet</span>
-    </div>
-  </div>
-</div><div className="flex items-center gap-2 mb-0 md:mb-8 px-1 shrink-0">
-          <Feather size={20} color="#C69A2E" />
-          <div className="hidden sm:block">
-            <div style={{ color: "#F1E6D2", fontWeight: 700, fontSize: 16, lineHeight: 1.1 }}>Gestao inteligente para seu criatorio</div>
-            <div className="ui-mono" style={{ color: "#8a6f4a", fontSize: 10, letterSpacing: 1 }}>CADASTRO DE AVES</div>
+        <div className="flex items-center justify-between gap-3 mb-1 md:mb-8 px-1 shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <Feather size={20} color="#C69A2E" />
+            <div>
+              <div style={{ color: "#F1E6D2", fontWeight: 700, fontSize: 16, lineHeight: 1.1 }}>
+                Aves<span style={{ color: "#C69A2E" }}>pet</span>
+              </div>
+              <div className="ui-mono hidden md:block" style={{ color: "#8a6f4a", fontSize: 10, letterSpacing: 1 }}>GESTAO DO CRIATORIO</div>
+            </div>
+          </div>
+          <div className="flex md:hidden items-center gap-2 shrink-0">
+            <button
+              onClick={() => setTab("dashboard")}
+              aria-label="Voltar ao início"
+              className="ui-sans flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold"
+              style={{ background: tab === "dashboard" ? "#3a2314" : "#332113", color: "#F1E6D2", border: "1px solid #6b4b25" }}
+            >
+              <LayoutDashboard size={15} /> Início
+            </button>
+            <button
+              onClick={onLogout}
+              className="ui-sans flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold"
+              style={{ background: "#332113", color: "#e6c9a4", border: "1px solid #6b4b25" }}
+            >
+              <LogOut size={15} /> Sair
+            </button>
           </div>
         </div>
 
-        <nav className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-visible flex-1 md:flex-none">
+        <nav className="w-full flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-visible flex-1 md:flex-none">
           {[
             { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
             { id: "lista", label: "Aves", icon: Bird },
