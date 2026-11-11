@@ -12,6 +12,43 @@ const modules = [
 ];
 
 export default function MasterApp({ user, onLogout }) {
+  const [summary, setSummary] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [summaryError, setSummaryError] = useState("");
+
+  const loadSummary = async () => {
+    setSummaryLoading(true);
+    setSummaryError("");
+    try {
+      const { data, error } = await supabase.functions.invoke("master-dashboard-summary", {
+        body: {},
+      });
+      if (error || data?.error) {
+        setSummary(null);
+        setSummaryError(data?.error || "Não foi possível carregar os indicadores.");
+      } else {
+        setSummary(data?.counts || {});
+      }
+    } catch {
+      setSummary(null);
+      setSummaryError("Não foi possível carregar os indicadores.");
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSummary();
+  }, []);
+
+  const indicators = [
+    ["Criadores", "perfil_criador"],
+    ["Aves cadastradas", "aves"],
+    ["Anúncios", "anuncios"],
+    ["Aves perdidas", "anuncios_aves_perdidas"],
+    ["Administradores", "admins"],
+  ];
+
   return (
     <div className="min-h-screen" style={{ background: "#f5f6f8", color: "#182230" }}>
       <header className="flex items-center justify-between gap-4 px-5 py-4 border-b bg-white" style={{ borderColor: "#e5e9ef" }}>
