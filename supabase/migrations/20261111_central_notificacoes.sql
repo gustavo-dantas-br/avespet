@@ -96,7 +96,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $fn$
 declare
   v_admin record;
 begin
@@ -109,7 +109,7 @@ begin
   end loop;
   return new;
 end;
-$;
+$fn$;
 
 drop trigger if exists trg_notificar_novo_anuncio_ave_perdida on public.anuncios_aves_perdidas;
 create trigger trg_notificar_novo_anuncio_ave_perdida
