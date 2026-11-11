@@ -25,6 +25,7 @@ import {
 } from "./lib/db";
 
 import AuthPage from "./components/AuthPage";
+import { PerdiUmaAve } from "./features/aves-perdidas";
 import ConteudoAdmin from "./conteudo/ConteudoAdmin";
 import { AdminCampanhas } from "./features/campanhas";
 import ModeracaoAvesPerdidasTab from "./features/aves-perdidas/components/ModeracaoAvesPerdidasTab";
@@ -950,6 +951,7 @@ function AppInner({ user, onLogout }) {
             { id: "posvenda", label: "Pos-venda", icon: ClipboardCheck },
             { id: "indicacoes", label: "Indicacoes", icon: Handshake },
             { id: "anuncios", label: "Anuncios", icon: Megaphone },
+            { id: "perdi-uma-ave", label: "Ave perdida", icon: Bird },
             { id: "perfil", label: "Perfil", icon: UserCircle },
             ...(isAdminUser ? [{ id: "aprovacoes", label: "Aprovacoes", icon: ShieldCheck }] : []),
             ...(isAdminUser ? [{ id: "achados", label: "Achados", icon: Bell }] : []),
@@ -1074,6 +1076,8 @@ function AppInner({ user, onLogout }) {
             {tab === "indicacoes" && (
               <IndicacoesTab indicacoes={indicacoes} clientes={clientes} onSave={handleSaveIndicacao} onDelete={handleDeleteIndicacao} Card={Card} Field={Field} SectionTitle={SectionTitle} SummaryCard={StatCard} inputStyle={inputStyle} STATUS_INDICACAO={STATUS_INDICACAO} emptyIndicacao={emptyIndicacao} hojeISO={hojeISO} />
             )}
+
+            {tab === "perdi-uma-ave" && <PerdiUmaAve userId={user.id} />}
 
             {tab === "anuncios" && (
               <AnunciosTab
