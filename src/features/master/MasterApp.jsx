@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { supabase } from "../../supabaseClient";
 import { LayoutDashboard, Users, Bird, Megaphone, CreditCard, LifeBuoy, Settings, LogOut, ShieldCheck } from "lucide-react";
 
 const modules = [
@@ -37,6 +38,30 @@ export default function MasterApp({ user, onLogout }) {
           <h1 className="text-2xl sm:text-3xl font-bold mt-1">Central de gestão do Avespet</h1>
           <p className="text-sm text-slate-500 mt-2">Ambiente separado do painel dos criadores. Os módulos serão habilitados após implementação e validação das permissões.</p>
         </div>
+
+        <section className="mb-8">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2 className="font-semibold">Indicadores da plataforma</h2>
+            <button type="button" onClick={loadSummary} className="text-sm rounded-lg border px-3 py-2 hover:bg-slate-50">
+              Atualizar
+            </button>
+          </div>
+          {summaryError && (
+            <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              {summaryError} Os indicadores só estarão disponíveis após a migration e a função segura serem implantadas.
+            </div>
+          )}
+          <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+            {indicators.map(([label, key]) => (
+              <article key={key} className="rounded-xl border bg-white p-4" style={{ borderColor: "#e5e9ef" }}>
+                <p className="text-xs text-slate-500">{label}</p>
+                <p className="text-2xl font-bold mt-1 tabular-nums">
+                  {summaryLoading ? "—" : (summary?.[key] ?? "—")}
+                </p>
+              </article>
+            ))}
+          </div>
+        </section>
 
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {modules.map(({ title, description, icon: Icon, status }) => (
