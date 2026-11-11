@@ -28,8 +28,7 @@ AS $function$
     NULL::text,
     NULL::text
   FROM public.perdidas AS p
-  WHERE p.status = 'perdida'
-    AND p_anilha IS NOT NULL
+  WHERE p_anilha IS NOT NULL
     AND pg_catalog.btrim(p_anilha) <> ''
     AND pg_catalog.regexp_replace(pg_catalog.upper(COALESCE(p.data ->> 'anilha', '')), '[^A-Z0-9]', '', 'g')
       = pg_catalog.regexp_replace(pg_catalog.upper(pg_catalog.btrim(p_anilha)), '[^A-Z0-9]', '', 'g');
@@ -65,10 +64,8 @@ AS $function$
     a.data ->> 'cor',
     a.data ->> 'anilha',
     a.data ->> 'foto',
-    CASE WHEN a.data -> 'autorizaContatoPublico' = 'true'::jsonb
-      THEN a.data ->> 'contatoNome' ELSE NULL END,
-    CASE WHEN a.data -> 'autorizaContatoPublico' = 'true'::jsonb
-      THEN a.data ->> 'whatsapp' ELSE NULL END
+    NULL::text,
+    NULL::text
   FROM public.anuncios_aves_perdidas AS a
   WHERE a.status = 'aprovado'
     AND p_anilha IS NOT NULL
@@ -97,7 +94,7 @@ BEGIN
   END IF;
 
   v_anilha := pg_catalog.regexp_replace(
-    pg_catalog.upper(pg_catalog.coalesce(NEW.data ->> 'anilha', '')),
+    pg_catalog.upper(COALESCE(NEW.data ->> 'anilha', '')),
     '[^A-Z0-9]', '', 'g'
   );
 
