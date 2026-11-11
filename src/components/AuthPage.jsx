@@ -129,11 +129,7 @@ function BuscaAnilha() {
                 <div className="text-[10px] px-2 py-0.5 rounded ui-mono inline-block mb-2" style={{ background: r.status === "perdida" ? "#f0dab0" : "#c8dcb8", color: "#2B241C" }}>
                   {r.status === "perdida" ? "AINDA PERDIDA" : "JA FOI ENCONTRADA"}
                 </div>
-                {r.whatsapp && whatsappUrl(r.whatsapp) && (
-                  <a href={whatsappUrl(r.whatsapp)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-semibold px-3 py-2 rounded-lg justify-center" style={{ background: "#556b3f", color: "#F1E6D2" }}>
-                    <Phone size={14} /> Falar com {r.nomeCriatorio || "o criador"}
-                  </a>
-                )}
+                <p className="text-xs mt-2" style={{ color: "#8a7a63" }}>O Avespet fará a intermediação do contato para proteger as duas partes.</p>
               </div>
           ))}
         </div>
