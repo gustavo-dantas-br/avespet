@@ -19,6 +19,57 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate }) {
   const [carregandoMais, setCarregandoMais] = useState(false);
   const [temMais, setTemMais] = useState(false);
   const [erro, setErro] = useState("");
+  const [naoLidasCount, setNaoLidasCount] = useState(0);
+  const [alerta, setAlerta] = useState(null);
+  const [permissao, setPermissao] = useState(() => (typeof Notification !== "undefined" ? Notification.permission : "unsupported"));
+
+  const atualizarContagem = useCallback(async () => {
+    if (!userId) return;
+    const { count, error } = await supabase.from("notificacoes")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId).is("lida_em", null).is("arquivada_em", null);
+    if (!error) setNaoLidasCount(count || 0);
+  }, [userId]);
+
+  useEffect(() => {
+    atualizarContagem();
+    const canal = supabase.channel("notificacoes-" + userId)
+      .on("postgres_changes", {
+        event: "*", schema: "public", table: "notificacoes",
+        filter: "user_id=eq." + userId,
+      }, (payload) => {
+        const novo = payload.new;
+        if (payload.eventType === "INSERT" && novo) {
+          if (!novo.lida_em && !novo.arquivada_em) {
+            setNaoLidasCount((n) => n + 1);
+            setAlerta(novo);
+            if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+              try {
+                new Notification(novo.titulo || "Avespet", { body: novo.mensagem || "Há uma nova atualização.", tag: novo.id });
+              } catch {}
+            }
+          }
+          setItens((prev) => [novo, ...prev.filter((n) => n.id !== novo.id)].slice(0, PAGE_SIZE));
+        } else {
+          atualizarContagem();
+          if (novo?.id) setItens((prev) => prev.map((n) => n.id === novo.id ? { ...n, ...novo } : n));
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(canal); };
+  }, [userId, atualizarContagem]);
+
+  useEffect(() => {
+    if (!alerta) return undefined;
+    const timer = setTimeout(() => setAlerta(null), 9000);
+    return () => clearTimeout(timer);
+  }, [alerta]);
+
+  async function ativarAlertasDispositivo() {
+    if (typeof Notification === "undefined") return;
+    const resultado = await Notification.requestPermission();
+    setPermissao(resultado);
+  }
 
   const carregar = useCallback(async (reset = true) => {
     if (!userId) return;
@@ -53,13 +104,14 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate }) {
     if (aberto) carregar(true);
   }, [aberto, filtro, userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const naoLidas = useMemo(() => itens.filter((n) => !n.lida_em && !n.arquivada_em).length, [itens]);
+  const naoLidas = naoLidasCount;
 
   async function marcarLida(id) {
     const agora = new Date().toISOString();
     const { error } = await supabase.from("notificacoes").update({ lida_em: agora }).eq("id", id).eq("user_id", userId);
     if (error) { setErro("Não foi possível marcar como lida."); return false; }
     setItens((prev) => prev.map((n) => n.id === id ? { ...n, lida_em: agora } : n));
+    setNaoLidasCount((n) => Math.max(0, n - 1));
     return true;
   }
 
@@ -70,6 +122,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate }) {
     const { error } = await supabase.from("notificacoes").update({ lida_em: agora }).in("id", ids).eq("user_id", userId);
     if (error) { setErro("Não foi possível marcar todas como lidas."); return; }
     setItens((prev) => prev.map((n) => ids.includes(n.id) ? { ...n, lida_em: agora } : n));
+    setNaoLidasCount((n) => Math.max(0, n - ids.length));
   }
 
   async function arquivar(n) {
@@ -78,6 +131,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate }) {
     const { error } = await supabase.from("notificacoes").update(atualizacao).eq("id", n.id).eq("user_id", userId);
     if (error) { setErro("Não foi possível arquivar esta notificação."); return; }
     setItens((prev) => prev.filter((item) => item.id !== n.id));
+    if (!n.lida_em) setNaoLidasCount((count) => Math.max(0, count - 1));
   }
 
   async function restaurar(n) {
@@ -90,11 +144,15 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate }) {
     if (!n.lida_em) await marcarLida(n.id);
     if (n.referencia_tipo === "achado_anilha") onNavigate?.(isAdmin ? "achados" : "perdi-uma-ave");
     else if (n.referencia_tipo === "anuncio_ave_perdida") onNavigate?.(isAdmin ? "aves-perdidas-admin" : "perdi-uma-ave");
+    else if (n.referencia_tipo === "anuncio") onNavigate?.(isAdmin ? "aprovacoes" : "anuncios");
     setAberto(false);
   }
 
   return (
     <div className="relative ui-sans flex justify-end mb-4">
+      {alerta && <button onClick={() => { setAberto(true); setAlerta(null); if (alerta.referencia_tipo === "anuncio") onNavigate?.(isAdmin ? "aprovacoes" : "anuncios"); }} className="fixed right-4 top-4 z-[80] max-w-sm rounded-xl p-4 text-left shadow-2xl" style={{ background: "#FAF3E6", color: "#2B241C", border: "2px solid #C69A2E" }}><strong className="block text-sm">{alerta.titulo}</strong><span className="block text-xs mt-1">{alerta.mensagem}</span><span className="block text-[10px] mt-2 underline">Abrir agora</span></button>}
+      {permissao === "default" && <button onClick={ativarAlertasDispositivo} className="mr-2 rounded-lg px-2 py-2 text-xs font-semibold" style={{ background: "#e8d8b9", color: "#2B241C" }}>Ativar alertas no dispositivo</button>}
+      {permissao === "denied" && <span className="mr-2 self-center text-[10px]" style={{ color: "#b09a78" }}>Alertas do dispositivo bloqueados</span> }
       <button onClick={() => setAberto((v) => !v)}
         className="relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold"
         style={{ background: "#3a2314", color: "#F1E6D2", border: "1px solid #6b4b25" }}>
@@ -109,6 +167,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate }) {
             <button onClick={() => setAberto(false)} style={{ color: "#8a7a63" }}><X size={18} /></button>
           </div>
         </div>
+        {permissao === "granted" && <p className="px-3 pt-2 text-[10px]" style={{ color: "#556b3f" }}>Alertas do dispositivo ativados neste navegador.</p>}
         <div className="flex gap-1 overflow-x-auto px-3 py-2" style={{ borderBottom: "1px solid #e3d3b4" }}>
           {FILTROS.map((f) => <button key={f.id} onClick={() => setFiltro(f.id)}
             className="shrink-0 rounded-md px-2.5 py-1.5 text-xs font-semibold"
