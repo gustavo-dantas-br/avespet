@@ -30,9 +30,9 @@ function AchadoCard({ achado, possiveisTitulares = [], onAtualizar }) {
           {achado.ave_nome && <div className="mb-1">Ave: <strong>{achado.ave_nome}</strong></div>}
           {possiveisTitulares.map((p, i) => (
             <div key={p.userId || i} className={i ? "mt-2 pt-2 border-t border-green-900/10" : ""}>
-              <strong>{p.nomeCriatorio || "Criador sem nome informado"}</strong>
+              <strong>{p.nomeCriatorio || p.nomeCompleto || [p.nome, p.sobrenome].filter(Boolean).join(" ") || (p.perfilCadastrado === false ? "Perfil não cadastrado" : "Perfil sem nome de criador")}</strong>
               {p.whatsapp && <div className="text-xs flex items-center gap-1 mt-1"><Phone size={11} /> {p.whatsapp}</div>}
-              {!p.whatsapp && <div className="text-xs">WhatsApp não informado no perfil</div>}
+              {!p.whatsapp && <div className="text-xs">{p.perfilCadastrado === false ? "Solicite ao criador que entre no site e complete seu cadastro." : "Telefone não informado no perfil"}</div>}
               <div className="text-[11px] mt-1 opacity-75">Anúncio aprovado com esta numeração</div>
             </div>
           ))}
@@ -76,7 +76,10 @@ export default function AchadosTab({ achados = [], perfis = [], anuncios = [], o
     const ids = [...new Set(anunciosAprovados
       .filter((a) => normalizarAnilha(a.data?.anilha) === chave && a.user_id)
       .map((a) => a.user_id))];
-    return ids.map((userId) => ({ userId, ...(perfisPorUser.get(userId) || {}) }));
+    return ids.map((userId) => {
+      const perfil = perfisPorUser.get(userId);
+      return perfil ? { userId, ...perfil, perfilCadastrado: true } : { userId, perfilCadastrado: false };
+    });
   }
 
   return (
