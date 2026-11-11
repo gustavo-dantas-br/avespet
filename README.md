@@ -1,6 +1,8 @@
-# Criatorio Dantas - Cadastro de Aves
+# Avespet
 
-Sistema web de gerenciamento de criatório, com cadastro e acompanhamento de aves, genealogia, reprodução, genética, anúncios, aves perdidas/encontradas, clientes, fornecedores e financeiro.
+Plataforma web para gestão de criadores de aves, com cadastro e acompanhamento de plantel, genealogia, reprodução, genética, anúncios, aves perdidas/encontradas, clientes, fornecedores e financeiro.
+
+> **Identidade do produto:** Avespet. “Criatório Dantas” é o nome de um criatório/negócio e não o nome do software.
 
 ## Documentação do projeto
 
@@ -16,6 +18,7 @@ Sistema web de gerenciamento de criatório, com cadastro e acompanhamento de ave
 - Tailwind CSS
 - Vite PWA
 - Deploy na Vercel
+- Repositório GitHub atual: `gustavo-dantas-br/criatorio-dantas-cadastro` (nome legado; renomeação ainda pendente)
 
 ## Executar localmente
 
@@ -60,6 +63,7 @@ Para detalhes e decisões, consulte **[docs/ARQUITETURA.md](docs/ARQUITETURA.md)
 - A chave anon/public do Supabase no frontend exige políticas RLS corretas em todas as tabelas.
 - Dados privados de criadores não devem ser expostos em consultas públicas.
 - Toda mudança de schema ou política deve ser revisada, versionada e testada.
+- A renomeação do produto não exige criar outro projeto Supabase nem trocar as chaves ou o project ref.
 
 ## Qualidade e manutenção
 
