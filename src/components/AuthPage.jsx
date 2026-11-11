@@ -101,7 +101,7 @@ function BuscaAnilha() {
         Encontrou uma ave?
       </h1>
       <p style={{ color: "#b09a78" }} className="text-base mb-6">
-        Digite o numero da anilha. Vamos verificar e, se for de algum criador cadastrado, entramos em contato pra devolver.
+        Digite o número da anilha. Se houver um anúncio de ave perdida aprovado, mostramos o resultado. Se não houver, você poderá registrar a ave encontrada para nossa equipe fazer a intermediação.
       </p>
 
       <form onSubmit={buscar} className="flex flex-col sm:flex-row gap-3 mb-6 max-w-md mx-auto">
@@ -144,7 +144,7 @@ function BuscaAnilha() {
           <div className="text-sm" style={{ color: "#2B241C" }}>
             {resultadosPerdidas?.some((r) => r.status === "perdida")
               ? "Encontramos um cadastro de ave ainda desaparecida. Se ela está com você, muito obrigado por ajudar! Informe os dados abaixo para facilitarmos o reencontro com sua família."
-              : "Essa anilha nao apareceu como perdida. Mesmo assim, se voce encontrou essa ave, informe os dados abaixo para ajudarmos a localizar o responsavel."}
+              : "Não encontramos anúncio aprovado com essa anilha. Registre a ave encontrada; nossa equipe ficará responsável por analisar o caso e fazer a ponte com o titular se ele cadastrar a perda posteriormente."}
           </div>
 
           <label className="ui-sans flex flex-col gap-1.5">
@@ -185,7 +185,7 @@ function BuscaAnilha() {
           <p className="mb-2">Muito obrigado por ter um coração disposto a ajudar. Sabemos o quanto uma ave é especial para sua família e como é angustiante ficar longe dela.</p>
           <p className="mb-2">Ao se preocupar em devolver esse pequeno companheiro, você está oferecendo esperança e a oportunidade de um reencontro cheio de alegria.</p>
           <p>Que sua atitude inspire outras pessoas. O bem que você está fazendo tem um valor enorme!</p>
-          <p className="mt-2">Nossa equipe vai verificar as informações e entrar em contato pelo telefone informado.</p>
+          <p className="mt-2">Nossa equipe administrativa vai conferir o registro e, se o titular cadastrar a ave perdida posteriormente, fará a ligação entre as partes. O contato não será divulgado publicamente.</p>
         </div>
       )}
     </div>
