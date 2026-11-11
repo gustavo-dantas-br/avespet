@@ -48,7 +48,7 @@ export default function AchadosTab({ achados = [], perfis = [], onAtualizar }) {
     <section>
       <h2 className="mb-2" style={{ color: "#F1E6D2", fontSize: 24, fontWeight: 700 }}>Achados por Anilha</h2>
       <p className="ui-sans text-sm mb-5" style={{ color: "#F1E6D2" }}>
-        Pessoas que buscaram uma anilha no site público e deixaram contato. Você confere de qual criador é a ave e faz a ponte.
+        Pessoas que encontraram uma ave e registraram a anilha e seus contatos. A equipe administrativa confere os anúncios de aves perdidas, inclusive os que forem cadastrados depois, e faz a intermediação. Os dados do encontrador não são exibidos publicamente.
       </p>
       <div className="flex flex-wrap gap-2 mb-5">
         {["novo", "contatado", "resolvido"].map((status) => (
