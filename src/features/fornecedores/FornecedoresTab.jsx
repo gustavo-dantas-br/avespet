@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Phone, Pencil, Save, Trash2, MessageCircle, Plus, Search, Users } from "lucide-react";
+import { Phone, Pencil, Save, Trash2, MessageCircle, Plus, Search, Users, Truck } from "lucide-react";
 
 function normalizeTelefone(t) {
   return (t || "").replace(/\\D/g, "");
