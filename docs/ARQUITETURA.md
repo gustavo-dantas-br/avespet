@@ -149,3 +149,36 @@ A estrutura final deve respeitar o padrão já existente em `features/`; não cr
 - Registrada a modularização já existente em `features/`.
 - Corrigida a expectativa: `App.jsx` ainda concentra responsabilidades; a arquitetura modular é uma evolução em andamento.
 - Definidas regras de documentação, segurança, migrações e validação para as próximas alterações.
+
+
+## 11. Identidade e integrações — Avespet
+
+A marca do software é **Avespet**. O nome “Criatório Dantas” pode continuar aparecendo como nome de um criatório cadastrado, mas não deve ser usado como nome da plataforma.
+
+### Estado da renomeação em 11/11/2026
+
+- [x] Projeto Vercel renomeado de `criatorio-dantas-cadastro` para `avespet`.
+- [x] Domínios personalizados `avespet.com.br` e `www.avespet.com.br` continuam associados e verificados no mesmo projeto Vercel.
+- [x] `package.json` e `package-lock.json` alinhados para o nome `avespet`.
+- [x] Manifest PWA atualizado para exibir Avespet no nome e na descrição.
+- [x] README atualizado com a identidade correta.
+- [ ] Repositório GitHub ainda usa o nome legado `criatorio-dantas-cadastro`; renomeação e atualização do remote local ainda pendentes.
+- [ ] Pasta local do projeto ainda precisa ser auditada e, se desejado, renomeada.
+- [ ] Confirmar integração Git do projeto Vercel após a renomeação do repositório GitHub.
+- [ ] Revisar URLs de redirecionamento do Supabase Auth somente depois de confirmar se o domínio público mudou. O domínio atual permanece `www.avespet.com.br`.
+
+### Regras de segurança para a renomeação
+
+1. Não criar outro projeto Supabase nem trocar o project ref ou as chaves por causa da mudança de marca.
+2. Preservar o domínio público e os redirects de produção.
+3. Não remover domínios antigos ou aliases até confirmar que não há dependências externas.
+4. Após renomear o repositório, atualizar o remote local e validar `git remote -v`, `git fetch` e `git status`.
+5. Fazer um deploy de validação e testar login, cadastro, rotas públicas, busca de anilha, aves perdidas e PWA.
+6. Registrar qualquer alteração de Auth redirect URL e configuração de domínio antes de aplicá-la.
+
+### Histórico — 11/11/2026
+
+- Projeto Vercel renomeado para `avespet`, preservando o mesmo ID de projeto.
+- Verificação posterior confirmou os domínios personalizados `avespet.com.br` e `www.avespet.com.br` ainda associados ao projeto.
+- Identificados os nomes legados em `package.json`, `package-lock.json`, README e manifest PWA; documentação e metadados do pacote foram alinhados.
+- Repositório GitHub e pasta local permanecem pendentes por dependerem da atualização do remote e da configuração local.
