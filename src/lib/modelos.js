@@ -25,6 +25,8 @@ function emptyAve() {
     casalLabel: "",
     foto: "",
     status: "No plantel",
+    anuncioPreco: "",
+    anuncioDescricao: "",
     ninhadasGeradas: "",
     garantiaDias: "",
     origemTipo: "Nasceu no plantel",
