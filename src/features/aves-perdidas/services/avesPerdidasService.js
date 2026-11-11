@@ -17,11 +17,7 @@ export async function criarAnuncioPerdida(dados) {
 }
 
 export async function listarAvesPerdidas() {
-  const { data, error } = await supabase
-    .from(TABELA)
-    .select("id, data, created_at")
-    .eq("status", "aprovado")
-    .order("created_at", { ascending: false });
+  const { data, error } = await supabase.rpc("listar_aves_perdidas_publicas");
   if (error) throw error;
   return data || [];
 }
