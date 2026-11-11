@@ -125,12 +125,15 @@ export async function buscarPerdidaPorAnilha(anilha) {
   const termo = (anilha || "").trim();
   if (!termo) return [];
 
-  const { data, error } = await supabase.rpc("buscar_perdida_por_anilha", {
-    p_anilha: termo,
-  });
-  if (error) throw error;
+  const consultas = await Promise.all([
+    supabase.rpc("buscar_perdida_por_anilha", { p_anilha: termo }),
+    supabase.rpc("buscar_anuncio_perdido_por_anilha", { p_anilha: termo }),
+  ]);
+  const erro = consultas.find((r) => r.error);
+  if (erro) throw erro.error;
+  const data = consultas.flatMap((r) => r.data || []);
 
-  return (data || []).map((r) => ({
+  return data.map((r) => ({
     id: r.id,
     status: r.status,
     nomeAve: r.nome_ave,
