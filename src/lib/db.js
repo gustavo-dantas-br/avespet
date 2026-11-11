@@ -120,17 +120,25 @@ export async function deletePerdida(id) {
   if (error) throw error;
 }
 
-// Busca publica por anilha - funciona sem login, ve registros de QUALQUER
-// criador (a policy de leitura publica da tabela 'perdidas' permite isso).
+// Busca publica por anilha usando RPC segura; nao consulta a tabela diretamente.
 export async function buscarPerdidaPorAnilha(anilha) {
   const termo = (anilha || "").trim();
   if (!termo) return [];
-  const { data, error } = await supabase
-    .from("perdidas")
-    .select("id, user_id, status, data")
-    .ilike("data->>anilha", `%${termo}%`);
+
+  const { data, error } = await supabase.rpc("buscar_perdida_por_anilha", {
+    p_anilha: termo,
+  });
   if (error) throw error;
-  return (data || []).map((r) => ({ ...r.data, id: r.id, userId: r.user_id, status: r.status }));
+
+  return (data || []).map((r) => ({
+    id: r.id,
+    status: r.status,
+    nomeAve: r.nome_ave,
+    especie: r.especie,
+    corMutacao: r.cor_mutacao,
+    anilha: r.anilha,
+    foto: r.foto,
+  }));
 }
 
 // ---------- Vitrine publica de anuncios + metricas (Fase 8F) ----------
