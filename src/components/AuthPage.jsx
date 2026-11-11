@@ -607,7 +607,7 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
       `}</style>
 
-      <header className="px-5 pt-4 pb-2 max-w-6xl mx-auto">
+      <header className="px-5 pb-2 max-w-6xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
         <div className="flex items-center justify-between gap-3">
           <Link para="/" className="flex items-center gap-2">
             <Feather size={22} color="#C69A2E" />
