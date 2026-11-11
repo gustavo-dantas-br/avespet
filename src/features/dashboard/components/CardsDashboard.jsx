@@ -20,13 +20,7 @@ function StatCard({ label: lbl, value, tone = "default", onClick }) {
   );
 }
 
-"A venda": "Aves a venda",
-  Vendida: "Aves vendidas",
-  Falecida: "Aves falecidas",
-  casais: "Casais",
-  solteiros: "Solteiros (sem parceiro)",
-  plantel: "Plantel (sob sua responsabilidade)",
-};
+
 
 function TreeCard({ ave }) {
   if (!ave) return null;
