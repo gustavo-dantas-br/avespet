@@ -146,7 +146,7 @@ export function PaginaGuia({ slug, onEntrar }) {
     tipo: "article",
   });
 
-  if (estado.carregando) return <Carregando />;
+  if (estado.carregando) return <div style={{ background: TEMA_PUBLICO.fundo, minHeight: "70vh" }}><Carregando /></div>;
   if (!a) {
     return (
       <div style={{ background: TEMA_PUBLICO.fundo, minHeight: "70vh" }}>
