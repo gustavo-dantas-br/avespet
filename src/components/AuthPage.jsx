@@ -35,7 +35,7 @@ function whatsappUrl(telefone, mensagem) {
 // Busca por anilha - achado direto (perdidas) ou registro mediado pelo admin
 // ---------------------------------------------------------------------------
 
-function BuscaAnilha() {
+function BuscaAnilha({ modoClaro = false }) {
   const [anilha, setAnilha] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -98,16 +98,16 @@ function BuscaAnilha() {
 
   return (
     <div className="w-full max-w-2xl mx-auto text-center ui-sans">
-      <h1 style={{ color: "#F1E6D2", fontFamily: "'Fraunces', serif", fontSize: 34, fontWeight: 700, lineHeight: 1.25 }} className="mb-3">
+      <h1 style={{ color: modoClaro ? "#1D2B25" : "#F1E6D2", fontFamily: "'Fraunces', serif", fontSize: 34, fontWeight: 700, lineHeight: 1.25 }} className="mb-3">
         Encontrou uma ave?
       </h1>
-      <p style={{ color: "#b09a78" }} className="text-base mb-6">
+      <p style={{ color: modoClaro ? "#63736A" : "#b09a78" }} className="text-base mb-6">
         Digite o número da anilha. Se houver um anúncio de ave perdida aprovado, mostramos o resultado. Se não houver, você poderá registrar a ave encontrada para nossa equipe fazer a intermediação.
       </p>
 
       <form onSubmit={buscar} className="flex flex-col sm:flex-row gap-3 mb-6 max-w-md mx-auto">
         <input style={{ ...inputStyle, fontSize: 16, padding: "14px 16px" }} value={anilha} onChange={(e) => setAnilha(e.target.value)} placeholder="ex: FOB 0080" />
-        <button type="submit" disabled={loading} className="shrink-0 flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
+        <button type="submit" disabled={loading} className="shrink-0 flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-semibold" style={{ background: modoClaro ? "#174B3B" : "#C69A2E", color: "#FFFFFF" }}>
           {loading ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} />} Buscar
         </button>
       </form>
@@ -202,17 +202,17 @@ function AnuncioVitrineCard({ anuncio, perfil }) {
   }
 
   return (
-    <div className="rounded-xl overflow-hidden ui-sans" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
+    <div className="rounded-xl overflow-hidden ui-sans" style={{ background: "#FFFFFF", border: "1px solid #E1E9E2" }}>
       <div className="w-full aspect-square" style={{ background: "#3a2a1c" }}>
         {anuncio.foto ? <img src={anuncio.foto} className="w-full h-full object-cover" alt="" /> : null}
       </div>
       <div className="p-3">
         <div className="font-semibold text-sm truncate" style={{ color: "#2B241C" }}>{anuncio.nomeAve}</div>
-        <div className="text-xs mb-1" style={{ color: "#8a7a63" }}>{anuncio.especie} - {anuncio.corMutacao || "sem mutacao"}</div>
-        <div className="text-base font-bold mb-2" style={{ color: "#556b3f" }}>{money(anuncio.preco)}</div>
-        {anuncio.descricao && <div className="text-xs italic mb-2 line-clamp-2" style={{ color: "#7a6a52" }}>{anuncio.descricao}</div>}
-        {perfil?.cidade && <div className="text-[11px] mb-2" style={{ color: "#8a7a63" }}>{perfil.cidade}{perfil.uf ? `/${perfil.uf}` : ""}</div>}
-        <button onClick={handleInteresse} className="w-full flex items-center justify-center gap-2 text-sm font-semibold px-3 py-2 rounded-lg" style={{ background: "#556b3f", color: "#F1E6D2" }}>
+        <div className="text-xs mb-1" style={{ color: "#63736A" }}>{anuncio.especie} - {anuncio.corMutacao || "sem mutacao"}</div>
+        <div className="text-base font-bold mb-2" style={{ color: "#174B3B" }}>{money(anuncio.preco)}</div>
+        {anuncio.descricao && <div className="text-xs italic mb-2 line-clamp-2" style={{ color: "#63736A" }}>{anuncio.descricao}</div>}
+        {perfil?.cidade && <div className="text-[11px] mb-2" style={{ color: "#63736A" }}>{perfil.cidade}{perfil.uf ? `/${perfil.uf}` : ""}</div>}
+        <button onClick={handleInteresse} className="w-full flex items-center justify-center gap-2 text-sm font-semibold px-3 py-2 rounded-lg" style={{ background: "#174B3B", color: "#FFFFFF" }}>
           <MessageCircle size={14} /> Tenho interesse
         </button>
       </div>
@@ -254,8 +254,8 @@ function VitrinePublica() {
 
   if (anuncios.length === 0) {
     return (
-      <div className="text-center ui-sans text-sm py-8" style={{ color: "#b09a78" }}>
-        Nenhuma ave disponivel pra venda no momento.
+      <div className="rounded-2xl bg-white px-5 py-10 text-center ui-sans text-sm" style={{ color: "#63736A", border: "1px solid #E1E9E2" }}>
+        Nenhuma ave disponível para venda no momento.
       </div>
     );
   }
@@ -484,21 +484,26 @@ function ConteudoDaRota({ caminho, onEntrar }) {
   if (caminho === "/") return <Inicio BuscaAnilha={BuscaAnilha} VitrinePublica={VitrinePublica} GuiasEmDestaque={GuiasEmDestaque} onEntrar={onEntrar} />;
   if (caminho === "/aves-a-venda") {
     return (
-      <section className="px-5 pb-16 max-w-6xl mx-auto">
-        <SeoFixo caminho={caminho} />
-        <h1 className="ui-sans mb-6" style={{ color: "#F1E6D2", fontFamily: "'Fraunces', serif", fontSize: 32, fontWeight: 700 }}>Aves disponiveis agora</h1>
-        <VitrinePublica />
-      </section>
+      <div style={{ background: "#F5F7F3", minHeight: "70vh" }}>
+        <section className="px-5 py-10 md:py-14 max-w-7xl mx-auto">
+          <SeoFixo caminho={caminho} />
+          <h1 className="ui-sans mb-3 text-3xl md:text-4xl" style={{ color: "#1D2B25", fontFamily: "'Fraunces', serif", fontWeight: 700 }}>Aves disponíveis agora</h1>
+          <p className="ui-sans mb-8 text-sm" style={{ color: "#63736A" }}>Conheça os anúncios publicados por criadores cadastrados no Avespet.</p>
+          <VitrinePublica />
+        </section>
+      </div>
     );
   }
   if (caminho === "/aves-perdidas") return <><SeoFixo caminho={caminho} /><AvesPerdidas onEntrar={onEntrar} /></>;
   if (caminho === "/campanha-ave-perdida") return <><SeoFixo caminho={caminho} /><SolicitarCampanha /></>;
   if (caminho === "/achei-uma-ave") {
     return (
-      <section className="px-5 py-8">
-        <SeoFixo caminho={caminho} />
-        <BuscaAnilha />
-      </section>
+      <div style={{ background: "#F5F7F3", minHeight: "70vh" }}>
+        <section className="px-5 py-10 md:py-14">
+          <SeoFixo caminho={caminho} />
+          <BuscaAnilha modoClaro />
+        </section>
+      </div>
     );
   }
   if (caminho === "/guias") return <PaginaGuias />;
