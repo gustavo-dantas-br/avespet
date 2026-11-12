@@ -1,36 +1,35 @@
-// Componentes visuais reutilizados nas diferentes abas do sistema.
+// Componentes visuais compartilhados do painel Avespet.
 
-function Card({ children, className = "" }) {
+function Card({ children, className = "", style = {} }) {
   return (
-    <div className={`rounded-xl ${className}`} style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
+    <div className={`rounded-2xl ${className}`} style={{ background: "#FFFFFF", border: "1px solid #DCE8DF", boxShadow: "0 3px 12px rgba(28, 67, 43, 0.055)", ...style }}>
       {children}
     </div>
   );
 }
 
 function SectionTitle({ children }) {
-  return <h2 className="mb-5" style={{ color: "#F1E6D2", fontSize: 24, fontWeight: 700 }}>{children}</h2>;
+  return <div className="mb-6 border-b pb-4" style={{ borderColor: "#DCE8DF" }}><h2 className="ui-sans text-2xl md:text-[28px] font-bold tracking-tight" style={{ color: "#173D29" }}>{children}</h2></div>;
 }
 
 const inputStyle = {
-  background: "#fff",
-  border: "1px solid #e3d3b4",
-  color: "#2B241C",
-  borderRadius: 8,
-  padding: "8px 10px",
+  background: "#FFFFFF",
+  border: "1px solid #A9BDAF",
+  color: "#172F22",
+  borderRadius: 10,
+  padding: "10px 12px",
   fontSize: 14,
   outline: "none",
+  minHeight: 42,
 };
 
 function Field({ label: lbl, children }) {
   return (
-    <label className="flex flex-col gap-1.5 ui-sans">
-      <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#8a7a63" }}>{lbl}</span>
+    <label className="flex flex-col gap-2 ui-sans">
+      <span className="text-xs font-bold uppercase tracking-wide" style={{ color: "#294D38" }}>{lbl}</span>
       {children}
     </label>
   );
 }
-
-// ---------------------------------------------------------------------------
 
 export { Card, SectionTitle, inputStyle, Field };

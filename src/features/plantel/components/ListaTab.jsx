@@ -1,20 +1,27 @@
 import React from "react";
-import { Plus, Download, Upload, Search } from "lucide-react";
+import { Plus, Download, Upload, Search, SlidersHorizontal, Bird } from "lucide-react";
 
 export default function ListaTab({ aves, search, setSearch, onEdit, onDelete, onNew, onSync, onExport, onImport, statusFilter, setStatusFilter, casaisAgrupados, Card, SectionTitle, AveCard, FILTER_LABELS }) {
   const pendentes = aves.filter((a) => a.synced === false).length;
+  const totalLabel = aves.length === 1 ? "ave encontrada" : "aves encontradas";
+
   return (
-    <div>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-        <SectionTitle>Minhas Aves</SectionTitle>
-        <div className="flex flex-wrap gap-2">
-          <button onClick={onNew} className="ui-sans flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold shrink-0" style={{ background: "#C69A2E", color: "#2B1D14" }}>
-            <Plus size={16} /> Nova ave
+    <div className="space-y-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <SectionTitle>Meu plantel</SectionTitle>
+          <p className="-mt-4 text-sm" style={{ color: "#587061" }}>
+            Organize, acompanhe e atualize as aves do seu criatório.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 sm:justify-end">
+          <button onClick={onNew} className="ui-sans inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition hover:brightness-95" style={{ background: "#18764B", color: "#FFFFFF", boxShadow: "0 3px 8px rgba(24,118,75,.16)" }}>
+            <Plus size={17} /> Nova ave
           </button>
-          <button onClick={onExport} className="ui-sans flex items-center gap-2 px-3 py-2 rounded-lg text-sm shrink-0" style={{ background: "#e3d3b4", color: "#2B241C" }}>
+          <button onClick={onExport} className="ui-sans inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition hover:bg-[#F2F7F3]" style={{ background: "#FFFFFF", borderColor: "#D6E3D9", color: "#315542" }}>
             <Download size={15} /> Backup
           </button>
-          <label className="ui-sans flex items-center gap-2 px-3 py-2 rounded-lg text-sm shrink-0 cursor-pointer" style={{ background: "#e3d3b4", color: "#2B241C" }}>
+          <label className="ui-sans inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition hover:bg-[#F2F7F3]" style={{ background: "#FFFFFF", borderColor: "#D6E3D9", color: "#315542" }}>
             <Upload size={15} /> Importar
             <input type="file" accept="application/json" className="hidden" onChange={onImport} />
           </label>
@@ -22,47 +29,59 @@ export default function ListaTab({ aves, search, setSearch, onEdit, onDelete, on
       </div>
 
       {statusFilter && (
-        <div className="ui-sans mb-4 px-4 py-2 rounded-lg text-sm flex items-center justify-between gap-3" style={{ background: "#f5e9c8", color: "#8a6f2e", border: "1px solid #d6c39a" }}>
-          <span>Filtrando por: <strong>{FILTER_LABELS[statusFilter] || statusFilter}</strong> ({statusFilter === "casais" ? casaisAgrupados.length : aves.length})</span>
-          <button onClick={() => setStatusFilter(null)} className="ui-sans px-2 py-1 rounded text-xs font-semibold" style={{ background: "#2B1D14", color: "#F1E6D2" }}>Limpar filtro</button>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm" style={{ background: "#EDF6F0", color: "#28563C", borderColor: "#CFE2D4" }}>
+          <span className="flex items-center gap-2"><SlidersHorizontal size={16} /> Filtro ativo: <strong>{FILTER_LABELS[statusFilter] || statusFilter}</strong> <span style={{ color: "#66816F" }}>({statusFilter === "casais" ? casaisAgrupados.length : aves.length})</span></span>
+          <button onClick={() => setStatusFilter(null)} className="rounded-lg px-3 py-1.5 text-xs font-bold hover:bg-white" style={{ color: "#176B45" }}>Limpar filtro</button>
         </div>
       )}
 
       {pendentes > 0 && (
-        <div className="ui-sans mb-4 px-4 py-2 rounded-lg text-sm" style={{ background: "#f0e6d2", color: "#8a6f2e", border: "1px solid #d6c39a" }}>
-          {pendentes} {pendentes === 1 ? "ave salva so neste aparelho" : "aves salvas so neste aparelho"} (nao sincronizou na nuvem ainda). Use "Sincronizar" no card, ou baixe o backup pra guardar num lugar seguro.
+        <div className="flex items-start gap-3 rounded-xl border px-4 py-3 text-sm" style={{ background: "#FFF8E8", color: "#76551B", borderColor: "#F0DDAE" }}>
+          <span className="mt-0.5 rounded-lg p-1.5" style={{ background: "#F8EBCB" }}><Upload size={16} /></span>
+          <div><strong>{pendentes} {pendentes === 1 ? "ave aguardando sincronização" : "aves aguardando sincronização"}</strong><p className="mt-0.5 text-xs" style={{ color: "#8B713D" }}>Esses registros estão salvos neste aparelho. Use “Sincronizar” no cartão ou faça um backup.</p></div>
         </div>
       )}
 
-      <div className="relative mb-6 max-w-sm">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#8a7a63" }} />
-        <input
-          value={search} onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por nome, anilha ou especie..."
-          className="ui-sans w-full pl-9 pr-3 py-2 rounded-lg text-sm outline-none"
-          style={{ background: "#FAF3E6", border: "1px solid #e3d3b4", color: "#2B241C" }}
-        />
+      <div className="rounded-2xl border p-3 sm:p-4" style={{ background: "#FFFFFF", borderColor: "#DCE8DF", boxShadow: "0 3px 12px rgba(28,67,43,.04)" }}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full sm:max-w-md">
+            <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#668071" }} />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por nome, anilha ou espécie..."
+              aria-label="Buscar aves"
+              className="ui-sans min-h-11 w-full rounded-xl border py-2.5 pl-10 pr-3 text-sm outline-none transition focus:ring-2 focus:ring-[#B7D9C2]"
+              style={{ background: "#F8FBF8", borderColor: "#D8E5DB", color: "#203B2C" }}
+            />
+          </div>
+          <div className="flex items-center gap-2 text-xs font-medium" style={{ color: "#668071" }}>
+            <Bird size={16} /> {aves.length} {totalLabel}
+          </div>
+        </div>
       </div>
 
       {aves.length === 0 ? (
-        <Card className="p-8 text-center ui-sans" style={{ color: "#8a7a63" }}>
-          {statusFilter ? "Nenhuma ave nesse filtro." : "Nenhuma ave encontrada. Cadastre a primeira pra comecar a preencher a arvore genealogica e gerar placas."}
+        <Card className="p-8 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: "#EAF4ED", color: "#287A50" }}><Bird size={24} /></div>
+          <h3 className="text-base font-bold" style={{ color: "#244532" }}>{search ? "Nenhuma ave encontrada" : statusFilter ? "Nenhuma ave neste filtro" : "Seu plantel começa aqui"}</h3>
+          <p className="mx-auto mt-1 max-w-md text-sm" style={{ color: "#668071" }}>{search ? "Tente outro nome, número de anilha ou espécie." : "Cadastre sua primeira ave para organizar o plantel e acompanhar a árvore genealógica."}</p>
+          {!search && !statusFilter && <button onClick={onNew} className="mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold" style={{ background: "#18764B", color: "#FFFFFF" }}><Plus size={16} /> Cadastrar primeira ave</button>}
         </Card>
       ) : statusFilter === "casais" ? (
         <div className="flex flex-col gap-4">
           {casaisAgrupados.map(({ a, b, label: casalLabel }) => (
-            <Card key={a.id} className="p-4">
-              {casalLabel && <div className="ui-mono text-xs mb-2" style={{ color: "#8a6f2e" }}>{casalLabel}</div>}
-              <div className="grid gap-3" style={{ gridTemplateColumns: b ? "1fr 1fr" : "1fr" }}>
+            <Card key={a.id} className="p-3 sm:p-4">
+              {casalLabel && <div className="mb-3 text-xs font-bold uppercase tracking-wide" style={{ color: "#477257" }}>{casalLabel}</div>}
+              <div className="grid gap-3 md:grid-cols-2">
                 <AveCard a={a} onEdit={onEdit} onDelete={onDelete} onSync={onSync} />
-                {b && <AveCard a={b} onEdit={onEdit} onDelete={onDelete} onSync={onSync} />}
-                {!b && <div className="ui-sans text-xs flex items-center justify-center" style={{ color: "#8a7a63" }}>Parceiro nao identificado no sistema</div>}
+                {b ? <AveCard a={b} onEdit={onEdit} onDelete={onDelete} onSync={onSync} /> : <div className="flex min-h-24 items-center justify-center rounded-xl border border-dashed text-sm" style={{ borderColor: "#D6E3D9", color: "#789080" }}>Parceiro não identificado no sistema</div>}
               </div>
             </Card>
           ))}
         </div>
       ) : (
-        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           {aves.map((a) => <AveCard key={a.id} a={a} onEdit={onEdit} onDelete={onDelete} onSync={onSync} />)}
         </div>
       )}
@@ -70,7 +89,4 @@ export default function ListaTab({ aves, search, setSearch, onEdit, onDelete, on
   );
 }
 
-// ---------------------------------------------------------------------------
-// Formulario de ave
-// ---------------------------------------------------------------------------
-
+// Formulário de ave
