@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
-import { Search, RefreshCw, Users, Bird, Mail, MapPin, CalendarDays, Clock3, ChevronLeft, ChevronRight, X, CheckCircle2, AlertCircle, ShieldOff, ShieldCheck } from "lucide-react";
+import { Search, RefreshCw, Users, Bird, Mail, MapPin, CalendarDays, Clock3, ChevronLeft, ChevronRight, X, CheckCircle2, AlertCircle, ShieldOff, ShieldCheck, Ban, Unlock, Loader2 } from "lucide-react";
 
 const fmtDate = (value) => value ? new Date(value).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }) : "Nunca acessou";
 const fmtDateTime = (value) => value ? new Date(value).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "Sem acesso registrado";
@@ -19,6 +19,11 @@ export default function CreatorManagement() {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [manageAction, setManageAction] = useState("");
+  const [reason, setReason] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState("");
+  const [actionSuccess, setActionSuccess] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -37,6 +42,33 @@ export default function CreatorManagement() {
   }, [query, page]);
 
   useEffect(() => { load(); }, [load]);
+
+  async function confirmAccountAction(event) {
+    event.preventDefault();
+    if (!selected || !manageAction || actionLoading) return;
+    setActionLoading(true);
+    setActionError("");
+    setActionSuccess("");
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke("master-manage-creator", {
+        body: { user_id: selected.userId, action: manageAction, reason: reason.trim() },
+      });
+      if (invokeError || data?.error || !data?.success) {
+        throw new Error(data?.error || "Não foi possível concluir a ação.");
+      }
+      const blocked = manageAction === "block";
+      setSelected((current) => current ? { ...current, blocked, blockedUntil: blocked ? null : null } : current);
+      setResult((current) => ({ ...current, items: current.items.map((item) => item.userId === selected.userId ? { ...item, blocked, blockedUntil: null } : item) }));
+      setActionSuccess(blocked ? "Conta bloqueada com sucesso." : "Conta desbloqueada com sucesso.");
+      setManageAction("");
+      setReason("");
+      await load();
+    } catch (err) {
+      setActionError(err.message || "Não foi possível concluir a ação.");
+    } finally {
+      setActionLoading(false);
+    }
+  }
 
   function submitSearch(event) {
     event.preventDefault();
@@ -93,7 +125,27 @@ export default function CreatorManagement() {
           <div className="flex gap-3"><Clock3 size={17} className="mt-0.5 text-slate-400" /><div><p className="text-[11px] text-slate-400">Último acesso</p><p className="text-sm font-medium text-slate-800">{fmtDateTime(selected.lastSignInAt)}</p></div></div>
           {selected.blocked && <div className="rounded-xl bg-rose-50 p-3 text-xs text-rose-700">Bloqueio válido até: {fmtDateTime(selected.blockedUntil)}</div>}
         </div>
-        <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4"><div className="flex items-center gap-2 text-slate-700"><ShieldCheck size={16} /><p className="text-xs font-semibold">Consulta administrativa somente leitura</p></div><p className="mt-1.5 text-xs leading-5 text-slate-500">Nenhuma alteração na conta é realizada por esta tela. Ações administrativas terão confirmação e auditoria próprias.</p></div>
+        {actionSuccess && <div role="status" className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{actionSuccess}</div>}
+        {actionError && <div role="alert" className="mt-6 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{actionError}</div>}
+        <div className="mt-7 border-t border-slate-100 pt-6">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Ações administrativas</p>
+          {selected.blocked ? (
+            <button type="button" onClick={() => { setManageAction("unblock"); setActionError(""); setActionSuccess(""); }} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 hover:bg-emerald-100"><Unlock size={16} /> Desbloquear conta</button>
+          ) : (
+            <button type="button" onClick={() => { setManageAction("block"); setActionError(""); setActionSuccess(""); }} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800 hover:bg-rose-100"><Ban size={16} /> Bloquear conta</button>
+          )}
+          <p className="mt-2 text-[11px] leading-5 text-slate-400">A ação impede novos acessos à conta. Contas administrativas são protegidas e não podem ser alteradas por este módulo.</p>
+        </div>
+        {manageAction && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/50 p-4">
+          <form onSubmit={confirmAccountAction} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Confirmação de segurança</p><h3 className="mt-2 text-lg font-bold text-slate-900">{manageAction === "block" ? "Bloquear esta conta?" : "Desbloquear esta conta?"}</h3></div><button type="button" onClick={() => setManageAction("")} disabled={actionLoading} aria-label="Cancelar" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={18} /></button></div>
+            <p className="mt-3 text-sm text-slate-500">Conta: <strong className="text-slate-700">{selected.email || selected.name}</strong></p>
+            {manageAction === "block" && <label className="mt-5 block"><span className="text-xs font-semibold text-slate-700">Motivo do bloqueio (obrigatório)</span><textarea value={reason} onChange={(event) => setReason(event.target.value)} minLength={8} maxLength={500} required rows={3} placeholder="Descreva o motivo administrativo..." className="mt-2 w-full resize-none rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100" /></label>}
+            {manageAction === "unblock" && <p className="mt-4 rounded-xl bg-amber-50 p-3 text-xs leading-5 text-amber-800">O acesso da conta será restaurado imediatamente. A ação ficará registrada na auditoria.</p>}
+            <div className="mt-6 flex gap-2"><button type="button" onClick={() => setManageAction("")} disabled={actionLoading} className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 disabled:opacity-50">Cancelar</button><button type="submit" disabled={actionLoading || (manageAction === "block" && reason.trim().length < 8)} className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white disabled:opacity-50" style={{ background: manageAction === "block" ? "#a33d46" : "#247653" }}>{actionLoading && <Loader2 size={15} className="animate-spin" />}{manageAction === "block" ? "Confirmar bloqueio" : "Confirmar desbloqueio"}</button></div>
+          </form>
+        </div>}
+        <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4"><div className="flex items-center gap-2 text-slate-700"><ShieldCheck size={16} /><p className="text-xs font-semibold">Ações protegidas e auditadas</p></div><p className="mt-1.5 text-xs leading-5 text-slate-500">Toda alteração exige autorização Master no servidor, confirmação explícita e registro de auditoria. Contas Master e administradores legados não podem ser bloqueados por esta tela.</p></div>
       </aside></div>}
     </section>
   );
