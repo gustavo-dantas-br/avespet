@@ -98,9 +98,8 @@ Deno.serve(async (req) => {
   since.setUTCDate(since.getUTCDate() - 13);
   since.setUTCHours(0, 0, 0, 0);
   const sinceDate = since.toISOString().slice(0, 10);
-  const [visitsResult, usersResult, adsPending, adsApproved, adsRejected, lostPending, lostApproved, lostRejected, lostClosed] = await Promise.all([
+  const [visitsResult, adsPending, adsApproved, adsRejected, lostPending, lostApproved, lostRejected, lostClosed] = await Promise.all([
     adminClient.from("visitas_diarias").select("dia,total").gte("dia", sinceDate).order("dia", { ascending: true }),
-    adminClient.from("auth.users").select("id", { count: "exact", head: true }),
     adminClient.from("anuncios").select("*", { count: "exact", head: true }).eq("status", "pendente"),
     adminClient.from("anuncios").select("*", { count: "exact", head: true }).eq("status", "aprovado"),
     adminClient.from("anuncios").select("*", { count: "exact", head: true }).eq("status", "rejeitado"),
