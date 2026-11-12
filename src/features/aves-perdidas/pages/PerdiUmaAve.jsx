@@ -13,7 +13,7 @@ const STATUS = {
 
 export default function PerdiUmaAve({ userId: userIdInicial }) {
   const [userId, setUserId] = useState(userIdInicial ?? undefined);
-  const [form, setForm] = useState({ nomeAve: "", especie: "Ring Neck", cor: "", anilha: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", autorizaContatoPublico: false, foto: "" });
+  const [form, setForm] = useState({ nomeAve: "", especie: "Ring Neck", cor: "", anilha: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", bairro: "", foto: "" });
   const [anuncios, setAnuncios] = useState([]);
   const [enviando, setEnviando] = useState(false);
   const [carregando, setCarregando] = useState(true);
@@ -58,7 +58,7 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
       await criarAnuncioPerdida(userId || null, { ...form, id: novoId, criadoEm: new Date().toISOString() });
       setAnuncioCriadoId(novoId);
       setMensagem("Recebemos seu anúncio! Ele ficará aguardando análise e só aparecerá na página pública depois da aprovação.");
-      setForm({ nomeAve: "", especie: "Ring Neck", cor: "", anilha: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", autorizaContatoPublico: false, foto: "" });
+      setForm({ nomeAve: "", especie: "Ring Neck", cor: "", anilha: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", bairro: "", foto: "" });
       if (userId) await carregarAnuncios();
     } catch (e) {
       setErro(e?.message || "Não foi possível enviar. Tente novamente.");
@@ -88,6 +88,7 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
         <label className="text-sm">Cor / mutação<input style={input} value={form.cor} onChange={e=>alterar("cor",e.target.value)} /></label>
         <label className="text-sm">Número da anilha (opcional)<input style={input} value={form.anilha} onChange={e=>alterar("anilha",e.target.value)} placeholder="Ex.: FOB 0080" /></label>
         <label className="text-sm">Data em que desapareceu<input type="date" style={input} value={form.dataPerda} onChange={e=>alterar("dataPerda",e.target.value)} /></label>
+        <label className="text-sm">Bairro ou região<input style={input} value={form.bairro} onChange={e=>alterar("bairro",e.target.value)} placeholder="Ex.: Vila Mariana" /></label>
         <label className="text-sm">Cidade<input required style={input} value={form.cidade} onChange={e=>alterar("cidade",e.target.value)} /></label>
         <label className="text-sm">Estado<input maxLength="2" style={input} value={form.uf} onChange={e=>alterar("uf",e.target.value.toUpperCase())} /></label>
       </div>
@@ -95,16 +96,12 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
       <label className="text-sm">Foto da ave (opcional)<input className="block w-full mt-1 text-sm" type="file" accept="image/*" onChange={fotoSelecionada} /></label>
       {form.foto && <img src={form.foto} alt="Prévia da ave" className="w-28 h-28 rounded-lg object-cover" />}
       <div className="border-t pt-3 mt-1" style={{ borderColor: "#e3d3b4" }}>
-        <p className="font-semibold mb-2">Seus dados para contato</p>
+        <p className="font-semibold mb-2">Contato reservado ao suporte Avespet</p>
         <div className="grid sm:grid-cols-2 gap-3">
           <label className="text-sm">Seu nome<input required style={input} value={form.contatoNome} onChange={e=>alterar("contatoNome",e.target.value)} /></label>
-          <label className="text-sm">WhatsApp<input required style={input} value={form.whatsapp} onChange={e=>alterar("whatsapp",e.target.value)} placeholder="DDD + número" /></label>
+          <label className="text-sm">Seu WhatsApp<input required style={input} value={form.whatsapp} onChange={e=>alterar("whatsapp",e.target.value)} placeholder="DDD + número" /></label>
         </div>
-        <label className="flex items-start gap-2 text-sm mt-3" style={{color:"#405331"}}>
-          <input type="checkbox" className="mt-1" checked={form.autorizaContatoPublico} onChange={e=>alterar("autorizaContatoPublico",e.target.checked)} />
-          <span>Autorizo que meu nome e WhatsApp sejam exibidos publicamente neste anúncio para facilitar o contato de quem encontrar minha ave. Sei que posso pedir a remoção dessas informações.</span>
-        </label>
-        <p className="text-xs mt-2" style={{color:"#8a7a63"}}>Se não marcar, seu WhatsApp não será exibido. A equipe poderá intermediar o contato.</p>
+        <p className="text-xs mt-2" style={{color:"#8a7a63"}}>Esses dados não serão exibidos no anúncio. Somente a equipe do Avespet terá acesso para intermediar o contato e ajudar na recuperação da ave.</p>
       </div>
       {erro && <p role="alert" className="text-sm" style={{color:"#a6402b"}}>{erro}</p>}
       {mensagem && <div role="status" className="text-sm p-3 rounded-lg" style={{background:"#e4ead9",color:"#405331"}}><p>{mensagem}</p><a href={anuncioCriadoId ? `/campanha-ave-perdida?anuncio=${anuncioCriadoId}` : "/campanha-ave-perdida"} className="inline-block mt-2 font-semibold underline" style={{color:"#405331"}}>Quero ampliar a divulgação da minha busca</a></div>}

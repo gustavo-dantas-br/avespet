@@ -50,17 +50,12 @@ export default function AvesPerdidas() {
                   <div className="flex aspect-[16/10] items-center justify-center" style={{ background: TEMA_PUBLICO.verdeClaro, color: TEMA_PUBLICO.verde }}>Ave cadastrada</div>
                 )}
                 <div className="p-5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-lg font-bold" style={{ color: TEMA_PUBLICO.tinta }}>{data.nomeAve || data.especie || "Ave perdida"}</h2>
-                    {data.cor && <span className="rounded-full px-2 py-1 text-[11px] font-semibold" style={{ background: TEMA_PUBLICO.verdeClaro, color: TEMA_PUBLICO.verde }}>{data.cor}</span>}
-                  </div>
-                  <p className="mt-1 text-sm" style={{ color: TEMA_PUBLICO.texto }}>{data.especie || "Espécie não informada"}</p>
-                  <p className="mt-3 text-sm font-semibold" style={{ color: TEMA_PUBLICO.verde }}>{data.cidade}{data.uf ? "/" + data.uf : ""}</p>
-                  {data.dataPerda && <p className="mt-1 text-xs" style={{ color: TEMA_PUBLICO.texto }}>Desapareceu em {new Date(data.dataPerda + "T12:00:00").toLocaleDateString("pt-BR")}</p>}
-                  {data.descricao && <p className="mt-3 whitespace-pre-wrap text-sm leading-6" style={{ color: TEMA_PUBLICO.texto }}>{data.descricao}</p>}
-                  <div className="mt-4 rounded-xl p-3 text-xs leading-5" style={{ background: TEMA_PUBLICO.fundo, color: TEMA_PUBLICO.texto }}>
-                    Para proteger os envolvidos, o contato é intermediado pelo Avespet.
-                  </div>
+                  <p className="text-sm font-semibold" style={{ color: TEMA_PUBLICO.verde }}>
+                    {[data.bairro || data.regiao, data.cidade, data.uf].filter(Boolean).join(" · ")}
+                  </p>
+                  <p className="mt-4 rounded-xl p-3 text-xs leading-5" style={{ background: TEMA_PUBLICO.fundo, color: TEMA_PUBLICO.texto }}>
+                    Encontrou esta ave? Avise o Avespet. Nossa equipe fará a intermediação com o responsável.
+                  </p>
                 </div>
               </CartaoPublico>
             ))}
