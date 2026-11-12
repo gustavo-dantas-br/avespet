@@ -59,7 +59,7 @@ export default function CreatorManagement() {
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
         <form onSubmit={submitSearch} className="flex flex-col gap-2 sm:flex-row">
-          <label className="relative flex-1"><span className="sr-only">Buscar criador</span><Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome, criatório, cidade ou e-mail" className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-100" /></label>
+          <label className="relative flex-1"><span className="sr-only">Buscar criador</span><Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome, criatório ou cidade" className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-100" /></label>
           <button type="submit" className="rounded-xl px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90" style={{ background: "#1d3553" }}>Buscar</button>
         </form>
         {error && <div role="alert" className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</div>}
