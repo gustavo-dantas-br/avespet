@@ -270,8 +270,8 @@ function VitrinePublica() {
 // Login / criar conta - modal, acionado pelo canto
 // ---------------------------------------------------------------------------
 
-function LoginModal({ onFechar }) {
-  const [mode, setMode] = useState("login");
+function LoginModal({ onFechar, initialMode = "login" }) {
+  const [mode, setMode] = useState(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
@@ -558,7 +558,7 @@ function NaoEncontrada() {
   );
 }
 
-function ConteudoDaRota({ caminho, onEntrar }) {
+function ConteudoDaRota({ caminho, onEntrar, onCriarConta }) {
   const guia = caminho.match(/^\/guias\/([a-z0-9-]+)$/);
   if (caminho === "/") return <Inicio />;
   if (caminho === "/aves-a-venda") {
@@ -570,7 +570,28 @@ function ConteudoDaRota({ caminho, onEntrar }) {
       </section>
     );
   }
-  if (caminho === "/aves-perdidas") return <><SeoFixo caminho={caminho} /><AvesPerdidas /></>;
+  if (caminho === "/aves-perdidas") return (
+    <>
+      <SeoFixo caminho={caminho} />
+      <section className="px-5 pt-5 max-w-4xl mx-auto">
+        <button
+          type="button"
+          onClick={onCriarConta}
+          className="w-full text-left rounded-xl p-5 sm:p-6 transition-opacity hover:opacity-90"
+          style={{ background: "#3a2314", border: "1px solid #6b4b25" }}
+        >
+          <span className="block text-xl font-bold mb-2" style={{ color: "#F1E6D2" }}>Sua ave desapareceu?</span>
+          <span className="block ui-sans text-sm mb-4" style={{ color: "#b09a78" }}>
+            Crie sua conta para registrar a ocorrência. O anúncio passa por análise antes de ser publicado.
+          </span>
+          <span className="inline-flex ui-sans rounded-lg px-4 py-2.5 text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
+            Cadastrar ave perdida
+          </span>
+        </button>
+      </section>
+      <AvesPerdidas />
+    </>
+  );
   if (caminho === "/campanha-ave-perdida") return <><SeoFixo caminho={caminho} /><SolicitarCampanha /></>;
   if (caminho === "/achei-uma-ave") {
     return (
@@ -589,6 +610,7 @@ function ConteudoDaRota({ caminho, onEntrar }) {
 // logado = o criador abriu um guia estando dentro do sistema (so troca o botao do canto)
 export default function AuthPage({ logado = false, redefinirSenha = false, onSenhaAtualizada }) {
   const [mostrarLogin, setMostrarLogin] = useState(false);
+  const [modoModal, setModoModal] = useState("login");
   const caminho = usePath();
 
   useEffect(() => {
@@ -597,7 +619,8 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
 
   if (redefinirSenha) return <RedefinirSenha onConcluir={onSenhaAtualizada} />;
 
-  const onEntrar = logado ? () => navegar("/") : () => setMostrarLogin(true);
+  const onEntrar = logado ? () => navegar("/") : () => { setModoModal("login"); setMostrarLogin(true); };
+  const onCriarConta = logado ? () => navegar("/") : () => { setModoModal("signup"); setMostrarLogin(true); };
 
   return (
     <div className="min-h-screen w-full" style={{ background: "#2B1D14", fontFamily: "'Fraunces', serif" }}>
@@ -634,7 +657,7 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
       </header>
 
       <main className="pt-6">
-        <ConteudoDaRota caminho={caminho} onEntrar={onEntrar} />
+        <ConteudoDaRota caminho={caminho} onEntrar={onEntrar} onCriarConta={onCriarConta} />
       </main>
 
       <footer className="text-center ui-sans text-xs py-6" style={{ color: "#6b5638" }}>
@@ -648,7 +671,7 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
         </div>
       </footer>
 
-      {mostrarLogin && !logado && <LoginModal onFechar={() => setMostrarLogin(false)} />}
+      {mostrarLogin && !logado && <LoginModal initialMode={modoModal} onFechar={() => setMostrarLogin(false)} />}
     </div>
   );
 }
