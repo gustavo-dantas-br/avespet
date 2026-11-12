@@ -1,0 +1,101 @@
+# Redesign da página inicial pública
+
+> Documento de acompanhamento da iniciativa. Complementa [ARQUITETURA.md](./ARQUITETURA.md).
+>
+> **Data de início:** 12/11/2026  
+> **Branch:** `feature/homepage-redesign`  
+> **Status:** implementação inicial no GitHub; build e validação visual pendentes.
+
+## 1. Objetivo
+
+Apresentar o ecossistema Avespet para dois públicos — tutores/visitantes e criadores — e encaminhá-los às páginas específicas já existentes. A home deve ser uma visão geral comercial, não uma cópia extensa de cada página interna.
+
+## 2. Princípios
+
+1. Reaproveitar rotas, componentes e serviços existentes.
+2. Não criar páginas duplicadas para funcionalidades já disponíveis.
+3. Não alterar dados, tabelas, políticas RLS ou regras de negócio durante a etapa visual.
+4. Não publicar em produção sem validação explícita.
+5. Documentar decisões, alterações, testes e pendências nesta pasta.
+6. Não afirmar que uma ave será devolvida com garantia; o cadastro e a identificação podem facilitar o reencontro, mas não o asseguram.
+7. Não expor endereço residencial ou dados pessoais do tutor na consulta pública.
+
+## 3. Mapa da página inicial
+
+| Seção da home | Objetivo | Destino |
+|---|---|---|
+| Hero | Apresentar Avespet e separar os dois públicos | Âncoras da própria home |
+| Proteção da ave | Incentivar o tutor a conhecer o serviço | `/aves-perdidas` |
+| Consulta de anilha | Facilitar a consulta pública | `/achei-uma-ave` |
+| Campanha regional | Apresentar divulgação adicional | `/campanha-ave-perdida` |
+| Gestão do criatório | Apresentar recursos para criadores | CTA de login/cadastro existente |
+| Vitrine | Mostrar anúncios públicos | `/aves-a-venda` |
+| Conteúdo | Destacar materiais educativos | `/guias` e `/videos` |
+
+## 4. Arquivos envolvidos
+
+- `src/publico/home/Inicio.jsx`: composição visual da home e seções.
+- `src/components/AuthPage.jsx`: integração da home, cabeçalho, rodapé, modal de autenticação e roteamento.
+- `src/publico/roteador.jsx`: componente `Link` e navegação da área pública; links internos devem passar o destino pela propriedade `para`.
+- `src/publico/PaginasConteudo.jsx`: guias, vídeos e destaques existentes.
+- `src/features/aves-perdidas`: fluxo existente de aves perdidas.
+- `src/features/campanhas`: fluxo existente de campanhas.
+
+## 5. Direção visual
+
+- Estilo moderno, natural, responsivo e profissional.
+- Paleta inicial: verde profundo, verdes suaves e fundos neutros.
+- Fotografia real de diferentes espécies, evitando aparência de plataforma voltada a uma única ave.
+- CTAs claros e conteúdo resumido.
+- Imagens com carregamento prioritário apenas para o destaque principal e carregamento tardio nas seções abaixo da dobra.
+
+**Atenção:** as imagens iniciais usam URLs externas do Pexels. Antes da publicação, validar se os arquivos continuam disponíveis, conferir licença/atribuição aplicável, dimensões e desempenho. Avaliar hospedagem otimizada em domínio/CDN controlado pelo projeto.
+
+## 6. Limites funcionais que precisam ser validados
+
+- O fluxo atual de busca por anilha consulta registros de aves perdidas aprovados; não se deve dizer que qualquer ave cadastrada no plantel aparece automaticamente na busca.
+- O cadastro atual do modal de autenticação cria perfil de criador. A experiência específica de cadastro de tutor/visitante ainda precisa ser analisada antes de anunciar um fluxo separado.
+- O registro de ave perdida e a consulta pública devem continuar respeitando autenticação, moderação e proteção dos dados pessoais.
+- A chamada “criar conta gratuita” da home reutiliza o modal existente; não implica que todo recurso avançado seja gratuito para sempre.
+- A vitrine e os guias devem continuar usando os componentes atuais, sem duplicar consultas ou regras.
+
+## 7. Critérios de aceite
+
+### Visual e responsividade
+- [ ] Home aprovada em largura mobile, tablet e desktop.
+- [ ] Imagens carregam corretamente, sem distorção ou layout shift excessivo.
+- [ ] Contraste, foco de teclado, textos alternativos e navegação acessível revisados.
+- [ ] Menu e rodapé legíveis em todos os tamanhos.
+
+### Navegação
+- [ ] Todas as rotas do mapa abrem a página correta.
+- [ ] Botões de rolagem levam às seções certas.
+- [ ] Voltar/avançar do navegador continuam funcionando.
+- [ ] CTAs abrem o modal correto sem mudar indevidamente a rota.
+
+### Funcionalidade
+- [ ] Consulta de anilha continua pública e funcional.
+- [ ] Formulário de ave encontrada continua funcionando.
+- [ ] Vitrine e guias carregam dados/conteúdo existentes.
+- [ ] Login, cadastro e recuperação de senha continuam funcionando.
+- [ ] Registro de ave perdida e campanha testados com os controles de acesso esperados.
+
+### Engenharia
+- [ ] `npm run build` concluído sem erros.
+- [ ] Nenhum erro de console relevante.
+- [ ] Nenhuma alteração indevida no Supabase.
+- [ ] Preview da branch validado antes de merge/deploy.
+- [ ] Documentação atualizada com os resultados reais dos testes.
+
+## 8. Histórico de alterações
+
+### 12/11/2026 — primeira composição modular
+- Criada a branch `feature/homepage-redesign` a partir de `main`.
+- Criado `src/publico/home/Inicio.jsx`.
+- Integrada a home no `AuthPage.jsx), reaproveitando busca de anilha, vitrine e guias existentes.
+- Mantidas as rotas públicas atuais.
+- Atualizado `docs/ARQUITETURA.md`.
+- Nenhuma alteração de produção ou banco de dados realizada.
+
+### Validação de Preview
+A tentativa de implantação pela API da Vercel foi bloqueada por limite diário (`api-deployments-free-per-day`, HTTP 402). Não há URL Preview confirmada para esta branch. O build e a validação visual permanecem pendentes; não considerar a etapa pronta para merge.
