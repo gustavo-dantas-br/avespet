@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: headers(origin) });
   if (req.method !== "POST") return respond({ error: "Method not allowed" }, 405, origin);
 
-  const token = (req.headers.get("Authorization") || "").replace(/^Bearer\\s+/i, "");
+  const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   if (!token) return respond({ error: "Unauthorized" }, 401, origin);
 
   const url = Deno.env.get("SUPABASE_URL");
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { return respond({ error: "Invalid request" }, 400, origin); }
   const page = Math.max(1, Math.min(500, Math.floor(Number(body.page) || 1)));
   const pageSize = 20;
-  const search = String(body.search || "").trim().replace(/[^\\p{L}\\p{N}\\s@._-]/gu, " ").replace(/\\s+/g, " ").slice(0, 60).toLocaleLowerCase("pt-BR");
+  const search = String(body.search || "").trim().replace(/[^\p{L}\p{N}\s@._-]/gu, " ").replace(/\s+/g, " ").slice(0, 60).toLocaleLowerCase("pt-BR");
 
   // A fonte principal é Auth: assim contas recém-criadas também aparecem mesmo sem perfil.
   const allUsers = [];
