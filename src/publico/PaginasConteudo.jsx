@@ -6,7 +6,7 @@ import { Link } from "./roteador";
 import { useSEO } from "./seo";
 import CorpoArtigo from "./CorpoArtigo";
 
-const CLARO = { background: "#FAF3E6", border: "1px solid #e3d3b4" };
+const CLARO = { background: "#FFFFFF", border: "1px solid #E1E9E2" };
 
 function useArtigos() {
   const [estado, setEstado] = useState({ carregando: true, lista: [], erro: false });
@@ -56,16 +56,15 @@ export function GuiasEmDestaque() {
   const { lista } = useArtigos();
   if (!lista.length) return null;
   return (
-    <section className="px-5 pb-16 max-w-6xl mx-auto">
-      <h2 className="ui-sans text-center mb-2" style={{ color: "#F1E6D2", fontSize: 22, fontWeight: 700 }}>Guias para criadores</h2>
-      <p className="ui-sans text-center text-sm mb-6" style={{ color: "#b09a78" }}>Ring Neck e Calopsita: reproducao, filhotes e manejo.</p>
+    <section className="w-full">
+      <h2 className="ui-sans mb-2 text-2xl font-bold" style={{ color: "#1D2B25" }}>Guias e vídeos para cuidar melhor</h2>
+      <p className="ui-sans mb-6 text-sm" style={{ color: "#63736A" }}>Conteúdo prático sobre reprodução, filhotes e manejo de diferentes espécies.</p>
       <div className="grid gap-4 mb-5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))" }}>
         {lista.slice(0, 3).map((a) => <CartaoGuia key={a.id} artigo={a} />)}
       </div>
-      <div className="text-center ui-sans text-sm">
-        <Link para="/guias" style={{ color: "#C69A2E", textDecoration: "underline" }}>Ver todos os guias</Link>
-        {" - "}
-        <Link para="/videos" style={{ color: "#C69A2E", textDecoration: "underline" }}>Ver videos</Link>
+      <div className="flex flex-wrap gap-4 ui-sans text-sm">
+        <Link para="/guias" style={{ color: "#174B3B", fontWeight: 700 }}>Ver todos os guias →</Link>
+        <Link para="/videos" style={{ color: "#174B3B", fontWeight: 700 }}>Ver vídeos →</Link>
       </div>
     </section>
   );
