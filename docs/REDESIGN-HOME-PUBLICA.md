@@ -125,8 +125,8 @@ O usuário informou que as verificações mencionadas nesta etapa já foram real
 
 - [x] Página de solicitação de campanha (`/campanha-ave-perdida`) — identidade visual atualizada.
 - [x] Guias, vídeos e página individual de artigo — identidade visual padronizada com o tema público.
-- [ ] Página de consulta de anilha (`/achei-uma-ave`).
-- [ ] Vitrine de aves à venda.
+- [x] Página de consulta de anilha (`/achei-uma-ave`) — fundo e cabeçalho ajustados para o tema público.
+- [x] Vitrine de aves à venda (`/aves-a-venda`) — página e cartões alinhados ao tema público.
 - [ ] Cabeçalho e navegação em todas as rotas públicas.
 
 ### Validação desta etapa de interface
@@ -155,3 +155,12 @@ O usuário informou que as verificações mencionadas nesta etapa já foram real
 - Ajustado o destaque de guias da home para contraste adequado no fundo claro.
 - Mantidos carregamento de conteúdo, filtros por espécie, metadados SEO, incorporação de vídeo e links de compartilhamento existentes.
 - Nenhuma regra de publicação ou consulta de conteúdo foi alterada.
+
+
+### 12/11/2026 — consulta de anilha e vitrine
+
+- Atualizado `BuscaAnilha` para suportar apresentação clara na página própria e manter a variante escura quando incorporada ao bloco verde da home.
+- Atualizada a rota `/achei-uma-ave` com fundo e espaçamento do tema público.
+- Atualizada a página `/aves-a-venda` e os cartões da vitrine com superfícies claras, tipografia e botões verdes.
+- Preservadas as consultas públicas, métricas de visualização/clique e a ação de contato via WhatsApp.
+- Não foram alterados anúncios, dados de criadores ou registros no Supabase.
