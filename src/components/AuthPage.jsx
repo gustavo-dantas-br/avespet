@@ -491,7 +491,7 @@ function ConteudoDaRota({ caminho, onEntrar }) {
       </section>
     );
   }
-  if (caminho === "/aves-perdidas") return <><SeoFixo caminho={caminho} /><AvesPerdidas /></>;
+  if (caminho === "/aves-perdidas") return <><SeoFixo caminho={caminho} /><AvesPerdidas onEntrar={onEntrar} /></>;
   if (caminho === "/campanha-ave-perdida") return <><SeoFixo caminho={caminho} /><SolicitarCampanha /></>;
   if (caminho === "/achei-uma-ave") {
     return (
