@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405, origin);
 
   const authorization = req.headers.get("Authorization") || "";
-  const token = authorization.replace(/^Bearer\\s+/i, "");
+  const token = authorization.replace(/^Bearer\s+/i, "");
   if (!token || token === authorization) return json({ error: "Unauthorized" }, 401, origin);
 
   const url = Deno.env.get("SUPABASE_URL");
