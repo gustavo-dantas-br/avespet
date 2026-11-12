@@ -2,13 +2,12 @@ import { supabase } from "../../../supabaseClient";
 
 const TABELA = "anuncios_aves_perdidas";
 
-// O cadastro exige sessão autenticada. A política RLS também valida o proprietário.
+// Visitantes podem enviar ocorrências sem conta; RLS limita esses envios a registros pendentes e sem proprietário.
 export async function criarAnuncioPerdida(userId, dados) {
-  if (!userId) throw new Error("Entre na sua conta para cadastrar uma ave perdida.");
   const id = dados.id || globalThis.crypto.randomUUID();
   const { error } = await supabase.from(TABELA).insert({
     id,
-    user_id: userId,
+    user_id: userId || null,
     data: dados,
     status: "pendente",
   });
