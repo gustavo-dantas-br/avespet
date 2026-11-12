@@ -19,7 +19,7 @@ const navigation = [
 ];
 
 const metrics = [
-  { label: "Criadores cadastrados", key: "perfil_criador", icon: Users, tint: "#eaf1ff", color: "#4169a8", hint: "Perfis na plataforma" },
+  { label: "Contas cadastradas", key: "auth_users", icon: Users, tint: "#eaf1ff", color: "#4169a8", hint: "Usuários registrados na plataforma" },
   { label: "Aves cadastradas", key: "aves", icon: Bird, tint: "#e8f5ee", color: "#27845b", hint: "Registros de aves" },
   { label: "Anúncios publicados", key: "anuncios", icon: Megaphone, tint: "#fff3e5", color: "#b8792b", hint: "Anúncios de aves" },
   { label: "Aves perdidas", key: "anuncios_aves_perdidas", icon: Activity, tint: "#f2edff", color: "#7955b3", hint: "Anúncios de localização" },

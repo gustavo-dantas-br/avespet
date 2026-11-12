@@ -93,6 +93,19 @@ Deno.serve(async (req) => {
     counts[tables[index]] = countResults[index].count || 0;
   }
 
+  // Contagem total de contas vem do Auth, incluindo usuários sem perfil de criador.
+  const authUsers: unknown[] = [];
+  for (let authPage = 1; authPage <= 100; authPage += 1) {
+    const { data, error } = await adminClient.auth.admin.listUsers({ page: authPage, perPage: 1000 });
+    if (error) {
+      console.error("Master dashboard Auth count failed", error.message);
+      return json({ error: "Could not load account total" }, 503, origin);
+    }
+    authUsers.push(...data.users);
+    if (data.users.length < 1000) break;
+  }
+  counts.auth_users = authUsers.length;
+
   // Agregados anônimos para os gráficos; nenhum dado pessoal é enviado ao cliente.
   const since = new Date();
   since.setUTCDate(since.getUTCDate() - 13);
