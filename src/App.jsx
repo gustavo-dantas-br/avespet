@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { StatCard, TreeCard } from "./features/dashboard/components/CardsDashboard";
 import AveCard from "./features/plantel/components/AveCard";
 import { Card, SectionTitle, inputStyle, Field } from "./components/ui/SharedUI";
@@ -25,6 +25,9 @@ import {
 } from "./lib/db";
 
 import AuthPage from "./components/AuthPage";
+import RequiredPasswordChange from "./components/RequiredPasswordChange";
+import MasterApp from "./features/master/MasterApp";
+import { checkIsMaster } from "./lib/masterAccess";
 import NotificationsCenter from "./components/NotificationsCenter";
 import { PerdiUmaAve } from "./features/aves-perdidas";
 import ConteudoAdmin from "./conteudo/ConteudoAdmin";
@@ -1236,6 +1239,11 @@ const FILTER_LABELS = {
 export default function App() {
   const [session, setSession] = useState(undefined);
   const [passwordRecovery, setPasswordRecovery] = useState(false);
+  const [passwordGate, setPasswordGate] = useState("checking");
+  const [passwordCheckRetry, setPasswordCheckRetry] = useState(0);
+  const [masterAccess, setMasterAccess] = useState(null);
+  const [masterAccessError, setMasterAccessError] = useState(false);
+  const [masterRetry, setMasterRetry] = useState(0);
   const caminho = usePath();
 
   useEffect(() => {
@@ -1246,6 +1254,61 @@ export default function App() {
     });
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  // Confere no banco a exigência de troca de senha; não depende do app_metadata possivelmente antigo da sessão.
+  useEffect(() => {
+    if (session === undefined) {
+      setPasswordGate("checking");
+      return;
+    }
+    if (!session?.user?.id) {
+      setPasswordGate("clear");
+      return;
+    }
+
+    let active = true;
+    setPasswordGate("checking");
+    supabase.functions.invoke("master-manage-creator", {
+      body: { action: "check_password_change_required" },
+    }).then(({ data, error }) => {
+      if (!active) return;
+      if (error || data?.error || typeof data?.required !== "boolean") {
+        setPasswordGate("error");
+        return;
+      }
+      setPasswordGate(data.required ? "required" : "clear");
+    }).catch(() => {
+      if (active) setPasswordGate("error");
+    });
+
+    return () => { active = false; };
+  }, [session?.user?.id, passwordCheckRetry]);
+
+  // Verifica o entitlement Master no banco antes de montar qualquer tela de criador.
+  useEffect(() => {
+    if (session === undefined) return;
+    if (!session?.user?.id) {
+      setMasterAccess(false);
+      return;
+    }
+
+    let active = true;
+    setMasterAccess(null);
+    setMasterAccessError(false);
+    checkIsMaster(session.user.id)
+      .then((allowed) => {
+        if (active) setMasterAccess(allowed);
+      })
+      .catch(() => {
+        // Falha na consulta nunca deve liberar o painel de criador por engano.
+        if (active) {
+          setMasterAccess(null);
+          setMasterAccessError(true);
+        }
+      });
+
+    return () => { active = false; };
+  }, [session?.user?.id, masterRetry]);
 
   if (session === undefined) {
     return (
@@ -1259,6 +1322,31 @@ export default function App() {
     return <AuthPage logado={!!session} redefinirSenha onSenhaAtualizada={() => setPasswordRecovery(false)} />;
   }
 
+  if (session?.user?.id && passwordGate === "checking") {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center" style={{ background: "#2B1D14" }}>
+        <Loader2 className="animate-spin" color="#C69A2E" size={28} />
+      </div>
+    );
+  }
+
+  if (session?.user?.id && passwordGate === "error") {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-5" style={{ background: "#2B1D14" }}>
+        <div className="w-full max-w-md rounded-2xl p-6 text-center" style={{ background: "#FAF3E6", color: "#2B241C" }}>
+          <ShieldCheck size={30} className="mx-auto mb-3" color="#A6402B" />
+          <h1 className="text-xl font-bold">Não foi possível validar sua senha</h1>
+          <p className="mt-2 text-sm">Por segurança, o acesso ficará bloqueado até a verificação ser concluída.</p>
+          <button type="button" onClick={() => setPasswordCheckRetry((value) => value + 1)} className="w-full mt-5 rounded-lg px-4 py-3 font-semibold" style={{ background: "#2B1D14", color: "#FAF3E6" }}>Tentar novamente</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (session?.user?.id && passwordGate === "required") {
+    return <RequiredPasswordChange onComplete={(nextSession) => { setSession(nextSession); setPasswordCheckRetry((value) => value + 1); }} />;
+  }
+
 // Visitante ve a area publica; quem esta logado tambem, mas so quando abre um guia/video (links compartilhados).
 const emConteudo = /^\/(guias|videos)(\/|$)/.test(caminho);
 if (!session || emConteudo) {
@@ -1270,7 +1358,44 @@ if (!session || emConteudo) {
   );
 }
 
+if (masterAccessError) {
+  return (
+    <div className="min-h-screen flex items-center justify-center px-5" style={{ background: "#2B1D14" }}>
+      <div className="w-full max-w-md rounded-2xl p-6 text-center" style={{ background: "#FAF3E6", color: "#2B241C" }}>
+        <ShieldCheck size={30} className="mx-auto mb-3" color="#A6402B" />
+        <h1 className="text-xl font-bold">Não foi possível validar suas permissões</h1>
+        <p className="mt-2 text-sm">Por segurança, o acesso ao painel ficará bloqueado até que a verificação seja concluída.</p>
+        <button
+          type="button"
+          onClick={() => setMasterRetry((value) => value + 1)}
+          className="w-full mt-5 rounded-lg px-4 py-3 font-semibold"
+          style={{ background: "#2B1D14", color: "#FAF3E6" }}
+        >
+          Tentar novamente
+        </button>
+        <button
+          type="button"
+          onClick={() => supabase.auth.signOut()}
+          className="w-full mt-2 rounded-lg px-4 py-3 text-sm"
+        >
+          Sair da conta
+        </button>
+      </div>
+    </div>
+  );
+}
 
+if (masterAccess === null) {
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center" style={{ background: "#2B1D14" }}>
+      <Loader2 className="animate-spin" color="#C69A2E" size={28} />
+    </div>
+  );
+}
+
+if (masterAccess) {
+  return <MasterApp user={session.user} onLogout={() => supabase.auth.signOut()} />;
+}
 
 return (
   <>
