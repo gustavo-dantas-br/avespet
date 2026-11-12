@@ -119,7 +119,7 @@ function AppInner({ user, onLogout }) {
   const [saving, setSaving] = useState(false);
   const [placaId, setPlacaId] = useState("");
   const [arvoreId, setArvoreId] = useState("");
-  const [statusFilter, setStatusFilter] = useState(null); // null | "A venda" | "Vendida" | "Falecida" | "casais" | "solteiros" | "plantel"
+  const [statusFilter, setStatusFilter] = useState("plantel"); // categoria inicial do Meu plantel"
   const [error, setError] = useState("");
   const canvasRef = useRef(null);
 
@@ -284,7 +284,7 @@ function AppInner({ user, onLogout }) {
   }
 
   function goToLista(filter) {
-    setStatusFilter(filter);
+    setStatusFilter(filter || "plantel");
     setTab("lista");
   }
 
@@ -925,11 +925,11 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
   });
 
   const filtered = bySearch.filter((a) => {
-    if (!statusFilter) return true;
+    const status = a.status || "No plantel";
+    if (!statusFilter || statusFilter === "plantel") return STATUS_PLANTEL.includes(status);
     if (statusFilter === "casais") return !!a.parceiroId || !!a.casalLabel?.trim();
     if (statusFilter === "solteiros") return !a.parceiroId && !a.casalLabel?.trim();
-    if (statusFilter === "plantel") return STATUS_PLANTEL.includes(a.status);
-    return a.status === statusFilter;
+    return status === statusFilter;
   });
 
   const casaisAgrupados = (() => {
@@ -1112,7 +1112,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
 
             {tab === "lista" && (
               <ListaTab
-                aves={filtered} search={search} setSearch={setSearch}
+                aves={filtered} todasAves={aves} search={search} setSearch={setSearch}
                 onEdit={startEdit} onDelete={handleDelete} onNew={startNew}
                 onSync={handleSync} onExport={handleExport} onImport={handleImport}
                 statusFilter={statusFilter} setStatusFilter={setStatusFilter}
@@ -1227,9 +1227,12 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
 // ---------------------------------------------------------------------------
 
 const FILTER_LABELS = {
-  "A venda": "Aves a venda",
+  plantel: "Aves no plantel",
+  "A venda": "Aves à venda",
+  Reservada: "Aves reservadas",
   Vendida: "Aves vendidas",
   Falecida: "Aves falecidas",
+  Perdida: "Aves perdidas",
   casais: "Casais",
   solteiros: "Solteiros (sem parceiro)",
   plantel: "Plantel (sob sua responsabilidade)",
