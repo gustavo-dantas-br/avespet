@@ -985,7 +985,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
 
   const renderNav = (compact = false, mobile = false) => navGroups.map((group) => (
     <div key={group.title} className="mb-3">
-      {!compact && <div className="ui-sans px-3 pt-3 pb-2 text-[10px] font-bold tracking-[0.14em]" style={{ color: "#91A99A" }}>{group.title}</div>}
+      {!compact && <div className="ui-sans px-3 pt-3 pb-2 text-[10px] font-bold tracking-[0.14em]" style={{ color: "#526A5B" }}>{group.title}</div>}
       <div className="flex flex-col gap-1">
         {group.items.map(({ id, label: lbl, icon: Icon }) => (
           <button
@@ -1016,7 +1016,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
   ));
 
   return (
-    <div className="min-h-screen w-full flex" style={{ background: "#F4F8F5", fontFamily: "'Inter', sans-serif", color: "#20352A" }}>
+    <div className="min-h-screen w-full flex" style={{ background: "#F3F7F4", fontFamily: "'Inter', sans-serif", color: "#20352A" }}>
       <style>{`
         .ui-sans { font-family: 'Inter', sans-serif; }
         .ui-mono { font-family: 'IBM Plex Mono', monospace; }
@@ -1034,35 +1034,35 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl" style={{ background: "#E5F2E9", color: "#1D754B" }}><Feather size={21} /></div>
             {!sidebarCollapsed && <div className="min-w-0">
               <div className="text-lg font-extrabold tracking-tight" style={{ color: "#1D3B2B" }}>Aves<span style={{ color: "#26945F" }}>pet</span></div>
-              <div className="text-[10px] font-semibold tracking-[0.12em]" style={{ color: "#84978A" }}>ÁREA DO CRIADOR</div>
+              <div className="text-[10px] font-semibold tracking-[0.12em]" style={{ color: "#526A5B" }}>ÁREA DO CRIADOR</div>
             </div>}
           </div>
-          {!sidebarCollapsed && <button onClick={() => setSidebarCollapsed(true)} aria-label="Recolher menu" title="Recolher menu" className="rounded-lg p-2 hover:bg-[#F1F6F2]" style={{ color: "#688072" }}><ChevronLeft size={18} /></button>}
+          {!sidebarCollapsed && <button onClick={() => setSidebarCollapsed(true)} aria-label="Recolher menu" title="Recolher menu" className="rounded-lg p-2 hover:bg-[#F1F6F2]" style={{ color: "#3F5D49" }}><ChevronLeft size={18} /></button>}
           {sidebarCollapsed && <button onClick={() => setSidebarCollapsed(false)} aria-label="Expandir menu" title="Expandir menu" className="absolute -right-3 top-7 rounded-full border bg-white p-1.5 shadow-sm" style={{ borderColor: "#E2EBE4", color: "#267A50" }}><ChevronRight size={16} /></button>}
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-3">{renderNav(sidebarCollapsed)}</nav>
         <div className={`border-t p-3 ${sidebarCollapsed ? "text-center" : ""}`} style={{ borderColor: "#EDF2EE" }}>
-          {!sidebarCollapsed && <div className="mb-2 truncate px-2 text-[11px]" style={{ color: "#829287" }}>{aves.length} {aves.length === 1 ? "ave cadastrada" : "aves cadastradas"}</div>}
+          {!sidebarCollapsed && <div className="mb-2 truncate px-2 text-[11px]" style={{ color: "#526A5B" }}>{aves.length} {aves.length === 1 ? "ave cadastrada" : "aves cadastradas"}</div>}
           <div className={`flex items-center ${sidebarCollapsed ? "justify-center" : "gap-2"}`}>
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold" style={{ background: "#E5F2E9", color: "#267A50" }}>{(perfil.nome || user.email || "C").slice(0,1).toUpperCase()}</div>
-            {!sidebarCollapsed && <div className="min-w-0 flex-1"><div className="truncate text-xs font-semibold" style={{ color: "#294536" }}>{perfil.nome || "Minha conta"}</div><div className="truncate text-[10px]" style={{ color: "#829287" }}>{user.email}</div></div>}
+            {!sidebarCollapsed && <div className="min-w-0 flex-1"><div className="truncate text-xs font-semibold" style={{ color: "#294536" }}>{perfil.nome || "Minha conta"}</div><div className="truncate text-[10px]" style={{ color: "#526A5B" }}>{user.email}</div></div>}
             <button onClick={onLogout} title="Sair" aria-label="Sair" className="rounded-lg p-2 hover:bg-[#FCEFED]" style={{ color: "#9B625B" }}><LogOut size={17} /></button>
           </div>
         </div>
       </aside>
 
       <div className={`avespet-workspace min-h-screen flex-1 flex flex-col transition-[margin] duration-200 ${sidebarCollapsed ? "md:ml-[76px]" : "md:ml-[264px]"}`}>
-        <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b bg-white/95 px-4 py-3 backdrop-blur md:px-7" style={{ borderColor: "#E5EDE7", minHeight: 68 }}>
+        <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b bg-white/95 px-4 py-3 backdrop-blur md:px-7" style={{ borderColor: "#D7E4DA", minHeight: 68, boxShadow: "0 2px 10px rgba(28, 67, 43, 0.04)" }}>
           <div className="flex items-center gap-3 min-w-0">
             <button onClick={() => setMobileMenuOpen(true)} aria-label="Abrir menu" className="md:hidden rounded-xl p-2" style={{ background: "#EAF4ED", color: "#267A50" }}><Menu size={21} /></button>
             <div className="md:hidden flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "#E5F2E9", color: "#1D754B" }}><Feather size={19} /></div>
             <div className="min-w-0">
               <div className="truncate text-sm font-bold md:text-base" style={{ color: "#234332" }}>{navGroups.flatMap((g) => g.items).find((item) => item.id === tab)?.label || "Painel do criador"}</div>
-              <div className="hidden text-[11px] sm:block" style={{ color: "#829287" }}>Gestão do seu criatório</div>
+              <div className="hidden text-[11px] sm:block" style={{ color: "#526A5B" }}>Gestão do seu criatório</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="hidden sm:block text-right"><div className="text-xs font-semibold" style={{ color: "#345442" }}>{perfil.nome || "Criador"}</div><div className="text-[10px]" style={{ color: "#8A9B90" }}>Área do criador</div></div>
+            <div className="hidden sm:block text-right"><div className="text-xs font-semibold" style={{ color: "#345442" }}>{perfil.nome || "Criador"}</div><div className="text-[10px]" style={{ color: "#526A5B" }}>Área do criador</div></div>
             <div className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold" style={{ background: "#E5F2E9", color: "#267A50" }}>{(perfil.nome || user.email || "C").slice(0,1).toUpperCase()}</div>
           </div>
         </header>
@@ -1072,11 +1072,11 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
           <div className="absolute inset-y-0 left-0 flex w-[min(86vw,340px)] flex-col bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b px-4 py-4" style={{ borderColor: "#E5EDE7" }}>
               <div className="flex items-center gap-2"><div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "#E5F2E9", color: "#1D754B" }}><Feather size={19} /></div><div className="font-extrabold" style={{ color: "#1D3B2B" }}>Aves<span style={{ color: "#26945F" }}>pet</span></div></div>
-              <button onClick={() => setMobileMenuOpen(false)} aria-label="Fechar menu" className="rounded-lg p-2" style={{ color: "#688072" }}><X size={20} /></button>
+              <button onClick={() => setMobileMenuOpen(false)} aria-label="Fechar menu" className="rounded-lg p-2" style={{ color: "#3F5D49" }}><X size={20} /></button>
             </div>
             <nav className="flex-1 overflow-y-auto px-3 py-3">{renderNav(false, true)}</nav>
             <div className="border-t p-4" style={{ borderColor: "#EDF2EE" }}>
-              <div className="mb-3 truncate text-xs" style={{ color: "#829287" }}>{user.email}</div>
+              <div className="mb-3 truncate text-xs" style={{ color: "#526A5B" }}>{user.email}</div>
               <button onClick={onLogout} className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold" style={{ background: "#FCEFED", color: "#9B5148" }}><LogOut size={17} /> Sair da conta</button>
             </div>
           </div>
