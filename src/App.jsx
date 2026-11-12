@@ -26,6 +26,7 @@ import {
 
 import AuthPage from "./components/AuthPage";
 import MasterApp from "./features/master/MasterApp";
+import MasterBootstrap from "./features/master/MasterBootstrap";
 import { checkIsMaster } from "./lib/masterAccess";
 import NotificationsCenter from "./components/NotificationsCenter";
 import { PerdiUmaAve } from "./features/aves-perdidas";
@@ -1284,6 +1285,10 @@ export default function App() {
         <Loader2 className="animate-spin" color="#C69A2E" size={28} />
       </div>
     );
+  }
+
+  if (session?.user?.email?.toLowerCase() === "gustavosvaio@yahoo.com.br" && caminho === "/master-setup") {
+    return <MasterBootstrap />;
   }
 
   if (passwordRecovery) {
