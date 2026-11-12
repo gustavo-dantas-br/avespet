@@ -70,7 +70,7 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
     if (!arquivo) return;
     setErro("");
     try {
-      const foto = await comprimirEEnviarImagemPublica(arquivo, "perdidas", 160 * 1024);
+      const foto = await comprimirEEnviarImagemPublica(arquivo, "perdidas", 350 * 1024);
       alterar("foto", foto);
     } catch (err) {
       setErro(err?.message || "Não foi possível processar essa foto.");

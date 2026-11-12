@@ -61,7 +61,7 @@ function BuscaAnilha({ modoClaro = false }) {
     if (!file) return;
     setError("");
     try {
-      const foto = await comprimirEEnviarImagemPublica(file, "achados", 160 * 1024);
+      const foto = await comprimirEEnviarImagemPublica(file, "achados", 350 * 1024);
       setFormAchado((f) => ({ ...f, foto }));
     } catch (err) {
       setError(err?.message || "Não foi possível processar essa foto.");

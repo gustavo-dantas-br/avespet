@@ -1,35 +1,56 @@
 import { supabase } from "../../../supabaseClient";
 
 /**
- * Reduz fotos para JPEG e envia ao Supabase Storage.
- * O banco recebe apenas a URL pública, nunca o conteúdo Base64.
+ * Reduz fotos no próprio navegador antes do upload.
+ * Prioriza WebP (menor arquivo com boa qualidade), com fallback para JPEG.
+ * O banco recebe somente a URL pública, nunca o conteúdo Base64.
  */
-export async function comprimirEEnviarImagemPublica(arquivo, pasta = "aves", limiteBytes = 160 * 1024) {
+export async function comprimirEEnviarImagemPublica(arquivo, pasta = "aves", limiteBytes = 350 * 1024) {
   if (!arquivo || !arquivo.type?.startsWith("image/")) {
     throw new Error("Selecione um arquivo de imagem válido.");
   }
+  if (arquivo.size > 15 * 1024 * 1024) {
+    throw new Error("A foto deve ter no máximo 15 MB antes da compressão.");
+  }
 
-  const bitmap = await createImageBitmap(arquivo);
-  let blobFinal = null;
+  let bitmap;
   try {
-    const maxDim = 720;
+    bitmap = await createImageBitmap(arquivo);
+  } catch {
+    throw new Error("Não foi possível abrir essa imagem. Tente enviar uma foto em JPG, PNG ou WebP.");
+  }
+
+  let blobFinal = null;
+  let tipoFinal = "image/webp";
+  try {
+    const maxDim = 1280;
     const escala = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
     const larguraBase = Math.max(1, Math.round(bitmap.width * escala));
     const alturaBase = Math.max(1, Math.round(bitmap.height * escala));
+    const formatos = ["image/webp", "image/jpeg"];
 
-    for (const fator of [1, 0.84, 0.68, 0.52, 0.40]) {
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(larguraBase * fator));
-      canvas.height = Math.max(1, Math.round(alturaBase * fator));
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Não foi possível preparar a imagem.");
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    for (const formato of formatos) {
+      for (const fator of [1, 0.9, 0.8, 0.7]) {
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(larguraBase * fator));
+        canvas.height = Math.max(1, Math.round(alturaBase * fator));
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Não foi possível preparar a imagem.");
+        if (formato === "image/jpeg") {
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
 
-      for (const quality of [0.72, 0.58, 0.44, 0.32]) {
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
-        if (blob && blob.size <= limiteBytes) { blobFinal = blob; break; }
+        for (const qualidade of [0.84, 0.76, 0.68, 0.60, 0.52]) {
+          const blob = await new Promise((resolve) => canvas.toBlob(resolve, formato, qualidade));
+          if (blob && blob.size <= limiteBytes && blob.type === formato) {
+            blobFinal = blob;
+            tipoFinal = formato;
+            break;
+          }
+        }
+        if (blobFinal) break;
       }
       if (blobFinal) break;
     }
@@ -37,11 +58,14 @@ export async function comprimirEEnviarImagemPublica(arquivo, pasta = "aves", lim
     bitmap.close?.();
   }
 
-  if (!blobFinal) throw new Error("Esta imagem não pôde ser reduzida o suficiente. Tente outra foto.");
+  if (!blobFinal) {
+    throw new Error("Não foi possível reduzir essa foto mantendo boa qualidade. Tente uma imagem menor.");
+  }
 
-  const nome = `${pasta}/${crypto.randomUUID()}.jpg`;
+  const extensao = tipoFinal === "image/webp" ? "webp" : "jpg";
+  const nome = `${pasta}/${crypto.randomUUID()}.${extensao}`;
   const { error } = await supabase.storage.from("fotos-publicas-aves").upload(nome, blobFinal, {
-    contentType: "image/jpeg",
+    contentType: tipoFinal,
     cacheControl: "31536000",
     upsert: false,
   });
