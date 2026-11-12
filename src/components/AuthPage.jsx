@@ -98,16 +98,16 @@ function BuscaAnilha({ modoClaro = false }) {
 
   return (
     <div className="w-full max-w-2xl mx-auto text-center ui-sans">
-      <h1 style={{ color: modoClaro ? "#1D2B25" : "#F1E6D2", fontFamily: "'Fraunces', serif", fontSize: 34, fontWeight: 700, lineHeight: 1.25 }} className="mb-3">
+      <h1 style={{ color: modoClaro ? "#1D2B25" : "#F4F7F2", fontFamily: "'Fraunces', serif", fontSize: 34, fontWeight: 700, lineHeight: 1.25 }} className="mb-3">
         Encontrou uma ave?
       </h1>
-      <p style={{ color: modoClaro ? "#63736A" : "#63736A" }} className="text-base mb-6">
+      <p style={{ color: modoClaro ? "#63736A" : "#C4D5CA" }} className="text-base mb-6">
         Digite o número da anilha. Se houver um anúncio de ave perdida aprovado, mostramos o resultado. Se não houver, você poderá registrar a ave encontrada para nossa equipe fazer a intermediação.
       </p>
 
       <form onSubmit={buscar} className="flex flex-col sm:flex-row gap-3 mb-6 max-w-md mx-auto">
         <input style={{ ...inputStyle, fontSize: 16, padding: "14px 16px" }} value={anilha} onChange={(e) => setAnilha(e.target.value)} placeholder="ex: FOB 0080" />
-        <button type="submit" disabled={loading} className="shrink-0 flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-semibold" style={{ background: modoClaro ? "#174B3B" : "#174B3B", color: "#FFFFFF" }}>
+        <button type="submit" disabled={loading} className="shrink-0 flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-semibold" style={{ background: modoClaro ? "#174B3B" : "#DDEBDD", color: modoClaro ? "#FFFFFF" : "#174B3B" }}>
           {loading ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} />} Buscar
         </button>
       </form>
