@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+﻿import React, { useState, useEffect, useRef, useCallback } from "react";
 import { StatCard, TreeCard } from "./features/dashboard/components/CardsDashboard";
 import AveCard from "./features/plantel/components/AveCard";
 import { Card, SectionTitle, inputStyle, Field } from "./components/ui/SharedUI";
@@ -10,7 +10,7 @@ import { normalizeTelefone, whatsappUrl } from "./lib/telefone";
 import { computeFinanceiro, computeFinanceiroPeriodo } from "./features/financeiro/utils/calcularFinanceiro";
 import { drawPlaque } from "./features/plantel/utils/desenharPlaca";
 import {
-  Bird, Plus, Search, GitBranch, Tag, Upload, Trash2, X, Loader2, Save,
+  Bird, Plus, Search, GitBranch, Tag, Upload, Trash2, X, Loader2, Save, ChevronLeft, ChevronRight, Menu, CalendarDays,
   Download, Feather, DollarSign, LogOut, LayoutDashboard, Dna, Users, Phone, Pencil, ClipboardCheck, Truck, MessageCircle, Handshake, Megaphone, UserCircle, ShieldCheck, Check, Bell, Eye, MousePointerClick, Egg, BookOpen,
 } from "lucide-react";
 
@@ -25,9 +25,9 @@ import {
 } from "./lib/db";
 
 import AuthPage from "./components/AuthPage";
-import RequiredPasswordChange from "./components/RequiredPasswordChange";
-import MasterApp from "./features/master/MasterApp";
 import { checkIsMaster } from "./lib/masterAccess";
+import MasterApp from "./features/master/MasterApp";
+import RequiredPasswordChange from "./components/RequiredPasswordChange";
 import NotificationsCenter from "./components/NotificationsCenter";
 import { PerdiUmaAve } from "./features/aves-perdidas";
 import ConteudoAdmin from "./conteudo/ConteudoAdmin";
@@ -37,6 +37,7 @@ import AchadosTab from "./features/aves-perdidas/components/AchadosTab";
 import AprovacoesTab from "./features/anuncios/components/AprovacoesTab";
 import CalculadoraGenetica from "./features/genetica/components/CalculadoraGenetica";
 import ListaTab from "./features/plantel/components/ListaTab";
+import ReservasTab from "./features/reservas/ReservasTab";
 import DashboardTab from "./features/dashboard/components/DashboardTab";
 import FinanceiroTab from "./features/financeiro/components/FinanceiroTab";
 import ReproducaoTab from "./features/reproducao/components/ReproducaoTab";
@@ -111,6 +112,8 @@ function AppInner({ user, onLogout }) {
   const [perdidas, setPerdidas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("dashboard");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState(emptyAve());
   const [saving, setSaving] = useState(false);
@@ -953,100 +956,138 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
   const mae = arvoreAve?.maeId ? aves.find((a) => a.id === arvoreAve.maeId) : null;
   const parceiro = arvoreAve?.parceiroId ? aves.find((a) => a.id === arvoreAve.parceiroId) : null;
 
+  const navGroups = [
+    { title: "VISÃO GERAL", items: [{ id: "dashboard", label: "Dashboard", icon: LayoutDashboard }] },
+    { title: "MEU CRIATÓRIO", items: [
+      { id: "lista", label: "Meu plantel", icon: Bird },
+      { id: "reservas", label: "Reservas", icon: CalendarDays },
+      { id: "form", label: "Cadastrar", icon: Plus },
+      { id: "arvore", label: "Árvore genealógica", icon: GitBranch },
+      { id: "reproducao", label: "Reprodução", icon: Egg },
+      { id: "mutacoes", label: "Genética", icon: Dna },
+      { id: "placa", label: "Placa", icon: Tag },
+    ] },
+    { title: "GESTÃO", items: [
+      { id: "financeiro", label: "Financeiro", icon: DollarSign },
+      { id: "clientes", label: "Clientes", icon: Users },
+      { id: "fornecedores", label: "Fornecedores", icon: Truck },
+      { id: "posvenda", label: "Pós-venda", icon: ClipboardCheck },
+      { id: "indicacoes", label: "Indicações", icon: Handshake },
+    ] },
+    { title: "AVESPET", items: [
+      { id: "anuncios", label: "Anúncios", icon: Megaphone },
+      { id: "perdi-uma-ave", label: "Ave perdida", icon: Bird },
+      { id: "perfil", label: "Meu perfil", icon: UserCircle },
+    ] },
+    ...(isAdminUser ? [{ title: "ADMINISTRAÇÃO", items: [
+      { id: "aprovacoes", label: "Aprovações", icon: ShieldCheck },
+      { id: "achados", label: "Achados", icon: Bell },
+      { id: "aves-perdidas-admin", label: "Aves perdidas", icon: Bird },
+      { id: "campanhas-admin", label: "Campanhas", icon: Megaphone },
+      { id: "conteudo", label: "Conteúdo", icon: BookOpen },
+    ] }] : []),
+  ];
+
+  const renderNav = (compact = false, mobile = false) => navGroups.map((group) => (
+    <div key={group.title} className="mb-3">
+      {!compact && <div className="ui-sans px-3 pt-3 pb-2 text-[10px] font-bold tracking-[0.14em]" style={{ color: "#526A5B" }}>{group.title}</div>}
+      <div className="flex flex-col gap-1">
+        {group.items.map(({ id, label: lbl, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => {
+              if (id === "form") startNew();
+              else if (id === "lista") goToLista(null);
+              else setTab(id);
+              if (mobile) setMobileMenuOpen(false);
+            }}
+            title={compact ? lbl : undefined}
+            aria-label={lbl}
+            className={`ui-sans w-full flex items-center ${compact ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-sm text-left transition-colors`}
+            style={{
+              background: tab === id ? "#E5F2E9" : "transparent",
+              color: tab === id ? "#176B45" : "#52665B",
+              fontWeight: tab === id ? 700 : 500,
+              minHeight: 42,
+            }}
+          >
+            <Icon size={18} />
+            {!compact && <span className="truncate">{lbl}</span>}
+            {!compact && tab === id && <span className="ml-auto h-1.5 w-1.5 rounded-full" style={{ background: "#23935F" }} />}
+          </button>
+        ))}
+      </div>
+    </div>
+  ));
+
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row" style={{ background: "#2B1D14", fontFamily: "'Fraunces', serif" }}>
+    <div className="min-h-screen w-full flex" style={{ background: "#F3F7F4", fontFamily: "'Inter', sans-serif", color: "#20352A" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
         .ui-sans { font-family: 'Inter', sans-serif; }
         .ui-mono { font-family: 'IBM Plex Mono', monospace; }
-        ::selection { background: #C69A2E; color: #2B1D14; }
+        ::selection { background: #CDE8D6; color: #174C34; }
+        .avespet-workspace { min-width: 0; }
+        @media (max-width: 767px) { .avespet-workspace { width: 100%; } }
       `}</style>
 
       <aside
-        className="w-full md:w-60 shrink-0 flex flex-col items-stretch py-3 md:py-6 px-3 md:px-4 gap-2 md:gap-0"
-        style={{ background: "#241609", borderBottom: "1px solid #4a2c18", borderRight: "1px solid #4a2c18" }}
+        className={`hidden md:flex fixed inset-y-0 left-0 z-30 flex-col border-r transition-[width] duration-200 ${sidebarCollapsed ? "w-[76px]" : "w-[264px]"}`}
+        style={{ background: "#FFFFFF", borderColor: "#E2EBE4", boxShadow: "4px 0 24px rgba(31, 73, 48, 0.035)" }}
       >
-        <div className="flex items-center justify-between gap-3 mb-1 md:mb-8 px-1 shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <Feather size={20} color="#C69A2E" />
-            <div>
-              <div style={{ color: "#F1E6D2", fontWeight: 700, fontSize: 16, lineHeight: 1.1 }}>
-                Aves<span style={{ color: "#C69A2E" }}>pet</span>
-              </div>
-              <div className="ui-mono hidden md:block" style={{ color: "#8a6f4a", fontSize: 10, letterSpacing: 1 }}>GESTAO DO CRIATORIO</div>
-            </div>
+        <div className={`flex items-center ${sidebarCollapsed ? "justify-center" : "justify-between"} px-4 py-5 border-b`} style={{ borderColor: "#EDF2EE", minHeight: 76 }}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl" style={{ background: "#E5F2E9", color: "#1D754B" }}><Feather size={21} /></div>
+            {!sidebarCollapsed && <div className="min-w-0">
+              <div className="text-lg font-extrabold tracking-tight" style={{ color: "#1D3B2B" }}>Aves<span style={{ color: "#26945F" }}>pet</span></div>
+              <div className="text-[10px] font-semibold tracking-[0.12em]" style={{ color: "#526A5B" }}>ÁREA DO CRIADOR</div>
+            </div>}
           </div>
-          <div className="flex md:hidden items-center gap-2 shrink-0">
-            <button
-              onClick={() => setTab("dashboard")}
-              aria-label="Voltar ao início"
-              className="ui-sans flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold"
-              style={{ background: tab === "dashboard" ? "#3a2314" : "#332113", color: "#F1E6D2", border: "1px solid #6b4b25" }}
-            >
-              <LayoutDashboard size={15} /> Início
-            </button>
-            <button
-              onClick={onLogout}
-              className="ui-sans flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold"
-              style={{ background: "#332113", color: "#e6c9a4", border: "1px solid #6b4b25" }}
-            >
-              <LogOut size={15} /> Sair
-            </button>
-          </div>
+          {!sidebarCollapsed && <button onClick={() => setSidebarCollapsed(true)} aria-label="Recolher menu" title="Recolher menu" className="rounded-lg p-2 hover:bg-[#F1F6F2]" style={{ color: "#3F5D49" }}><ChevronLeft size={18} /></button>}
+          {sidebarCollapsed && <button onClick={() => setSidebarCollapsed(false)} aria-label="Expandir menu" title="Expandir menu" className="absolute -right-3 top-7 rounded-full border bg-white p-1.5 shadow-sm" style={{ borderColor: "#E2EBE4", color: "#267A50" }}><ChevronRight size={16} /></button>}
         </div>
-
-        <nav className="w-full flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-visible flex-1 md:flex-none">
-          {[
-            { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-            { id: "lista", label: "Aves", icon: Bird },
-            { id: "form", label: "Cadastrar", icon: Plus },
-            { id: "arvore", label: "Arvore", icon: GitBranch },
-            { id: "reproducao", label: "Reproducao", icon: Egg },
-            { id: "placa", label: "Placa", icon: Tag },
-            { id: "financeiro", label: "Financeiro", icon: DollarSign },
-            { id: "clientes", label: "Clientes", icon: Users },
-            { id: "fornecedores", label: "Fornecedores", icon: Truck },
-            { id: "posvenda", label: "Pos-venda", icon: ClipboardCheck },
-            { id: "indicacoes", label: "Indicacoes", icon: Handshake },
-            { id: "anuncios", label: "Anuncios", icon: Megaphone },
-            { id: "perdi-uma-ave", label: "Ave perdida", icon: Bird },
-            { id: "perfil", label: "Perfil", icon: UserCircle },
-            ...(isAdminUser ? [{ id: "aprovacoes", label: "Aprovacoes", icon: ShieldCheck }] : []),
-            ...(isAdminUser ? [{ id: "achados", label: "Achados", icon: Bell }] : []),
-            ...(isAdminUser ? [{ id: "aves-perdidas-admin", label: "Aves perdidas", icon: Bird }, { id: "campanhas-admin", label: "Campanhas", icon: Megaphone }] : []),
-            ...(isAdminUser ? [{ id: "conteudo", label: "Conteudo", icon: BookOpen }] : []),
-
-
-            { id: "mutacoes", label: "Genetica", icon: Dna },
-          ].map(({ id, label: lbl, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => (id === "form" ? startNew() : id === "lista" ? goToLista(null) : setTab(id))}
-              className="ui-sans flex items-center gap-2 md:gap-3 px-3 py-2 md:py-2.5 rounded-lg text-xs md:text-sm text-left transition-colors shrink-0"
-              style={{
-                background: tab === id ? "#3a2314" : "transparent",
-                color: tab === id ? "#F1E6D2" : "#b09a78",
-                fontWeight: tab === id ? 600 : 500,
-              }}
-            >
-              <Icon size={16} />
-              {lbl}
-            </button>
-          ))}
-        </nav>
-
-        <div className="hidden md:flex mt-auto flex-col gap-2">
-          <div className="ui-mono text-[11px]" style={{ color: "#6b5638" }}>
-            {aves.length} {aves.length === 1 ? "ave cadastrada" : "aves cadastradas"}
+        <nav className="flex-1 overflow-y-auto px-3 py-3">{renderNav(sidebarCollapsed)}</nav>
+        <div className={`border-t p-3 ${sidebarCollapsed ? "text-center" : ""}`} style={{ borderColor: "#EDF2EE" }}>
+          {!sidebarCollapsed && <div className="mb-2 truncate px-2 text-[11px]" style={{ color: "#526A5B" }}>{aves.length} {aves.length === 1 ? "ave cadastrada" : "aves cadastradas"}</div>}
+          <div className={`flex items-center ${sidebarCollapsed ? "justify-center" : "gap-2"}`}>
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold" style={{ background: "#E5F2E9", color: "#267A50" }}>{(perfil.nome || user.email || "C").slice(0,1).toUpperCase()}</div>
+            {!sidebarCollapsed && <div className="min-w-0 flex-1"><div className="truncate text-xs font-semibold" style={{ color: "#294536" }}>{perfil.nome || "Minha conta"}</div><div className="truncate text-[10px]" style={{ color: "#526A5B" }}>{user.email}</div></div>}
+            <button onClick={onLogout} title="Sair" aria-label="Sair" className="rounded-lg p-2 hover:bg-[#FCEFED]" style={{ color: "#9B625B" }}><LogOut size={17} /></button>
           </div>
-          <div className="ui-mono text-[10px] truncate" style={{ color: "#5a4a30" }}>{user.email}</div>
-          <button onClick={onLogout} className="ui-sans flex items-center gap-2 text-xs px-2 py-1.5 rounded-lg self-start" style={{ color: "#b09a78" }}>
-            <LogOut size={13} /> Sair
-          </button>
         </div>
       </aside>
 
-      <main className="flex-1 p-4 md:p-8 overflow-y-auto w-full min-w-0" style={{ minHeight: "60vh" }}>
+      <div className={`avespet-workspace min-h-screen flex-1 flex flex-col transition-[margin] duration-200 ${sidebarCollapsed ? "md:ml-[76px]" : "md:ml-[264px]"}`}>
+        <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b bg-white/95 px-4 py-3 backdrop-blur md:px-7" style={{ borderColor: "#D7E4DA", minHeight: 68, boxShadow: "0 2px 10px rgba(28, 67, 43, 0.04)" }}>
+          <div className="flex items-center gap-3 min-w-0">
+            <button onClick={() => setMobileMenuOpen(true)} aria-label="Abrir menu" className="md:hidden rounded-xl p-2" style={{ background: "#EAF4ED", color: "#267A50" }}><Menu size={21} /></button>
+            <div className="md:hidden flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "#E5F2E9", color: "#1D754B" }}><Feather size={19} /></div>
+            <div className="min-w-0">
+              <div className="truncate text-sm font-bold md:text-base" style={{ color: "#234332" }}>{navGroups.flatMap((g) => g.items).find((item) => item.id === tab)?.label || "Painel do criador"}</div>
+              <div className="hidden text-[11px] sm:block" style={{ color: "#526A5B" }}>Gestão do seu criatório</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:block text-right"><div className="text-xs font-semibold" style={{ color: "#345442" }}>{perfil.nome || "Criador"}</div><div className="text-[10px]" style={{ color: "#526A5B" }}>Área do criador</div></div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold" style={{ background: "#E5F2E9", color: "#267A50" }}>{(perfil.nome || user.email || "C").slice(0,1).toUpperCase()}</div>
+          </div>
+        </header>
+
+        {mobileMenuOpen && <div className="fixed inset-0 z-50 md:hidden">
+          <button aria-label="Fechar menu" onClick={() => setMobileMenuOpen(false)} className="absolute inset-0 bg-black/40" />
+          <div className="absolute inset-y-0 left-0 flex w-[min(86vw,340px)] flex-col bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b px-4 py-4" style={{ borderColor: "#E5EDE7" }}>
+              <div className="flex items-center gap-2"><div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "#E5F2E9", color: "#1D754B" }}><Feather size={19} /></div><div className="font-extrabold" style={{ color: "#1D3B2B" }}>Aves<span style={{ color: "#26945F" }}>pet</span></div></div>
+              <button onClick={() => setMobileMenuOpen(false)} aria-label="Fechar menu" className="rounded-lg p-2" style={{ color: "#3F5D49" }}><X size={20} /></button>
+            </div>
+            <nav className="flex-1 overflow-y-auto px-3 py-3">{renderNav(false, true)}</nav>
+            <div className="border-t p-4" style={{ borderColor: "#EDF2EE" }}>
+              <div className="mb-3 truncate text-xs" style={{ color: "#526A5B" }}>{user.email}</div>
+              <button onClick={onLogout} className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold" style={{ background: "#FCEFED", color: "#9B5148" }}><LogOut size={17} /> Sair da conta</button>
+            </div>
+          </div>
+        </div>}
+
+        <main className="flex-1 p-4 md:p-7 lg:p-8 overflow-y-auto w-full min-w-0" style={{ minHeight: "60vh" }}>
         <NotificationsCenter userId={user.id} isAdmin={isAdminUser} onNavigate={setTab} />
         {error && (
           <div className="ui-sans mb-4 px-4 py-2.5 rounded-lg flex items-center justify-between" style={{ background: "#4a2018", color: "#f2c9c0", border: "1px solid #7a3226" }}>
@@ -1066,6 +1107,8 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
             {tab === "reproducao" && (
               <ReproducaoTab aves={aves} posturas={posturas} onSave={handleSavePostura} onDelete={handleDeletePostura} onNascimento={handleRegistrarNascimento} Card={Card} Field={Field} inputStyle={inputStyle} SectionTitle={SectionTitle} />
             )}
+
+            {tab === "reservas" && <ReservasTab userId={user.id} perfil={perfil} clientes={clientes} aves={aves} posturas={posturas} Card={Card} SectionTitle={SectionTitle} />}
 
             {tab === "lista" && (
               <ListaTab
@@ -1171,6 +1214,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
           </>
         )}
       </main>
+      </div>
     </div>
   );
 }
