@@ -97,11 +97,11 @@ export default function CreatorManagement() {
         {error && <div role="alert" className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</div>}
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[720px] text-left">
-            <thead><tr className="border-b border-slate-100 text-[10px] uppercase tracking-wider text-slate-400"><th className="px-3 py-3 font-semibold">Criador</th><th className="px-3 py-3 font-semibold">Localização</th><th className="px-3 py-3 font-semibold">Aves</th><th className="px-3 py-3 font-semibold">Situação</th><th className="px-3 py-3 font-semibold">Cadastro</th><th className="px-3 py-3 font-semibold text-right">Detalhes</th></tr></thead>
+            <thead><tr className="border-b border-slate-100 text-[10px] uppercase tracking-wider text-slate-400"><th className="px-3 py-3 font-semibold">Conta</th><th className="px-3 py-3 font-semibold">Localização</th><th className="px-3 py-3 font-semibold">Aves</th><th className="px-3 py-3 font-semibold">Situação</th><th className="px-3 py-3 font-semibold">Cadastro</th><th className="px-3 py-3 font-semibold text-right">Detalhes</th></tr></thead>
             <tbody>
               {loading ? Array.from({ length: 5 }, (_, i) => <tr key={i} className="border-b border-slate-50"><td colSpan="6" className="px-3 py-4"><div className="h-5 animate-pulse rounded bg-slate-100" /></td></tr>) :
               result.items.length ? result.items.map((item) => <tr key={item.userId} className="border-b border-slate-50 transition hover:bg-slate-50/70">
-                <td className="px-3 py-4"><div className="font-semibold text-sm text-slate-800">{item.name}</div><div className="mt-1 text-xs text-slate-400">{item.creatorName || item.email || "Sem nome de criatório"}</div></td>
+                <td className="px-3 py-4"><div className="font-semibold text-sm text-slate-800">{item.name}</div><div className="mt-1 text-xs text-slate-400">{item.email || item.creatorName || "E-mail não informado"}</div>{!item.hasProfile && <div className="mt-1 inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Perfil não preenchido</div>}</td>
                 <td className="px-3 py-4 text-xs text-slate-500">{[item.city, item.state].filter(Boolean).join(" / ") || "Não informado"}</td>
                 <td className="px-3 py-4"><span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700"><Bird size={14} className="text-slate-400" />{item.birdsCount}</span></td>
                 <td className="px-3 py-4"><Status blocked={item.blocked} confirmed={item.emailConfirmed} /></td>
