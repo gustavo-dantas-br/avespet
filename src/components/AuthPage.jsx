@@ -524,7 +524,6 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
   if (redefinirSenha) return <RedefinirSenha onConcluir={onSenhaAtualizada} />;
 
   const onEntrar = logado ? () => navegar("/") : () => setMostrarLogin(true);
-  const ehInicio = caminho === "/";
 
   return (
     <div className="min-h-screen w-full" style={{ background: "#F5F7F3", fontFamily: "'Fraunces', serif" }}>
@@ -571,7 +570,7 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
           </div>
         )}
         <div className="mt-2">
-          Precisa de ajuda? <a href={SUPORTE_WHATSAPP} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: ehInicio ? "#174B3B" : "#C69A2E" }}>Fale com o suporte</a>
+          Precisa de ajuda? <a href={SUPORTE_WHATSAPP} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#174B3B" }}>Fale com o suporte</a>
         </div>
       </footer>
 
