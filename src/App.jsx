@@ -45,6 +45,7 @@ import IndicacoesTab from "./features/indicacoes/IndicacoesTab";
 import PerfilTab from "./features/perfil/PerfilTab";
 import { carregarDadosPerfil } from "./features/perfil/services/perfilService";
 import { carregarDadosAdministracao } from "./features/admin/services/administracaoService";
+import { carregarRegistrosUsuario } from "./features/cadastros/services/cadastrosService";
 import AnunciosTab from "./features/anuncios/AnunciosTab";
 import FormTab from "./features/plantel/FormTab";
 import { SeletorComprador, SeletorFornecedor } from "./features/plantel/components/SeletoresCadastro";
@@ -105,8 +106,8 @@ function AppInner({ user, onLogout }) {
     setLoading(true);
     setError("");
     try {
-      const items = await listRows("aves", user.id);
-      setAves(items.map((a) => ({ ...a, synced: true })).sort((a, b) => (a.nome || "").localeCompare(b.nome || "")));
+      const items = await carregarRegistrosUsuario(user.id, "aves", "nome");
+      setAves(items);
     } catch (e) {
       setError("Nao foi possivel carregar o cadastro. Tenta recarregar. (" + (e?.message || "") + ")");
     } finally {
@@ -116,8 +117,8 @@ function AppInner({ user, onLogout }) {
 
   const loadDespesas = useCallback(async () => {
     try {
-      const items = await listRows("despesas", user.id);
-      setDespesas(items.map((d) => ({ ...d, synced: true })).sort((a, b) => (a.data || "").localeCompare(b.data || "")));
+      const items = await carregarRegistrosUsuario(user.id, "despesas", "data");
+      setDespesas(items);
     } catch {
       // silencioso
     }
@@ -125,8 +126,8 @@ function AppInner({ user, onLogout }) {
 
   const loadMutacoes = useCallback(async () => {
     try {
-      const items = await listRows("mutacoes", user.id);
-      setMutacoes(items.map((m) => ({ ...m, synced: true })).sort((a, b) => (a.nome || "").localeCompare(b.nome || "")));
+      const items = await carregarRegistrosUsuario(user.id, "mutacoes", "nome");
+      setMutacoes(items);
     } catch {
       // silencioso
       }
@@ -136,8 +137,8 @@ function AppInner({ user, onLogout }) {
 
   const loadClientes = useCallback(async () => {
     try {
-      const items = await listRows("clientes", user.id);
-      setClientes(items.map((c) => ({ ...c, synced: true })).sort((a, b) => (a.nome || "").localeCompare(b.nome || "")));
+      const items = await carregarRegistrosUsuario(user.id, "clientes", "nome");
+      setClientes(items);
     } catch {
       // silencioso - se a tabela ainda nao existir no banco, so fica vazio
     }
@@ -145,8 +146,8 @@ function AppInner({ user, onLogout }) {
 
   const loadFornecedores = useCallback(async () => {
     try {
-      const items = await listRows("fornecedores", user.id);
-      setFornecedores(items.map((f) => ({ ...f, synced: true })).sort((a, b) => (a.nome || "").localeCompare(b.nome || "")));
+      const items = await carregarRegistrosUsuario(user.id, "fornecedores", "nome");
+      setFornecedores(items);
     } catch {
       // silencioso - se a tabela ainda nao existir no banco, so fica vazio
     }
@@ -154,8 +155,8 @@ function AppInner({ user, onLogout }) {
 
   const loadIndicacoes = useCallback(async () => {
     try {
-      const items = await listRows("indicacoes", user.id);
-      setIndicacoes(items.map((i) => ({ ...i, synced: true })).sort((a, b) => (b.data || "").localeCompare(a.data || "")));
+      const items = await carregarRegistrosUsuario(user.id, "indicacoes", "data", "desc");
+      setIndicacoes(items);
     } catch {
       // silencioso - se a tabela ainda nao existir no banco, so fica vazio
     }
@@ -206,8 +207,8 @@ function AppInner({ user, onLogout }) {
 
   const loadPosturas = useCallback(async () => {
     try {
-      const items = await listRows("posturas", user.id);
-      setPosturas(items.map((p) => ({ ...p, synced: true })));
+      const items = await carregarRegistrosUsuario(user.id, "posturas");
+      setPosturas(items);
     } catch {
       // silencioso - se a tabela ainda nao existir no banco, so fica vazio
     }
