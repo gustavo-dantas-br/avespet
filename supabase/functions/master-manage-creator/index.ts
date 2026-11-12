@@ -69,13 +69,13 @@ Deno.serve(async (req) => {
 
   const [{ data: targetMaster, error: masterError }, { data: targetLegacy, error: legacyError }] = await Promise.all([
     admin.from("master_admins").select("user_id").eq("user_id", targetId).maybeSingle(),
-    admin.from("admins").select("*", { count: "exact", head: true }).eq("user_id", targetId),
+    admin.from("admins").select("user_id").eq("user_id", targetId).maybeSingle(),
   ]);
   if (masterError || legacyError) {
     console.error("Privileged target check failed", masterError?.message || legacyError?.message);
     return response({ error: "Could not validate target account" }, 503, origin);
   }
-  if (targetMaster || (legacyError === null && (await admin.from("admins").select("*", { count: "exact", head: true }).eq("user_id", targetId)).count)) {
+  if (targetMaster || targetLegacy) {
     return response({ error: "Administrative accounts cannot be managed through this action" }, 403, origin);
   }
 
