@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
-import { Search, RefreshCw, Users, Bird, Mail, MapPin, CalendarDays, Clock3, ChevronLeft, ChevronRight, X, CheckCircle2, AlertCircle, ShieldOff, ShieldCheck, Ban, Unlock, Loader2 } from "lucide-react";
+import { Search, RefreshCw, Users, Bird, Mail, Phone, MapPin, CalendarDays, Clock3, ChevronLeft, ChevronRight, X, CheckCircle2, AlertCircle, ShieldOff, ShieldCheck, Ban, Unlock, Loader2 } from "lucide-react";
 
 const fmtDate = (value) => value ? new Date(value).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }) : "Nunca acessou";
 const fmtDateTime = (value) => value ? new Date(value).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "Sem acesso registrado";
@@ -119,6 +119,10 @@ export default function CreatorManagement() {
         <div className="mt-6"><Status blocked={selected.blocked} confirmed={selected.emailConfirmed} /></div>
         <div className="mt-6 space-y-4">
           <div className="flex gap-3"><Mail size={17} className="mt-0.5 text-slate-400" /><div className="min-w-0"><p className="text-[11px] text-slate-400">E-mail da conta</p><p className="break-all text-sm font-medium text-slate-800">{selected.email || "Não informado"}</p></div></div>
+          {selected.phone && <div className="flex gap-3"><Phone size={17} className="mt-0.5 text-slate-400" /><div><p className="text-[11px] text-slate-400">Telefone da conta</p><p className="text-sm font-medium text-slate-800">{selected.phone}</p></div></div>}
+          <div className="flex gap-3"><CheckCircle2 size={17} className="mt-0.5 text-slate-400" /><div><p className="text-[11px] text-slate-400">Confirmação do e-mail</p><p className="text-sm font-medium text-slate-800">{selected.emailConfirmedAt ? fmtDateTime(selected.emailConfirmedAt) : "Pendente de confirmação"}</p></div></div>
+          <div className="flex gap-3"><Users size={17} className="mt-0.5 text-slate-400" /><div><p className="text-[11px] text-slate-400">Perfil de criador</p><p className="text-sm font-medium text-slate-800">{selected.hasProfile ? "Perfil cadastrado" : "Perfil não preenchido"}</p></div></div>
+          {selected.hasProfile && <div className="flex gap-3"><CalendarDays size={17} className="mt-0.5 text-slate-400" /><div><p className="text-[11px] text-slate-400">Última atualização do perfil</p><p className="text-sm font-medium text-slate-800">{fmtDateTime(selected.profileUpdatedAt)}</p></div></div>}
           <div className="flex gap-3"><MapPin size={17} className="mt-0.5 text-slate-400" /><div><p className="text-[11px] text-slate-400">Localização</p><p className="text-sm font-medium text-slate-800">{[selected.city, selected.state].filter(Boolean).join(" / ") || "Não informado"}</p></div></div>
           <div className="flex gap-3"><Bird size={17} className="mt-0.5 text-slate-400" /><div><p className="text-[11px] text-slate-400">Aves cadastradas</p><p className="text-sm font-medium text-slate-800">{selected.birdsCount}</p></div></div>
           <div className="flex gap-3"><CalendarDays size={17} className="mt-0.5 text-slate-400" /><div><p className="text-[11px] text-slate-400">Data de cadastro</p><p className="text-sm font-medium text-slate-800">{fmtDate(selected.createdAt)}</p></div></div>
