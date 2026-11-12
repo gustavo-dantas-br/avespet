@@ -25,7 +25,7 @@ function corsHeaders(origin: string | null) {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Vary": "Origin",
   };
-  if (origin && allowedOrigins.has(origin)) headers["Access-Control-Allow-Origin"] = origin;
+  if (origin && isAllowedOrigin(origin)) headers["Access-Control-Allow-Origin"] = origin;
   return headers;
 }
 
