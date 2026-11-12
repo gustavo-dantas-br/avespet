@@ -90,7 +90,11 @@ Deno.serve(async (req) => {
   });
   if (auditError) {
     console.error("Master invite audit failed",auditError.message);
-    return reply({error:"Convite e permissão registrados, mas a auditoria falhou. O acesso ficará bloqueado operacionalmente até correção."},503,origin);
+    const { error: rollbackError } = await admin.from("master_admins").delete().eq("user_id",inviteData.user.id);
+    if (rollbackError) console.error("Master grant rollback failed",rollbackError.message);
+    return reply({error: rollbackError
+      ? "Falha na auditoria e no rollback da permissão. Acesso requer intervenção imediata."
+      : "O convite foi enviado, mas a auditoria falhou; a permissão Master foi removida. Corrija a auditoria antes de tentar novamente."},503,origin);
   }
 
   return reply({success:true,email:targetEmail,message:"Convite enviado. A conta receberá o link do Supabase Auth."},200,origin);
