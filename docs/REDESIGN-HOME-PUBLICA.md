@@ -108,3 +108,31 @@ O usuário informou que as verificações mencionadas nesta etapa já foram real
 - [x] Usuário confirmou que a verificação funcional está concluída e sem problemas identificados.
 - [ ] Anexar/registrar URL de Preview ou evidência da validação visual, caso esteja disponível.
 - [ ] Fazer uma última conferência automatizada de build na branch antes do merge.
+
+
+## 9. Segunda etapa — identidade visual das páginas públicas
+
+### 12/11/2026 — componentes compartilhados e página de aves perdidas
+
+- Criado `src/publico/ComponentesPublicos.jsx` com tokens visuais e componentes reutilizáveis: `PaginaPublica`, `CabecalhoPublico` e `CartaoPublico`.
+- Atualizada `src/features/aves-perdidas/pages/AvesPerdidas.jsx` para usar fundo claro, cartões padronizados, estados de carregamento/erro/vazio e cabeçalho compartilhado.
+- A página agora oferece caminho explícito para consulta de anilha.
+- Corrigido o CTA de cadastro da página de aves perdidas: ele aciona o modal de entrada/cadastro existente, em vez de direcionar incorretamente para a consulta de anilha.
+- `src/components/AuthPage.jsx` passa a ação `onEntrar` para a página de aves perdidas.
+- Nenhuma regra de consulta, aprovação ou persistência foi modificada nesta etapa.
+
+### Próximas páginas a padronizar
+
+- [ ] Página de solicitação de campanha (`/campanha-ave-perdida`).
+- [ ] Guias, vídeos e página individual de artigo.
+- [ ] Página de consulta de anilha (`/achei-uma-ave`).
+- [ ] Vitrine de aves à venda.
+- [ ] Cabeçalho e navegação em todas as rotas públicas.
+
+### Validação desta etapa de interface
+
+- [ ] Executar build após as alterações desta segunda etapa.
+- [ ] Conferir visualmente página de aves perdidas em mobile e desktop.
+- [ ] Testar CTA de entrada/cadastro e consulta de anilha.
+- [ ] Conferir estado vazio, carregamento, erro e anúncios com/sem foto.
+- [ ] Atualizar este checklist após os testes.
