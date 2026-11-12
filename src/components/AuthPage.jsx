@@ -473,8 +473,8 @@ function contarVisita(caminho) {
 function NaoEncontrada() {
   return (
     <section className="px-5 pb-16 max-w-3xl mx-auto text-center ui-sans">
-      <h1 className="mb-3" style={{ color: "#F1E6D2", fontSize: 26, fontWeight: 700 }}>Pagina nao encontrada</h1>
-      <Link para="/" style={{ color: "#C69A2E", textDecoration: "underline" }}>Voltar para o inicio</Link>
+      <h1 className="mb-3" style={{ color: "#1D2B25", fontSize: 26, fontWeight: 700 }}>Pagina nao encontrada</h1>
+      <Link para="/" style={{ color: "#174B3B", textDecoration: "underline" }}>Voltar para o início</Link>
     </section>
   );
 }
@@ -527,7 +527,7 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
   const ehInicio = caminho === "/";
 
   return (
-    <div className="min-h-screen w-full" style={{ background: ehInicio ? "#F5F7F3" : "#2B1D14", fontFamily: "'Fraunces', serif" }}>
+    <div className="min-h-screen w-full" style={{ background: "#F5F7F3", fontFamily: "'Fraunces', serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap');
         .ui-sans { font-family: 'Inter', sans-serif; }
@@ -537,13 +537,13 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
       <header className="px-5 pb-2 max-w-6xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
         <div className="flex items-center justify-between gap-3">
           <Link para="/" className="flex items-center gap-2">
-            <Feather size={22} color="#C69A2E" />
-            <span style={{ color: ehInicio ? "#174B3B" : "#F1E6D2", fontWeight: 700, fontSize: 18, fontFamily: "'Fraunces', serif" }}>Avespet</span>
+            <Feather size={22} color="#174B3B" />
+            <span style={{ color: "#174B3B", fontWeight: 700, fontSize: 18, fontFamily: "'Fraunces', serif" }}>Avespet</span>
           </Link>
           <button
             onClick={logado ? () => navegar("/") : onEntrar}
             className="ui-sans text-sm px-5 py-3 rounded-lg font-semibold"
-            style={{ background: ehInicio ? "#174B3B" : "#3a2314", color: "#FFFFFF" }}
+            style={{ background: "#174B3B", color: "#FFFFFF" }}
           >
             {logado ? "Voltar ao sistema" : "Entrar / Criar conta"}
           </button>
@@ -552,7 +552,7 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
           {MENU.map(([para, nome]) => {
             const ativo = para === "/" ? caminho === "/" : caminho === para || caminho.startsWith(para + "/");
             return (
-              <Link key={para} para={para} style={{ color: ehInicio ? (ativo ? "#174B3B" : "#63736A") : (ativo ? "#C69A2E" : "#b09a78"), fontWeight: ativo ? 700 : 400 }}>
+              <Link key={para} para={para} style={{ color: ativo ? "#174B3B" : "#63736A", fontWeight: ativo ? 700 : 400 }}>
                 {nome}
               </Link>
             );
@@ -560,14 +560,14 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
         </nav>
       </header>
 
-      <main className={ehInicio ? "pt-0" : "pt-6"}>
+      <main className="pt-0">
         <ConteudoDaRota caminho={caminho} onEntrar={onEntrar} />
       </main>
 
-      <footer className="text-center ui-sans text-xs py-6" style={{ color: ehInicio ? "#63736A" : "#6b5638" }}>
+      <footer className="text-center ui-sans text-xs py-6" style={{ color: "#63736A" }}>
         {!logado && (
           <div>
-            Criador de aves? <button onClick={onEntrar} className="underline" style={{ color: ehInicio ? "#174B3B" : "#C69A2E" }}>Cadastre seu plantel gratuitamente</button>
+            Criador de aves? <button onClick={onEntrar} className="underline" style={{ color: "#174B3B" }}>Cadastre seu plantel gratuitamente</button>
           </div>
         )}
         <div className="mt-2">
