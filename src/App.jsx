@@ -44,6 +44,7 @@ import PosVendaTab from "./features/pos-venda/PosVendaTab";
 import IndicacoesTab from "./features/indicacoes/IndicacoesTab";
 import PerfilTab from "./features/perfil/PerfilTab";
 import { carregarDadosPerfil } from "./features/perfil/services/perfilService";
+import { carregarDadosAdministracao } from "./features/admin/services/administracaoService";
 import AnunciosTab from "./features/anuncios/AnunciosTab";
 import FormTab from "./features/plantel/FormTab";
 import { SeletorComprador, SeletorFornecedor } from "./features/plantel/components/SeletoresCadastro";
@@ -183,22 +184,12 @@ function AppInner({ user, onLogout }) {
 
   const loadAdminStatus = useCallback(async () => {
     try {
-      const admin = await checkIsAdmin(user.id);
-      setIsAdminUser(admin);
-
-      if (admin) {
-        const [todos, perfis, achadosData, perdidasData] = await Promise.all([
-          listTodosAnunciosParaAdmin(),
-          listPerfisPublicos(),
-          listAchadosAnilha().catch(() => []),
-          listAnunciosAvesPerdidasAdmin().catch(() => []),
-        ]);
-
-        setAnunciosAprovacao(todos);
-        setPerfisPublicos(perfis);
-        setAchados(achadosData);
-        setAnunciosPerdidasAdmin(perdidasData);
-      }
+      const dados = await carregarDadosAdministracao(user.id);
+      setIsAdminUser(dados.isAdminUser);
+      setAnunciosAprovacao(dados.anunciosAprovacao);
+      setPerfisPublicos(dados.perfisPublicos);
+      setAchados(dados.achados);
+      setAnunciosPerdidasAdmin(dados.anunciosPerdidasAdmin);
     } catch {
       // silencioso - se a tabela 'admins' ainda nao existir, so nao mostra o painel
     }
