@@ -187,6 +187,8 @@ A marca do software é **Avespet**. O nome “Criatório Dantas” pode continua
 
 ## 12. Área pública e redesign da página inicial — 12/11/2026
 
+Documento operacional e checklist de aceite: [REDESIGN-HOME-PUBLICA.md](./REDESIGN-HOME-PUBLICA.md).
+
 ### Organização atual
 
 - `src/components/AuthPage.jsx` continua sendo o ponto de entrada público: controla o cabeçalho, menu, modal de autenticação e escolhe o conteúdo pela rota.
