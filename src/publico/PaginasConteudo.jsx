@@ -7,7 +7,7 @@ import { PaginaPublica, CabecalhoPublico, CartaoPublico, TEMA_PUBLICO } from "./
 import { useSEO } from "./seo";
 import CorpoArtigo from "./CorpoArtigo";
 
-const CLARO = { background: "#FFFFFF", border: "1px solid #E1E9E2" };
+const CLARO = { background: "#FFFFFF", border: "1px solid #E1E9E2", boxShadow: "0 10px 28px rgba(22,58,42,.05)" };
 
 function useArtigos() {
   const [estado, setEstado] = useState({ carregando: true, lista: [], erro: false });
@@ -22,11 +22,11 @@ function useArtigos() {
 }
 
 function Carregando() {
-  return <div className="flex justify-center py-12"><Loader2 className="animate-spin" color="#C69A2E" size={28} /></div>;
+  return <div className="flex justify-center py-12"><Loader2 className="animate-spin" color={TEMA_PUBLICO.verde} size={28} /></div>;
 }
 
-function Etiqueta({ children, cor = "#f0e6d2" }) {
-  return <span className="text-[10px] px-2 py-0.5 rounded ui-mono" style={{ background: cor, color: "#5a4a30" }}>{children}</span>;
+function Etiqueta({ children, cor = TEMA_PUBLICO.verdeClaro }) {
+  return <span className="text-[10px] px-2.5 py-1 rounded-full font-semibold ui-sans" style={{ background: cor, color: TEMA_PUBLICO.verde }}>{children}</span>;
 }
 
 function CartaoGuia({ artigo }) {
@@ -34,7 +34,7 @@ function CartaoGuia({ artigo }) {
   return (
     <Link para={`/guias/${artigo.slug}`} className="block rounded-xl overflow-hidden ui-sans" style={CLARO}>
       {vid && (
-        <div className="relative aspect-video" style={{ background: "#3a2a1c" }}>
+        <div className="relative aspect-video" style={{ background: TEMA_PUBLICO.verdeEscuro }}>
           <img src={`https://i.ytimg.com/vi/${vid}/hqdefault.jpg`} alt="" loading="lazy" className="w-full h-full object-cover" />
           <span className="absolute inset-0 flex items-center justify-center">
             <span className="rounded-full p-3" style={{ background: "rgba(43,29,20,0.75)" }}><Play size={22} color="#F1E6D2" /></span>
@@ -43,11 +43,11 @@ function CartaoGuia({ artigo }) {
       )}
       <div className="p-4">
         <div className="flex flex-wrap gap-1.5 mb-2">
-          <Etiqueta cor={artigo.especie === "Calopsita" ? "#f5e3b0" : artigo.especie === "Ring Neck" ? "#cfe3c4" : "#f0e6d2"}>{artigo.especie}</Etiqueta>
+          <Etiqueta cor={TEMA_PUBLICO.verdeClaro}>{artigo.especie}</Etiqueta>
           {artigo.categoria && <Etiqueta>{artigo.categoria}</Etiqueta>}
         </div>
-        <div className="font-semibold mb-1" style={{ color: "#2B241C", fontSize: 17, lineHeight: 1.3 }}>{artigo.titulo}</div>
-        {artigo.resumo && <div className="text-sm" style={{ color: "#7a6a52" }}>{artigo.resumo}</div>}
+        <div className="font-semibold mb-1" style={{ color: TEMA_PUBLICO.tinta, fontSize: 17, lineHeight: 1.3 }}>{artigo.titulo}</div>
+        {artigo.resumo && <div className="text-sm" style={{ color: TEMA_PUBLICO.texto }}>{artigo.resumo}</div>}
       </div>
     </Link>
   );

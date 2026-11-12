@@ -156,6 +156,27 @@ export default function Inicio({ BuscaAnilha, VitrinePublica, GuiasEmDestaque, o
         </div>
       </section>
 
+
+      <section id="historias" className="px-5 py-14 md:px-8 md:py-20">
+        <div className="mx-auto max-w-7xl">
+          <TituloSecao etiqueta="Experiências na comunidade" titulo="Histórias que fazem a diferença" descricao="O Avespet nasceu para apoiar quem cuida, cria e ama aves. Veja algumas formas como a plataforma pode ajudar no dia a dia." />
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              { titulo: "Mais organização no criatório", texto: "Plantel, histórico, reprodução e informações importantes reunidos em um só lugar.", tema: "Gestão do plantel" },
+              { titulo: "Apoio quando uma ave desaparece", texto: "Consulta de anilha e divulgação ajudam a aproximar quem encontrou de quem está procurando.", tema: "Proteção e reencontro" },
+              { titulo: "Conhecimento compartilhado", texto: "Guias e vídeos ajudam tutores e criadores a aprender e cuidar melhor das aves.", tema: "Aprendizado" },
+            ].map((item) => (
+              <article key={item.tema} className="rounded-2xl bg-white p-6" style={{ border: "1px solid #DCE7DE", boxShadow: "0 10px 28px rgba(22,58,42,.05)" }}>
+                <div className="mb-4 inline-flex rounded-full px-3 py-1 text-xs font-bold" style={{ background: verdeClaro, color: verde }}>Como o Avespet ajuda</div>
+                <h3 className="text-xl font-bold" style={{ color: tinta, fontFamily: "'Fraunces', Georgia, serif" }}>{item.titulo}</h3>
+                <p className="mt-3 text-sm leading-6" style={{ color: texto }}>{item.texto}</p>
+              </article>
+            ))}
+          </div>
+          <p className="mt-5 text-center text-xs" style={{ color: texto }}>Em breve: relatos e avaliações de usuários, publicados com autorização dos participantes.</p>
+        </div>
+      </section>
+
       <section className="px-5 pb-4 md:px-8">
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-5 rounded-[2rem] p-7 md:flex-row md:items-center md:p-10" style={{ background: "#173E32" }}>
           <div>

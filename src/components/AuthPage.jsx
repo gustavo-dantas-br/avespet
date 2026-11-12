@@ -13,7 +13,7 @@ import Inicio from "../publico/home/Inicio";
 import { AvesPerdidas } from "../features/aves-perdidas";
 import { SolicitarCampanha } from "../features/campanhas";
 
-const inputStyle = { background: "#fff", border: "1px solid #e3d3b4", color: "#2B241C", borderRadius: 8, padding: "10px 12px", fontSize: 14, outline: "none", width: "100%" };
+const inputStyle = { background: "#FFFFFF", border: "1px solid #DCE7DE", color: "#1D2B25", borderRadius: 12, padding: "12px 14px", fontSize: 14, outlineColor: "#174B3B", width: "100%" };
 
 const SUPORTE_WHATSAPP = "https://wa.me/5511986338898?text=" + encodeURIComponent("Ola! Preciso de ajuda com o site Avespet.");
 
@@ -101,13 +101,13 @@ function BuscaAnilha({ modoClaro = false }) {
       <h1 style={{ color: modoClaro ? "#1D2B25" : "#F1E6D2", fontFamily: "'Fraunces', serif", fontSize: 34, fontWeight: 700, lineHeight: 1.25 }} className="mb-3">
         Encontrou uma ave?
       </h1>
-      <p style={{ color: modoClaro ? "#63736A" : "#b09a78" }} className="text-base mb-6">
+      <p style={{ color: modoClaro ? "#63736A" : "#63736A" }} className="text-base mb-6">
         Digite o número da anilha. Se houver um anúncio de ave perdida aprovado, mostramos o resultado. Se não houver, você poderá registrar a ave encontrada para nossa equipe fazer a intermediação.
       </p>
 
       <form onSubmit={buscar} className="flex flex-col sm:flex-row gap-3 mb-6 max-w-md mx-auto">
         <input style={{ ...inputStyle, fontSize: 16, padding: "14px 16px" }} value={anilha} onChange={(e) => setAnilha(e.target.value)} placeholder="ex: FOB 0080" />
-        <button type="submit" disabled={loading} className="shrink-0 flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-semibold" style={{ background: modoClaro ? "#174B3B" : "#C69A2E", color: "#FFFFFF" }}>
+        <button type="submit" disabled={loading} className="shrink-0 flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-semibold" style={{ background: modoClaro ? "#174B3B" : "#174B3B", color: "#FFFFFF" }}>
           {loading ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} />} Buscar
         </button>
       </form>
@@ -117,35 +117,35 @@ function BuscaAnilha({ modoClaro = false }) {
       {resultadosPerdidas && resultadosPerdidas.length > 0 && (
         <div className="flex flex-col gap-3 max-w-md mx-auto text-left">
           {resultadosPerdidas.map((r) => (
-              <div key={r.id} className="rounded-lg p-3" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
+              <div key={r.id} className="rounded-lg p-3" style={{ background: "#FFFFFF", border: "1px solid #E1E9E2" }}>
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0" style={{ background: "#3a2a1c" }}>
+                  <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0" style={{ background: "#E8F1E9" }}>
                     {r.foto ? <img src={r.foto} className="w-full h-full object-cover" alt="" /> : null}
                   </div>
                   <div className="min-w-0">
-                    <div className="font-semibold text-sm" style={{ color: "#2B241C" }}>{r.nomeAve}</div>
-                    <div className="text-xs" style={{ color: "#8a7a63" }}>{r.especie} - {r.corMutacao}</div>
+                    <div className="font-semibold text-sm" style={{ color: "#1D2B25" }}>{r.nomeAve}</div>
+                    <div className="text-xs" style={{ color: "#63736A" }}>{r.especie} - {r.corMutacao}</div>
                   </div>
                 </div>
-                <div className="text-[10px] px-2 py-0.5 rounded ui-mono inline-block mb-2" style={{ background: r.status === "perdida" ? "#f0dab0" : "#c8dcb8", color: "#2B241C" }}>
+                <div className="text-[10px] px-2 py-0.5 rounded ui-mono inline-block mb-2" style={{ background: r.status === "perdida" ? "#E8F1E9" : "#DDEBDD", color: "#1D2B25" }}>
                   {r.status === "perdida" ? "AINDA PERDIDA" : "JA FOI ENCONTRADA"}
                 </div>
-                <p className="text-xs mt-2" style={{ color: "#8a7a63" }}>O Avespet fará a intermediação do contato para proteger as duas partes.</p>
+                <p className="text-xs mt-2" style={{ color: "#63736A" }}>O Avespet fará a intermediação do contato para proteger as duas partes.</p>
               </div>
           ))}
         </div>
       )}
 
       {(mostrarFormAchado || resultadosPerdidas?.some((r) => r.status === "perdida")) && !enviado && (
-        <form onSubmit={enviarAchado} className="flex flex-col gap-3 max-w-md mx-auto text-left rounded-lg p-4" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
-          <div className="text-sm" style={{ color: "#2B241C" }}>
+        <form onSubmit={enviarAchado} className="flex flex-col gap-3 max-w-md mx-auto text-left rounded-lg p-4" style={{ background: "#FFFFFF", border: "1px solid #E1E9E2" }}>
+          <div className="text-sm" style={{ color: "#1D2B25" }}>
             {resultadosPerdidas?.some((r) => r.status === "perdida")
               ? "Encontramos um cadastro de ave ainda desaparecida. Se ela está com você, muito obrigado por ajudar! Informe os dados abaixo para facilitarmos o reencontro com sua família."
               : "Não encontramos anúncio aprovado com essa anilha. Registre a ave encontrada; nossa equipe ficará responsável por analisar o caso e fazer a ponte com o titular se ele cadastrar a perda posteriormente."}
           </div>
 
           <label className="ui-sans flex flex-col gap-1.5">
-            <span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Foto da ave (opcional)</span>
+            <span className="text-xs font-semibold uppercase" style={{ color: "#63736A" }}>Foto da ave (opcional)</span>
             <input type="file" accept="image/*" onChange={handleFotoAchado} className="text-xs" />
             {formAchado.foto && (
               <img src={formAchado.foto} alt="" className="w-24 h-24 object-cover rounded-lg mt-1" />
@@ -155,20 +155,20 @@ function BuscaAnilha({ modoClaro = false }) {
           <input style={inputStyle} value={formAchado.nome} onChange={(e) => setFormAchado((f) => ({ ...f, nome: e.target.value }))} placeholder="Seu nome" required />
           <input style={inputStyle} value={formAchado.telefone} onChange={(e) => setFormAchado((f) => ({ ...f, telefone: e.target.value }))} placeholder="Seu telefone/WhatsApp" required />
           <label className="ui-sans flex flex-col gap-1.5 text-left">
-            <span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Data em que encontrou</span>
+            <span className="text-xs font-semibold uppercase" style={{ color: "#63736A" }}>Data em que encontrou</span>
             <input type="date" style={inputStyle} value={formAchado.dataEncontrada} onChange={(e) => setFormAchado((f) => ({ ...f, dataEncontrada: e.target.value }))} required />
           </label>
           <input style={inputStyle} value={formAchado.endereco} onChange={(e) => setFormAchado((f) => ({ ...f, endereco: e.target.value }))} placeholder="Onde encontrou (endereco/bairro/cidade)" required />
           <input style={inputStyle} value={formAchado.mensagem} onChange={(e) => setFormAchado((f) => ({ ...f, mensagem: e.target.value }))} placeholder="Observacoes (opcional)" />
 
-          <button type="submit" disabled={loading} className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
+          <button type="submit" disabled={loading} className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold" style={{ background: "#174B3B", color: "#FFFFFF" }}>
             {loading && <Loader2 className="animate-spin" size={16} />} Enviar
           </button>
         </form>
       )}
 
       {resultadosPerdidas?.length > 0 && resultadosPerdidas.every((r) => r.status !== "perdida") && (
-        <div className="text-sm px-4 py-4 rounded-lg max-w-md mx-auto text-left" style={{ background: "#e4ead9", color: "#405735", border: "1px solid #c8dcb8" }}>
+        <div className="text-sm px-4 py-4 rounded-lg max-w-md mx-auto text-left" style={{ background: "#E8F1E9", color: "#174B3B", border: "1px solid #DDEBDD" }}>
           <div className="font-semibold text-base mb-2">Que atitude bonita! 💚</div>
           <p className="mb-2">A ave deste cadastro já foi encontrada. Mesmo assim, queremos agradecer por você se importar.</p>
           <p className="mb-2">Devolver um animal ao seu responsável é um gesto de empatia, respeito e amor. Para quem espera por esse reencontro, receber seu companheiro de volta significa muito mais do que palavras conseguem expressar.</p>
@@ -177,7 +177,7 @@ function BuscaAnilha({ modoClaro = false }) {
       )}
 
       {enviado && (
-        <div className="text-sm px-4 py-4 rounded-lg max-w-md mx-auto text-left" style={{ background: "#e4ead9", color: "#405735", border: "1px solid #c8dcb8" }}>
+        <div className="text-sm px-4 py-4 rounded-lg max-w-md mx-auto text-left" style={{ background: "#E8F1E9", color: "#174B3B", border: "1px solid #DDEBDD" }}>
           <div className="font-semibold text-base mb-2">Seu gesto pode transformar uma história! 💚</div>
           <p className="mb-2">Muito obrigado por ter um coração disposto a ajudar. Sabemos o quanto uma ave é especial para sua família e como é angustiante ficar longe dela.</p>
           <p className="mb-2">Ao se preocupar em devolver esse pequeno companheiro, você está oferecendo esperança e a oportunidade de um reencontro cheio de alegria.</p>
@@ -202,12 +202,12 @@ function AnuncioVitrineCard({ anuncio, perfil }) {
   }
 
   return (
-    <div className="rounded-xl overflow-hidden ui-sans" style={{ background: "#FFFFFF", border: "1px solid #E1E9E2" }}>
-      <div className="w-full aspect-square" style={{ background: "#3a2a1c" }}>
+    <div className="rounded-2xl overflow-hidden ui-sans" style={{ background: "#FFFFFF", border: "1px solid #E1E9E2", boxShadow: "0 10px 28px rgba(22,58,42,.05)" }}>
+      <div className="w-full aspect-square" style={{ background: "#E8F1E9" }}>
         {anuncio.foto ? <img src={anuncio.foto} className="w-full h-full object-cover" alt="" /> : null}
       </div>
       <div className="p-3">
-        <div className="font-semibold text-sm truncate" style={{ color: "#2B241C" }}>{anuncio.nomeAve}</div>
+        <div className="font-semibold text-sm truncate" style={{ color: "#1D2B25" }}>{anuncio.nomeAve}</div>
         <div className="text-xs mb-1" style={{ color: "#63736A" }}>{anuncio.especie} - {anuncio.corMutacao || "sem mutacao"}</div>
         <div className="text-base font-bold mb-2" style={{ color: "#174B3B" }}>{money(anuncio.preco)}</div>
         {anuncio.descricao && <div className="text-xs italic mb-2 line-clamp-2" style={{ color: "#63736A" }}>{anuncio.descricao}</div>}
@@ -249,7 +249,7 @@ function VitrinePublica() {
   }, []);
 
   if (loading) {
-    return <div className="flex justify-center py-10"><Loader2 className="animate-spin" color="#C69A2E" size={28} /></div>;
+    return <div className="flex justify-center py-10"><Loader2 className="animate-spin" color="#174B3B" size={28} /></div>;
   }
 
   if (anuncios.length === 0) {
@@ -317,17 +317,17 @@ function LoginModal({ onFechar }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(20,12,6,0.6)" }} onClick={onFechar}>
-      <div className="w-full max-w-sm rounded-xl p-6 sm:p-8 relative" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }} onClick={(e) => e.stopPropagation()}>
-        <button onClick={onFechar} className="absolute top-3 right-3" style={{ color: "#8a7a63" }}><X size={18} /></button>
+      <div className="w-full max-w-sm rounded-xl p-6 sm:p-8 relative" style={{ background: "#FFFFFF", border: "1px solid #E1E9E2" }} onClick={(e) => e.stopPropagation()}>
+        <button onClick={onFechar} className="absolute top-3 right-3" style={{ color: "#63736A" }}><X size={18} /></button>
         <div className="flex items-center gap-2 mb-5 justify-center">
           <Feather size={20} color="#A6402B" />
-          <div style={{ color: "#2B241C", fontWeight: 700, fontSize: 16, fontFamily: "'Fraunces', serif" }}>Avespet</div>
+          <div style={{ color: "#1D2B25", fontWeight: 700, fontSize: 16, fontFamily: "'Fraunces', serif" }}>Avespet</div>
         </div>
-        <h2 className="text-center ui-sans font-semibold mb-5" style={{ color: "#2B241C" }}>{mode === "login" ? "Entrar na sua conta" : mode === "forgot" ? "Recuperar senha" : "Criar conta gratuita"}</h2>
+        <h2 className="text-center ui-sans font-semibold mb-5" style={{ color: "#1D2B25" }}>{mode === "login" ? "Entrar na sua conta" : mode === "forgot" ? "Recuperar senha" : "Criar conta gratuita"}</h2>
         {error && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#f0dad4", color: "#a6402b" }}>{error}</div>}
-        {message && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#e4ead9", color: "#556b3f" }}>{message}</div>}
+        {message && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#E8F1E9", color: "#174B3B" }}>{message}</div>}
         {message ? (
-          <button type="button" onClick={onFechar} className="ui-sans w-full px-4 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
+          <button type="button" onClick={onFechar} className="ui-sans w-full px-4 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#174B3B", color: "#FFFFFF" }}>
             Voltar para entrar
           </button>
         ) : (
@@ -335,23 +335,23 @@ function LoginModal({ onFechar }) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {mode === "signup" && (
             <>
-              <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Nome</span><input style={inputStyle} autoComplete="given-name" required value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Seu nome" /></label>
-              <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Sobrenome</span><input style={inputStyle} autoComplete="family-name" required value={sobrenome} onChange={(e) => setSobrenome(e.target.value)} placeholder="Seu sobrenome" /></label>
-              <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Telefone de contato / WhatsApp</span><input style={inputStyle} type="tel" autoComplete="tel" required value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 99999-9999" /></label>
+              <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#63736A" }}>Nome</span><input style={inputStyle} autoComplete="given-name" required value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Seu nome" /></label>
+              <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#63736A" }}>Sobrenome</span><input style={inputStyle} autoComplete="family-name" required value={sobrenome} onChange={(e) => setSobrenome(e.target.value)} placeholder="Seu sobrenome" /></label>
+              <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#63736A" }}>Telefone de contato / WhatsApp</span><input style={inputStyle} type="tel" autoComplete="tel" required value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 99999-9999" /></label>
             </>
           )}
-          <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>E-mail</span><input style={inputStyle} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
-          {mode !== "forgot" && <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Senha</span><input style={inputStyle} type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></label>}
-          <button type="submit" disabled={loading} className="ui-sans flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold mt-1" style={{ background: "#C69A2E", color: "#2B1D14" }}>
+          <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#63736A" }}>E-mail</span><input style={inputStyle} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+          {mode !== "forgot" && <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#63736A" }}>Senha</span><input style={inputStyle} type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></label>}
+          <button type="submit" disabled={loading} className="ui-sans flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold mt-1" style={{ background: "#174B3B", color: "#FFFFFF" }}>
             {loading && <Loader2 className="animate-spin" size={16} />}{mode === "login" ? "Entrar" : mode === "forgot" ? "Enviar link de recuperação" : "Criar conta"}
           </button>
         </form>
         {mode === "login" && (
-          <button type="button" onClick={() => { setMode("forgot"); setError(""); setMessage(""); }} className="ui-sans text-xs mt-4 w-full text-center underline" style={{ color: "#8a7a63" }}>
+          <button type="button" onClick={() => { setMode("forgot"); setError(""); setMessage(""); }} className="ui-sans text-xs mt-4 w-full text-center underline" style={{ color: "#63736A" }}>
             Esqueceu sua senha?
           </button>
         )}
-        <button type="button" onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setMessage(""); }} className="ui-sans text-xs mt-5 w-full text-center underline" style={{ color: "#8a7a63" }}>
+        <button type="button" onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setMessage(""); }} className="ui-sans text-xs mt-5 w-full text-center underline" style={{ color: "#63736A" }}>
           {mode === "login" ? "Nao tem conta? Criar uma gratuita" : "Voltar para entrar"}
         </button>
           </>
@@ -399,30 +399,30 @@ function RedefinirSenha({ onConcluir }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "#2B1D14" }}>
-      <div className="w-full max-w-sm rounded-xl p-6 sm:p-8" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "#FFFFFF" }}>
+      <div className="w-full max-w-sm rounded-xl p-6 sm:p-8" style={{ background: "#FFFFFF", border: "1px solid #E1E9E2" }}>
         <div className="flex items-center gap-2 mb-5 justify-center">
           <Feather size={20} color="#A6402B" />
-          <div style={{ color: "#2B241C", fontWeight: 700, fontSize: 16, fontFamily: "'Fraunces', serif" }}>Avespet</div>
+          <div style={{ color: "#1D2B25", fontWeight: 700, fontSize: 16, fontFamily: "'Fraunces', serif" }}>Avespet</div>
         </div>
-        <h1 className="text-center ui-sans font-semibold mb-5" style={{ color: "#2B241C" }}>Criar nova senha</h1>
+        <h1 className="text-center ui-sans font-semibold mb-5" style={{ color: "#1D2B25" }}>Criar nova senha</h1>
         {error && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#f0dad4", color: "#a6402b" }}>{error}</div>}
-        {message && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#e4ead9", color: "#556b3f" }}>{message}</div>}
+        {message && <div className="ui-sans text-sm mb-4 px-3 py-2 rounded-lg" style={{ background: "#E8F1E9", color: "#174B3B" }}>{message}</div>}
         {message ? (
-          <button type="button" onClick={onConcluir} className="ui-sans w-full px-4 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
+          <button type="button" onClick={onConcluir} className="ui-sans w-full px-4 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#174B3B", color: "#FFFFFF" }}>
             Voltar para entrar
           </button>
         ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="ui-sans flex flex-col gap-1.5">
-            <span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Nova senha</span>
+            <span className="text-xs font-semibold uppercase" style={{ color: "#63736A" }}>Nova senha</span>
             <input style={inputStyle} type="password" autoComplete="new-password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
           </label>
           <label className="ui-sans flex flex-col gap-1.5">
-            <span className="text-xs font-semibold uppercase" style={{ color: "#8a7a63" }}>Confirmar nova senha</span>
+            <span className="text-xs font-semibold uppercase" style={{ color: "#63736A" }}>Confirmar nova senha</span>
             <input style={inputStyle} type="password" autoComplete="new-password" required minLength={6} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
           </label>
-          <button type="submit" disabled={loading} className="ui-sans flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
+          <button type="submit" disabled={loading} className="ui-sans flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#174B3B", color: "#FFFFFF" }}>
             {loading && <Loader2 className="animate-spin" size={16} />} Salvar nova senha
           </button>
         </form>
@@ -533,25 +533,25 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
       `}</style>
 
-      <header className="px-5 pb-2 max-w-6xl mx-auto" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}>
-        <div className="flex items-center justify-between gap-3">
+      <header className="sticky top-0 z-40 border-b px-5 pb-3 shadow-sm" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + .75rem)", background: "rgba(255,255,255,.96)", borderColor: "#E1E9E2", backdropFilter: "blur(12px)" }}>
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <Link para="/" className="flex items-center gap-2">
             <Feather size={22} color="#174B3B" />
             <span style={{ color: "#174B3B", fontWeight: 700, fontSize: 18, fontFamily: "'Fraunces', serif" }}>Avespet</span>
           </Link>
           <button
             onClick={logado ? () => navegar("/") : onEntrar}
-            className="ui-sans text-sm px-5 py-3 rounded-lg font-semibold"
+            className="ui-sans rounded-xl px-5 py-3 text-sm font-semibold shadow-sm transition hover:opacity-90"
             style={{ background: "#174B3B", color: "#FFFFFF" }}
           >
             {logado ? "Voltar ao sistema" : "Entrar / Criar conta"}
           </button>
         </div>
-        <nav className="flex flex-wrap gap-x-5 gap-y-2 mt-3 ui-sans text-sm" aria-label="Menu principal">
+        <nav className="mx-auto mt-3 flex max-w-7xl flex-wrap gap-2 ui-sans text-sm" aria-label="Menu principal">
           {MENU.map(([para, nome]) => {
             const ativo = para === "/" ? caminho === "/" : caminho === para || caminho.startsWith(para + "/");
             return (
-              <Link key={para} para={para} style={{ color: ativo ? "#174B3B" : "#63736A", fontWeight: ativo ? 700 : 400 }}>
+              <Link key={para} para={para} className="inline-flex rounded-full px-3 py-2 transition" style={{ color: ativo ? "#174B3B" : "#63736A", background: ativo ? "#E8F1E9" : "transparent", fontWeight: ativo ? 700 : 500 }}>
                 {nome}
               </Link>
             );
@@ -563,7 +563,7 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
         <ConteudoDaRota caminho={caminho} onEntrar={onEntrar} />
       </main>
 
-      <footer className="text-center ui-sans text-xs py-6" style={{ color: "#63736A" }}>
+      <footer className="mt-10 border-t px-5 py-8 text-center ui-sans text-xs" style={{ color: "#63736A", background: "#FFFFFF", borderColor: "#E1E9E2" }}>
         {!logado && (
           <div>
             Criador de aves? <button onClick={onEntrar} className="underline" style={{ color: "#174B3B" }}>Cadastre seu plantel gratuitamente</button>
