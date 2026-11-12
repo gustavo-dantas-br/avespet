@@ -1105,7 +1105,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
               <ReproducaoTab aves={aves} posturas={posturas} onSave={handleSavePostura} onDelete={handleDeletePostura} onNascimento={handleRegistrarNascimento} Card={Card} Field={Field} inputStyle={inputStyle} SectionTitle={SectionTitle} />
             )}
 
-            {tab === "reservas" && <ReservasTab userId={user.id} clientes={clientes} aves={aves} posturas={posturas} Card={Card} SectionTitle={SectionTitle} />}
+            {tab === "reservas" && <ReservasTab userId={user.id} perfil={perfil} clientes={clientes} aves={aves} posturas={posturas} Card={Card} SectionTitle={SectionTitle} />}
 
             {tab === "lista" && (
               <ListaTab
