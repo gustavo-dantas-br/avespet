@@ -4,9 +4,20 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const allowedOrigins = new Set([
   "https://avespet.com.br",
   "https://www.avespet.com.br",
-  "https://avespet-qns5g4ejs-gustavo-dantas.vercel.app",
   "https://avespet-git-feature-master-admin-panel-gustavo-dantas.vercel.app",
 ]);
+
+// Inclui URLs únicas de Preview do projeto, sem aceitar outros projetos Vercel.
+function isAllowedOrigin(origin: string | null) {
+  if (!origin) return true;
+  if (allowedOrigins.has(origin)) return true;
+  try {
+    const hostname = new URL(origin).hostname;
+    return /^avespet-[a-z0-9]+-gustavo-dantas\\.vercel\\.app$/.test(hostname);
+  } catch {
+    return false;
+  }
+}
 
 function corsHeaders(origin: string | null) {
   const headers: Record<string, string> = {
@@ -27,7 +38,7 @@ function json(body: unknown, status = 200, origin: string | null = null) {
 
 Deno.serve(async (req) => {
   const origin = req.headers.get("Origin");
-  const originAllowed = !origin || allowedOrigins.has(origin);
+  const originAllowed = isAllowedOrigin(origin);
 
   if (req.method === "OPTIONS") {
     return originAllowed
