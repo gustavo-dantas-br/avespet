@@ -36,7 +36,7 @@ export default function DashboardTab({ aves, despesas, clientes = [], indicacoes
 
   return (
     <div>
-      <SectionTitle>Dashboard</SectionTitle>
+      <div className="mb-6"><SectionTitle>Visão geral</SectionTitle><p className="ui-sans -mt-3 text-sm" style={{ color: "#425D4B" }}>Acompanhe os principais números e atividades do seu criatório.</p></div>
 
       <div className="grid gap-3 mb-6" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
         <StatCard label="Total de aves" value={total} onClick={() => goToLista(null)} />
@@ -67,7 +67,7 @@ export default function DashboardTab({ aves, despesas, clientes = [], indicacoes
 
       {(semSexagem > 0 || naoSincronizadas > 0 || rep.atrasados > 0) && (
         <Card className="p-4 mb-6">
-          <div className="ui-mono text-xs mb-2" style={{ color: "#8a7a63" }}>ALERTAS</div>
+          <div className="ui-mono text-xs mb-2" style={{ color: "#294D38" }}>ALERTAS</div>
           <div className="flex flex-col gap-1 ui-sans text-sm" style={{ color: "#2B241C" }}>
             {rep.atrasados > 0 && <div>⚠️ {rep.atrasados} {rep.atrasados === 1 ? "ovo passou" : "ovos passaram"} da data prevista de eclosao.</div>}
             {semSexagem > 0 && <div>⚠️ {semSexagem} {semSexagem === 1 ? "ave esta" : "aves estao"} sem laudo de sexagem.</div>}
@@ -76,19 +76,19 @@ export default function DashboardTab({ aves, despesas, clientes = [], indicacoes
         </Card>
       )}
 
-      <div className="ui-mono text-xs mb-3" style={{ color: "#F1E6D2" }}>ULTIMAS CADASTRADAS</div>
+      <div className="ui-mono text-xs mb-3" style={{ color: "#173D29" }}>ÚLTIMAS AVES CADASTRADAS</div>
       {ultimasCadastradas.length === 0 ? (
-        <Card className="p-6 text-center ui-sans" style={{ color: "#8a7a63" }}>Nenhuma ave cadastrada ainda.</Card>
+        <Card className="p-6 text-center ui-sans" style={{ color: "#425D4B" }}>Nenhuma ave cadastrada ainda.</Card>
       ) : (
         <div className="flex flex-col gap-2">
           {ultimasCadastradas.map((a) => (
             <Card key={a.id} className="p-3 flex items-center gap-3 ui-sans">
-              <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0" style={{ background: "#3a2a1c" }}>
+              <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0" style={{ background: "#E8F2EB" }}>
                 {a.foto ? <img src={a.foto} className="w-full h-full object-cover" alt="" /> : null}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="font-semibold text-sm truncate" style={{ color: "#2B241C" }}>{a.nome}</div>
-                <div className="text-xs" style={{ color: "#8a7a63" }}>{a.especie} - {a.status}</div>
+                <div className="text-xs" style={{ color: "#425D4B" }}>{a.especie} · {a.status}</div>
               </div>
             </Card>
           ))}
