@@ -88,10 +88,11 @@ Observações:
 
 1. `main.jsx` monta o React e renderiza `App.jsx`.
 2. `App.jsx` coordena a sessão recebida, estado global da área autenticada, carregamentos e seleção de telas.
-3. As telas e componentes ficam principalmente em `components/` e `features/`.
-4. As funções em `lib/db.js` consultam e persistem dados no Supabase.
-5. `supabaseClient.js` fornece o cliente configurado pelas variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.
-6. O PostgreSQL aplica políticas de Row Level Security (RLS) definidas no banco. O arquivo `supabase/schema.sql` é apenas o schema inicial; alterações posteriores podem existir no projeto Supabase e precisam ser documentadas em migrações versionadas.
+3. Visitantes passam por `components/AuthPage.jsx`, que organiza o cabeçalho, navegação, login e roteamento público. A home foi extraída para `publico/home/Inicio.jsx`; páginas de domínio continuam em `features/` e conteúdos editoriais em `publico/`.
+4. As telas e componentes ficam principalmente em `components/`, `features/` e `publico/`.
+5. As funções em `lib/db.js` consultam e persistem dados no Supabase.
+6. `supabaseClient.js` fornece o cliente configurado pelas variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.
+7. O PostgreSQL aplica políticas de Row Level Security (RLS) definidas no banco. O arquivo `supabase/schema.sql` é apenas o schema inicial; alterações posteriores podem existir no projeto Supabase e precisam ser documentadas em migrações versionadas.
 
 ## 6. Arquitetura-alvo
 
@@ -182,3 +183,51 @@ A marca do software é **Avespet**. O nome “Criatório Dantas” pode continua
 - Verificação posterior confirmou os domínios personalizados `avespet.com.br` e `www.avespet.com.br` ainda associados ao projeto.
 - Identificados os nomes legados em `package.json`, `package-lock.json`, README e manifest PWA; documentação e metadados do pacote foram alinhados.
 - Repositório GitHub e pasta local permanecem pendentes por dependerem da atualização do remote e da configuração local.
+
+
+## 12. Área pública e redesign da página inicial — 12/11/2026
+
+### Organização atual
+
+- `src/components/AuthPage.jsx` continua sendo o ponto de entrada público: controla o cabeçalho, menu, modal de autenticação e escolhe o conteúdo pela rota.
+- `src/publico/home/Inicio.jsx` concentra a composição visual da página inicial e recebe por propriedades os recursos já existentes (`BuscaAnilha`, `VitrinePublica`, `GuiasEmDestaque` e `onEntrar`).
+- O roteador público continua em `src/publico/roteador.jsx`; links da nova home devem usar o componente `Link` com a propriedade `para`, não `href`.
+- Páginas completas permanecem nas rotas já existentes: `/aves-a-venda`, `/guias`, `/videos`, `/achei-uma-ave`, `/aves-perdidas` e `/campanha-ave-perdida`. A home apresenta resumos e direciona para essas páginas, sem duplicar suas explicações.
+
+### Direção visual e conteúdo
+
+- Apresentação equilibrada para tutores/visitantes e criadores.
+- Identidade visual clara com tons naturais de verde e superfícies neutras, preservando as rotas e os componentes funcionais existentes.
+- Blocos da home: apresentação geral; proteção da ave; consulta de anilha; ferramentas do criador; vitrine pública; guias e vídeos; chamadas para cadastro.
+- Fotografia real de aves em múltiplas espécies. As imagens externas atualmente referenciadas no componente precisam ser verificadas visualmente e avaliadas quanto a disponibilidade, licença, desempenho e estratégia de hospedagem antes da publicação definitiva.
+
+### Implementação registrada nesta branch
+
+- Criada `src/publico/home/Inicio.jsx` para separar a página inicial da composição de rotas.
+- Atualizado `src/components/AuthPage.jsx` para carregar a nova home e manter os componentes e destinos públicos existentes.
+- O cabeçalho e o rodapé adotam cores compatíveis com o fundo claro quando a rota é a home; as páginas internas mantêm o tema anterior nesta primeira etapa.
+- Nenhuma tabela, política RLS, dado de usuário ou configuração de produção foi alterada.
+- Branch de trabalho: `feature/homepage-redesign`.
+
+### Validação e pendências
+
+- [ ] Executar `npm run build` na branch.
+- [ ] Conferir em desktop e celular: cabeçalho, navegação, imagens, cards, espaçamentos e chamadas.
+- [ ] Testar cada link da home e confirmar que abre a página existente correta.
+- [ ] Testar abertura e fechamento do login/cadastro a partir dos CTAs.
+- [ ] Testar consulta de anilha e vitrine pública sem autenticação.
+- [ ] Confirmar o fluxo real de cadastro de tutor e registro de ave perdida; não prometer cadastro de animal se o fluxo exigir uma conta ou etapa ainda não disponível.
+- [ ] Revisar acessibilidade, carregamento e direitos/estabilidade das imagens externas.
+- [ ] Gerar implantação Preview e validar antes de qualquer merge ou publicação.
+- [ ] Atualizar este histórico após cada etapa de validação.
+
+### Limitação de implantação em 12/11/2026
+
+A tentativa de criar uma implantação Preview foi bloqueada pela Vercel por limite diário de API (`api-deployments-free-per-day`, resposta 402). Portanto, não existe URL Preview confirmada para esta branch e a validação visual/build ainda está pendente. A produção não foi modificada.
+
+### Histórico — 12/11/2026
+
+- Iniciada a reorganização da home em componente próprio.
+- Criada a branch `feature/homepage-redesign` a partir de `main`.
+- Adicionada a primeira composição modular da home e conectada ao roteamento público.
+- Registrada a necessidade de validar os caminhos de cadastro de tutores e proteção das aves antes de afirmar que a funcionalidade está completa.
