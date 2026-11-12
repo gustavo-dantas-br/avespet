@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { return respond({ error: "Invalid request" }, 400, origin); }
   const page = Math.max(1, Math.min(500, Math.floor(Number(body.page) || 1)));
   const pageSize = 20;
-  const search = String(body.search || "").trim().replace(/[^\\p{L}\\p{N}\\s@._-]/gu, " ").replace(/\\s+/g, " ").slice(0, 60);
+  const search = String(body.search || "").trim().replace(/[^\p{L}\p{N}\s@._-]/gu, " ").replace(/\s+/g, " ").slice(0, 60);
   let query = admin.from("perfil_criador").select("user_id,data,updated_at", { count: "exact" });
   if (search) {
     const safe = search;
