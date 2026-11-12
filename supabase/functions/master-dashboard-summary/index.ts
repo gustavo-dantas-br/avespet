@@ -1,38 +1,57 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const allowedOrigins = new Set([
+  "https://avespet.com.br",
+  "https://www.avespet.com.br",
+  "https://avespet-qns5g4ejs-gustavo-dantas.vercel.app",
+  "https://avespet-git-feature-master-admin-panel-gustavo-dantas.vercel.app",
+]);
 
-function json(body: unknown, status = 200) {
+function corsHeaders(origin: string | null) {
+  const headers: Record<string, string> = {
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+  if (origin && allowedOrigins.has(origin)) headers["Access-Control-Allow-Origin"] = origin;
+  return headers;
+}
+
+function json(body: unknown, status = 200, origin: string | null = null) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders(origin), "Content-Type": "application/json" },
   });
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  const origin = req.headers.get("Origin");
+  const originAllowed = !origin || allowedOrigins.has(origin);
+
+  if (req.method === "OPTIONS") {
+    return originAllowed
+      ? new Response("ok", { headers: corsHeaders(origin) })
+      : new Response("Origin not allowed", { status: 403, headers: corsHeaders(null) });
+  }
+  if (!originAllowed) return json({ error: "Origin not allowed" }, 403, origin);
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405, origin);
 
   const authorization = req.headers.get("Authorization") || "";
   const token = authorization.replace(/^Bearer\s+/i, "");
-  if (!token || token === authorization) return json({ error: "Unauthorized" }, 401);
+  if (!token || token === authorization) return json({ error: "Unauthorized" }, 401, origin);
 
   const url = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!url || !anonKey || !serviceKey) return json({ error: "Server configuration error" }, 503);
+  if (!url || !anonKey || !serviceKey) return json({ error: "Server configuration error" }, 503, origin);
 
   // Validar o JWT com Auth antes de consultar qualquer dado administrativo.
   const authClient = createClient(url, anonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const { data: authData, error: authError } = await authClient.auth.getUser(token);
-  if (authError || !authData.user) return json({ error: "Unauthorized" }, 401);
+  if (authError || !authData.user) return json({ error: "Unauthorized" }, 401, origin);
 
   const adminClient = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -47,9 +66,9 @@ Deno.serve(async (req) => {
 
   if (entitlementError) {
     console.error("Master entitlement lookup failed", entitlementError.message);
-    return json({ error: "Could not validate access" }, 503);
+    return json({ error: "Could not validate access" }, 503, origin);
   }
-  if (!entitlement) return json({ error: "Forbidden" }, 403);
+  if (!entitlement) return json({ error: "Forbidden" }, 403, origin);
 
   const tables = ["admins", "perfil_criador", "aves", "anuncios", "anuncios_aves_perdidas"];
   const counts: Record<string, number> = {};
@@ -59,7 +78,7 @@ Deno.serve(async (req) => {
       .select("*", { count: "exact", head: true });
     if (error) {
       console.error("Master dashboard count failed", { table, message: error.message });
-      return json({ error: "Could not load platform summary" }, 503);
+      return json({ error: "Could not load platform summary" }, 503, origin);
     }
     counts[table] = count || 0;
   }
@@ -72,8 +91,8 @@ Deno.serve(async (req) => {
   });
   if (auditError) {
     console.error("Master audit insert failed", auditError.message);
-    return json({ error: "Could not record administrative audit" }, 503);
+    return json({ error: "Could not record administrative audit" }, 503, origin);
   }
 
-  return json({ counts });
+  return json({ counts }, 200, origin);
 });
