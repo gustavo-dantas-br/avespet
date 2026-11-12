@@ -7,6 +7,18 @@ const allowedOrigins = new Set([
   "https://avespet-git-feature-master-admin-panel-gustavo-dantas.vercel.app",
 ]);
 
+// Inclui URLs únicas de Preview do projeto, sem aceitar outros projetos Vercel.
+function isAllowedOrigin(origin: string | null) {
+  if (!origin) return true;
+  if (allowedOrigins.has(origin)) return true;
+  try {
+    const hostname = new URL(origin).hostname;
+    return /^avespet-[a-z0-9]+-gustavo-dantas\\.vercel\\.app$/.test(hostname);
+  } catch {
+    return false;
+  }
+}
+
 function corsHeaders(origin: string | null) {
   const headers: Record<string, string> = {
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -26,7 +38,7 @@ function respond(body: unknown, status: number, origin: string | null) {
 
 Deno.serve(async (req) => {
   const origin = req.headers.get("Origin");
-  const allowed = !origin || allowedOrigins.has(origin);
+  const allowed = isAllowedOrigin(origin);
 
   if (req.method === "OPTIONS") {
     return allowed
