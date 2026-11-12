@@ -149,11 +149,15 @@ export function PaginaGuia({ slug, onEntrar }) {
   if (estado.carregando) return <Carregando />;
   if (!a) {
     return (
-      <section className="px-5 pb-16 max-w-3xl mx-auto text-center ui-sans">
-        <h1 className="mb-3" style={{ color: "#F1E6D2", fontSize: 26, fontWeight: 700 }}>{estado.erro ? "Nao foi possivel carregar" : "Guia nao encontrado"}</h1>
-        <p className="text-sm mb-5" style={{ color: "#b09a78" }}>{estado.erro ? "Tente de novo em instantes." : "Esse guia nao existe ou ainda nao foi publicado."}</p>
-        <Link para="/guias" style={{ color: "#C69A2E", textDecoration: "underline" }}>Ver todos os guias</Link>
-      </section>
+      <div style={{ background: TEMA_PUBLICO.fundo, minHeight: "70vh" }}>
+        <PaginaPublica largura="max-w-3xl" className="text-center">
+          <CartaoPublico className="p-8">
+            <h1 className="mb-3 text-2xl font-bold" style={{ color: TEMA_PUBLICO.tinta }}>{estado.erro ? "Não foi possível carregar" : "Guia não encontrado"}</h1>
+            <p className="mb-5 text-sm" style={{ color: TEMA_PUBLICO.texto }}>{estado.erro ? "Tente de novo em instantes." : "Esse guia não existe ou ainda não foi publicado."}</p>
+            <Link para="/guias" style={{ color: TEMA_PUBLICO.verde, fontWeight: 700 }}>Ver todos os guias →</Link>
+          </CartaoPublico>
+        </PaginaPublica>
+      </div>
     );
   }
 
@@ -165,15 +169,16 @@ export function PaginaGuia({ slug, onEntrar }) {
   }
 
   return (
-    <article className="px-5 pb-16 max-w-3xl mx-auto">
-      <Link para="/guias" className="ui-sans inline-flex items-center gap-1 text-sm mb-4" style={{ color: "#b09a78" }}><ArrowLeft size={14} /> Todos os guias</Link>
+    <div style={{ background: TEMA_PUBLICO.fundo, minHeight: "70vh" }}>
+    <article className="px-5 py-10 md:py-14 max-w-3xl mx-auto">
+      <Link para="/guias" className="ui-sans inline-flex items-center gap-1 text-sm mb-4" style={{ color: TEMA_PUBLICO.verde, fontWeight: 600 }}><ArrowLeft size={14} /> Todos os guias</Link>
       <div className="rounded-xl p-5 sm:p-8" style={CLARO}>
         <div className="flex flex-wrap gap-1.5 mb-3">
           <Etiqueta>{a.especie}</Etiqueta>
           {a.categoria && <Etiqueta>{a.categoria}</Etiqueta>}
         </div>
-        <h1 style={{ color: "#2B241C", fontFamily: "'Fraunces', serif", fontSize: 32, fontWeight: 700, lineHeight: 1.2 }}>{a.titulo}</h1>
-        <div className="ui-sans text-xs mt-2 mb-5" style={{ color: "#8a7a63" }}>{data}{data ? " - " : ""}{minutosLeitura(a.corpo)} min de leitura</div>
+        <h1 style={{ color: TEMA_PUBLICO.tinta, fontFamily: "'Fraunces', serif", fontSize: 32, fontWeight: 700, lineHeight: 1.2 }}>{a.titulo}</h1>
+        <div className="ui-sans text-xs mt-2 mb-5" style={{ color: TEMA_PUBLICO.texto }}>{data}{data ? " - " : ""}{minutosLeitura(a.corpo)} min de leitura</div>
 
         {vid && (
           <div className="aspect-video mb-6 rounded-lg overflow-hidden" style={{ background: "#000" }}>
@@ -186,31 +191,32 @@ export function PaginaGuia({ slug, onEntrar }) {
 
         <CorpoArtigo corpo={a.corpo} />
 
-        <div className="flex flex-wrap gap-2 mt-8 pt-5 ui-sans" style={{ borderTop: "1px solid #e3d3b4" }}>
+        <div className="flex flex-wrap gap-2 mt-8 pt-5 ui-sans" style={{ borderTop: "1px solid #E1E9E2" }}>
           <a href={`https://wa.me/?text=${encodeURIComponent(`${a.titulo} - ${url}`)}`} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg" style={{ background: "#556b3f", color: "#F1E6D2" }}>
+            className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg" style={{ background: TEMA_PUBLICO.verde, color: "#FFFFFF" }}>
             <Share2 size={14} /> Compartilhar no WhatsApp
           </a>
-          <button onClick={copiar} className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg" style={{ background: "#e3d3b4", color: "#2B241C" }}>
+          <button onClick={copiar} className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg" style={{ background: TEMA_PUBLICO.verdeClaro, color: TEMA_PUBLICO.verde }}>
             <Link2 size={14} /> {copiado ? "Link copiado!" : "Copiar link"}
           </button>
         </div>
       </div>
 
-      <div className="rounded-xl p-5 mt-6 text-center ui-sans" style={{ background: "#3a2314", border: "1px solid #4b3523" }}>
-        <div className="font-semibold mb-1" style={{ color: "#F1E6D2" }}>Cria Ring Neck ou Calopsita?</div>
-        <div className="text-sm mb-3" style={{ color: "#b09a78" }}>Organize cadastro, genealogia, ovos, filhotes e financeiro do seu plantel, de graca.</div>
-        <button onClick={onEntrar} className="text-sm font-semibold px-5 py-2.5 rounded-lg" style={{ background: "#C69A2E", color: "#2B1D14" }}>Criar conta gratuita</button>
+      <div className="rounded-xl p-5 mt-6 text-center ui-sans" style={{ background: TEMA_PUBLICO.verdeEscuro, border: "1px solid #174B3B" }}>
+        <div className="font-semibold mb-1" style={{ color: "#FFFFFF" }}>Cria aves?</div>
+        <div className="text-sm mb-3" style={{ color: "#D2E1D6" }}>Organize cadastro, genealogia, ovos, filhotes e financeiro do seu plantel.</div>
+        <button onClick={onEntrar} className="text-sm font-semibold px-5 py-2.5 rounded-lg" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}>Criar conta gratuita</button>
       </div>
 
       {outros.length > 0 && (
         <div className="mt-8">
-          <div className="ui-sans font-semibold mb-3" style={{ color: "#F1E6D2" }}>Continue lendo</div>
+          <div className="ui-sans font-semibold mb-3" style={{ color: TEMA_PUBLICO.tinta }}>Continue lendo</div>
           <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))" }}>
             {outros.map((o) => <CartaoGuia key={o.id} artigo={o} />)}
           </div>
         </div>
       )}
     </article>
+    </div>
   );
 }
