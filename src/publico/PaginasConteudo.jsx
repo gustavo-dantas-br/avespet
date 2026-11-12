@@ -3,6 +3,7 @@ import { Loader2, Play, Share2, Link2, ArrowLeft } from "lucide-react";
 import { listArtigosPublicos, getArtigoPorSlug } from "../lib/db";
 import { youtubeId, resumoAutomatico, minutosLeitura, ESPECIES_CONTEUDO } from "./conteudo";
 import { Link } from "./roteador";
+import { PaginaPublica, CabecalhoPublico, CartaoPublico, TEMA_PUBLICO } from "./ComponentesPublicos";
 import { useSEO } from "./seo";
 import CorpoArtigo from "./CorpoArtigo";
 
@@ -73,48 +74,52 @@ export function GuiasEmDestaque() {
 export function PaginaGuias() {
   const { carregando, lista, erro } = useArtigos();
   const [filtro, setFiltro] = useState("Todas");
-  useSEO({ titulo: "Guias para criadores de Ring Neck e Calopsita", descricao: "Guias praticos sobre reproducao, incubacao, filhotes e manejo de Ring Neck e Calopsita.", caminho: "/guias" });
+  useSEO({ titulo: "Guias para criadores de Ring Neck e Calopsita", descricao: "Guias práticos sobre reprodução, incubação, filhotes e manejo de aves.", caminho: "/guias" });
   const visiveis = lista.filter((a) => filtro === "Todas" || a.especie === filtro || a.especie === "Geral");
 
   return (
-    <section className="px-5 pb-16 max-w-6xl mx-auto">
-      <h1 className="ui-sans mb-2" style={{ color: "#F1E6D2", fontFamily: "'Fraunces', serif", fontSize: 32, fontWeight: 700 }}>Guias para criadores</h1>
-      <p className="ui-sans text-sm mb-5" style={{ color: "#b09a78" }}>Conteudo pratico sobre Ring Neck e Calopsita.</p>
-      <div className="flex flex-wrap gap-2 mb-6">
-        {["Todas", ...ESPECIES_CONTEUDO.filter((e) => e !== "Geral")].map((e) => (
-          <button key={e} onClick={() => setFiltro(e)} className="ui-sans text-xs px-3 py-1.5 rounded-lg font-semibold"
-            style={{ background: filtro === e ? "#C69A2E" : "#3a2314", color: filtro === e ? "#2B1D14" : "#b09a78" }}>{e}</button>
-        ))}
-      </div>
-      {carregando ? <Carregando /> : visiveis.length === 0 ? (
-        <div className="ui-sans text-center text-sm py-10" style={{ color: "#b09a78" }}>
-          {erro ? "Nao foi possivel carregar os guias agora." : "Ainda nao publicamos guias nessa categoria. Volte em breve!"}
+    <div style={{ background: TEMA_PUBLICO.fundo, minHeight: "70vh" }}>
+      <PaginaPublica>
+        <CabecalhoPublico etiqueta="Aprendizado e cuidado" titulo="Guias para cuidar melhor das suas aves" descricao="Conteúdo prático sobre reprodução, incubação, filhotes e manejo." />
+        <div className="mb-6 flex flex-wrap gap-2">
+          {["Todas", ...ESPECIES_CONTEUDO.filter((e) => e !== "Geral")].map((e) => (
+            <button key={e} onClick={() => setFiltro(e)} className="rounded-full px-4 py-2 text-xs font-semibold transition"
+              style={{ background: filtro === e ? TEMA_PUBLICO.verde : "#FFFFFF", color: filtro === e ? "#FFFFFF" : TEMA_PUBLICO.texto, border: `1px solid ${filtro === e ? TEMA_PUBLICO.verde : TEMA_PUBLICO.borda}` }}>{e}</button>
+          ))}
         </div>
-      ) : (
-        <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))" }}>
-          {visiveis.map((a) => <CartaoGuia key={a.id} artigo={a} />)}
-        </div>
-      )}
-    </section>
+        {carregando ? <div className="py-10"><Carregando /></div> : visiveis.length === 0 ? (
+          <CartaoPublico className="p-8 text-center">
+            <p className="text-sm" style={{ color: TEMA_PUBLICO.texto }}>{erro ? "Não foi possível carregar os guias agora." : "Ainda não publicamos guias nessa categoria. Volte em breve!"}</p>
+          </CartaoPublico>
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {visiveis.map((a) => <CartaoGuia key={a.id} artigo={a} />)}
+          </div>
+        )}
+      </PaginaPublica>
+    </div>
   );
 }
 
 export function PaginaVideos() {
   const { carregando, lista } = useArtigos();
-  useSEO({ titulo: "Videos para criadores de Ring Neck e Calopsita", descricao: "Videos sobre cuidados com filhotes, epoca de criacao e manejo de Ring Neck e Calopsita.", caminho: "/videos" });
+  useSEO({ titulo: "Vídeos para criadores de aves", descricao: "Vídeos sobre cuidados com filhotes, época de criação e manejo de aves.", caminho: "/videos" });
   const comVideo = lista.filter((a) => youtubeId(a.videoUrl));
   return (
-    <section className="px-5 pb-16 max-w-6xl mx-auto">
-      <h1 className="ui-sans mb-2" style={{ color: "#F1E6D2", fontFamily: "'Fraunces', serif", fontSize: 32, fontWeight: 700 }}>Videos</h1>
-      <p className="ui-sans text-sm mb-6" style={{ color: "#b09a78" }}>Cuidados com filhotes, epoca de criacao e manejo.</p>
-      {carregando ? <Carregando /> : comVideo.length === 0 ? (
-        <div className="ui-sans text-center text-sm py-10" style={{ color: "#b09a78" }}>Ainda nao publicamos videos. Volte em breve!</div>
-      ) : (
-        <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))" }}>
-          {comVideo.map((a) => <CartaoGuia key={a.id} artigo={a} />)}
-        </div>
-      )}
-    </section>
+    <div style={{ background: TEMA_PUBLICO.fundo, minHeight: "70vh" }}>
+      <PaginaPublica>
+        <CabecalhoPublico etiqueta="Conteúdo em vídeo" titulo="Vídeos sobre o universo das aves" descricao="Orientações e demonstrações sobre cuidados com filhotes, época de criação e manejo." />
+        {carregando ? <div className="py-10"><Carregando /></div> : comVideo.length === 0 ? (
+          <CartaoPublico className="p-8 text-center">
+            <p className="text-sm" style={{ color: TEMA_PUBLICO.texto }}>Ainda não publicamos vídeos. Volte em breve!</p>
+          </CartaoPublico>
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {comVideo.map((a) => <CartaoGuia key={a.id} artigo={a} />)}
+          </div>
+        )}
+      </PaginaPublica>
+    </div>
   );
 }
 
