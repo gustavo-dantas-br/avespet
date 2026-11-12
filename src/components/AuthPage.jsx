@@ -9,6 +9,7 @@ import { Link, usePath, navegar } from "../publico/roteador";
 import { useSEO } from "../publico/seo";
 import { comprimirEEnviarImagemPublica } from "../features/aves-perdidas/utils/comprimirImagem";
 import { PaginaGuias, PaginaGuia, PaginaVideos, GuiasEmDestaque } from "../publico/PaginasConteudo";
+import Inicio from "../publico/home/Inicio";
 import { AvesPerdidas } from "../features/aves-perdidas";
 import { SolicitarCampanha } from "../features/campanhas";
 
@@ -469,86 +470,6 @@ function contarVisita(caminho) {
   registrarVisita(caminho).catch(() => {});
 }
 
-function Inicio() {
-  return (
-    <>
-      {/* Hero principal */}
-      <section className="px-5 pt-10 pb-8 md:pt-16 md:pb-10 max-w-5xl mx-auto text-center">
-        <div className="ui-sans mb-3" style={{ color: "#C69A2E", fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-          Avespet
-        </div>
-
-        <h1
-          style={{
-            color: "#F1E6D2",
-            fontFamily: "'Fraunces', serif",
-            fontSize: "clamp(34px, 5vw, 52px)",
-            fontWeight: 700,
-            lineHeight: 1.1,
-            marginBottom: 18,
-          }}
-        >
-          Organize o cadastro do seu plantel, de graça.
-        </h1>
-
-        <p
-          className="ui-sans mx-auto"
-          style={{
-            color: "#b09a78",
-            fontSize: 16,
-            lineHeight: 1.7,
-            maxWidth: 720,
-            marginBottom: 30,
-          }}
-        >
-          Sistema completo pra criadores de aves cuidarem do cadastro,
-          financeiro e identificação do plantel — cada criador com o
-          próprio espaço, privado e gratuito.
-        </p>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-4xl mx-auto text-left">
-          {[
-            "Cadastro de cada ave com foto",
-            "Árvore genealógica automática",
-            "Controle financeiro de compra e venda",
-            "Gerador de placa de identificação",
-            "Acompanhamento de pós-venda",
-            "Clientes, fornecedores e indicações",
-          ].map((item) => (
-            <div
-              key={item}
-              className="ui-sans rounded-lg px-4 py-3"
-              style={{
-                background: "#3a2314",
-                border: "1px solid #4b3523",
-                color: "#F1E6D2",
-                fontSize: 13,
-                lineHeight: 1.4,
-              }}
-            >
-              <span style={{ color: "#C69A2E", marginRight: 7 }}>✓</span>
-              {item}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="px-5 py-8 md:py-12">
-        <BuscaAnilha />
-      </section>
-
-      <section className="px-5 pb-16 max-w-6xl mx-auto">
-        <h2 className="ui-sans text-center mb-6" style={{ color: "#F1E6D2", fontSize: 22, fontWeight: 700 }}>
-          Aves disponiveis agora
-        </h2>
-        <VitrinePublica />
-      </section>
-
-      <GuiasEmDestaque />
-    </>
-  );
-}
-
 function NaoEncontrada() {
   return (
     <section className="px-5 pb-16 max-w-3xl mx-auto text-center ui-sans">
@@ -560,7 +481,7 @@ function NaoEncontrada() {
 
 function ConteudoDaRota({ caminho, onEntrar }) {
   const guia = caminho.match(/^\/guias\/([a-z0-9-]+)$/);
-  if (caminho === "/") return <Inicio />;
+  if (caminho === "/") return <Inicio BuscaAnilha={BuscaAnilha} VitrinePublica={VitrinePublica} GuiasEmDestaque={GuiasEmDestaque} onEntrar={onEntrar} />;
   if (caminho === "/aves-a-venda") {
     return (
       <section className="px-5 pb-16 max-w-6xl mx-auto">
@@ -598,9 +519,10 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
   if (redefinirSenha) return <RedefinirSenha onConcluir={onSenhaAtualizada} />;
 
   const onEntrar = logado ? () => navegar("/") : () => setMostrarLogin(true);
+  const ehInicio = caminho === "/";
 
   return (
-    <div className="min-h-screen w-full" style={{ background: "#2B1D14", fontFamily: "'Fraunces', serif" }}>
+    <div className="min-h-screen w-full" style={{ background: ehInicio ? "#F5F7F3" : "#2B1D14", fontFamily: "'Fraunces', serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap');
         .ui-sans { font-family: 'Inter', sans-serif; }
@@ -611,12 +533,12 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
         <div className="flex items-center justify-between gap-3">
           <Link para="/" className="flex items-center gap-2">
             <Feather size={22} color="#C69A2E" />
-            <span style={{ color: "#F1E6D2", fontWeight: 700, fontSize: 18, fontFamily: "'Fraunces', serif" }}>Avespet</span>
+            <span style={{ color: ehInicio ? "#174B3B" : "#F1E6D2", fontWeight: 700, fontSize: 18, fontFamily: "'Fraunces', serif" }}>Avespet</span>
           </Link>
           <button
             onClick={logado ? () => navegar("/") : onEntrar}
             className="ui-sans text-sm px-5 py-3 rounded-lg font-semibold"
-            style={{ background: "#3a2314", color: "#C69A2E" }}
+            style={{ background: ehInicio ? "#174B3B" : "#3a2314", color: "#FFFFFF" }}
           >
             {logado ? "Voltar ao sistema" : "Entrar / Criar conta"}
           </button>
@@ -625,7 +547,7 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
           {MENU.map(([para, nome]) => {
             const ativo = para === "/" ? caminho === "/" : caminho === para || caminho.startsWith(para + "/");
             return (
-              <Link key={para} para={para} style={{ color: ativo ? "#C69A2E" : "#b09a78", fontWeight: ativo ? 600 : 400 }}>
+              <Link key={para} para={para} style={{ color: ehInicio ? (ativo ? "#174B3B" : "#63736A") : (ativo ? "#C69A2E" : "#b09a78"), fontWeight: ativo ? 700 : 400 }}>
                 {nome}
               </Link>
             );
@@ -633,18 +555,18 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
         </nav>
       </header>
 
-      <main className="pt-6">
+      <main className={ehInicio ? "pt-0" : "pt-6"}>
         <ConteudoDaRota caminho={caminho} onEntrar={onEntrar} />
       </main>
 
-      <footer className="text-center ui-sans text-xs py-6" style={{ color: "#6b5638" }}>
+      <footer className="text-center ui-sans text-xs py-6" style={{ color: ehInicio ? "#63736A" : "#6b5638" }}>
         {!logado && (
           <div>
-            Criador de aves? <button onClick={onEntrar} className="underline" style={{ color: "#C69A2E" }}>Cadastre seu plantel gratuitamente</button>
+            Criador de aves? <button onClick={onEntrar} className="underline" style={{ color: ehInicio ? "#174B3B" : "#C69A2E" }}>Cadastre seu plantel gratuitamente</button>
           </div>
         )}
         <div className="mt-2">
-          Precisa de ajuda? <a href={SUPORTE_WHATSAPP} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#C69A2E" }}>Fale com o suporte</a>
+          Precisa de ajuda? <a href={SUPORTE_WHATSAPP} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: ehInicio ? "#174B3B" : "#C69A2E" }}>Fale com o suporte</a>
         </div>
       </footer>
 
