@@ -123,8 +123,8 @@ O usuário informou que as verificações mencionadas nesta etapa já foram real
 
 ### Próximas páginas a padronizar
 
-- [ ] Página de solicitação de campanha (`/campanha-ave-perdida`).
-- [ ] Guias, vídeos e página individual de artigo.
+- [x] Página de solicitação de campanha (`/campanha-ave-perdida`) — identidade visual atualizada.
+- [ ] Guias, vídeos e página individual de artigo — destaque da home ajustado; páginas completas ainda pendentes.
 - [ ] Página de consulta de anilha (`/achei-uma-ave`).
 - [ ] Vitrine de aves à venda.
 - [ ] Cabeçalho e navegação em todas as rotas públicas.
@@ -136,3 +136,13 @@ O usuário informou que as verificações mencionadas nesta etapa já foram real
 - [ ] Testar CTA de entrada/cadastro e consulta de anilha.
 - [ ] Conferir estado vazio, carregamento, erro e anúncios com/sem foto.
 - [ ] Atualizar este checklist após os testes.
+
+
+### 12/11/2026 — campanha e destaque de conteúdo
+
+- Atualizada `src/features/campanhas/pages/SolicitarCampanha.jsx` para usar o sistema visual compartilhado, preservando os pacotes, campos, envio e estados de sucesso/erro.
+- Ajustado o destaque `GuiasEmDestaque` em `src/publico/PaginasConteudo.jsx` para ter contraste correto no fundo claro da nova home.
+- Os cartões de conteúdo passaram a usar superfície branca e borda neutra.
+- Nenhuma regra de solicitação, pacote, orçamento ou cobrança foi alterada.
+- As páginas completas de guias, vídeos e artigo individual ainda precisam de padronização visual.
+- Testes automatizados e visuais destas alterações específicas continuam pendentes; a confirmação anterior do usuário se refere à verificação que já havia sido feita antes desta nova rodada de código.
