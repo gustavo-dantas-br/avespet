@@ -61,10 +61,10 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { return respond({ error: "Invalid request" }, 400, origin); }
   const page = Math.max(1, Math.min(500, Math.floor(Number(body.page) || 1)));
   const pageSize = 20;
-  const search = String(body.search || "").trim().replace(/[%_]/g, "").slice(0, 60);
+  const search = String(body.search || "").trim().replace(/[^\\p{L}\\p{N}\\s@._-]/gu, " ").replace(/\\s+/g, " ").slice(0, 60);
   let query = admin.from("perfil_criador").select("user_id,data,updated_at", { count: "exact" });
   if (search) {
-    const safe = search.replace(/[,.()]/g, " ").trim();
+    const safe = search;
     if (safe) query = query.or([
       `data->>nome.ilike.%${safe}%`,
       `data->>sobrenome.ilike.%${safe}%`,
@@ -82,16 +82,27 @@ Deno.serve(async (req) => {
     return respond({ error: "Could not load creators" }, 503, origin);
   }
 
-  const rows = await Promise.all((profiles || []).map(async (profile) => {
-    const [userResult, birdResult] = await Promise.all([
-      admin.auth.admin.getUserById(profile.user_id),
-      admin.from("aves").select("id", { count: "exact", head: true }).eq("user_id", profile.user_id),
-    ]);
-    if (userResult.error) {
-      console.error("Creator auth lookup failed", userResult.error.message);
+  const profileRows = profiles || [];
+  const userIds = profileRows.map((profile) => profile.user_id);
+  const { data: birdRows, error: birdsError } = userIds.length
+    ? await admin.from("aves").select("user_id").in("user_id", userIds)
+    : { data: [], error: null };
+  if (birdsError) {
+    console.error("Creator birds count query failed", birdsError.message);
+    return respond({ error: "Could not load creator bird counts" }, 503, origin);
+  }
+  const birdCounts = new Map<string, number>();
+  for (const bird of birdRows || []) {
+    birdCounts.set(bird.user_id, (birdCounts.get(bird.user_id) || 0) + 1);
+  }
+
+  const rows = await Promise.all(profileRows.map(async (profile) => {
+    const { data: userResult, error: userError } = await admin.auth.admin.getUserById(profile.user_id);
+    if (userError || !userResult.user) {
+      console.error("Creator auth lookup failed", userError?.message || "User not found");
       return null;
     }
-    const account = userResult.data.user;
+    const account = userResult.user;
     const data = profile.data || {};
     const bannedUntil = account.banned_until || null;
     const isBlocked = Boolean(bannedUntil && new Date(bannedUntil).getTime() > Date.now());
@@ -107,7 +118,7 @@ Deno.serve(async (req) => {
       emailConfirmed: Boolean(account.email_confirmed_at),
       blocked: isBlocked,
       blockedUntil: bannedUntil,
-      birdsCount: birdResult.count || 0,
+      birdsCount: birdCounts.get(profile.user_id) || 0,
       profileUpdatedAt: profile.updated_at,
     };
   }));
