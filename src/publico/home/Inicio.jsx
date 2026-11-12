@@ -2,10 +2,19 @@ import React from "react";
 import { Link } from "../roteador";
 
 const FOTOS = {
-  ringneck: "https://images.pexels.com/photos/37060351/pexels-photo-37060351.jpeg?cs=srgb&dl=pexels-mohit-khare-3592184-37060351.jpg&fm=jpg",
-  calopsita: "https://images.pexels.com/photos/11961251/pexels-photo-11961251.jpeg?cs=srgb&dl=pexels-connorscottmcmanus-11961251.jpg&fm=jpg",
-  arara: "https://images.pexels.com/photos/19649411/pexels-photo-19649411.jpeg?cs=srgb&dl=pexels-saplak-19649411.jpg&fm=jpg",
+  ringneck: "https://images.pexels.com/photos/1463295/pexels-photo-1463295.jpeg?auto=compress&cs=tinysrgb&w=1400",
+  calopsita: "https://images.pexels.com/photos/32276363/pexels-photo-32276363.jpeg?auto=compress&cs=tinysrgb&w=1400",
+  arara: "https://images.pexels.com/photos/19649411/pexels-photo-19649411.jpeg?auto=compress&cs=tinysrgb&w=1400",
 };
+
+const GALERIA_PSITACIDEOS = [
+  { nome: "Ring Neck", detalhe: "Verde e tons naturais", foto: FOTOS.ringneck, alt: "Ring Neck verde em fotografia de alta definição" },
+  { nome: "Calopsita", detalhe: "Lutino e cara-branca", foto: FOTOS.calopsita, alt: "Calopsita clara com bochechas alaranjadas" },
+  { nome: "Agapórnis", detalhe: "Cores vibrantes", foto: "https://images.unsplash.com/photo-1518001589401-1743b61d1def?auto=format&fit=crop&w=1400&q=90", alt: "Casal de agapórnis coloridos em um galho" },
+  { nome: "Periquito-australiano", detalhe: "Azul, verde e amarelo", foto: "https://images.pexels.com/photos/12565371/pexels-photo-12565371.jpeg?auto=compress&cs=tinysrgb&w=1400", alt: "Periquito australiano verde e amarelo" },
+  { nome: "Arara", detalhe: "Azul e amarelo", foto: FOTOS.arara, alt: "Arara azul e amarela em ambiente natural" },
+  { nome: "Jandaia / Conure", detalhe: "Amarelo, laranja e verde", foto: "https://images.pexels.com/photos/32923339/pexels-photo-32923339.jpeg?auto=compress&cs=tinysrgb&w=1400", alt: "Jandaia do sol colorida em galho" },
+];
 
 const verde = "#174B3B";
 const verdeClaro = "#E8F1E9";
@@ -52,6 +61,7 @@ function CartaoServico({ foto, alt, etiqueta, titulo, descricao, href, acao }) {
 }
 
 export default function Inicio({ BuscaAnilha, VitrinePublica, GuiasEmDestaque, onEntrar }) {
+  const galeriaRef = React.useRef(null);
   const irPara = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   return (
@@ -73,20 +83,31 @@ export default function Inicio({ BuscaAnilha, VitrinePublica, GuiasEmDestaque, o
             <span>✓ Cadastro gratuito</span><span>✓ Consulta pública de anilhas</span><span>✓ Ferramentas para criadores</span>
           </div>
         </div>
-        <div className="relative mx-auto grid w-full max-w-xl grid-cols-[1.2fr_.8fr] gap-3">
-          <div className="row-span-2 overflow-hidden rounded-[2rem] bg-white shadow-xl" style={{ minHeight: 390 }}>
-            <img src={FOTOS.ringneck} alt="Ring Neck verde pousado entre folhas" fetchPriority="high" loading="eager" className="h-full min-h-[390px] w-full object-cover" />
+        <div className="mx-auto w-full max-w-xl">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: verde }}>Galeria Avespet</div>
+              <div className="mt-1 text-lg font-bold" style={{ color: tinta }}>A beleza dos psitacídeos</div>
+            </div>
+            <div className="flex gap-2">
+              <button type="button" aria-label="Ver aves anteriores" onClick={() => galeriaRef.current?.scrollBy({ left: -290, behavior: "smooth" })} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg shadow-sm" style={{ border: "1px solid #DCE7DE", color: verde }}>‹</button>
+              <button type="button" aria-label="Ver próximas aves" onClick={() => galeriaRef.current?.scrollBy({ left: 290, behavior: "smooth" })} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg shadow-sm" style={{ border: "1px solid #DCE7DE", color: verde }}>›</button>
+            </div>
           </div>
-          <div className="overflow-hidden rounded-[1.5rem] bg-white shadow-lg">
-            <img src={FOTOS.calopsita} alt="Calopsita em um galho" loading="lazy" className="h-48 w-full object-cover md:h-56" />
+          <div ref={galeriaRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-4" style={{ scrollbarWidth: "thin" }}>
+            {GALERIA_PSITACIDEOS.map((ave, index) => (
+              <article key={ave.nome} className="w-[78%] shrink-0 snap-start overflow-hidden rounded-[1.6rem] bg-white shadow-lg sm:w-[62%] md:w-[72%]" style={{ border: "1px solid #E3EAE4" }}>
+                <div className="relative h-[330px] overflow-hidden bg-[#E8F1E9]">
+                  <img src={ave.foto} alt={ave.alt} loading={index === 0 ? "eager" : "lazy"} fetchPriority={index === 0 ? "high" : "auto"} className="h-full w-full object-cover" />
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent px-5 pb-5 pt-14">
+                    <div className="text-xl font-bold text-white">{ave.nome}</div>
+                    <div className="mt-1 text-sm text-white/90">{ave.detalhe}</div>
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
-          <div className="overflow-hidden rounded-[1.5rem] bg-white shadow-lg">
-            <img src={FOTOS.arara} alt="Arara azul e amarela em ambiente natural" loading="lazy" className="h-48 w-full object-cover md:h-56" />
-          </div>
-          <div className="absolute -bottom-5 left-4 rounded-2xl px-4 py-3 shadow-lg md:left-8" style={{ background: "#FFFFFF", border: "1px solid #E3EAE4" }}>
-            <div className="text-xs font-semibold" style={{ color: texto }}>Uma comunidade para</div>
-            <div className="text-sm font-bold" style={{ color: verde }}>todas as espécies</div>
-          </div>
+          <p className="mt-1 text-xs" style={{ color: texto }}>Uma pequena amostra da diversidade e das cores do universo dos psitacídeos.</p>
         </div>
       </section>
 
