@@ -1235,7 +1235,6 @@ const FILTER_LABELS = {
   Perdida: "Aves perdidas",
   casais: "Casais",
   solteiros: "Solteiros (sem parceiro)",
-  plantel: "Plantel (sob sua responsabilidade)",
 };
 
 // ---------------------------------------------------------------------------
