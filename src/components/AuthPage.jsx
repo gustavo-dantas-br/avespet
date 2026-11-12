@@ -37,12 +37,24 @@ function whatsappUrl(telefone, mensagem) {
 
 function BuscaAnilha({ modoClaro = false }) {
   const [anilha, setAnilha] = useState("");
+  const [temAnilha, setTemAnilha] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [resultadosPerdidas, setResultadosPerdidas] = useState(null);
   const [mostrarFormAchado, setMostrarFormAchado] = useState(false);
-  const [formAchado, setFormAchado] = useState({ nome: "", telefone: "", endereco: "", dataEncontrada: new Date().toISOString().slice(0, 10), mensagem: "", foto: "" });
+  const [formAchado, setFormAchado] = useState({
+    nome: "", telefone: "", endereco: "", dataEncontrada: new Date().toISOString().slice(0, 10),
+    especie: "", corMutacao: "", caracteristicas: "", mensagem: "", foto: ""
+  });
   const [enviado, setEnviado] = useState(false);
+
+  function escolherTipo(valor) {
+    setTemAnilha(valor);
+    setError("");
+    setResultadosPerdidas(null);
+    setMostrarFormAchado(valor === "nao");
+    setEnviado(false);
+  }
 
   async function handleFotoAchado(e) {
     const file = e.target.files?.[0];
@@ -59,7 +71,10 @@ function BuscaAnilha({ modoClaro = false }) {
 
   async function buscar(e) {
     e.preventDefault();
-    if (!anilha.trim()) return;
+    if (!anilha.trim()) {
+      setError("Informe o número da anilha para fazer a busca.");
+      return;
+    }
     setLoading(true);
     setError("");
     setResultadosPerdidas(null);
@@ -68,11 +83,11 @@ function BuscaAnilha({ modoClaro = false }) {
     try {
       const achados = await buscarPerdidaPorAnilha(anilha);
       setResultadosPerdidas(achados);
-      if (achados.length === 0) {
+      if (achados.length === 0 || achados.some((r) => r.status === "perdida")) {
         setMostrarFormAchado(true);
       }
     } catch {
-      setError("Nao foi possivel buscar agora. Tenta de novo em instantes.");
+      setError("Não foi possível buscar agora. Tente novamente em instantes.");
     } finally {
       setLoading(false);
     }
@@ -80,21 +95,42 @@ function BuscaAnilha({ modoClaro = false }) {
 
   async function enviarAchado(e) {
     e.preventDefault();
-    if (!formAchado.nome.trim() || !formAchado.telefone.trim()) return;
+    if (!formAchado.nome.trim() || !formAchado.telefone.trim() || !formAchado.endereco.trim()) {
+      setError("Preencha seus dados de contato e o local onde encontrou a ave.");
+      return;
+    }
+    if (!formAchado.foto) {
+      setError("Envie uma foto da ave para ajudar na identificação.");
+      return;
+    }
+    if (!formAchado.especie.trim()) {
+      setError("Informe a espécie da ave ou selecione 'Não sei identificar'.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
-      const detalhes = [formAchado.dataEncontrada ? `Data em que encontrou: ${new Date(formAchado.dataEncontrada + "T12:00:00").toLocaleDateString("pt-BR")}` : "", formAchado.mensagem.trim()].filter(Boolean).join("\n");
+      const detalhes = [
+        `Tipo de registro: ${temAnilha === "sim" ? "COM ANILHA" : "SEM ANILHA"}`,
+        formAchado.especie ? `Espécie: ${formAchado.especie}` : "",
+        formAchado.corMutacao ? `Cor/mutação: ${formAchado.corMutacao}` : "",
+        formAchado.caracteristicas ? `Características: ${formAchado.caracteristicas}` : "",
+        formAchado.dataEncontrada ? `Data em que encontrou: ${new Date(formAchado.dataEncontrada + "T12:00:00").toLocaleDateString("pt-BR")}` : "",
+        formAchado.mensagem.trim()
+      ].filter(Boolean).join("\n");
       await registrarAchadoAnilha(
-        anilha, formAchado.nome, formAchado.telefone, detalhes, formAchado.endereco, formAchado.foto
+        temAnilha === "sim" ? anilha : "",
+        formAchado.nome, formAchado.telefone, detalhes, formAchado.endereco, formAchado.foto
       );
       setEnviado(true);
     } catch {
-      setError("Nao consegui registrar agora. Tenta de novo em instantes.");
+      setError("Não foi possível registrar agora. Tente novamente em instantes.");
     } finally {
       setLoading(false);
     }
   }
+
+  const mostrarFormulario = mostrarFormAchado || resultadosPerdidas?.some((r) => r.status === "perdida");
 
   return (
     <div className="w-full max-w-2xl mx-auto text-center ui-sans">
@@ -102,67 +138,81 @@ function BuscaAnilha({ modoClaro = false }) {
         Encontrou uma ave?
       </h1>
       <p style={{ color: modoClaro ? "#63736A" : "#C4D5CA" }} className="text-base mb-6">
-        Digite o número da anilha. Se houver um anúncio de ave perdida aprovado, mostramos o resultado. Se não houver, você poderá registrar a ave encontrada para nossa equipe fazer a intermediação.
+        Com ou sem anilha, registre a ave encontrada. O Avespet mantém seus dados de contato reservados e faz a intermediação.
       </p>
 
-      <form onSubmit={buscar} className="flex flex-col sm:flex-row gap-3 mb-6 max-w-md mx-auto">
-        <input style={{ ...inputStyle, fontSize: 16, padding: "14px 16px" }} value={anilha} onChange={(e) => setAnilha(e.target.value)} placeholder="ex: FOB 0080" />
-        <button type="submit" disabled={loading} className="shrink-0 flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-semibold" style={{ background: modoClaro ? "#174B3B" : "#DDEBDD", color: modoClaro ? "#FFFFFF" : "#174B3B" }}>
-          {loading ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} />} Buscar
-        </button>
-      </form>
+      <div className="max-w-md mx-auto mb-5 rounded-xl p-4 text-left" style={{ background: modoClaro ? "#FFFFFF" : "rgba(255,255,255,.08)", border: "1px solid " + (modoClaro ? "#E1E9E2" : "rgba(255,255,255,.18)") }}>
+        <div className="text-sm font-semibold mb-3" style={{ color: modoClaro ? "#1D2B25" : "#F4F7F2" }}>A ave tem anilha?</div>
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => escolherTipo("sim")} className="rounded-lg px-3 py-3 text-sm font-semibold" style={{ background: temAnilha === "sim" ? "#174B3B" : (modoClaro ? "#E8F1E9" : "rgba(255,255,255,.12)"), color: temAnilha === "sim" ? "#FFFFFF" : (modoClaro ? "#174B3B" : "#F4F7F2"), border: "1px solid " + (temAnilha === "sim" ? "#174B3B" : (modoClaro ? "#DCE7DE" : "rgba(255,255,255,.2)")) }}>Sim, tem anilha</button>
+          <button type="button" onClick={() => escolherTipo("nao")} className="rounded-lg px-3 py-3 text-sm font-semibold" style={{ background: temAnilha === "nao" ? "#174B3B" : (modoClaro ? "#E8F1E9" : "rgba(255,255,255,.12)"), color: temAnilha === "nao" ? "#FFFFFF" : (modoClaro ? "#174B3B" : "#F4F7F2"), border: "1px solid " + (temAnilha === "nao" ? "#174B3B" : (modoClaro ? "#DCE7DE" : "rgba(255,255,255,.2)")) }}>Não tem anilha</button>
+        </div>
+      </div>
+
+      {temAnilha === "sim" && (
+        <form onSubmit={buscar} className="flex flex-col sm:flex-row gap-3 mb-6 max-w-md mx-auto">
+          <input style={{ ...inputStyle, fontSize: 16, padding: "14px 16px" }} value={anilha} onChange={(e) => setAnilha(e.target.value)} placeholder="Número da anilha (ex.: FOB 0080)" />
+          <button type="submit" disabled={loading} className="shrink-0 flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-semibold" style={{ background: modoClaro ? "#174B3B" : "#DDEBDD", color: modoClaro ? "#FFFFFF" : "#174B3B" }}>
+            {loading ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} />} Buscar
+          </button>
+        </form>
+      )}
 
       {error && <div className="text-sm mb-4 px-3 py-2 rounded-lg max-w-md mx-auto" style={{ background: "#f0dad4", color: "#a6402b" }}>{error}</div>}
 
       {resultadosPerdidas && resultadosPerdidas.length > 0 && (
-        <div className="flex flex-col gap-3 max-w-md mx-auto text-left">
+        <div className="flex flex-col gap-3 max-w-md mx-auto text-left mb-5">
           {resultadosPerdidas.map((r) => (
-              <div key={r.id} className="rounded-lg p-3" style={{ background: "#FFFFFF", border: "1px solid #E1E9E2" }}>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0" style={{ background: "#E8F1E9" }}>
-                    {r.foto ? <img src={r.foto} className="w-full h-full object-cover" alt="" /> : null}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-semibold text-sm" style={{ color: "#1D2B25" }}>{r.nomeAve}</div>
-                    <div className="text-xs" style={{ color: "#63736A" }}>{r.especie} - {r.corMutacao}</div>
-                  </div>
+            <div key={r.id} className="rounded-lg p-3" style={{ background: "#FFFFFF", border: "1px solid #E1E9E2" }}>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0" style={{ background: "#E8F1E9" }}>
+                  {r.foto ? <img src={r.foto} className="w-full h-full object-cover" alt="" /> : null}
                 </div>
-                <div className="text-[10px] px-2 py-0.5 rounded ui-mono inline-block mb-2" style={{ background: r.status === "perdida" ? "#E8F1E9" : "#DDEBDD", color: "#1D2B25" }}>
-                  {r.status === "perdida" ? "AINDA PERDIDA" : "JA FOI ENCONTRADA"}
+                <div className="min-w-0">
+                  <div className="font-semibold text-sm" style={{ color: "#1D2B25" }}>{r.nomeAve}</div>
+                  <div className="text-xs" style={{ color: "#63736A" }}>{r.especie} - {r.corMutacao}</div>
                 </div>
-                <p className="text-xs mt-2" style={{ color: "#63736A" }}>O Avespet fará a intermediação do contato para proteger as duas partes.</p>
               </div>
+              <div className="text-[10px] px-2 py-0.5 rounded ui-mono inline-block mb-2" style={{ background: r.status === "perdida" ? "#E8F1E9" : "#DDEBDD", color: "#1D2B25" }}>
+                {r.status === "perdida" ? "AINDA PERDIDA" : "JÁ FOI ENCONTRADA"}
+              </div>
+              <p className="text-xs mt-2" style={{ color: "#63736A" }}>O Avespet fará a intermediação do contato para proteger as duas partes.</p>
+            </div>
           ))}
         </div>
       )}
 
-      {(mostrarFormAchado || resultadosPerdidas?.some((r) => r.status === "perdida")) && !enviado && (
-        <form onSubmit={enviarAchado} className="flex flex-col gap-3 max-w-md mx-auto text-left rounded-lg p-4" style={{ background: "#FFFFFF", border: "1px solid #E1E9E2" }}>
+      {mostrarFormulario && !enviado && (
+        <form onSubmit={enviarAchado} className="flex flex-col gap-3 max-w-md mx-auto text-left rounded-xl p-4" style={{ background: "#FFFFFF", border: "1px solid #E1E9E2" }}>
           <div className="text-sm" style={{ color: "#1D2B25" }}>
-            {resultadosPerdidas?.some((r) => r.status === "perdida")
-              ? "Encontramos um cadastro de ave ainda desaparecida. Se ela está com você, muito obrigado por ajudar! Informe os dados abaixo para facilitarmos o reencontro com sua família."
-              : "Não encontramos anúncio aprovado com essa anilha. Registre a ave encontrada; nossa equipe ficará responsável por analisar o caso e fazer a ponte com o titular se ele cadastrar a perda posteriormente."}
+            {temAnilha === "nao"
+              ? "Registre a ave mesmo sem numeração. Nossa equipe analisará a foto e as características para tentar localizar o responsável."
+              : resultadosPerdidas?.some((r) => r.status === "perdida")
+                ? "Encontramos um cadastro de ave ainda desaparecida. Informe os dados para nossa equipe confirmar o possível reencontro."
+                : "Não encontramos anúncio aprovado com essa anilha. Registre a ave; o responsável ainda poderá cadastrar a perda posteriormente."}
           </div>
 
-          <label className="ui-sans flex flex-col gap-1.5">
-            <span className="text-xs font-semibold uppercase" style={{ color: "#63736A" }}>Foto da ave (opcional)</span>
-            <input type="file" accept="image/*" onChange={handleFotoAchado} className="text-xs" />
-            {formAchado.foto && (
-              <img src={formAchado.foto} alt="" className="w-24 h-24 object-cover rounded-lg mt-1" />
-            )}
+          <label className="flex flex-col gap-1.5">
+            <span className="text-xs font-semibold uppercase" style={{ color: "#63736A" }}>Foto da ave (obrigatória)</span>
+            <input type="file" accept="image/*" onChange={handleFotoAchado} className="text-xs" required={!formAchado.foto} />
+            {formAchado.foto && <img src={formAchado.foto} alt="Prévia da ave encontrada" className="w-28 h-28 object-cover rounded-lg mt-1" />}
           </label>
 
-          <input style={inputStyle} value={formAchado.nome} onChange={(e) => setFormAchado((f) => ({ ...f, nome: e.target.value }))} placeholder="Seu nome" required />
-          <input style={inputStyle} value={formAchado.telefone} onChange={(e) => setFormAchado((f) => ({ ...f, telefone: e.target.value }))} placeholder="Seu telefone/WhatsApp" required />
-          <label className="ui-sans flex flex-col gap-1.5 text-left">
+          <input style={inputStyle} value={formAchado.especie} onChange={(e) => setFormAchado((f) => ({ ...f, especie: e.target.value }))} placeholder="Espécie (ou 'Não sei identificar')" required />
+          <input style={inputStyle} value={formAchado.corMutacao} onChange={(e) => setFormAchado((f) => ({ ...f, corMutacao: e.target.value }))} placeholder="Cor ou mutação (opcional)" />
+          <textarea style={{ ...inputStyle, minHeight: 82 }} value={formAchado.caracteristicas} onChange={(e) => setFormAchado((f) => ({ ...f, caracteristicas: e.target.value }))} placeholder="Características para ajudar na identificação (opcional)" />
+          <label className="flex flex-col gap-1.5 text-left">
             <span className="text-xs font-semibold uppercase" style={{ color: "#63736A" }}>Data em que encontrou</span>
             <input type="date" style={inputStyle} value={formAchado.dataEncontrada} onChange={(e) => setFormAchado((f) => ({ ...f, dataEncontrada: e.target.value }))} required />
           </label>
-          <input style={inputStyle} value={formAchado.endereco} onChange={(e) => setFormAchado((f) => ({ ...f, endereco: e.target.value }))} placeholder="Onde encontrou (endereco/bairro/cidade)" required />
-          <input style={inputStyle} value={formAchado.mensagem} onChange={(e) => setFormAchado((f) => ({ ...f, mensagem: e.target.value }))} placeholder="Observacoes (opcional)" />
+          <input style={inputStyle} value={formAchado.endereco} onChange={(e) => setFormAchado((f) => ({ ...f, endereco: e.target.value }))} placeholder="Bairro/região e cidade onde encontrou" required />
+          <div className="text-xs rounded-lg px-3 py-2" style={{ background: "#E8F1E9", color: "#174B3B" }}>Seu nome e telefone são solicitados abaixo apenas para o suporte. Eles não serão exibidos publicamente.</div>
+          <input style={inputStyle} value={formAchado.nome} onChange={(e) => setFormAchado((f) => ({ ...f, nome: e.target.value }))} placeholder="Seu nome (reservado ao suporte)" required />
+          <input style={inputStyle} value={formAchado.telefone} onChange={(e) => setFormAchado((f) => ({ ...f, telefone: e.target.value }))} placeholder="Seu telefone/WhatsApp (reservado ao suporte)" required />
+          <textarea style={{ ...inputStyle, minHeight: 70 }} value={formAchado.mensagem} onChange={(e) => setFormAchado((f) => ({ ...f, mensagem: e.target.value }))} placeholder="Observações adicionais (opcional)" />
 
           <button type="submit" disabled={loading} className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold" style={{ background: "#174B3B", color: "#FFFFFF" }}>
-            {loading && <Loader2 className="animate-spin" size={16} />} Enviar
+            {loading && <Loader2 className="animate-spin" size={16} />} Enviar para o suporte Avespet
           </button>
         </form>
       )}
@@ -170,19 +220,16 @@ function BuscaAnilha({ modoClaro = false }) {
       {resultadosPerdidas?.length > 0 && resultadosPerdidas.every((r) => r.status !== "perdida") && (
         <div className="text-sm px-4 py-4 rounded-lg max-w-md mx-auto text-left" style={{ background: "#E8F1E9", color: "#174B3B", border: "1px solid #DDEBDD" }}>
           <div className="font-semibold text-base mb-2">Que atitude bonita! 💚</div>
-          <p className="mb-2">A ave deste cadastro já foi encontrada. Mesmo assim, queremos agradecer por você se importar.</p>
-          <p className="mb-2">Devolver um animal ao seu responsável é um gesto de empatia, respeito e amor. Para quem espera por esse reencontro, receber seu companheiro de volta significa muito mais do que palavras conseguem expressar.</p>
-          <p>Obrigado por fazer o bem e por mostrar que ainda existem pessoas de bom coração. Sua atitude faz a diferença na vida de uma família e de seu pequeno pet. 🐦</p>
+          <p className="mb-2">A ave deste cadastro já foi encontrada. Mesmo assim, obrigado por se importar.</p>
+          <p>Se encontrou outra ave, você pode iniciar um novo registro escolhendo uma das opções acima.</p>
         </div>
       )}
 
       {enviado && (
         <div className="text-sm px-4 py-4 rounded-lg max-w-md mx-auto text-left" style={{ background: "#E8F1E9", color: "#174B3B", border: "1px solid #DDEBDD" }}>
-          <div className="font-semibold text-base mb-2">Seu gesto pode transformar uma história! 💚</div>
-          <p className="mb-2">Muito obrigado por ter um coração disposto a ajudar. Sabemos o quanto uma ave é especial para sua família e como é angustiante ficar longe dela.</p>
-          <p className="mb-2">Ao se preocupar em devolver esse pequeno companheiro, você está oferecendo esperança e a oportunidade de um reencontro cheio de alegria.</p>
-          <p>Que sua atitude inspire outras pessoas. O bem que você está fazendo tem um valor enorme!</p>
-          <p className="mt-2">Nossa equipe administrativa vai conferir o registro e, se o titular cadastrar a ave perdida posteriormente, fará a ligação entre as partes. O contato não será divulgado publicamente.</p>
+          <div className="font-semibold text-base mb-2">Registro enviado ao Avespet! 💚</div>
+          <p className="mb-2">Obrigado por ajudar. Nossa equipe administrativa vai analisar as informações e procurar possíveis correspondências.</p>
+          <p>Seus dados de contato não serão divulgados publicamente. O Avespet fará a intermediação com o possível responsável.</p>
         </div>
       )}
     </div>

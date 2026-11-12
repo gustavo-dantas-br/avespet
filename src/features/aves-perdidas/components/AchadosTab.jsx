@@ -13,7 +13,7 @@ function AchadoCard({ achado, possiveisTitulares = [], onAtualizar }) {
     <article className="rounded-xl p-4 ui-sans" style={{ background: "#FAF3E6", color: "#2B241C" }}>
       <div className="flex items-start justify-between gap-2 mb-2">
         <div>
-          <div className="ui-mono text-xs" style={{ color: "#8a7a63" }}>ANILHA BUSCADA</div>
+          <div className="ui-mono text-xs" style={{ color: "#8a7a63" }}>{achado.anilha_buscada === "SEM ANILHA" ? "REGISTRO SEM ANILHA" : "ANILHA BUSCADA"}</div>
           <div className="font-semibold text-sm">{achado.anilha_buscada}</div>
         </div>
         <span className="text-[10px] px-2 py-1 rounded ui-mono shrink-0" style={{ background: STATUS_ACHADO_TONS[achado.status] || "#e3d3b4", color: "#2B241C" }}>
@@ -69,7 +69,7 @@ export default function AchadosTab({ achados = [], perfis = [], anuncios = [], o
 
   function localizarPossiveisTitulares(achado) {
     const chave = normalizarAnilha(achado.anilha_buscada);
-    if (!chave) return [];
+    if (!chave || achado.anilha_buscada === "SEM ANILHA") return [];
 
     // owner_user_id identifica uma associação do registro, mas não comprova
     // a titularidade nem deve impedir a exibição de outros anúncios aprovados.
@@ -86,7 +86,7 @@ export default function AchadosTab({ achados = [], perfis = [], anuncios = [], o
     <section>
       <h2 className="mb-2" style={{ color: "#F1E6D2", fontSize: 24, fontWeight: 700 }}>Achados por Anilha</h2>
       <p className="ui-sans text-sm mb-5" style={{ color: "#F1E6D2" }}>
-        A equipe administrativa vê os dados de quem encontrou e todos os possíveis titulares localizados nos anúncios aprovados. Quando houver mais de um candidato, confirme a titularidade antes de fazer a intermediação.
+        A equipe administrativa vê os dados reservados de quem encontrou, as fotos e as características informadas. Nos registros com anilha, também aparecem possíveis titulares dos anúncios aprovados. Nos casos sem anilha, a equipe faz a análise manual.
       </p>
       <div className="flex flex-wrap gap-2 mb-5">
         {["novo", "contatado", "resolvido"].map((status) => (
