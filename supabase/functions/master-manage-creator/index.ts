@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
   }
   if (targetId === authData.user.id) return response({ error: "You cannot change your own access" }, 400, origin);
   if (action !== "block" && action !== "unblock") return response({ error: "Invalid action" }, 400, origin);
-  if (action === "block" && reason.length < 8) return response({ error: "Informe um motivo com pelo menos 8 caracteres" }, 400, origin);
+  if (reason.length < 8) return response({ error: "Informe um motivo com pelo menos 8 caracteres para esta ação" }, 400, origin);
 
   const [{ data: targetMaster, error: masterError }, { data: targetLegacy, error: legacyError }] = await Promise.all([
     admin.from("master_admins").select("user_id").eq("user_id", targetId).maybeSingle(),
