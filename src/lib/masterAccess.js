@@ -1,21 +1,17 @@
 import { supabase } from "../supabaseClient";
 
-// A permissão Master é mantida no banco e não depende de metadata editável pelo usuário.
-export async function checkIsMaster(userId) {
-  if (!userId) return false;
-
-  const { data, error } = await supabase
-    .from("master_admins")
-    .select("user_id")
-    .eq("user_id", userId)
-    .maybeSingle();
+// A permissão Master é validada no servidor; a interface não decide privilégios.
+export async function checkIsMaster() {
+  const { data, error } = await supabase.functions.invoke("master-check-access", {
+    body: {},
+  });
 
   if (error) {
-    // Antes da migration Master chegar ao banco, a tabela pode não existir.
-    // Nesse caso não há como conceder acesso Master: mantenha o usuário no
-    // painel comum. Falhas de rede, RLS ou outras consultas continuam bloqueando.
-    if (error.code === "42P01" || error.code === "PGRST205") return false;
+    // Antes da implantação da função, falhar fechado sem conceder painel Master.
     throw error;
   }
-  return Boolean(data);
+  if (typeof data?.isMaster !== "boolean") {
+    throw new Error("Resposta inválida ao validar acesso Master.");
+  }
+  return data.isMaster;
 }
