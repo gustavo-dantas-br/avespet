@@ -10,7 +10,7 @@ import { normalizeTelefone, whatsappUrl } from "./lib/telefone";
 import { computeFinanceiro, computeFinanceiroPeriodo } from "./features/financeiro/utils/calcularFinanceiro";
 import { drawPlaque } from "./features/plantel/utils/desenharPlaca";
 import {
-  Bird, Plus, Search, GitBranch, Tag, Upload, Trash2, X, Loader2, Save, ChevronLeft, ChevronRight, Menu,
+  Bird, Plus, Search, GitBranch, Tag, Upload, Trash2, X, Loader2, Save, ChevronLeft, ChevronRight, Menu, CalendarDays,
   Download, Feather, DollarSign, LogOut, LayoutDashboard, Dna, Users, Phone, Pencil, ClipboardCheck, Truck, MessageCircle, Handshake, Megaphone, UserCircle, ShieldCheck, Check, Bell, Eye, MousePointerClick, Egg, BookOpen,
 } from "lucide-react";
 
@@ -34,6 +34,7 @@ import AchadosTab from "./features/aves-perdidas/components/AchadosTab";
 import AprovacoesTab from "./features/anuncios/components/AprovacoesTab";
 import CalculadoraGenetica from "./features/genetica/components/CalculadoraGenetica";
 import ListaTab from "./features/plantel/components/ListaTab";
+import ReservasTab from "./features/reservas/ReservasTab";
 import DashboardTab from "./features/dashboard/components/DashboardTab";
 import FinanceiroTab from "./features/financeiro/components/FinanceiroTab";
 import ReproducaoTab from "./features/reproducao/components/ReproducaoTab";
@@ -955,7 +956,8 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
   const navGroups = [
     { title: "VISÃO GERAL", items: [{ id: "dashboard", label: "Dashboard", icon: LayoutDashboard }] },
     { title: "MEU CRIATÓRIO", items: [
-      { id: "lista", label: "Aves", icon: Bird },
+      { id: "lista", label: "Meu plantel", icon: Bird },
+      { id: "reservas", label: "Reservas", icon: CalendarDays },
       { id: "form", label: "Cadastrar", icon: Plus },
       { id: "arvore", label: "Árvore genealógica", icon: GitBranch },
       { id: "reproducao", label: "Reprodução", icon: Egg },
@@ -1102,6 +1104,8 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
             {tab === "reproducao" && (
               <ReproducaoTab aves={aves} posturas={posturas} onSave={handleSavePostura} onDelete={handleDeletePostura} onNascimento={handleRegistrarNascimento} Card={Card} Field={Field} inputStyle={inputStyle} SectionTitle={SectionTitle} />
             )}
+
+            {tab === "reservas" && <ReservasTab userId={user.id} clientes={clientes} aves={aves} posturas={posturas} Card={Card} SectionTitle={SectionTitle} />}
 
             {tab === "lista" && (
               <ListaTab
