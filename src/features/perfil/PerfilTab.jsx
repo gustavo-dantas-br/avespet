@@ -12,6 +12,33 @@ export default function PerfilTab({ perfil, privado, email, onSave, onSavePrivad
   useEffect(() => setNovoEmail(email || ""), [email]);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
+  async function carregarLogo(file) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { alert("Escolha um arquivo de imagem."); return; }
+    if (file.size > 8 * 1024 * 1024) { alert("A imagem deve ter no máximo 8 MB."); return; }
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const escala = Math.min(1, 600 / Math.max(img.width, img.height));
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round(img.width * escala));
+            canvas.height = Math.max(1, Math.round(img.height * escala));
+            canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL("image/jpeg", 0.8));
+          };
+          img.onerror = reject;
+          img.src = reader.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      setForm((f) => ({ ...f, logoUrl: dataUrl }));
+    } catch { alert("Não foi possível carregar essa imagem. Tente outro arquivo."); }
+  }
+
   function submit() {
     onSave({ ...form, email: novoEmail });
     onSavePrivado(endereco);
@@ -40,6 +67,16 @@ export default function PerfilTab({ perfil, privado, email, onSave, onSavePrivad
               {UF_LISTA.map((u) => <option key={u}>{u}</option>)}
             </select>
           </Field>
+        </div>
+        <div className="my-5 h-px" style={{ background: "#e3d3b4" }} />
+        <div className="ui-sans text-sm font-semibold mb-2" style={{ color: "#2B241C" }}>Logo do criatório</div>
+        <p className="ui-sans text-xs mb-3" style={{ color: "#756B5E" }}>Essa imagem será usada no comprovante de reserva para identificar seu criatório.</p>
+        <div className="flex flex-wrap items-center gap-4 mb-5">
+          {form.logoUrl ? <img src={form.logoUrl} alt="Logo do criatório" className="h-20 w-20 rounded-xl border object-contain p-1" style={{ borderColor: "#e3d3b4", background: "#fff" }} /> : <div className="h-20 w-20 rounded-xl border flex items-center justify-center text-xs text-center px-2" style={{ borderColor: "#e3d3b4", color: "#8b806f" }}>Sem logo</div>}
+          <div className="flex flex-wrap gap-2">
+            <label className="ui-sans cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold" style={{ background: "#e4ead9", color: "#405a35" }}>Escolher imagem<input type="file" accept="image/*" className="hidden" onChange={e => { carregarLogo(e.target.files?.[0]); e.target.value = ""; }} /></label>
+            {form.logoUrl && <button type="button" onClick={() => setForm(f => ({ ...f, logoUrl: "" }))} className="ui-sans rounded-lg border px-3 py-2 text-sm" style={{ borderColor: "#e3d3b4", color: "#8b4b3c" }}>Remover logo</button>}
+          </div>
         </div>
         <div className="my-5 h-px" style={{ background: "#e3d3b4" }} />
         <div className="ui-sans text-sm font-semibold mb-3" style={{ color: "#2B241C" }}>Endereco completo (privado)</div>
