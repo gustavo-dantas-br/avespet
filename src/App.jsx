@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { StatCard, TreeCard } from "./features/dashboard/components/CardsDashboard";
 import AveCard from "./features/plantel/components/AveCard";
 import { Card, SectionTitle, inputStyle, Field } from "./components/ui/SharedUI";
@@ -25,6 +25,7 @@ import {
 } from "./lib/db";
 
 import AuthPage from "./components/AuthPage";
+import RequiredPasswordChange from "./components/RequiredPasswordChange";
 import MasterApp from "./features/master/MasterApp";
 import MasterBootstrap from "./features/master/MasterBootstrap";
 import { checkIsMaster } from "./lib/masterAccess";
@@ -1293,6 +1294,10 @@ export default function App() {
 
   if (passwordRecovery) {
     return <AuthPage logado={!!session} redefinirSenha onSenhaAtualizada={() => setPasswordRecovery(false)} />;
+  }
+
+  if (session?.user?.app_metadata?.must_change_password) {
+    return <RequiredPasswordChange onComplete={(nextSession) => setSession(nextSession)} />;
   }
 
 // Visitante ve a area publica; quem esta logado tambem, mas so quando abre um guia/video (links compartilhados).

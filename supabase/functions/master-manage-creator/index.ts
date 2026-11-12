@@ -1,129 +1,22 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const allowedOrigins = new Set([
-  "https://avespet.com.br",
-  "https://www.avespet.com.br",
-  "https://avespet-git-feature-master-admin-panel-gustavo-dantas.vercel.app",
-]);
-function allowedOrigin(origin: string | null) {
-  if (!origin || allowedOrigins.has(origin)) return true;
-  try {
-    const host = new URL(origin).hostname;
-    return host.startsWith("avespet-") && host.endsWith("-gustavo-dantas.vercel.app");
-  } catch { return false; }
-}
-function cors(origin: string | null) {
-  const headers: Record<string, string> = {
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Vary": "Origin",
-  };
-  if (origin && allowedOrigin(origin)) headers["Access-Control-Allow-Origin"] = origin;
-  return headers;
-}
-function response(body: unknown, status: number, origin: string | null) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...cors(origin), "Content-Type": "application/json" },
-  });
-}
-
-Deno.serve(async (req) => {
-  const origin = req.headers.get("Origin");
-  if (!allowedOrigin(origin)) return response({ error: "Origin not allowed" }, 403, null);
-  if (req.method === "OPTIONS") return new Response("ok", { headers: cors(origin) });
-  if (req.method !== "POST") return response({ error: "Method not allowed" }, 405, origin);
-
-  const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
-  if (!token) return response({ error: "Unauthorized" }, 401, origin);
-  const url = Deno.env.get("SUPABASE_URL");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!url || !anonKey || !serviceKey) return response({ error: "Server configuration error" }, 503, origin);
-
-  const auth = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data: authData, error: authError } = await auth.auth.getUser(token);
-  if (authError || !authData.user) return response({ error: "Unauthorized" }, 401, origin);
-
-  const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data: entitlement, error: entitlementError } = await admin
-    .from("master_admins").select("user_id").eq("user_id", authData.user.id).maybeSingle();
-  if (entitlementError) {
-    console.error("Master entitlement lookup failed", entitlementError.message);
-    return response({ error: "Could not validate access" }, 503, origin);
-  }
-  if (!entitlement) return response({ error: "Forbidden" }, 403, origin);
-
-  let body: Record<string, unknown>;
-  try { body = await req.json(); } catch { return response({ error: "Invalid request" }, 400, origin); }
-  const targetId = String(body.user_id || "").trim();
-  const action = String(body.action || "");
-  const reason = String(body.reason || "").trim().slice(0, 500);
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(targetId)) {
-    return response({ error: "Invalid user" }, 400, origin);
-  }
-  if (targetId === authData.user.id) return response({ error: "You cannot change your own access" }, 400, origin);
-  if (action !== "block" && action !== "unblock") return response({ error: "Invalid action" }, 400, origin);
-  if (reason.length < 8) return response({ error: "Informe um motivo com pelo menos 8 caracteres para esta ação" }, 400, origin);
-
-  const [{ data: targetMaster, error: masterError }, { data: targetLegacy, error: legacyError }] = await Promise.all([
-    admin.from("master_admins").select("user_id").eq("user_id", targetId).maybeSingle(),
-    admin.from("admins").select("user_id").eq("user_id", targetId).maybeSingle(),
-  ]);
-  if (masterError || legacyError) {
-    console.error("Privileged target check failed", masterError?.message || legacyError?.message);
-    return response({ error: "Could not validate target account" }, 503, origin);
-  }
-  if (targetMaster || targetLegacy) {
-    return response({ error: "Administrative accounts cannot be managed through this action" }, 403, origin);
-  }
-
-  const { data: targetData, error: targetError } = await admin.auth.admin.getUserById(targetId);
-  if (targetError || !targetData.user) return response({ error: "Creator not found" }, 404, origin);
-  const target = targetData.user;
-  const currentBan = target.banned_until ? new Date(target.banned_until).getTime() : 0;
-  const currentlyBlocked = currentBan > Date.now();
-  if (action === "block" && currentlyBlocked) return response({ error: "Account is already blocked" }, 409, origin);
-  if (action === "unblock" && !currentlyBlocked) return response({ error: "Account is not blocked" }, 409, origin);
-
-  const auditBase = {
-    actor_user_id: authData.user.id,
-    action: action === "block" ? "creator_account_block_requested" : "creator_account_unblock_requested",
-    resource_type: "creator",
-    resource_id: targetId,
-    metadata: { reason, target_email: target.email || null },
-  };
-  const { error: beforeAuditError } = await admin.from("master_audit_log").insert(auditBase);
-  if (beforeAuditError) {
-    console.error("Pre-action audit failed", beforeAuditError.message);
-    return response({ error: "Could not record administrative audit" }, 503, origin);
-  }
-
-  const { data: updated, error: updateError } = await admin.auth.admin.updateUserById(
-    targetId,
-    { ban_duration: action === "block" ? "876000h" : "none" },
-  );
-  if (updateError) {
-    console.error("Creator account update failed", updateError.message);
-    await admin.from("master_audit_log").insert({
-      ...auditBase,
-      action: action === "block" ? "creator_account_block_failed" : "creator_account_unblock_failed",
-      metadata: { reason, error: updateError.message },
-    });
-    return response({ error: "Could not update creator account" }, 503, origin);
-  }
-
-  const { error: afterAuditError } = await admin.from("master_audit_log").insert({
-    actor_user_id: authData.user.id,
-    action: action === "block" ? "creator_account_blocked" : "creator_account_unblocked",
-    resource_type: "creator",
-    resource_id: targetId,
-    metadata: { reason, target_email: updated.user?.email || target.email || null, banned_until: updated.user?.banned_until || null },
-  });
-  if (afterAuditError) {
-    console.error("Post-action audit failed", afterAuditError.message);
-    return response({ error: "Account updated, but audit confirmation failed. Contact support before repeating." }, 503, origin);
-  }
-  return response({ success: true, blocked: action === "block" }, 200, origin);
+const allowedOrigins=new Set(["https://avespet.com.br","https://www.avespet.com.br","https://avespet-git-feature-master-admin-panel-gustavo-dantas.vercel.app"]);
+function allowedOrigin(origin:string|null){if(!origin||allowedOrigins.has(origin))return true;try{const host=new URL(origin).hostname;return host.startsWith("avespet-")&&host.endsWith("-gustavo-dantas.vercel.app");}catch{return false;}}
+function cors(origin:string|null){const h:Record<string,string>={"Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Vary":"Origin"};if(origin&&allowedOrigin(origin))h["Access-Control-Allow-Origin"]=origin;return h;}
+function response(body:unknown,status:number,origin:string|null){return new Response(JSON.stringify(body),{status,headers:{...cors(origin),"Content-Type":"application/json"}});}
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+Deno.serve(async(req)=>{const origin=req.headers.get("Origin");if(!allowedOrigin(origin))return response({error:"Origin not allowed"},403,null);if(req.method==="OPTIONS")return new Response("ok",{headers:cors(origin)});if(req.method!=="POST")return response({error:"Method not allowed"},405,origin);
+ const token=(req.headers.get("Authorization")||"").replace(/^Bearer\s+/i,"");if(!token)return response({error:"Unauthorized"},401,origin);const url=Deno.env.get("SUPABASE_URL"),anon=Deno.env.get("SUPABASE_ANON_KEY"),service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");if(!url||!anon||!service)return response({error:"Server configuration error"},503,origin);
+ const auth=createClient(url,anon,{auth:{persistSession:false,autoRefreshToken:false}});const {data:authData,error:authError}=await auth.auth.getUser(token);if(authError||!authData.user)return response({error:"Unauthorized"},401,origin);const admin=createClient(url,service,{auth:{persistSession:false,autoRefreshToken:false}});
+ let body:Record<string,any>;try{body=await req.json();}catch{return response({error:"Invalid request"},400,origin);}const action=String(body.action||"");
+ if(action==="complete_password_change"){const user=authData.user,meta=user.app_metadata||{},resetAt=Date.parse(String(meta.password_reset_at||""));if(meta.must_change_password!==true||!Number.isFinite(resetAt))return response({error:"No pending password change"},409,origin);const {data:latest,error}=await admin.auth.admin.getUserById(user.id);if(error||!latest.user)return response({error:"Could not verify password update"},503,origin);if(Date.parse(latest.user.updated_at||"")<=resetAt)return response({error:"The new password has not been confirmed yet"},409,origin);const nextMeta={...(latest.user.app_metadata||{})};delete nextMeta.must_change_password;delete nextMeta.password_reset_at;const {error:updateError}=await admin.auth.admin.updateUserById(user.id,{app_metadata:nextMeta});if(updateError)return response({error:"Could not finish password change"},503,origin);return response({success:true},200,origin);}
+ const {data:entitlement,error:entitlementError}=await admin.from("master_admins").select("user_id").eq("user_id",authData.user.id).maybeSingle();if(entitlementError)return response({error:"Could not validate access"},503,origin);if(!entitlement)return response({error:"Forbidden"},403,origin);
+ const targetId=String(body.user_id||"").trim(),reason=String(body.reason||"").trim().slice(0,500);if(!uuid.test(targetId))return response({error:"Invalid user"},400,origin);if(targetId===authData.user.id)return response({error:"You cannot change your own account through this action"},400,origin);
+ const [{data:targetMaster,error:masterError},{data:targetLegacy,error:legacyError}]=await Promise.all([admin.from("master_admins").select("user_id").eq("user_id",targetId).maybeSingle(),admin.from("admins").select("user_id").eq("user_id",targetId).maybeSingle()]);if(masterError||legacyError)return response({error:"Could not validate target account"},503,origin);if(targetMaster||targetLegacy)return response({error:"Administrative accounts cannot be managed through this action"},403,origin);
+ const {data:targetData,error:targetError}=await admin.auth.admin.getUserById(targetId);if(targetError||!targetData.user)return response({error:"Account not found"},404,origin);const target=targetData.user;
+ const audit=async(event:string,metadata:Record<string,unknown>)=>admin.from("master_audit_log").insert({actor_user_id:authData.user.id,action:event,resource_type:"account",resource_id:targetId,metadata:{...metadata,target_email:target.email||null}});
+ if(action==="update_account"){const p=body.profile||{},name=String(p.name||"").trim().slice(0,120),phone=String(p.phone||"").trim().slice(0,30),creatorName=String(p.creatorName||"").trim().slice(0,120),city=String(p.city||"").trim().slice(0,100),state=String(p.state||"").trim().toUpperCase().slice(0,2);if(!name)return response({error:"Informe o nome completo"},400,origin);const {data:existing,error:profileReadError}=await admin.from("perfil_criador").select("data").eq("user_id",targetId).maybeSingle();if(profileReadError)return response({error:"Could not load profile"},503,origin);const profileData={...(existing?.data||{}),nomeCompleto:name,nomeCriatorio:creatorName,cidade:city,uf:state};const {error:profileError}=await admin.from("perfil_criador").upsert({user_id:targetId,data:profileData},{onConflict:"user_id"});if(profileError){console.error("Profile update failed",profileError.message);return response({error:"Could not save account profile"},503,origin);}const authUpdates:any={user_metadata:{...(target.user_metadata||{}),name}};if(phone)authUpdates.phone=phone;const {error:accountError}=await admin.auth.admin.updateUserById(targetId,authUpdates);if(accountError){console.error("Auth account update failed",accountError.message);return response({error:"Profile saved but account contact could not be updated"},503,origin);}const {error:auditError}=await audit("account_profile_updated",{fields:["name","phone","creatorName","city","state"]});if(auditError)return response({error:"Account updated but audit confirmation failed"},503,origin);return response({success:true},200,origin);}
+ if(!["block","unblock","reset_password"].includes(action))return response({error:"Invalid action"},400,origin);if(reason.length<8)return response({error:"Informe um motivo com pelo menos 8 caracteres para esta ação"},400,origin);const currentlyBlocked=Boolean(target.banned_until&&Date.parse(target.banned_until)>Date.now());if(action==="block"&&currentlyBlocked)return response({error:"Account is already blocked"},409,origin);if(action==="unblock"&&!currentlyBlocked)return response({error:"Account is not blocked"},409,origin);
+ if(action==="reset_password"){const {error:auditBefore}=await audit("account_password_reset_requested",{reason});if(auditBefore)return response({error:"Could not record administrative audit"},503,origin);const metadata={...(target.app_metadata||{}),must_change_password:true,password_reset_at:new Date().toISOString()};const {error:updateError}=await admin.auth.admin.updateUserById(targetId,{password:"010203",app_metadata:metadata});if(updateError){console.error("Temporary password reset failed",updateError.message);return response({error:"Could not reset account password"},503,origin);}const {error:auditAfter}=await audit("account_password_reset",{reason,temporary_password_set:true,forced_change:true});if(auditAfter)return response({error:"Password reset but audit confirmation failed"},503,origin);return response({success:true,password_reset:true},200,origin);}
+ const {error:beforeAudit}=await audit(action==="block"?"creator_account_block_requested":"creator_account_unblock_requested",{reason});if(beforeAudit)return response({error:"Could not record administrative audit"},503,origin);const {error:updateError}=await admin.auth.admin.updateUserById(targetId,{ban_duration:action==="block"?"876000h":"none"});if(updateError)return response({error:"Could not update account access"},503,origin);const {error:afterAudit}=await audit(action==="block"?"creator_account_blocked":"creator_account_unblocked",{reason});if(afterAudit)return response({error:"Account updated but audit confirmation failed"},503,origin);return response({success:true,blocked:action==="block"},200,origin);
 });
