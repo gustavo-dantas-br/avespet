@@ -18,7 +18,7 @@ import {
 import { supabase } from "./supabaseClient";
 
 import {
-  listRows, saveRow, deleteRow, uid, savePerfil, savePerfilPrivado, listAnuncios, saveAnuncio, deleteAnuncio,
+  saveRow, deleteRow, uid, savePerfil, savePerfilPrivado, listAnuncios, saveAnuncio, deleteAnuncio,
   checkIsAdmin, listTodosAnunciosParaAdmin, updateAnuncioStatus, listPerfisPublicos,
   listPerdidas, savePerdida, deletePerdida, buscarPerdidaPorAnilha,
   listAchadosAnilha, atualizarStatusAchado,
