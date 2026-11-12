@@ -233,3 +233,11 @@ A tentativa de criar uma implantação Preview foi bloqueada pela Vercel por lim
 - Criada a branch `feature/homepage-redesign` a partir de `main`.
 - Adicionada a primeira composição modular da home e conectada ao roteamento público.
 - Registrada a necessidade de validar os caminhos de cadastro de tutores e proteção das aves antes de afirmar que a funcionalidade está completa.
+
+
+### Atualização de organização pública — 12/11/2026
+
+- Criado `src/publico/ComponentesPublicos.jsx` para centralizar tokens visuais e componentes compartilhados entre páginas públicas.
+- A página `src/features/aves-perdidas/pages/AvesPerdidas.jsx` foi adaptada para consumir esses componentes, mantendo seu serviço de listagem e suas regras de acesso.
+- O botão de cadastro dessa página reutiliza o modal de autenticação existente via propriedade `onEntrar`.
+- O plano e checklist detalhados estão em [REDESIGN-HOME-PUBLICA.md](./REDESIGN-HOME-PUBLICA.md).
