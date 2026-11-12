@@ -124,7 +124,7 @@ O usuário informou que as verificações mencionadas nesta etapa já foram real
 ### Próximas páginas a padronizar
 
 - [x] Página de solicitação de campanha (`/campanha-ave-perdida`) — identidade visual atualizada.
-- [ ] Guias, vídeos e página individual de artigo — destaque da home ajustado; páginas completas ainda pendentes.
+- [x] Guias, vídeos e página individual de artigo — identidade visual padronizada com o tema público.
 - [ ] Página de consulta de anilha (`/achei-uma-ave`).
 - [ ] Vitrine de aves à venda.
 - [ ] Cabeçalho e navegação em todas as rotas públicas.
@@ -146,3 +146,12 @@ O usuário informou que as verificações mencionadas nesta etapa já foram real
 - Nenhuma regra de solicitação, pacote, orçamento ou cobrança foi alterada.
 - As páginas completas de guias, vídeos e artigo individual ainda precisam de padronização visual.
 - Testes automatizados e visuais destas alterações específicas continuam pendentes; a confirmação anterior do usuário se refere à verificação que já havia sido feita antes desta nova rodada de código.
+
+
+### 12/11/2026 — páginas de conteúdo
+
+- Padronizadas as listagens de guias e vídeos em `src/publico/PaginasConteudo.jsx` com o fundo claro, cabeçalhos, filtros e estados vazios usando os componentes compartilhados.
+- Padronizada a página individual do guia, incluindo navegação de retorno, compartilhamento, CTA de cadastro e recomendações de leitura.
+- Ajustado o destaque de guias da home para contraste adequado no fundo claro.
+- Mantidos carregamento de conteúdo, filtros por espécie, metadados SEO, incorporação de vídeo e links de compartilhamento existentes.
+- Nenhuma regra de publicação ou consulta de conteúdo foi alterada.
