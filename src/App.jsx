@@ -1284,11 +1284,14 @@ export default function App() {
     return () => { active = false; };
   }, [session?.user?.id, passwordCheckRetry]);
 
-  // Verifica o entitlement Master no banco antes de montar qualquer tela de criador.
+  // A verificacao de acesso Master acontece somente na rota administrativa /adm.
+  const isMasterRoute = caminho === "/adm" || caminho.startsWith("/adm/");
+
   useEffect(() => {
     if (session === undefined) return;
-    if (!session?.user?.id) {
+    if (!isMasterRoute || !session?.user?.id) {
       setMasterAccess(false);
+      setMasterAccessError(false);
       return;
     }
 
@@ -1300,7 +1303,7 @@ export default function App() {
         if (active) setMasterAccess(allowed);
       })
       .catch(() => {
-        // Falha na consulta nunca deve liberar o painel de criador por engano.
+        // Falha na consulta nunca deve liberar o painel administrativo.
         if (active) {
           setMasterAccess(null);
           setMasterAccessError(true);
@@ -1308,7 +1311,7 @@ export default function App() {
       });
 
     return () => { active = false; };
-  }, [session?.user?.id, masterRetry]);
+  }, [session?.user?.id, masterRetry, isMasterRoute]);
 
   if (session === undefined) {
     return (
@@ -1393,17 +1396,37 @@ if (masterAccess === null) {
   );
 }
 
+if (!isMasterRoute) {
+  return (
+    <>
+      <AppInner
+        user={session.user}
+        onLogout={() => supabase.auth.signOut()}
+      />
+      <SuporteWhatsApp />
+    </>
+  );
+}
+
 if (masterAccess) {
   return <MasterApp user={session.user} onLogout={() => supabase.auth.signOut()} />;
 }
 
 return (
-  <>
-    <AppInner
-      user={session.user}
-      onLogout={() => supabase.auth.signOut()}
-    />
-    <SuporteWhatsApp />
-  </>
+  <div className="min-h-screen flex items-center justify-center px-5" style={{ background: "#182b45" }}>
+    <div className="w-full max-w-md rounded-2xl bg-white p-7 text-center shadow-xl">
+      <ShieldCheck size={34} className="mx-auto mb-3" color="#a27b2e" />
+      <h1 className="text-xl font-bold text-slate-900">Acesso administrativo restrito</h1>
+      <p className="mt-2 text-sm leading-6 text-slate-600">Esta conta não possui autorização para acessar o painel Master do Avespet.</p>
+      <a href="/" className="mt-5 block w-full rounded-lg px-4 py-3 text-sm font-semibold text-white" style={{ background: "#182b45" }}>Voltar ao Avespet</a>
+      <button
+        type="button"
+        onClick={() => supabase.auth.signOut()}
+        className="mt-2 w-full rounded-lg px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+      >
+        Sair da conta
+      </button>
+    </div>
+  </div>
 );
 }
