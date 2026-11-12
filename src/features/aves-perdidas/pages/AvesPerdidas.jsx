@@ -3,7 +3,7 @@ import { listarAvesPerdidas } from "../services/avesPerdidasService";
 import { Link } from "../../../publico/roteador";
 import { PaginaPublica, CabecalhoPublico, CartaoPublico, TEMA_PUBLICO } from "../../../publico/ComponentesPublicos";
 
-export default function AvesPerdidas() {
+export default function AvesPerdidas({ onEntrar }) {
   const [lista, setLista] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
@@ -68,7 +68,7 @@ export default function AvesPerdidas() {
         <div className="mt-10 rounded-2xl p-6 md:p-8" style={{ background: TEMA_PUBLICO.verdeEscuro }}>
           <h2 className="text-xl font-bold md:text-2xl" style={{ color: "#FFFFFF", fontFamily: "'Fraunces', Georgia, serif" }}>Sua ave desapareceu?</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6" style={{ color: "#D2E1D6" }}>Entre na sua conta para registrar a ocorrência. O anúncio passa por análise antes de ser publicado.</p>
-          <Link para="/achei-uma-ave" className="mt-5 inline-flex rounded-xl px-5 py-3 text-sm font-bold" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}>Encontrou uma ave? Consultar anilha</Link>
+          <button type="button" onClick={onEntrar} className="mt-5 inline-flex rounded-xl px-5 py-3 text-sm font-bold" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}>Entrar para cadastrar ave perdida</button>
         </div>
       </PaginaPublica>
     </div>
