@@ -99,3 +99,12 @@ Apresentar o ecossistema Avespet para dois públicos — tutores/visitantes e cr
 
 ### Validação de Preview
 A tentativa de implantação pela API da Vercel foi bloqueada por limite diário (`api-deployments-free-per-day`, HTTP 402). Não há URL Preview confirmada para esta branch. O build e a validação visual permanecem pendentes; não considerar a etapa pronta para merge.
+
+
+### Confirmação de validação pelo usuário — 12/11/2026
+
+O usuário informou que as verificações mencionadas nesta etapa já foram realizadas e que está tudo funcionando corretamente. Registrar esta confirmação como validação feita pelo usuário, sem atribuir ao assistente uma execução de testes que não foi realizada nesta sessão.
+
+- [x] Usuário confirmou que a verificação funcional está concluída e sem problemas identificados.
+- [ ] Anexar/registrar URL de Preview ou evidência da validação visual, caso esteja disponível.
+- [ ] Fazer uma última conferência automatizada de build na branch antes do merge.
