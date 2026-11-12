@@ -127,7 +127,7 @@ O usuário informou que as verificações mencionadas nesta etapa já foram real
 - [x] Guias, vídeos e página individual de artigo — identidade visual padronizada com o tema público.
 - [x] Página de consulta de anilha (`/achei-uma-ave`) — fundo e cabeçalho ajustados para o tema público.
 - [x] Vitrine de aves à venda (`/aves-a-venda`) — página e cartões alinhados ao tema público.
-- [ ] Cabeçalho e navegação em todas as rotas públicas.
+- [x] Cabeçalho e navegação em todas as rotas públicas — identidade clara e links em verde.
 
 ### Validação desta etapa de interface
 
@@ -164,3 +164,12 @@ O usuário informou que as verificações mencionadas nesta etapa já foram real
 - Atualizada a página `/aves-a-venda` e os cartões da vitrine com superfícies claras, tipografia e botões verdes.
 - Preservadas as consultas públicas, métricas de visualização/clique e a ação de contato via WhatsApp.
 - Não foram alterados anúncios, dados de criadores ou registros no Supabase.
+
+
+### 12/11/2026 — cabeçalho e navegação pública
+
+- Unificada a base visual da área pública em fundo claro.
+- Cabeçalho, marca, botão de entrada, menu e rodapé passaram a usar a paleta verde/neutra.
+- Removida a alternância antiga entre cabeçalho marrom e cabeçalho claro conforme a rota.
+- Página não encontrada também passou a usar cores legíveis no tema claro.
+- As rotas existentes e a ação do modal de autenticação foram preservadas.
