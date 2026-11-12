@@ -13,7 +13,7 @@ function isAllowedOrigin(origin: string | null) {
   if (allowedOrigins.has(origin)) return true;
   try {
     const hostname = new URL(origin).hostname;
-    return /^avespet-[a-z0-9]+-gustavo-dantas\\.vercel\\.app$/.test(hostname);
+    return hostname.startsWith("avespet-") && hostname.endsWith("-gustavo-dantas.vercel.app");
   } catch {
     return false;
   }
