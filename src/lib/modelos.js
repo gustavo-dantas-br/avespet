@@ -100,7 +100,7 @@ function emptyAnuncio() {
 }
 
 function emptyPerfilCriador() {
-  return { nomeCriatorio: "", nome: "", sobrenome: "", nomeCompleto: "", cidade: "", uf: "", whatsapp: "", email: "" };
+  return { nomeCriatorio: "", nome: "", sobrenome: "", nomeCompleto: "", cidade: "", uf: "", whatsapp: "", email: "", logoUrl: "" };
 }
 
 function emptyPerfilPrivado() {
