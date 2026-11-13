@@ -241,3 +241,19 @@ A tentativa de criar uma implantação Preview foi bloqueada pela Vercel por lim
 - A página `src/features/aves-perdidas/pages/AvesPerdidas.jsx` foi adaptada para consumir esses componentes, mantendo seu serviço de listagem e suas regras de acesso.
 - O botão de cadastro dessa página reutiliza o modal de autenticação existente via propriedade `onEntrar`.
 - O plano e checklist detalhados estão em [REDESIGN-HOME-PUBLICA.md](./REDESIGN-HOME-PUBLICA.md).
+
+## 12. Planos, assinaturas e pagamentos da plataforma
+
+A gestão comercial do AvesPet é separada do módulo financeiro dos criadores.
+
+- `platform_plans`: catálogo de planos, preço em centavos, periodicidade, limite de aves e permissões funcionais em JSON.
+- `creator_subscriptions`: vínculo do criador com um plano e estado da assinatura.
+- `platform_payment_records`: histórico de cobranças e pagamentos, preparado para futura integração com gateway.
+- O plano gratuito inicial é criado com limite de 10 aves e permissões essenciais. Os recursos avançados ficam configuráveis no catálogo; a divisão inicial deve ser revisada conforme a oferta comercial evoluir.
+- `max_birds = NULL` representa ausência de limite de aves.
+- O catálogo ativo pode ser consultado publicamente; assinatura e pagamentos são visíveis somente ao próprio criador por RLS.
+- Alterações administrativas de planos, assinaturas e pagamentos devem ocorrer no servidor, com validação de vínculo em `master_admins` e registro de auditoria. Não confiar em bloqueios somente na interface.
+- Nenhum gateway de pagamento está integrado nesta etapa. Não há preço de plano pago definido nesta migração.
+- A migração `202611130001_platform_plans_subscriptions.sql` foi adicionada à branch de desenvolvimento. Ela ainda não foi aplicada ao projeto Supabase.
+
+Próximas etapas: criar o serviço administrativo protegido para manutenção do catálogo, construir a interface Master de planos e permissões, e depois implementar a atribuição de assinatura e enforcement de limites/recursos no servidor. Antes de aplicar a migração, comparar seu conteúdo com o schema real do projeto Supabase e revisar as políticas RLS.
