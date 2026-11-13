@@ -182,3 +182,17 @@ A marca do software é **Avespet**. O nome “Criatório Dantas” pode continua
 - Verificação posterior confirmou os domínios personalizados `avespet.com.br` e `www.avespet.com.br` ainda associados ao projeto.
 - Identificados os nomes legados em `package.json`, `package-lock.json`, README e manifest PWA; documentação e metadados do pacote foram alinhados.
 - Repositório GitHub e pasta local permanecem pendentes por dependerem da atualização do remote e da configuração local.
+
+
+## 12. Genetica — primeira evolucao incremental (13/11/2026)
+
+- Criada a branch `feature/genetica-ringneck-base` para desenvolver a primeira etapa sem publicar diretamente em producao.
+- Adicionado catalogo inicial Ring Neck em `src/features/genetica/data/catalogoRingNeck.js`, com nomenclatura tecnica + popular e status de validacao.
+- A tela Banco de Genetica permite importar itens ausentes, sem substituir nem apagar registros existentes.
+- O modelo da ave agora reserva campos estruturados para cor-base, mutacoes visuais e fatores Dark/Violet, mantendo `corMutacao` e `portadores` para compatibilidade com cadastros antigos.
+- O cadastro separa cor-base e fatores SF/DF; permite selecionar portadores do catalogo, inclusive itens em validacao. Femeas nao podem marcar portadores ocultos de mutacoes ligadas ao sexo.
+- A calculadora permite selecionar aves cadastradas ou informar pai/mae manualmente e foi disponibilizada para os criadores.
+- Limite importante: nesta etapa, a calculadora ainda usa o motor mendeliano legado. Cor-base, fatores Dark/Violet, genes ligados entre si, recombinacao e alelos do locus Ino/Pallid ainda nao estao plenamente conectados. A interface sinaliza que esses campos sao apenas registro ate a validacao do motor.
+- O catalogo inicial inclui mutacoes em diferentes niveis de evidencia; apenas Cleartail esta marcada para calculo nesta primeira etapa. As demais ficam disponiveis para cadastro/portadores, mas bloqueadas no motor quando a regra nao estiver validada.
+- O banco Supabase de producao foi inspecionado: `aves` e `mutacoes` usam JSONB em `data`, com RLS habilitada. Nenhuma alteracao estrutural ou migracao de banco foi feita nesta etapa.
+- A publicacao de preview nao foi concluida porque a API da Vercel retornou limite diario do plano. A branch permanece separada; nao houve deploy de producao.
