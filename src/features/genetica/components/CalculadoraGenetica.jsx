@@ -163,7 +163,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                 className="w-full rounded-xl px-3 py-3"
                 style={campo}
                 value={
-                  manual.corLivre
+                  manual.aparenciaOutra
                     ? "__outra__"
                     : manual.corMutacao === "Ino"
                     ? (String(manual.corBase || "").toLowerCase().includes("blue") ? "popular|Albino" : "popular|Lutino")
@@ -176,18 +176,20 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                 onChange={(e) => {
                   const value = e.target.value;
                   if (value === "__outra__") {
-                    setManual((atual) => ({ ...atual, corMutacao: "", corLivre: "" }));
+                    setManual((atual) => ({ ...atual, corMutacao: "", corLivre: "", aparenciaOutra: true }));
                     setResultado(null);
                   } else if (value.startsWith("popular|")) {
                     const popular = value.split("|")[1];
                     setManual((atual) => ({
                       ...atual,
+                      aparenciaOutra: false,
+                      corLivre: "",
                       corMutacao: popular === "Lutino" || popular === "Albino" ? "Ino" : popular,
                       corBase: popular === "Lutino" ? "Green (Verde)" : popular === "Albino" ? "Blue (Azul)" : atual.corBase || "",
                     }));
                     setResultado(null);
                   } else if (CORES_BASE.some((c) => c.value === value)) {
-                    setManual((atual) => ({ ...atual, corBase: value, corMutacao: "" }));
+                    setManual((atual) => ({ ...atual, corBase: value, corMutacao: "", corLivre: "", aparenciaOutra: false }));
                     setResultado(null);
                   } else {
                     atualizarManual(setManual, "corMutacao", value);
@@ -202,13 +204,13 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                   <option value="popular|Lutino">Lutino</option>
                   <option value="popular|Albino">Albino</option>
                   <option value="popular|Cremino">Cremino</option>
-                  {extras.filter((m) => !["Ino", "Pallid (Palido)"].includes(m.nome)).map((m) => (
+                  {mutacoesRingNeck.filter((m) => m.nome !== "Ino").map((m) => (
                     <option key={m.id || m.nome} value={m.nome}>{m.nome}</option>
                   ))}
                 </optgroup>
                 <option value="__outra__">Outra (digitar)</option>
               </select>
-              {manual.corMutacao === "Outra" && (
+              {manual.aparenciaOutra && (
                 <input
                   className="w-full rounded-xl px-3 py-3 mt-2"
                   style={campo}
@@ -218,13 +220,8 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                 />
               )}
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: "#5e5143" }}>Ela apresenta alguma mutação além da cor?</label>
-              <select className="w-full rounded-xl px-3 py-3" style={campo} value={manual.corMutacao || ""} onChange={(e) => atualizarManual(setManual, "corMutacao", e.target.value)}>
-                <option value="">Não sei / nenhuma</option>
-                {extras.map((m) => <option key={m.id || m.nome} value={m.nome}>{m.nome}</option>)}
-              </select>
-              <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Você pode escolher uma cor-base, uma aparência como Lutino ou Albino, ou informar outra opção. Os detalhes que não souber podem ficar em branco.</p>
+            <div className="rounded-xl p-3 text-xs" style={{ background: "#fffaf0", color: "#8a7a63" }}>
+              A aparência principal já foi selecionada acima. Para informar outras mutações visíveis, abra “Se souber mais detalhes (opcional)”.
             </div>
 
             <details className="rounded-xl p-3" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
@@ -233,7 +230,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                 <div>
                   <p className="text-sm font-medium mb-2" style={{ color: "#5e5143" }}>Outras mutações que aparecem na aparência</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {extras.filter((m) => m.nome !== manual.corMutacao).map((m) => (
+                    {mutacoesRingNeck.filter((m) => m.nome !== manual.corMutacao && m.categoria !== "cor_base").map((m) => (
                       <label key={m.id || m.nome} className="flex gap-2 text-sm" style={{ color: "#5e5143" }}>
                         <input type="checkbox" checked={(manual.mutacoesVisuais || []).includes(m.nome)} onChange={(e) => {
                           const lista = e.target.checked ? [...new Set([...(manual.mutacoesVisuais || []), m.nome])] : (manual.mutacoesVisuais || []).filter((n) => n !== m.nome);
