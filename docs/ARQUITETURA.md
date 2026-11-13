@@ -196,3 +196,15 @@ A marca do software é **Avespet**. O nome “Criatório Dantas” pode continua
 - O catalogo inicial inclui mutacoes em diferentes niveis de evidencia; apenas Cleartail esta marcada para calculo nesta primeira etapa. As demais ficam disponiveis para cadastro/portadores, mas bloqueadas no motor quando a regra nao estiver validada.
 - O banco Supabase de producao foi inspecionado: `aves` e `mutacoes` usam JSONB em `data`, com RLS habilitada. Nenhuma alteracao estrutural ou migracao de banco foi feita nesta etapa.
 - A publicacao de preview nao foi concluida porque a API da Vercel retornou limite diario do plano. A branch permanece separada; nao houve deploy de producao.
+
+
+### 12.1. Combinacoes fenotipicas e estrutura visual
+
+- Adicionado `src/features/genetica/data/combinacoesRingNeck.js` como catalogo de combinacoes, separado das mutacoes primarias.
+- Registra Lutino, Albino, Creamino/Cremino, Pallid-ino, Skyblue/Azul Canela e Silver com componentes, nomenclatura alternativa, ressalvas e fonte de referencia.
+- As combinacoes nao foram importadas como mutacoes no banco nem habilitadas como genes independentes.
+- O formulario de aves passou a aceitar multiplas mutacoes visuais por ave; a calculadora manual tambem permite informar cor-base, mutacoes visuais e fatores SF/DF.
+- O motor legado agora reconhece mutacoes visuais adicionais em loci autossomicos e ligados ao sexo, mas isso nao resolve ainda a representacao dos alelos da serie azul/turquesa, Dark/Violet ou o locus alelico Ino/Pallid.
+- Corrigida a separacao entre mutacoes bloqueadas por validacao e mutacoes com heranca ainda nao classificada.
+- Referencias consultadas: Psittacula World (Pallid, Ino, Cinnamon e combinacoes) e calculadora brasileira Criar e Preservar para nomenclatura de mercado. A taxa de ligacao Dark/Blue nao sera presumida como comprovada em Ring Neck: material de calculadora antigo cita estimativa baseada em periquito-australiano e ressalva que nao estava conclusivamente demonstrada em Ring Neck.
+- Preview continua pendente por limite diario da Vercel; nenhuma publicacao de producao foi feita.
