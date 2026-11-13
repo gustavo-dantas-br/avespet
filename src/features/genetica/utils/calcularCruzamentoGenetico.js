@@ -3,7 +3,8 @@ function normTxtGen(s) {
 }
 
 function alelosAutossomico(ave, mutNome, dominante) {
-  const expressa = normTxtGen(ave.corMutacao) === normTxtGen(mutNome);
+  const expressa = normTxtGen(ave.corMutacao) === normTxtGen(mutNome) ||
+    (ave.mutacoesVisuais || []).some((m) => normTxtGen(m) === normTxtGen(mutNome));
   const carrega = (ave.portadores || []).some((p) => normTxtGen(p) === normTxtGen(mutNome));
   if (dominante) return expressa ? ["M", "N"] : ["N", "N"];
   if (expressa) return ["m", "m"];
@@ -58,6 +59,7 @@ function calcularCruzamentoGenetico(pai, mae, mutacoes) {
     .filter((m) => {
       const envolve = (ave) =>
         normTxtGen(ave.corMutacao) === normTxtGen(m.nome) ||
+        (ave.mutacoesVisuais || []).some((v) => normTxtGen(v) === normTxtGen(m.nome)) ||
         (ave.portadores || []).some((p) => normTxtGen(p) === normTxtGen(m.nome));
       return envolve(pai) || envolve(mae);
     });
