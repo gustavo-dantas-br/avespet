@@ -101,7 +101,8 @@ export default function MutacoesTab({ mutacoes, onSave, onDelete, emptyMutacao, 
               </div>
               {m.nomeAlternativo && <div className="text-xs mb-1" style={{ color: "#8a7a63" }}>também chamada: {m.nomeAlternativo}</div>}
               {(m.gene || m.serie) && <div className="text-xs mb-1 ui-mono" style={{ color: "#7a6a52" }}>{m.gene && `Gene: ${m.gene}`}{m.gene && m.serie ? " · " : ""}{m.serie && `Série: ${m.serie}`}</div>}
-              <div className="text-xs mb-1 ui-mono" style={{ color: "#a6402b" }}>{m.tipoHeranca}</div>\n              {m.statusValidacao && <div className="text-xs mb-1" style={{ color: "#556b3f" }}>Validacao: {m.statusValidacao} · Calculadora: {m.calculadoraAtiva ? "ativa" : "bloqueada"}</div>}
+              <div className="text-xs mb-1 ui-mono" style={{ color: "#a6402b" }}>{m.tipoHeranca}</div>
+              {m.statusValidacao && <div className="text-xs mb-1" style={{ color: "#556b3f" }}>Validacao: {m.statusValidacao} · Calculadora: {m.calculadoraAtiva ? "ativa" : "bloqueada"}</div>}
               {m.combinaCom && <div className="text-xs mb-1" style={{ color: "#556b3f" }}>Combina com: {m.combinaCom}</div>}
               {m.comoIdentificar && <div className="text-xs mb-1" style={{ color: "#7a6a52" }}>{m.comoIdentificar}</div>}
               {m.observacoes && <div className="text-xs italic mb-2" style={{ color: "#7a6a52" }}>{m.observacoes}</div>}
