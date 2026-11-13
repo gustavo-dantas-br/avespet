@@ -20,7 +20,7 @@ export default function MutacoesTab({ mutacoes, onSave, onDelete, emptyMutacao, 
   return (
     <div>
       <SectionTitle>Banco de Genética</SectionTitle>
-      <p className="ui-sans text-sm mb-5" style={{ color: "#F1E6D2" }}>Cadastro das mutações que você trabalha. Essa base alimenta a calculadora genética.</p>
+      <p className="ui-sans text-sm mb-5" style={{ color: "#334155" }}>Cadastro das mutações que você trabalha. Essa base alimenta a calculadora genética.</p>
       <Card className="p-4 sm:p-6 mb-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <Field label="Nome da mutação"><input style={inputStyle} value={nova.nome} onChange={(e) => setNova((m) => ({ ...m, nome: e.target.value }))} placeholder="ex: Pallid Azul Turquesa" /></Field>
