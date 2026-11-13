@@ -16,8 +16,8 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
   const [modoMae, setModoMae] = useState("cadastro");
   const [paiId, setPaiId] = useState("");
   const [maeId, setMaeId] = useState("");
-  const [paiManual, setPaiManual] = useState({ nome: "Pai simulado", corMutacao: "", portadores: [] });
-  const [maeManual, setMaeManual] = useState({ nome: "Mae simulada", corMutacao: "", portadores: [] });
+  const [paiManual, setPaiManual] = useState({ nome: "Pai simulado", corMutacao: "", corBase: "", mutacoesVisuais: [], portadores: [], fatoresGeneticos: { darkFactor: "", violetFactor: "" } });
+  const [maeManual, setMaeManual] = useState({ nome: "Mae simulada", corMutacao: "", corBase: "", mutacoesVisuais: [], portadores: [], fatoresGeneticos: { darkFactor: "", violetFactor: "" } });
   const [resultado, setResultado] = useState(null);
 
   const machos = useMemo(() => aves.filter((a) => a.sexo === "Macho"), [aves]);
@@ -82,14 +82,27 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
               <option value="">-- selecione {isPai ? "o pai" : "a mae"} --</option>
               {opcoes.map((a) => <option key={a.id} value={a.id}>{a.nome} — {a.corMutacao || a.corBase || "Cor nao informada"}</option>)}
             </select>
-            {registro && <div className="mt-4 text-sm" style={{ color: "#5e5143" }}><strong>{registro.nome}</strong><br />Cor/mutacao: {registro.corMutacao || registro.corBase || "Nao informada"}<br />Portadores: {(registro.portadores || []).join(", ") || "Nao informados"}</div>}
+            {registro && <div className="mt-4 text-sm" style={{ color: "#5e5143" }}><strong>{registro.nome}</strong><br />Cor-base: {registro.corBase || "Nao informada"}<br />Mutacoes visuais: {[registro.corMutacao, ...(registro.mutacoesVisuais || [])].filter(Boolean).join(", ") || "Nao informadas"}<br />Portadores: {(registro.portadores || []).join(", ") || "Nao informados"}</div>}
           </>
         ) : (
           <div className="space-y-3">
             <input className="w-full rounded-xl px-3 py-3" style={campo} placeholder="Nome ou identificacao" value={manual.nome} onChange={(e) => setManual((v) => ({ ...v, nome: e.target.value }))} />
-            <input className="w-full rounded-xl px-3 py-3" style={campo} placeholder="Cor/mutacao visual (nome exato do catalogo)" value={manual.corMutacao} onChange={(e) => setManual((v) => ({ ...v, corMutacao: e.target.value }))} />
+            <select className="w-full rounded-xl px-3 py-3" style={campo} value={manual.corBase || ""} onChange={(e) => setManual((v) => ({ ...v, corBase: e.target.value }))}>
+              <option value="">Cor-base nao informada</option>
+              <option>Green (Verde)</option><option>Blue (Azul)</option><option>Turquoise Blue (Azul Turquesa)</option><option>Turquoise (Turquesa)</option>
+            </select>
+            <input className="w-full rounded-xl px-3 py-3" style={campo} placeholder="Mutacao visual principal (nome exato)" value={manual.corMutacao} onChange={(e) => setManual((v) => ({ ...v, corMutacao: e.target.value }))} />
+            <div className="rounded-xl p-3" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
+              <div className="text-xs font-semibold mb-2">Mutacoes visuais adicionais</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {mutacoesRingNeck.map((m) => <label key={m.id || m.nome} className="flex gap-2 text-xs">
+                  <input type="checkbox" checked={(manual.mutacoesVisuais || []).includes(m.nome)} onChange={(e) => setManual((v) => ({ ...v, mutacoesVisuais: e.target.checked ? [...new Set([...(v.mutacoesVisuais || []), m.nome])] : (v.mutacoesVisuais || []).filter((n) => n !== m.nome) }))} />
+                  {m.nome}
+                </label>)}
+              </div>
+            </div>
             <input className="w-full rounded-xl px-3 py-3" style={campo} placeholder="Portadores separados por virgula" value={(manual.portadores || []).join(", ")} onChange={(e) => setManual((v) => ({ ...v, portadores: normalizarLista(e.target.value) }))} />
-            <p className="text-xs" style={{ color: "#8a7a63" }}>Use os nomes exatamente como aparecem no Banco de Genetica. Para mutacoes ligadas ao sexo, a mae nao pode ser cadastrada como portadora oculta.</p>
+            <p className="text-xs" style={{ color: "#8a7a63" }}>A cor-base e as mutacoes visuais adicionais ficam registradas para a proxima etapa do motor. Nao marque femeas como portadoras ocultas de genes ligados ao sexo.</p>
           </div>
         )}
       </div>
