@@ -61,20 +61,22 @@ function calcularCruzamentoGenetico(pai, mae, mutacoes) {
         (ave.portadores || []).some((p) => normTxtGen(p) === normTxtGen(m.nome));
       return envolve(pai) || envolve(mae);
     });
+  const bloqueadas = relevantes.filter((m) => m.calculadoraAtiva === false).map((m) => m.nome);
+  const calculaveis = relevantes.filter((m) => m.calculadoraAtiva !== false);
 
   const naoRegistradas = [pai.corMutacao, mae.corMutacao]
     .filter(Boolean)
     .filter((nome, i, arr) => arr.indexOf(nome) === i)
     .filter((nome) => !mutacoes.some((m) => normTxtGen(m.nome) === normTxtGen(nome)));
 
-  if (relevantes.length === 0) {
-    return { semLociRelevantes: true, naoRegistradas };
+  if (calculaveis.length === 0) {
+    return { semLociRelevantes: true, naoRegistradas, bloqueadas };
   }
 
-  const autossomicos = relevantes.filter((m) =>
+  const autossomicos = calculaveis.filter((m) =>
     ["Autossomica recessiva", "Autossomica dominante", "Codominante"].includes(m.tipoHeranca)
   );
-  const sexLigados = relevantes.filter((m) =>
+  const sexLigados = calculaveis.filter((m) =>
     ["Ligada ao sexo (recessiva)", "Ligada ao sexo (dominante)"].includes(m.tipoHeranca)
   );
   const naoDefinidos = relevantes
