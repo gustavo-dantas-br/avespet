@@ -173,3 +173,15 @@ O usuário informou que as verificações mencionadas nesta etapa já foram real
 - Removida a alternância antiga entre cabeçalho marrom e cabeçalho claro conforme a rota.
 - Página não encontrada também passou a usar cores legíveis no tema claro.
 - As rotas existentes e a ação do modal de autenticação foram preservadas.
+
+
+### 13/11/2026 — acessibilidade do carrossel da home
+
+- O carrossel agora respeita a preferência do sistema operacional/navegador por movimento reduzido e não inicia avanço automático nesse modo.
+- Adicionado controle explícito para pausar e retomar o avanço automático.
+- O avanço automático pausa durante foco, hover e interação por toque; os controles manuais continuam disponíveis.
+- A rolagem dos controles e das âncoras da home passa a usar comportamento imediato quando movimento reduzido está ativo.
+- Nenhuma consulta, rota, tabela ou política do Supabase foi alterada.
+- Commit: `3c1b5f4671d8c8127dddc72f204dcbab2cfe8b0e`.
+- [ ] Validar build e Preview após a alteração.
+- [ ] Conferir o comportamento com movimento reduzido ativado e desativado, em desktop e celular.
