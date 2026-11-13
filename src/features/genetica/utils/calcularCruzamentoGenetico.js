@@ -1,21 +1,29 @@
 function normTxtGen(s) {
-  return (s || "").trim().toLowerCase();
+  return (s || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase();
 }
 
-function aveExpressaMutacao(ave, mutNome) {
-  const alvo = normTxtGen(mutNome);
-  return normTxtGen(ave.corMutacao) === alvo ||
-    (ave.mutacoesVisuais || []).some((nome) => normTxtGen(nome) === alvo);
+function nomesDaMutacao(mutacao) {
+  return [mutacao.nome, mutacao.nomeAlternativo].filter(Boolean).map(normTxtGen);
 }
 
-function aveEnvolveMutacao(ave, mutNome) {
-  return aveExpressaMutacao(ave, mutNome) ||
-    (ave.portadores || []).some((nome) => normTxtGen(nome) === normTxtGen(mutNome));
+function nomeCoincideMutacao(nome, mutacao) {
+  return nomesDaMutacao(mutacao).includes(normTxtGen(nome));
 }
 
-function alelosAutossomico(ave, mutNome, dominante) {
-  const expressa = aveExpressaMutacao(ave, mutNome);
-  const carrega = (ave.portadores || []).some((p) => normTxtGen(p) === normTxtGen(mutNome));
+function aveExpressaMutacao(ave, mutacao) {
+  return [ave.corMutacao, ...(ave.mutacoesVisuais || [])]
+    .filter(Boolean)
+    .some((nome) => nomeCoincideMutacao(nome, mutacao));
+}
+
+function aveEnvolveMutacao(ave, mutacao) {
+  return aveExpressaMutacao(ave, mutacao) ||
+    (ave.portadores || []).some((nome) => nomeCoincideMutacao(nome, mutacao));
+}
+
+function alelosAutossomico(ave, mutacao, dominante) {
+  const expressa = aveExpressaMutacao(ave, mutacao);
+  const carrega = (ave.portadores || []).some((nome) => nomeCoincideMutacao(nome, mutacao));
   if (dominante) return expressa ? ["M", "N"] : ["N", "N"];
   if (expressa) return ["m", "m"];
   if (carrega) return ["N", "m"];
@@ -35,9 +43,9 @@ function classificarAutossomico(par, dominante, codominante) {
   return "normal";
 }
 
-function alelosZ(ave, mutNome, dominante) {
-  const expressa = aveExpressaMutacao(ave, mutNome);
-  const carrega = (ave.portadores || []).some((p) => normTxtGen(p) === normTxtGen(mutNome));
+function alelosZ(ave, mutacao, dominante) {
+  const expressa = aveExpressaMutacao(ave, mutacao);
+  const carrega = (ave.portadores || []).some((nome) => nomeCoincideMutacao(nome, mutacao));
   const alvo = dominante ? "M" : "m";
   if (ave.sexo === "Macho") {
     if (expressa) return [alvo, alvo];
@@ -66,7 +74,7 @@ function classificarSexLigado(sexoFilho, alelos, dominante) {
 function calcularCruzamentoGenetico(pai, mae, mutacoes) {
   const envolvidas = mutacoes
     .filter((m) => m.tipoHeranca !== "Cor base (selvagem)")
-    .filter((m) => aveEnvolveMutacao(pai, m.nome) || aveEnvolveMutacao(mae, m.nome));
+    .filter((m) => aveEnvolveMutacao(pai, m) || aveEnvolveMutacao(mae, m));
 
   // Itens explicitamente bloqueados no Banco de Genetica nunca entram nos percentuais.
   const bloqueadas = envolvidas
@@ -79,7 +87,7 @@ function calcularCruzamentoGenetico(pai, mae, mutacoes) {
     .filter(Boolean)
     .filter((nome, i, arr) => arr.findIndex((n) => normTxtGen(n) === normTxtGen(nome)) === i);
   const naoRegistradas = nomesInformados
-    .filter((nome) => !mutacoes.some((m) => normTxtGen(m.nome) === normTxtGen(nome)));
+    .filter((nome) => !mutacoes.some((m) => nomeCoincideMutacao(nome, m)));
 
   if (relevantes.length === 0) {
     return { semLociRelevantes: true, naoRegistradas, bloqueadas };
@@ -106,8 +114,8 @@ function calcularCruzamentoGenetico(pai, mae, mutacoes) {
   autossomicos.forEach((m) => {
     const dominante = m.tipoHeranca === "Autossomica dominante";
     const codominante = m.tipoHeranca === "Codominante";
-    const aPai = alelosAutossomico(pai, m.nome, dominante);
-    const aMae = alelosAutossomico(mae, m.nome, dominante);
+    const aPai = alelosAutossomico(pai, m, dominante);
+    const aMae = alelosAutossomico(mae, m, dominante);
     const porClasse = new Map();
     aPai.forEach((p) =>
       aMae.forEach((mm) => {
@@ -137,8 +145,8 @@ function calcularCruzamentoGenetico(pai, mae, mutacoes) {
         let subCombos = [{ prob: 1, partes: [] }];
         sexLigados.forEach((m) => {
           const dominante = m.tipoHeranca === "Ligada ao sexo (dominante)";
-          const zPai = alelosZ(pai, m.nome, dominante);
-          const zMae = alelosZ(mae, m.nome, dominante);
+          const zPai = alelosZ(pai, m, dominante);
+          const zMae = alelosZ(mae, m, dominante);
           const novosSub = [];
           subCombos.forEach((sub) => {
             zPai.forEach((pz) => {
