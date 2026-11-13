@@ -26,7 +26,8 @@ function classificarAutossomico(par, dominante, codominante) {
 }
 
 function alelosZ(ave, mutNome, dominante) {
-  const expressa = normTxtGen(ave.corMutacao) === normTxtGen(mutNome);
+  const expressa = normTxtGen(ave.corMutacao) === normTxtGen(mutNome) ||
+    (ave.mutacoesVisuais || []).some((m) => normTxtGen(m) === normTxtGen(mutNome));
   const carrega = (ave.portadores || []).some((p) => normTxtGen(p) === normTxtGen(mutNome));
   const alvo = dominante ? "M" : "m";
   if (ave.sexo === "Macho") {
