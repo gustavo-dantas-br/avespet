@@ -2,8 +2,19 @@ function normTxtGen(s) {
   return (s || "").trim().toLowerCase();
 }
 
+function aveExpressaMutacao(ave, mutNome) {
+  const alvo = normTxtGen(mutNome);
+  return normTxtGen(ave.corMutacao) === alvo ||
+    (ave.mutacoesVisuais || []).some((nome) => normTxtGen(nome) === alvo);
+}
+
+function aveEnvolveMutacao(ave, mutNome) {
+  return aveExpressaMutacao(ave, mutNome) ||
+    (ave.portadores || []).some((nome) => normTxtGen(nome) === normTxtGen(mutNome));
+}
+
 function alelosAutossomico(ave, mutNome, dominante) {
-  const expressa = normTxtGen(ave.corMutacao) === normTxtGen(mutNome);
+  const expressa = aveExpressaMutacao(ave, mutNome);
   const carrega = (ave.portadores || []).some((p) => normTxtGen(p) === normTxtGen(mutNome));
   if (dominante) return expressa ? ["M", "N"] : ["N", "N"];
   if (expressa) return ["m", "m"];
@@ -53,22 +64,25 @@ function classificarSexLigado(sexoFilho, alelos, dominante) {
 // pai OU mae expressam ou carregam), usando o tipo de heranca cadastrado
 // no Banco de Genetica pra cada uma.
 function calcularCruzamentoGenetico(pai, mae, mutacoes) {
-  const relevantes = mutacoes
+  const envolvidas = mutacoes
     .filter((m) => m.tipoHeranca !== "Cor base (selvagem)")
-    .filter((m) => {
-      const envolve = (ave) =>
-        normTxtGen(ave.corMutacao) === normTxtGen(m.nome) ||
-        (ave.portadores || []).some((p) => normTxtGen(p) === normTxtGen(m.nome));
-      return envolve(pai) || envolve(mae);
-    });
+    .filter((m) => aveEnvolveMutacao(pai, m.nome) || aveEnvolveMutacao(mae, m.nome));
 
-  const naoRegistradas = [pai.corMutacao, mae.corMutacao]
+  // Itens explicitamente bloqueados no Banco de Genetica nunca entram nos percentuais.
+  const bloqueadas = envolvidas
+    .filter((m) => m.calculadoraAtiva === false)
+    .map((m) => m.nome);
+
+  const relevantes = envolvidas.filter((m) => m.calculadoraAtiva !== false);
+
+  const nomesInformados = [pai.corMutacao, mae.corMutacao, ...(pai.mutacoesVisuais || []), ...(mae.mutacoesVisuais || [])]
     .filter(Boolean)
-    .filter((nome, i, arr) => arr.indexOf(nome) === i)
+    .filter((nome, i, arr) => arr.findIndex((n) => normTxtGen(n) === normTxtGen(nome)) === i);
+  const naoRegistradas = nomesInformados
     .filter((nome) => !mutacoes.some((m) => normTxtGen(m.nome) === normTxtGen(nome)));
 
   if (relevantes.length === 0) {
-    return { semLociRelevantes: true, naoRegistradas };
+    return { semLociRelevantes: true, naoRegistradas, bloqueadas };
   }
 
   const autossomicos = relevantes.filter((m) =>
@@ -171,6 +185,7 @@ function calcularCruzamentoGenetico(pai, mae, mutacoes) {
     semLociRelevantes: false,
     naoDefinidos,
     naoRegistradas,
+    bloqueadas,
     lociConsiderados: [...autossomicos, ...sexLigados].map((m) => m.nome),
     resultadoFinal,
   };
