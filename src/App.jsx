@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from "react";
 import { StatCard, TreeCard } from "./features/dashboard/components/CardsDashboard";
-import AveCard from "./features/plantel/components/AveCard";
+const AveCard = React.lazy(() => import("./features/plantel/components/AveCard"));
 import { Card, SectionTitle, inputStyle, Field } from "./components/ui/SharedUI";
 import SuporteWhatsApp from "./components/SuporteWhatsApp";
 import { compressPhoto } from "./features/plantel/utils/comprimirFoto";
@@ -26,33 +26,34 @@ import {
 
 import AuthPage from "./components/AuthPage";
 import { checkIsMaster } from "./lib/masterAccess";
-import MasterApp from "./features/master/MasterApp";
+const MasterApp = React.lazy(() => import("./features/master/MasterApp"));
 import RequiredPasswordChange from "./components/RequiredPasswordChange";
 import NotificationsCenter from "./components/NotificationsCenter";
-import { PerdiUmaAve } from "./features/aves-perdidas";
-import ConteudoAdmin from "./conteudo/ConteudoAdmin";
-import { AdminCampanhas } from "./features/campanhas";
-import ModeracaoAvesPerdidasTab from "./features/aves-perdidas/components/ModeracaoAvesPerdidasTab";
-import AchadosTab from "./features/aves-perdidas/components/AchadosTab";
-import AprovacoesTab from "./features/anuncios/components/AprovacoesTab";
-import CalculadoraGenetica from "./features/genetica/components/CalculadoraGenetica";
-import ListaTab from "./features/plantel/components/ListaTab";
-import ReservasTab from "./features/reservas/ReservasTab";
-import DashboardTab from "./features/dashboard/components/DashboardTab";
-import FinanceiroTab from "./features/financeiro/components/FinanceiroTab";
-import ReproducaoTab from "./features/reproducao/components/ReproducaoTab";
-import ClientesTab from "./features/clientes/ClientesTab";
-import FornecedoresTab from "./features/fornecedores/FornecedoresTab";
-import PosVendaTab from "./features/pos-venda/PosVendaTab";
-import IndicacoesTab from "./features/indicacoes/IndicacoesTab";
-import PerfilTab from "./features/perfil/PerfilTab";
-import AnunciosTab from "./features/anuncios/AnunciosTab";
-import FormTab from "./features/plantel/FormTab";
-import { SeletorComprador, SeletorFornecedor } from "./features/plantel/components/SeletoresCadastro";
-import PesoHistorico from "./features/plantel/PesoHistorico";
-import ArvoreTab from "./features/plantel/ArvoreTab";
-import PlacaTab from "./features/plantel/PlacaTab";
-import MutacoesTab from "./features/genetica/MutacoesTab";
+const PerdiUmaAve = React.lazy(() => import("./features/aves-perdidas").then((m) => ({ default: m.PerdiUmaAve })));
+const ConteudoAdmin = React.lazy(() => import("./conteudo/ConteudoAdmin"));
+const AdminCampanhas = React.lazy(() => import("./features/campanhas").then((m) => ({ default: m.AdminCampanhas })));
+const ModeracaoAvesPerdidasTab = React.lazy(() => import("./features/aves-perdidas/components/ModeracaoAvesPerdidasTab"));
+const AchadosTab = React.lazy(() => import("./features/aves-perdidas/components/AchadosTab"));
+const AprovacoesTab = React.lazy(() => import("./features/anuncios/components/AprovacoesTab"));
+const CalculadoraGenetica = React.lazy(() => import("./features/genetica/components/CalculadoraGenetica"));
+const ListaTab = React.lazy(() => import("./features/plantel/components/ListaTab"));
+const ReservasTab = React.lazy(() => import("./features/reservas/ReservasTab"));
+const DashboardTab = React.lazy(() => import("./features/dashboard/components/DashboardTab"));
+const FinanceiroTab = React.lazy(() => import("./features/financeiro/components/FinanceiroTab"));
+const ReproducaoTab = React.lazy(() => import("./features/reproducao/components/ReproducaoTab"));
+const ClientesTab = React.lazy(() => import("./features/clientes/ClientesTab"));
+const FornecedoresTab = React.lazy(() => import("./features/fornecedores/FornecedoresTab"));
+const PosVendaTab = React.lazy(() => import("./features/pos-venda/PosVendaTab"));
+const IndicacoesTab = React.lazy(() => import("./features/indicacoes/IndicacoesTab"));
+const PerfilTab = React.lazy(() => import("./features/perfil/PerfilTab"));
+const AnunciosTab = React.lazy(() => import("./features/anuncios/AnunciosTab"));
+const FormTab = React.lazy(() => import("./features/plantel/FormTab"));
+const SeletorComprador = React.lazy(() => import("./features/plantel/components/SeletoresCadastro").then((m) => ({ default: m.SeletorComprador })));
+const SeletorFornecedor = React.lazy(() => import("./features/plantel/components/SeletoresCadastro").then((m) => ({ default: m.SeletorFornecedor })));
+const PesoHistorico = React.lazy(() => import("./features/plantel/PesoHistorico"));
+const ArvoreTab = React.lazy(() => import("./features/plantel/ArvoreTab"));
+const PlacaTab = React.lazy(() => import("./features/plantel/PlacaTab"));
+const MutacoesTab = React.lazy(() => import("./features/genetica/MutacoesTab"));
 import { usePath } from "./publico/roteador";
 
 // ---------------------------------------------------------------------------
@@ -1102,6 +1103,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
           </div>
         ) : (
           <>
+            <React.Suspense fallback={<div className="flex items-center gap-2 ui-sans py-6" style={{ color: "#F1E6D2" }}><Loader2 className="animate-spin" size={18} /> Carregando funcionalidade...</div>}>
             {tab === "dashboard" && <DashboardTab aves={aves} despesas={despesas} clientes={clientes} indicacoes={indicacoes} posturas={posturas} setTab={setTab} goToLista={goToLista} STATUS_PLANTEL={STATUS_PLANTEL} SectionTitle={SectionTitle} StatCard={StatCard} money={money} Card={Card} />}
 
             {tab === "reproducao" && (
@@ -1211,6 +1213,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
             {tab === "campanhas-admin" && isAdminUser && <AdminCampanhas />}
 
             {tab === "conteudo" && isAdminUser && <ConteudoAdmin />}
+            </React.Suspense>
           </>
         )}
       </main>
