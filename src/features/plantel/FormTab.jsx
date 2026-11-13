@@ -109,7 +109,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
         {mutacoes.filter((m) => m.permitePortador !== false && m.categoria !== "cor_base" && m.calculadoraAtiva !== false && (!m.especie || m.especie === form.especie)).map((mutacao) => {
           const selecionado = (form.portadores || []).includes(mutacao.nome);
           return <label key={mutacao.id || mutacao.nome} className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: "#4f4336" }}>
-            <input type="checkbox" checked={selecionado} onChange={(e) => {
+            <input type="checkbox" checked={selecionado} disabled={form.sexo === "Femea" && (mutacao.tipoHeranca || "").startsWith("Ligada ao sexo")} onChange={(e) => {
               const atuais = form.portadores || [];
               const novos = e.target.checked ? [...new Set([...atuais, mutacao.nome])] : atuais.filter((nome) => nome !== mutacao.nome);
               setForm((f) => ({ ...f, portadores: novos }));
