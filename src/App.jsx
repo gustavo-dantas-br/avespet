@@ -750,30 +750,35 @@ function AppInner({ user, onLogout }) {
     }
   }
 
-  function handleSavePerfil(novoPerfil) {
+  async function handleSavePerfil(novoPerfil) {
     setPerfil({ ...novoPerfil, synced: false });
-    savePerfil(user.id, (() => { const { email, ...publico } = novoPerfil; return publico; })())
-      .then(() => setPerfil({ ...novoPerfil, synced: true }))
-      .catch((e) => setError(
-        `Perfil ficou na tela, mas nao salvou no banco (${e?.message || "erro desconhecido"}). ` +
-        "Se a tabela 'perfil_criador' ainda nao existe no seu Supabase, roda o schema_fase_anuncios.sql no SQL Editor."
-      ));
+    try {
+      const { email, ...publico } = novoPerfil;
+      await savePerfil(user.id, publico);
+      setPerfil({ ...novoPerfil, synced: true });
+    } catch (e) {
+      setError(
+        `Nao foi possivel salvar o perfil no banco (${e?.message || "erro desconhecido"}). ` +
+        "Confira se a tabela 'perfil_criador' esta disponivel."
+      );
+      throw e;
+    }
   }
 
   async function handleSavePerfilPrivado(dados) {
-    setPerfilPrivado(dados);
     try {
       await savePerfilPrivado(user.id, dados);
-      setError("");
+      setPerfilPrivado(dados);
     } catch (e) {
       setError("Nao foi possivel salvar o endereco privado (" + (e?.message || "erro desconhecido") + ").");
+      throw e;
     }
   }
 
   async function handleUpdateEmail(novoEmail) {
     const { error: authError } = await supabase.auth.updateUser({ email: novoEmail });
-    if (authError) setError("Nao foi possivel solicitar a troca de e-mail: " + authError.message);
-    else setError("Solicitacao enviada. Confirme o novo e-mail pelo link enviado pelo Supabase para concluir a alteracao.");
+    if (authError) throw new Error("Nao foi possivel solicitar a troca de e-mail: " + authError.message);
+    return "A solicitacao de troca de e-mail foi enviada; confirme pelo link recebido para concluir a alteracao.";
   }
 
   async function handleModerarAnuncio(id, novoStatus) {
