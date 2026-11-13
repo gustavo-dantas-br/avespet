@@ -75,55 +75,22 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
 </Field>
 
 <Field label="Portador de">
-  <div
-    className="rounded-xl p-3"
-    style={{
-      background: "#fffaf0",
-      border: "1px solid #d8c6a5",
-    }}
-  >
-    {mutacoes.length === 0 ? (
-      <div className="text-sm" style={{ color: "#8a7a63" }}>
-        Nenhuma mutacao cadastrada.
-      </div>
-    ) : (
-      <div className="space-y-2">
-        {mutacoes.map((mutacao) => {
-          const selecionado = (form.portadores || []).includes(mutacao.nome);
-
-          return (
-            <label
-              key={mutacao.id}
-              className="flex items-center gap-2 text-sm cursor-pointer"
-              style={{ color: "#4f4336" }}
-            >
-              <input
-                type="checkbox"
-                checked={selecionado}
-                onChange={(e) => {
-                  const atuais = form.portadores || [];
-
-                  const novos = e.target.checked
-                    ? [...new Set([...atuais, mutacao.nome])]
-                    : atuais.filter((nome) => nome !== mutacao.nome);
-
-                  setForm({
-                    ...form,
-                    portadores: novos,
-                  });
-                }}
-              />
-
-              <span>{mutacao.nome}</span>
-            </label>
-          );
-        })}
-      </div>
-    )}
-  </div>
-
+  <input
+    style={inputStyle}
+    value={(form.portadores || []).join(", ")}
+    onChange={(e) =>
+      setForm((f) => ({
+        ...f,
+        portadores: e.target.value
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+      }))
+    }
+    placeholder="Preencha manualmente (opcional)"
+  />
   <p className="text-xs mt-2" style={{ color: "#8a7a63" }}>
-    Marque as mutacoes que a ave carrega sem apresentar visualmente.
+    Informe manualmente apenas quando houver confirmação. As listas oficiais serão organizadas por espécie futuramente.
   </p>
 </Field>
           </div>
