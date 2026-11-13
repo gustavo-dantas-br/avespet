@@ -376,7 +376,7 @@ export default function ReproducaoTab({ aves, posturas, onSave, onDelete, onNasc
         )}
       </div>
 
-      <div className="ui-sans text-sm mb-5" style={{ color: "#F1E6D2" }}>
+      <div className="ui-sans text-sm mb-5" style={{ color: "#334155" }}>
         {sumario.incubando} {sumario.incubando === 1 ? "ovo incubando" : "ovos incubando"}
         {" - "}{sumario.previstos7} {sumario.previstos7 === 1 ? "nascimento previsto" : "nascimentos previstos"} nos proximos 7 dias
         {sumario.atrasados > 0 ? ` - ${sumario.atrasados} ${sumario.atrasados === 1 ? "ovo passou" : "ovos passaram"} da data prevista` : ""}
@@ -411,7 +411,7 @@ export default function ReproducaoTab({ aves, posturas, onSave, onDelete, onNasc
                 <div className="ui-sans font-semibold" style={{ color: "#F1E6D2", fontSize: 17 }}>
                   {pai ? pai.nome : "(macho removido)"} x {mae ? mae.nome : "(femea removida)"}
                 </div>
-                <div className="ui-mono text-xs" style={{ color: "#b09a78" }}>
+                <div className="ui-mono text-xs" style={{ color: "#475569" }}>
                   {ps.length} {ps.length === 1 ? "postura" : "posturas"} - {tot.total || 0} ovos - {tot.nasceram || 0} nasceram - {tot.inferteis || 0} inferteis - {tot.perdidos || 0} perdidos
                 </div>
               </div>
