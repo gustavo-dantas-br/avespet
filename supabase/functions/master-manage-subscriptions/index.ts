@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     if(error) return reply({error:"Não foi possível carregar assinaturas. Verifique se a migração do módulo foi aplicada."},503,origin);
     const planIds=[...new Set((subs||[]).map(x=>x.plan_id))], userIds=[...new Set((subs||[]).map(x=>x.user_id))];
     const [{data:plans,error:pe},{data:users,error:ue}]=await Promise.all([
-      planIds.length?admin.from("platform_plans").select("id,code,name,price_cents,billing_interval,max_birds,is_active").in("id",planIds):Promise.resolve({data:[],error:null}),
+      planIds.length?admin.from("platform_plans").select("id,code,name,price_cents,billing_interval,max_birds,is_active,is_free").in("id",planIds):Promise.resolve({data:[],error:null}),
       admin.auth.admin.listUsers({page:1,perPage:1000})
     ]);
     if(pe||ue) return reply({error:"Falha ao consultar dados de planos ou contas."},503,origin);
@@ -82,8 +82,15 @@ Deno.serve(async (req) => {
     const starts=body.starts_at?new Date(String(body.starts_at)):new Date(), ends=body.ends_at?new Date(String(body.ends_at)):null;
     if(!uuid.test(userId)||!uuid.test(planId)||!["active","trialing"].includes(status)) return reply({error:"Selecione criador, plano e situação válidos."},400,origin);
     if(Number.isNaN(starts.getTime())||(ends&&(Number.isNaN(ends.getTime())||ends<=starts))) return reply({error:"Confira as datas da assinatura."},400,origin);
-    const [{data:user,error:ue},{data:plan,error:pe}]=await Promise.all([admin.auth.admin.getUserById(userId),admin.from("platform_plans").select("id,code,name,is_active").eq("id",planId).maybeSingle()]);
+    const [{data:user,error:ue},{data:plan,error:pe},{data:masterAccount,error:mae},{data:adminAccount,error:ade}]=await Promise.all([
+      admin.auth.admin.getUserById(userId),
+      admin.from("platform_plans").select("id,code,name,is_active").eq("id",planId).maybeSingle(),
+      admin.from("master_admins").select("user_id").eq("user_id",userId).maybeSingle(),
+      admin.from("admins").select("user_id").eq("user_id",userId).maybeSingle(),
+    ]);
     if(ue||!user?.user) return reply({error:"Criador não encontrado."},404,origin);
+    if(mae||ade) return reply({error:"Não foi possível validar a conta selecionada."},503,origin);
+    if(masterAccount||adminAccount) return reply({error:"Não é permitido atribuir planos a contas administrativas."},400,origin);
     if(pe||!plan||!plan.is_active) return reply({error:"Plano inexistente ou inativo."},400,origin);
     const {data:current,error:ce}=await admin.from("creator_subscriptions").select("id").eq("user_id",userId).in("status",["active","trialing","past_due"]);
     if(ce) return reply({error:"Não foi possível verificar a assinatura atual."},503,origin);
