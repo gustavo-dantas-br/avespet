@@ -191,6 +191,20 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
         <div className="text-xs font-semibold mb-2" style={{ color: "#8a7a63" }}>CALCULADORA GENÉTICA</div>
         <h2 className="text-2xl font-semibold mb-2" style={{ color: "#2B241C" }}>Quais filhotes esse casal pode gerar?</h2>
         <p className="text-sm" style={{ color: "#6f6254" }}>Escolha o pai e a mãe. Se eles não estiverem cadastrados, informe apenas o que você sabe. Os detalhes avançados são opcionais.</p>
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="rounded-lg p-3" style={{ background: "#fffaf0" }}>
+            <strong className="text-sm" style={{ color: "#2B241C" }}>Cor</strong>
+            <p className="text-xs mt-1" style={{ color: "#6f6254" }}>É a cor que você vê na ave, como verde ou azul.</p>
+          </div>
+          <div className="rounded-lg p-3" style={{ background: "#fffaf0" }}>
+            <strong className="text-sm" style={{ color: "#2B241C" }}>Mutação</strong>
+            <p className="text-xs mt-1" style={{ color: "#6f6254" }}>É uma característica genética que muda a aparência, como lutino ou albino.</p>
+          </div>
+          <div className="rounded-lg p-3" style={{ background: "#fffaf0" }}>
+            <strong className="text-sm" style={{ color: "#2B241C" }}>Portador</strong>
+            <p className="text-xs mt-1" style={{ color: "#6f6254" }}>A ave carrega uma mutação, mas não mostra essa característica. Só informe se tiver certeza.</p>
+          </div>
+        </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">{renderGenitor("pai")}{renderGenitor("mae")}</div>
       <button onClick={calcular} className="w-full sm:w-auto px-6 py-3 rounded-xl font-semibold" style={{ background: "#C69A2E", color: "#2B241C" }}>Ver possíveis filhotes</button>
@@ -209,7 +223,10 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
           </div>)}</div>
           <div className="mt-5 rounded-xl p-4" style={{ background: "#f5e9c8", border: "1px solid #dfcba7" }}>
             <div className="font-semibold text-sm mb-2" style={{ color: "#2B241C" }}>Como entender</div>
-            <p className="text-sm" style={{ color: "#6f6254" }}>As porcentagens mostram chances aproximadas por filhote, não garantias. “Portador” significa que o filhote pode carregar uma mutação sem apresentar essa aparência.</p>
+            <p className="text-sm mb-2" style={{ color: "#6f6254" }}>As porcentagens mostram uma possibilidade para cada filhote. Por exemplo, 25% significa que, em muitas ninhadas, a média esperada seria cerca de 1 em cada 4. Não é uma garantia: cada filhote pode ser diferente.</p>
+            <p className="text-sm mb-1" style={{ color: "#6f6254" }}><strong>Visual:</strong> o filhote apresenta a mutação na aparência.</p>
+            <p className="text-sm mb-1" style={{ color: "#6f6254" }}><strong>Portador:</strong> o filhote pode carregar a mutação, mesmo sem mostrar essa cor.</p>
+            <p className="text-sm" style={{ color: "#6f6254" }}><strong>Normal:</strong> não apresenta a mutação considerada no cálculo.</p>
           </div>
           <ul className="mt-3 space-y-1 text-xs" style={{ color: "#8a7a63" }}>{resultado.observacoes.map((obs, i) => <li key={i}>• {obs}</li>)}</ul>
         </>}
