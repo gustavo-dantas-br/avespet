@@ -10,8 +10,8 @@ const campo = {
 const CORES_BASE = [
   { value: "Green (Verde)", label: "Verde" },
   { value: "Blue (Azul)", label: "Azul" },
-  { value: "Turquoise Blue (Azul Turquesa)", label: "Azul turquesa" },
   { value: "Turquoise (Turquesa)", label: "Turquesa" },
+  { value: "Turquoise Blue (Azul Turquesa)", label: "Azul turquesa" },
 ];
 
 function novaAve(nome) {
@@ -156,11 +156,62 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
               <input className="w-full rounded-xl px-3 py-3" style={campo} placeholder={titulo} value={manual.nome} onChange={(e) => atualizarManual(setManual, "nome", e.target.value)} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: "#5e5143" }}>Qual é a cor da ave?</label>
-              <select className="w-full rounded-xl px-3 py-3" style={campo} value={manual.corBase || ""} onChange={(e) => atualizarManual(setManual, "corBase", e.target.value)}>
+              <label className="block text-sm font-medium mb-1" style={{ color: "#5e5143" }}>Qual é a cor ou aparência da ave?</label>
+              <select
+                className="w-full rounded-xl px-3 py-3"
+                style={campo}
+                value={
+                  manual.corMutacao === "Ino"
+                    ? (String(manual.corBase || "").toLowerCase().includes("blue") ? "popular|Albino" : "popular|Lutino")
+                    : manual.corMutacao === "Cremino"
+                      ? "popular|Cremino"
+                      : manual.corMutacao
+                        ? (extras.some((m) => m.nome === manual.corMutacao) ? manual.corMutacao : "__outra__")
+                        : manual.corBase || ""
+                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "__outra__") {
+                    atualizarManual(setManual, "corMutacao", "Outra");
+                  } else if (value.startsWith("popular|")) {
+                    const popular = value.split("|")[1];
+                    setManual((atual) => ({
+                      ...atual,
+                      corMutacao: popular === "Lutino" || popular === "Albino" ? "Ino" : popular,
+                      corBase: popular === "Lutino" ? "Green (Verde)" : popular === "Albino" ? "Blue (Azul)" : atual.corBase || "",
+                    }));
+                    setResultado(null);
+                  } else if (CORES_BASE.some((c) => c.value === value)) {
+                    setManual((atual) => ({ ...atual, corBase: value, corMutacao: "" }));
+                    setResultado(null);
+                  } else {
+                    atualizarManual(setManual, "corMutacao", value);
+                  }
+                }}
+              >
                 <option value="">Não sei informar</option>
-                {CORES_BASE.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                <optgroup label="Cores-base">
+                  {CORES_BASE.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </optgroup>
+                <optgroup label="Aparências conhecidas">
+                  <option value="popular|Lutino">Lutino</option>
+                  <option value="popular|Albino">Albino</option>
+                  <option value="popular|Cremino">Cremino</option>
+                  {extras.filter((m) => !["Ino", "Pallid (Palido)"].includes(m.nome)).map((m) => (
+                    <option key={m.id || m.nome} value={m.nome}>{m.nome}</option>
+                  ))}
+                </optgroup>
+                <option value="__outra__">Outra (digitar)</option>
               </select>
+              {manual.corMutacao === "Outra" && (
+                <input
+                  className="w-full rounded-xl px-3 py-3 mt-2"
+                  style={campo}
+                  placeholder="Digite a cor ou mutação"
+                  value={manual.corLivre || ""}
+                  onChange={(e) => atualizarManual(setManual, "corLivre", e.target.value)}
+                />
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: "#5e5143" }}>Ela apresenta alguma mutação além da cor?</label>
@@ -168,7 +219,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                 <option value="">Não sei / nenhuma</option>
                 {extras.map((m) => <option key={m.id || m.nome} value={m.nome}>{m.nome}</option>)}
               </select>
-              <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Se não souber o nome da mutação, deixe sem selecionar.</p>
+              <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Você pode escolher uma cor-base, uma aparência como Lutino ou Albino, ou informar outra opção. Os detalhes que não souber podem ficar em branco.</p>
             </div>
 
             <details className="rounded-xl p-3" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
