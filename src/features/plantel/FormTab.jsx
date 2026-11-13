@@ -48,8 +48,10 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
                 value={
                   form.corMutacao === "Ino"
                     ? (String(form.corBase || "").toLowerCase().includes("blue") ? "popular|Albino" : "popular|Lutino")
-                    : form.corMutacao
-                      ? (mutacaoLivre ? "__outra__" : form.corMutacao)
+                    : form.corMutacao === "Cremino"
+                      ? "popular|Cremino"
+                      : form.corMutacao
+                        ? (mutacaoLivre ? "__outra__" : form.corMutacao)
                       : form.corBase || ""
                 }
                 onChange={(e) => {
@@ -171,6 +173,11 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
           </div>
         </div>
 
+        <details className="mt-5 rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
+          <summary className="cursor-pointer font-semibold text-sm" style={{ color: "#5e5143" }}>
+            Outras informações da ave (opcional)
+          </summary>
+          <div className="mt-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <Field label="Numero da anilha"><input style={inputStyle} value={form.anilha} onChange={set("anilha")} placeholder="ex: FOB 0080" /></Field>
           <Field label="Cor da anilha"><input style={inputStyle} value={form.corAnilha} onChange={set("corAnilha")} placeholder="ex: azul 2024" /></Field>
@@ -297,6 +304,9 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
         <div className="my-5 h-px" style={{ background: "#e3d3b4" }} />
         <div className="ui-mono text-xs mb-3" style={{ color: "#8a7a63" }}>HISTORICO DE PESO</div>
         <PesoHistorico inputStyle={inputStyle} pesos={form.pesos} onChange={(pesos) => setForm((f) => ({ ...f, pesos }))} />
+
+          </div>
+        </details>
 
         <div className="flex gap-3 mt-6">
           <button onClick={onSave} disabled={saving} className="ui-sans flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>
