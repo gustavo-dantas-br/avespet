@@ -6,7 +6,12 @@ function emptyAve() {
     nome: "",
     especie: "Ring Neck",
     sexo: "Indefinido",
+    // Campos geneticos novos. corMutacao e portadores sao mantidos para compatibilidade
+    // com aves ja cadastradas; a migracao para o perfil estruturado sera gradual.
+    corBase: "",
     corMutacao: "",
+    mutacoesVisuais: [],
+    fatoresGeneticos: { darkFactor: "", violetFactor: "" },
     portadores: [],
     pesos: [],
     corAnilha: "",
@@ -66,6 +71,13 @@ function emptyMutacao() {
     combinaCom: "",
     comoIdentificar: "",
     observacoes: "",
+    categoria: "mutacao",
+    especie: "Ring Neck",
+    statusValidacao: "em_validacao",
+    calculadoraAtiva: false,
+    permitePortador: true,
+    descricaoIniciante: "",
+    grupoAlelico: "",
   };
 }
 
