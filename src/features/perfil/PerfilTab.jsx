@@ -68,7 +68,7 @@ export default function PerfilTab({ perfil, privado, email, onSave, onSavePrivad
   return (
     <div className="max-w-xl">
       <SectionTitle>Perfil do Criador</SectionTitle>
-      <p className="ui-sans text-sm mb-5" style={{ color: "#F1E6D2" }}>
+      <p className="ui-sans text-sm mb-5" style={{ color: "#334155" }}>
         Nome do criatorio, cidade, UF e WhatsApp podem aparecer nos anuncios. Seu endereco completo e seu e-mail ficam privados.
       </p>
       <Card className="p-4 sm:p-6">

@@ -981,6 +981,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
   const parceiro = arvoreAve?.parceiroId ? aves.find((a) => a.id === arvoreAve.parceiroId) : null;
 
   const navGroups = [
+    { title: "CONTA", items: [{ id: "perfil", label: "Meu perfil", icon: UserCircle }] },
     { title: "VISÃO GERAL", items: [{ id: "dashboard", label: "Dashboard", icon: LayoutDashboard }] },
     { title: "MEU CRIATÓRIO", items: [
       { id: "lista", label: "Meu plantel", icon: Bird },
@@ -1001,7 +1002,6 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
     { title: "AVESPET", items: [
       { id: "anuncios", label: "Anúncios", icon: Megaphone },
       { id: "perdi-uma-ave", label: "Ave perdida", icon: Bird },
-      { id: "perfil", label: "Meu perfil", icon: UserCircle },
     ] },
     ...(isAdminUser ? [{ title: "ADMINISTRAÇÃO", items: [
       { id: "aprovacoes", label: "Aprovações", icon: ShieldCheck },
@@ -1065,6 +1065,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
               <div className="text-lg font-extrabold tracking-tight" style={{ color: "#1D3B2B" }}>Aves<span style={{ color: "#26945F" }}>pet</span></div>
               <div className="text-[10px] font-semibold tracking-[0.12em]" style={{ color: "#526A5B" }}>ÁREA DO CRIADOR</div>
             </div>}
+            {!sidebarCollapsed && perfil.logoUrl && <img src={perfil.logoUrl} alt="Logo do criatório" className="h-10 w-10 shrink-0 rounded-xl border border-[#E2EBE4] bg-white object-contain p-0.5" />}
           </div>
           {!sidebarCollapsed && <button onClick={() => setSidebarCollapsed(true)} aria-label="Recolher menu" title="Recolher menu" className="rounded-lg p-2 hover:bg-[#F1F6F2]" style={{ color: "#3F5D49" }}><ChevronLeft size={18} /></button>}
           {sidebarCollapsed && <button onClick={() => setSidebarCollapsed(false)} aria-label="Expandir menu" title="Expandir menu" className="absolute -right-3 top-7 rounded-full border bg-white p-1.5 shadow-sm" style={{ borderColor: "#E2EBE4", color: "#267A50" }}><ChevronRight size={16} /></button>}
@@ -1092,6 +1093,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
           </div>
           <div className="flex items-center gap-2">
             <div className="hidden sm:block text-right"><div className="text-xs font-semibold" style={{ color: "#345442" }}>{perfil.nome || "Criador"}</div><div className="text-[10px]" style={{ color: "#526A5B" }}>Área do criador</div></div>
+            {perfil.logoUrl && <img src={perfil.logoUrl} alt="Logo do criatório" className="h-9 w-9 rounded-lg border border-[#D7E4DA] bg-white object-contain p-0.5" />}
             <div className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold" style={{ background: "#E5F2E9", color: "#267A50" }}>{(perfil.nome || user.email || "C").slice(0,1).toUpperCase()}</div>
           </div>
         </header>
@@ -1100,7 +1102,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
           <button aria-label="Fechar menu" onClick={() => setMobileMenuOpen(false)} className="absolute inset-0 bg-black/40" />
           <div className="absolute inset-y-0 left-0 flex w-[min(86vw,340px)] flex-col bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b px-4 py-4" style={{ borderColor: "#E5EDE7" }}>
-              <div className="flex items-center gap-2"><div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "#E5F2E9", color: "#1D754B" }}><Feather size={19} /></div><div className="font-extrabold" style={{ color: "#1D3B2B" }}>Aves<span style={{ color: "#26945F" }}>pet</span></div></div>
+              <div className="flex items-center gap-2"><div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "#E5F2E9", color: "#1D754B" }}><Feather size={19} /></div><div className="font-extrabold" style={{ color: "#1D3B2B" }}>Aves<span style={{ color: "#26945F" }}>pet</span></div>{perfil.logoUrl && <img src={perfil.logoUrl} alt="Logo do criatório" className="h-9 w-9 rounded-lg border border-[#E2EBE4] bg-white object-contain p-0.5" />}</div>
               <button onClick={() => setMobileMenuOpen(false)} aria-label="Fechar menu" className="rounded-lg p-2" style={{ color: "#3F5D49" }}><X size={20} /></button>
             </div>
             <nav className="flex-1 overflow-y-auto px-3 py-3">{renderNav(false, true)}</nav>
