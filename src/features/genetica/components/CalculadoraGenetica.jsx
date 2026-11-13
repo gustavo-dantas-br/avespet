@@ -73,11 +73,37 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       calc.naoDefinidos?.length ? `Não calculadas porque a regra ainda está em estudo: ${calc.naoDefinidos.join(", ")}.` : "",
       calc.naoRegistradas?.length ? `Não encontradas no catálogo: ${calc.naoRegistradas.join(", ")}.` : "",
     ].filter(Boolean);
+
+    const estadoDoGene = (ave, mutacao) => {
+      const visuais = [ave.corMutacao, ...(ave.mutacoesVisuais || [])].filter(Boolean).map((v) => String(v).trim().toLowerCase());
+      const portadores = (ave.portadores || []).map((v) => String(v).trim().toLowerCase());
+      if (visuais.includes(mutacao.nome.trim().toLowerCase())) return "apresenta visualmente";
+      if (portadores.includes(mutacao.nome.trim().toLowerCase())) return "foi informado como portador";
+      return "não foi informado como portador nem como visual";
+    };
+
+    const explicacoes = calc.lociConsiderados.map((nome) => {
+      const mutacao = mutacoesRingNeck.find((m) => m.nome === nome);
+      if (!mutacao) return "";
+      const heranca = mutacao.tipoHeranca || "";
+      let motivo = "O filhote recebe uma combinação de genes dos dois pais.";
+      if (heranca === "Autossomica recessiva") {
+        motivo = "Para essa característica aparecer, o filhote precisa receber o gene dos dois pais. Se receber de apenas um, poderá ser portador sem mostrar a mutação.";
+      } else if (heranca === "Ligada ao sexo (recessiva)") {
+        motivo = "Essa característica é ligada ao sexo. Machos e fêmeas recebem combinações diferentes, por isso as possibilidades são separadas por sexo.";
+      } else if (heranca === "Autossomica dominante" || heranca === "Ligada ao sexo (dominante)") {
+        motivo = "Nessa herança, uma cópia do gene já pode ser suficiente para a característica aparecer.";
+      } else if (heranca === "Codominante") {
+        motivo = "Uma ou duas cópias desse fator podem produzir resultados visuais diferentes.";
+      }
+      return `${mutacao.nome}: ${motivo} Pai: ${estadoDoGene(pai, mutacao)}; mãe: ${estadoDoGene(mae, mutacao)}.`;
+    }).filter(Boolean);
     setResultado({
       tipo: "sucesso",
       cruzamento: `${pai.nome || "Pai"} × ${mae.nome || "Mãe"}`,
       genotipos: calc.lociConsiderados.join(", "),
       possibilidades,
+      explicacoes,
       observacoes,
     });
   }
@@ -222,8 +248,16 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
             <div><div className="font-semibold">{item.nome}</div><div className="text-xs mt-1" style={{ color: "#8a7a63" }}>{item.detalhe}</div></div><span className="font-semibold">{item.percentual}</span>
           </div>)}</div>
           <div className="mt-5 rounded-xl p-4" style={{ background: "#f5e9c8", border: "1px solid #dfcba7" }}>
-            <div className="font-semibold text-sm mb-2" style={{ color: "#2B241C" }}>Como entender</div>
-            <p className="text-sm mb-2" style={{ color: "#6f6254" }}>As porcentagens mostram uma possibilidade para cada filhote. Por exemplo, 25% significa que, em muitas ninhadas, a média esperada seria cerca de 1 em cada 4. Não é uma garantia: cada filhote pode ser diferente.</p>
+            <div className="font-semibold text-sm mb-2" style={{ color: "#2B241C" }}>Entenda o resultado</div>
+            <div className="space-y-2 mb-3">
+              {resultado.explicacoes?.length ? resultado.explicacoes.map((explicacao, i) => (
+                <p key={i} className="text-sm" style={{ color: "#6f6254" }}>{explicacao}</p>
+              )) : (
+                <p className="text-sm" style={{ color: "#6f6254" }}>O sistema considerou as informações genéticas cadastradas para o pai e a mãe. Se alguma mutação ou condição de portador não foi informada, ela não pode ser presumida no cálculo.</p>
+              )}
+            </div>
+            <p className="text-sm mb-2" style={{ color: "#6f6254" }}>As porcentagens mostram possibilidades para cada filhote, não uma garantia da quantidade que nascerá.</p>
+            <p className="text-sm mb-2" style={{ color: "#6f6254" }}>Por exemplo, 25% significa que a expectativa estatística é cerca de 1 em cada 4 filhotes ao longo de muitas ninhadas. Cada filhote, porém, pode ser diferente.</p>
             <p className="text-sm mb-1" style={{ color: "#6f6254" }}><strong>Visual:</strong> o filhote apresenta a mutação na aparência.</p>
             <p className="text-sm mb-1" style={{ color: "#6f6254" }}><strong>Portador:</strong> o filhote pode carregar a mutação, mesmo sem mostrar essa cor.</p>
             <p className="text-sm" style={{ color: "#6f6254" }}><strong>Normal:</strong> não apresenta a mutação considerada no cálculo.</p>
