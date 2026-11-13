@@ -192,7 +192,13 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                     setManual((atual) => ({ ...atual, corBase: value, corMutacao: "", corLivre: "", aparenciaOutra: false }));
                     setResultado(null);
                   } else {
-                    atualizarManual(setManual, "corMutacao", value);
+                    setManual((atual) => ({
+                      ...atual,
+                      corMutacao: value,
+                      corLivre: "",
+                      aparenciaOutra: false,
+                    }));
+                    setResultado(null);
                   }
                 }}
               >
