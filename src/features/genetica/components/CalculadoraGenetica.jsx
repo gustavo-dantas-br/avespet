@@ -74,16 +74,19 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       calc.naoRegistradas?.length ? `Não encontradas no catálogo: ${calc.naoRegistradas.join(", ")}.` : "",
     ].filter(Boolean);
 
+    const normalizarNome = (valor) => String(valor || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase();
+    const nomesEquivalentes = (mutacao) => [mutacao.nome, mutacao.nomeAlternativo].filter(Boolean).map(normalizarNome);
     const estadoDoGene = (ave, mutacao) => {
-      const visuais = [ave.corMutacao, ...(ave.mutacoesVisuais || [])].filter(Boolean).map((v) => String(v).trim().toLowerCase());
-      const portadores = (ave.portadores || []).map((v) => String(v).trim().toLowerCase());
-      if (visuais.includes(mutacao.nome.trim().toLowerCase())) return "apresenta visualmente";
-      if (portadores.includes(mutacao.nome.trim().toLowerCase())) return "foi informado como portador";
+      const equivalentes = nomesEquivalentes(mutacao);
+      const visuais = [ave.corMutacao, ...(ave.mutacoesVisuais || [])].filter(Boolean).map(normalizarNome);
+      const portadores = (ave.portadores || []).map(normalizarNome);
+      if (visuais.some((nome) => equivalentes.includes(nome))) return "apresenta visualmente";
+      if (portadores.some((nome) => equivalentes.includes(nome))) return "foi informado como portador";
       return "não foi informado como portador nem como visual";
     };
 
     const explicacoes = calc.lociConsiderados.map((nome) => {
-      const mutacao = mutacoesRingNeck.find((m) => m.nome === nome);
+      const mutacao = mutacoesRingNeck.find((m) => nomesEquivalentes(m).includes(normalizarNome(nome)));
       if (!mutacao) return "";
       const heranca = mutacao.tipoHeranca || "";
       let motivo = "O filhote recebe uma combinação de genes dos dois pais.";
