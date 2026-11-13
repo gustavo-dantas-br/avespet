@@ -96,6 +96,8 @@ const STATUS_ANUNCIO_LABEL = { pendente: "EM ANALISE", aprovado: "APROVADO", rej
 function AppInner({ user, onLogout }) {
   const [aves, setAves] = useState([]);
   const [despesas, setDespesas] = useState([]);
+  const [reservasFinanceiro, setReservasFinanceiro] = useState([]);
+  const [pagamentosReservasFinanceiro, setPagamentosReservasFinanceiro] = useState([]);
   const [mutacoes, setMutacoes] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
@@ -142,6 +144,21 @@ function AppInner({ user, onLogout }) {
       setDespesas(items.map((d) => ({ ...d, synced: true })).sort((a, b) => (a.data || "").localeCompare(b.data || "")));
     } catch {
       // silencioso
+    }
+  }, [user.id]);
+
+  const loadReservasFinanceiro = useCallback(async () => {
+    try {
+      const [r, p] = await Promise.all([
+        supabase.from("reservas_aves").select("id, cliente_id, ave_id, valor_total, status, data_reserva, updated_at").eq("user_id", user.id).eq("status", "concluida"),
+        supabase.from("reserva_pagamentos").select("id, reserva_id, valor, data_pagamento, status, descricao, forma_pagamento").eq("user_id", user.id),
+      ]);
+      if (r.error) throw r.error;
+      if (p.error) throw p.error;
+      setReservasFinanceiro(r.data || []);
+      setPagamentosReservasFinanceiro(p.data || []);
+    } catch (e) {
+      setError("Não foi possível atualizar os recebimentos das reservas (" + (e?.message || "erro desconhecido") + ").");
     }
   }, [user.id]);
 
@@ -267,6 +284,7 @@ function AppInner({ user, onLogout }) {
   useEffect(() => {
     loadAves();
     loadDespesas();
+    loadReservasFinanceiro();
     loadMutacoes();
     loadClientes();
     loadFornecedores();
@@ -276,7 +294,7 @@ function AppInner({ user, onLogout }) {
     loadAdminStatus();
     loadPerdidas();
     loadPosturas();
-  }, [loadAves, loadDespesas, loadMutacoes, loadClientes, loadFornecedores, loadIndicacoes, loadAnuncios, loadPerfil, loadAdminStatus, loadPerdidas, loadPosturas]);
+  }, [loadAves, loadDespesas, loadReservasFinanceiro, loadMutacoes, loadClientes, loadFornecedores, loadIndicacoes, loadAnuncios, loadPerfil, loadAdminStatus, loadPerdidas, loadPosturas]);
 
   function startNew() {
     setForm(emptyAve());
@@ -1132,7 +1150,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
               <ReproducaoTab aves={aves} posturas={posturas} onSave={handleSavePostura} onDelete={handleDeletePostura} onNascimento={handleRegistrarNascimento} Card={Card} Field={Field} inputStyle={inputStyle} SectionTitle={SectionTitle} />
             )}
 
-            {tab === "reservas" && <ReservasTab userId={user.id} perfil={perfil} clientes={clientes} aves={aves} posturas={posturas} onReservaConcluida={loadAves} Card={Card} SectionTitle={SectionTitle} />}
+            {tab === "reservas" && <ReservasTab userId={user.id} perfil={perfil} clientes={clientes} aves={aves} posturas={posturas} onReservaConcluida={loadAves} onFinanceiroAtualizado={loadReservasFinanceiro} Card={Card} SectionTitle={SectionTitle} />}
 
             {tab === "lista" && (
               <ListaTab
@@ -1165,7 +1183,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
             )}
 
             {tab === "financeiro" && (
-              <FinanceiroTab aves={aves} despesas={despesas} onSaveDespesa={handleSaveDespesa} onDeleteDespesa={handleDeleteDespesa} emptyDespesa={emptyDespesa} primeiroDiaMesISO={primeiroDiaMesISO} hojeISO={hojeISO} ultimoDiaMesISO={ultimoDiaMesISO} primeiroDiaAnoISO={primeiroDiaAnoISO} computeFinanceiro={computeFinanceiro} computeFinanceiroPeriodo={computeFinanceiroPeriodo} money={money} DESPESA_TIPOS={DESPESA_TIPOS} inputStyle={inputStyle} SectionTitle={SectionTitle} Card={Card} Field={Field} />
+              <FinanceiroTab aves={aves} despesas={despesas} reservasFinanceiro={reservasFinanceiro} pagamentosReservasFinanceiro={pagamentosReservasFinanceiro} clientes={clientes} onSaveDespesa={handleSaveDespesa} onDeleteDespesa={handleDeleteDespesa} emptyDespesa={emptyDespesa} primeiroDiaMesISO={primeiroDiaMesISO} hojeISO={hojeISO} ultimoDiaMesISO={ultimoDiaMesISO} primeiroDiaAnoISO={primeiroDiaAnoISO} computeFinanceiro={computeFinanceiro} computeFinanceiroPeriodo={computeFinanceiroPeriodo} money={money} DESPESA_TIPOS={DESPESA_TIPOS} inputStyle={inputStyle} SectionTitle={SectionTitle} Card={Card} Field={Field} />
             )}
 
             {tab === "mutacoes" && (
