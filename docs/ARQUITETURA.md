@@ -257,3 +257,15 @@ A gestão comercial do AvesPet é separada do módulo financeiro dos criadores.
 - A migração `202611130001_platform_plans_subscriptions.sql` foi adicionada à branch de desenvolvimento. Ela ainda não foi aplicada ao projeto Supabase.
 
 Próximas etapas: criar o serviço administrativo protegido para manutenção do catálogo, construir a interface Master de planos e permissões, e depois implementar a atribuição de assinatura e enforcement de limites/recursos no servidor. Antes de aplicar a migração, comparar seu conteúdo com o schema real do projeto Supabase e revisar as políticas RLS.
+
+### Administração do catálogo no Painel Master
+
+A tela `src/features/master/BillingManagement.jsx` administra o catálogo por meio da Edge Function `master-manage-billing`.
+
+- A função valida o token com Supabase Auth e confirma o usuário em `master_admins` antes de permitir qualquer ação.
+- Ações disponíveis: `list_plans`, `save_plan` e `toggle_plan`.
+- A criação e edição validam código único, preço em centavos, periodicidade, limite de aves e permissões funcionais.
+- Ativação, desativação, criação e edição geram eventos em `master_audit_log`.
+- A interface não possui exclusão física de planos para preservar referências futuras em assinaturas e histórico.
+- A tela não atribui planos a criadores, não registra pagamentos e não realiza cobranças. Essas etapas dependem de regras comerciais e de integração próprias.
+- A Edge Function e a interface estão versionadas na branch de desenvolvimento e ainda não foram implantadas.
