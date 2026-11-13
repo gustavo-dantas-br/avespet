@@ -131,11 +131,11 @@ O usuário informou que as verificações mencionadas nesta etapa já foram real
 
 ### Validação desta etapa de interface
 
-- [ ] Executar build após as alterações desta segunda etapa.
 - [ ] Conferir visualmente página de aves perdidas em mobile e desktop.
 - [ ] Testar CTA de entrada/cadastro e consulta de anilha.
 - [ ] Conferir estado vazio, carregamento, erro e anúncios com/sem foto.
-- [ ] Atualizar este checklist após os testes.
+- [x] Build de produção executado após a atualização de acessibilidade da home (13/11/2026).
+- [ ] Validar visualmente o Preview e testar o carrossel com movimento reduzido ativado/desativado.
 
 
 ### 12/11/2026 — campanha e destaque de conteúdo
@@ -185,3 +185,15 @@ O usuário informou que as verificações mencionadas nesta etapa já foram real
 - Commit: `3c1b5f4671d8c8127dddc72f204dcbab2cfe8b0e`.
 - [ ] Validar build e Preview após a alteração.
 - [ ] Conferir o comportamento com movimento reduzido ativado e desativado, em desktop e celular.
+
+
+### Resultado do build — 13/11/2026
+
+- Preview criado a partir da branch `feature/homepage-redesign`, commit `379c4b3cfdf204f92307a73145c247bcb74938e4`.
+- Vercel concluiu o build com estado `READY`; Vite transformou 1.603 módulos e concluiu o build principal em 4,27 s.
+- O build do service worker/PWA também foi concluído.
+- Aviso não bloqueante: bundle JavaScript principal com aproximadamente 737 kB minificados, acima do limite de 500 kB do Vite. Próxima melhoria técnica sugerida: divisão de código por rotas/funcionalidades, sem alterar o comportamento.
+- Avisos npm sobre configuração `cache-dir` e script de instalação do esbuild também foram registrados; não impediram o build.
+- URL Preview: https://avespet-deoe314by-gustavo-dantas.vercel.app
+- A implantação foi criada como Preview; não foi solicitado nem executado merge ou publicação manual em produção.
+- Supabase: conferido o projeto `tnnpzitijvklbnwptsuq`; as tabelas consultadas estavam com RLS habilitada. A função `concluir_reserva_ave` valida sessão, propriedade da reserva, vínculo de cliente e ave, impede conclusão duplicada e calcula saldo usando somente pagamentos com status `recebido`. Nenhuma alteração foi feita no banco.
