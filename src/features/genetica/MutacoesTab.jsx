@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, Trash2, Download, ShieldCheck } from "lucide-react";
+import { Plus, Trash2, Download } from "lucide-react";
 import { CATALOGO_MUTACOES_RING_NECK } from "./data/catalogoRingNeck";
 
 export default function MutacoesTab({ mutacoes, onSave, onDelete, emptyMutacao, TIPOS_HERANCA, SectionTitle, Field, inputStyle, Card }) {
@@ -15,7 +15,7 @@ export default function MutacoesTab({ mutacoes, onSave, onDelete, emptyMutacao, 
     const existentes = new Set(mutacoes.map((m) => (m.nome || "").trim().toLowerCase()));
     const faltantes = CATALOGO_MUTACOES_RING_NECK.filter((m) => !existentes.has(m.nome.trim().toLowerCase()));
     try {
-      for (const item of faltantes) await onSave({ ...emptyMutacao(), ...item, id: null });
+      for (const item of faltantes) {\n        const salvo = await onSave({ ...emptyMutacao(), ...item, id: null });\n        if (salvo === false) throw new Error("Falha ao salvar " + item.nome);\n      }
       setMensagemCatalogo(faltantes.length
         ? `${faltantes.length} itens adicionados ao seu Banco de Genética. Nenhum registro existente foi alterado.`
         : "Seu banco ja possui todos os itens deste catalogo. Nenhum registro foi alterado.");
