@@ -7,8 +7,22 @@ const campo = {
   color: "#2B241C",
 };
 
-function normalizarLista(valor) {
-  return (valor || "").split(",").map((s) => s.trim()).filter(Boolean);
+const CORES_BASE = [
+  { value: "Green (Verde)", label: "Verde" },
+  { value: "Blue (Azul)", label: "Azul" },
+  { value: "Turquoise Blue (Azul Turquesa)", label: "Azul turquesa" },
+  { value: "Turquoise (Turquesa)", label: "Turquesa" },
+];
+
+function novaAve(nome) {
+  return {
+    nome,
+    corMutacao: "",
+    corBase: "",
+    mutacoesVisuais: [],
+    portadores: [],
+    fatoresGeneticos: { darkFactor: "", violetFactor: "" },
+  };
 }
 
 export default function CalculadoraGenetica({ aves, mutacoes }) {
@@ -16,41 +30,52 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
   const [modoMae, setModoMae] = useState("cadastro");
   const [paiId, setPaiId] = useState("");
   const [maeId, setMaeId] = useState("");
-  const [paiManual, setPaiManual] = useState({ nome: "Pai simulado", corMutacao: "", corBase: "", mutacoesVisuais: [], portadores: [], fatoresGeneticos: { darkFactor: "", violetFactor: "" } });
-  const [maeManual, setMaeManual] = useState({ nome: "Mae simulada", corMutacao: "", corBase: "", mutacoesVisuais: [], portadores: [], fatoresGeneticos: { darkFactor: "", violetFactor: "" } });
+  const [paiManual, setPaiManual] = useState(novaAve("Pai"));
+  const [maeManual, setMaeManual] = useState(novaAve("Mãe"));
   const [resultado, setResultado] = useState(null);
 
   const machos = useMemo(() => aves.filter((a) => a.sexo === "Macho"), [aves]);
   const femeas = useMemo(() => aves.filter((a) => a.sexo === "Femea"), [aves]);
   const pai = modoPai === "cadastro" ? aves.find((a) => a.id === paiId) : { ...paiManual, sexo: "Macho" };
   const mae = modoMae === "cadastro" ? aves.find((a) => a.id === maeId) : { ...maeManual, sexo: "Femea" };
-  const mutacoesRingNeck = mutacoes.filter((m) => !m.especie || m.especie === "Ring Neck");
+  const mutacoesRingNeck = mutacoes.filter((m) => (!m.especie || m.especie === "Ring Neck") && m.categoria !== "cor_base");
+
+  function atualizarManual(setManual, campoNome, valor) {
+    setManual((atual) => ({ ...atual, [campoNome]: valor }));
+    setResultado(null);
+  }
 
   function calcular() {
     if (!pai || !mae || (modoPai === "cadastro" && !paiId) || (modoMae === "cadastro" && !maeId)) {
-      setResultado({ tipo: "erro", mensagem: "Selecione ou informe o pai e a mae." });
+      setResultado({ tipo: "erro", mensagem: "Escolha uma ave para o pai e outra para a mãe." });
       return;
     }
     const calc = calcularCruzamentoGenetico(pai, mae, mutacoesRingNeck);
     if (calc.semLociRelevantes) {
-      setResultado({ tipo: "erro", mensagem: "Nenhum locus selecionado possui uma regra de heranca liberada para calculo. " + (calc.bloqueadas?.length ? "Bloqueadas por validacao pendente: " + calc.bloqueadas.join(", ") + ". " : "") + (calc.naoDefinidos?.length ? "Heranca ainda nao implementada: " + calc.naoDefinidos.join(", ") + ". " : "") + "Cadastre ou selecione uma mutacao com regra validada no Banco de Genetica." });
+      const detalhes = [
+        calc.bloqueadas?.length ? "Ainda estamos validando: " + calc.bloqueadas.join(", ") + "." : "",
+        calc.naoDefinidos?.length ? "A regra genética ainda não está pronta para: " + calc.naoDefinidos.join(", ") + "." : "",
+      ].filter(Boolean).join(" ");
+      setResultado({
+        tipo: "erro",
+        mensagem: "Ainda não conseguimos calcular esse cruzamento com segurança. " + detalhes + " Você pode cadastrar as informações, mas elas não entram no cálculo até a regra ser validada.",
+      });
       return;
     }
     const possibilidades = calc.resultadoFinal.map((r) => ({
       nome: r.descricao,
-      percentual: `${r.percentual.toFixed(1).replace(/\.0$/, "")}%`,
+      percentual: `${r.percentual.toFixed(1).replace(/\\.0$/, "")}%`,
       detalhe: r.sexo,
     }));
     const observacoes = [
-      "Esta versao inicial calcula somente os loci que estao cadastrados e identificados pelo motor atual.",
-      "Os loci ainda sao tratados pelo motor legado. A cor-base, Dark/Violet SF/DF, combinacoes alelicas Pallid/Ino e ligacao/recombinacao entre genes sex-linked estao em registro, mas ainda nao entram integralmente nos percentuais.",
-      calc.bloqueadas?.length ? `Bloqueadas ate validacao: ${calc.bloqueadas.join(", ")}.` : "",
-      calc.naoDefinidos?.length ? `Fora do calculo por heranca nao definida: ${calc.naoDefinidos.join(", ")}.` : "",
-      calc.naoRegistradas?.length ? `Nomes nao encontrados no catalogo: ${calc.naoRegistradas.join(", ")}.` : "",
+      "O resultado é uma estimativa genética, não uma garantia do que vai nascer.",
+      calc.bloqueadas?.length ? `Não incluídas porque ainda estão em validação: ${calc.bloqueadas.join(", ")}.` : "",
+      calc.naoDefinidos?.length ? `Não calculadas porque a regra ainda está em estudo: ${calc.naoDefinidos.join(", ")}.` : "",
+      calc.naoRegistradas?.length ? `Não encontradas no catálogo: ${calc.naoRegistradas.join(", ")}.` : "",
     ].filter(Boolean);
     setResultado({
       tipo: "sucesso",
-      cruzamento: `${pai.nome || "Pai"} (${pai.corBase || "cor-base nao informada"}; ${pai.corMutacao || "mutacao principal nao informada"}) × ${mae.nome || "Mae"} (${mae.corBase || "cor-base nao informada"}; ${mae.corMutacao || "mutacao principal nao informada"})`,
+      cruzamento: `${pai.nome || "Pai"} × ${mae.nome || "Mãe"}`,
       genotipos: calc.lociConsiderados.join(", "),
       possibilidades,
       observacoes,
@@ -67,80 +92,124 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     const opcoes = isPai ? machos : femeas;
     const id = isPai ? paiId : maeId;
     const setId = isPai ? setPaiId : setMaeId;
-    const titulo = isPai ? "PAI" : "MAE";
+    const titulo = isPai ? "Pai" : "Mãe";
+    const extras = mutacoesRingNeck.filter((m) => m.permitePortador !== false);
 
     return (
-      <div className="rounded-2xl p-5" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
-        <div className="ui-mono text-xs mb-3" style={{ color: "#8a7a63" }}>{titulo}</div>
-        <div className="flex gap-2 mb-4">
-          <button type="button" onClick={() => { setModo("cadastro"); setResultado(null); }} className="px-3 py-2 rounded-lg text-xs font-semibold" style={{ background: modo === "cadastro" ? "#C69A2E" : "#f2e8d4", color: "#2B241C" }}>Ave cadastrada</button>
-          <button type="button" onClick={() => { setModo("manual"); setResultado(null); }} className="px-3 py-2 rounded-lg text-xs font-semibold" style={{ background: modo === "manual" ? "#C69A2E" : "#f2e8d4", color: "#2B241C" }}>Simular manualmente</button>
+      <section className="rounded-2xl p-5" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
+        <h3 className="text-lg font-semibold mb-1" style={{ color: "#2B241C" }}>{titulo}</h3>
+        <p className="text-xs mb-3" style={{ color: "#8a7a63" }}>{isPai ? "Reprodutor macho" : "Reprodutora fêmea"}</p>
+        <div className="flex flex-wrap gap-2 mb-4">
+          <button type="button" onClick={() => { setModo("cadastro"); setResultado(null); }} className="px-3 py-2 rounded-lg text-sm font-semibold" style={{ background: modo === "cadastro" ? "#C69A2E" : "#f2e8d4", color: "#2B241C" }}>Escolher do meu plantel</button>
+          <button type="button" onClick={() => { setModo("manual"); setResultado(null); }} className="px-3 py-2 rounded-lg text-sm font-semibold" style={{ background: modo === "manual" ? "#C69A2E" : "#f2e8d4", color: "#2B241C" }}>Informar outra ave</button>
         </div>
+
         {modo === "cadastro" ? (
           <>
+            <label className="block text-sm font-medium mb-1" style={{ color: "#5e5143" }}>Selecione {isPai ? "o macho" : "a fêmea"}</label>
             <select className="w-full rounded-xl px-3 py-3" style={campo} value={id} onChange={(e) => { setId(e.target.value); setResultado(null); }}>
-              <option value="">-- selecione {isPai ? "o pai" : "a mae"} --</option>
-              {opcoes.map((a) => <option key={a.id} value={a.id}>{a.nome} — {a.corMutacao || a.corBase || "Cor nao informada"}</option>)}
+              <option value="">Escolha uma ave cadastrada</option>
+              {opcoes.map((a) => <option key={a.id} value={a.id}>{a.nome} — {a.corMutacao || a.corBase || "Cor não informada"}</option>)}
             </select>
-            {registro && <div className="mt-4 text-sm" style={{ color: "#5e5143" }}><strong>{registro.nome}</strong><br />Cor-base: {registro.corBase || "Nao informada"}<br />Fatores: Dark {registro.fatoresGeneticos?.darkFactor || "—"} / Violet {registro.fatoresGeneticos?.violetFactor || "—"}<br />Mutacoes visuais: {[registro.corMutacao, ...(registro.mutacoesVisuais || [])].filter(Boolean).join(", ") || "Nao informadas"}<br />Portadores: {(registro.portadores || []).join(", ") || "Nao informados"}</div>}
+            {registro && (
+              <div className="mt-3 rounded-xl p-3 text-sm" style={{ background: "#fffaf0", color: "#5e5143" }}>
+                <strong>{registro.nome}</strong>
+                <p className="mt-1">Cor: {registro.corBase || "não informada"}</p>
+                <p>Mutação visível: {[registro.corMutacao, ...(registro.mutacoesVisuais || [])].filter(Boolean).join(", ") || "não informada"}</p>
+                <p>Portador de: {(registro.portadores || []).join(", ") || "não informado"}</p>
+              </div>
+            )}
           </>
         ) : (
           <div className="space-y-3">
-            <input className="w-full rounded-xl px-3 py-3" style={campo} placeholder="Nome ou identificacao" value={manual.nome} onChange={(e) => setManual((v) => ({ ...v, nome: e.target.value }))} />
-            <select className="w-full rounded-xl px-3 py-3" style={campo} value={manual.corBase || ""} onChange={(e) => setManual((v) => ({ ...v, corBase: e.target.value }))}>
-              <option value="">Cor-base nao informada</option>
-              <option>Green (Verde)</option><option>Blue (Azul)</option><option>Turquoise Blue (Azul Turquesa)</option><option>Turquoise (Turquesa)</option>
-            </select>
-            <input className="w-full rounded-xl px-3 py-3" style={campo} placeholder="Mutacao visual principal (nome exato)" value={manual.corMutacao} onChange={(e) => setManual((v) => ({ ...v, corMutacao: e.target.value }))} />
-            <div className="rounded-xl p-3" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
-              <div className="text-xs font-semibold mb-2">Mutacoes visuais adicionais</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {mutacoesRingNeck.map((m) => <label key={m.id || m.nome} className="flex gap-2 text-xs">
-                  <input type="checkbox" checked={(manual.mutacoesVisuais || []).includes(m.nome)} onChange={(e) => setManual((v) => ({ ...v, mutacoesVisuais: e.target.checked ? [...new Set([...(v.mutacoesVisuais || []), m.nome])] : (v.mutacoesVisuais || []).filter((n) => n !== m.nome) }))} />
-                  {m.nome}
-                </label>)}
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: "#5e5143" }}>Nome (opcional)</label>
+              <input className="w-full rounded-xl px-3 py-3" style={campo} placeholder={titulo} value={manual.nome} onChange={(e) => atualizarManual(setManual, "nome", e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: "#5e5143" }}>Qual é a cor da ave?</label>
+              <select className="w-full rounded-xl px-3 py-3" style={campo} value={manual.corBase || ""} onChange={(e) => atualizarManual(setManual, "corBase", e.target.value)}>
+                <option value="">Não sei informar</option>
+                {CORES_BASE.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: "#5e5143" }}>Ela apresenta alguma mutação além da cor?</label>
+              <select className="w-full rounded-xl px-3 py-3" style={campo} value={manual.corMutacao || ""} onChange={(e) => atualizarManual(setManual, "corMutacao", e.target.value)}>
+                <option value="">Não sei / nenhuma</option>
+                {extras.map((m) => <option key={m.id || m.nome} value={m.nome}>{m.nome}</option>)}
+              </select>
+              <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Se não souber o nome da mutação, deixe sem selecionar.</p>
+            </div>
+
+            <details className="rounded-xl p-3" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
+              <summary className="cursor-pointer text-sm font-semibold" style={{ color: "#5e5143" }}>Se souber mais detalhes (opcional)</summary>
+              <div className="mt-3 space-y-3">
+                <div>
+                  <p className="text-sm font-medium mb-2" style={{ color: "#5e5143" }}>Outras mutações que aparecem na aparência</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {extras.filter((m) => m.nome !== manual.corMutacao).map((m) => (
+                      <label key={m.id || m.nome} className="flex gap-2 text-sm" style={{ color: "#5e5143" }}>
+                        <input type="checkbox" checked={(manual.mutacoesVisuais || []).includes(m.nome)} onChange={(e) => {
+                          const lista = e.target.checked ? [...new Set([...(manual.mutacoesVisuais || []), m.nome])] : (manual.mutacoesVisuais || []).filter((n) => n !== m.nome);
+                          atualizarManual(setManual, "mutacoesVisuais", lista);
+                        }} />
+                        {m.nome}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className="text-sm" style={{ color: "#5e5143" }}>Fator escuro
+                    <select className="w-full rounded-xl px-3 py-2 mt-1" style={campo} value={manual.fatoresGeneticos?.darkFactor || ""} onChange={(e) => setManual((v) => ({ ...v, fatoresGeneticos: { ...(v.fatoresGeneticos || {}), darkFactor: e.target.value } }))}>
+                      <option value="">Não sei</option><option value="SF">Simples (SF)</option><option value="DF">Duplo (DF)</option>
+                    </select>
+                  </label>
+                  <label className="text-sm" style={{ color: "#5e5143" }}>Fator violeta
+                    <select className="w-full rounded-xl px-3 py-2 mt-1" style={campo} value={manual.fatoresGeneticos?.violetFactor || ""} onChange={(e) => setManual((v) => ({ ...v, fatoresGeneticos: { ...(v.fatoresGeneticos || {}), violetFactor: e.target.value } }))}>
+                      <option value="">Não sei</option><option value="SF">Simples (SF)</option><option value="DF">Duplo (DF)</option>
+                    </select>
+                  </label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1" style={{ color: "#5e5143" }}>A ave é portadora de alguma mutação?</label>
+                  <input className="w-full rounded-xl px-3 py-3" style={campo} placeholder="Digite os nomes separados por vírgula" value={(manual.portadores || []).join(", ")} onChange={(e) => atualizarManual(setManual, "portadores", e.target.value.split(",").map((x) => x.trim()).filter(Boolean))} />
+                  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Portadora é a ave que carrega um gene sem mostrar essa cor. Se não tiver certeza, deixe em branco.</p>
+                </div>
+                {isPai ? null : <p className="text-xs" style={{ color: "#8a7a63" }}>Em algumas mutações ligadas ao sexo, a fêmea não pode ser portadora oculta. O sistema considera essa regra.</p>}
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <label className="text-xs">Dark Factor
-                <select className="w-full rounded-xl px-3 py-2 mt-1" style={campo} value={manual.fatoresGeneticos?.darkFactor || ""} onChange={(e) => setManual((v) => ({ ...v, fatoresGeneticos: { ...(v.fatoresGeneticos || {}), darkFactor: e.target.value } }))}>
-                  <option value="">Nao informado</option><option value="SF">SF</option><option value="DF">DF</option>
-                </select>
-              </label>
-              <label className="text-xs">Violet Factor
-                <select className="w-full rounded-xl px-3 py-2 mt-1" style={campo} value={manual.fatoresGeneticos?.violetFactor || ""} onChange={(e) => setManual((v) => ({ ...v, fatoresGeneticos: { ...(v.fatoresGeneticos || {}), violetFactor: e.target.value } }))}>
-                  <option value="">Nao informado</option><option value="SF">SF</option><option value="DF">DF</option>
-                </select>
-              </label>
-            </div>
-            <input className="w-full rounded-xl px-3 py-3" style={campo} placeholder="Portadores separados por virgula" value={(manual.portadores || []).join(", ")} onChange={(e) => setManual((v) => ({ ...v, portadores: normalizarLista(e.target.value) }))} />
-            <p className="text-xs" style={{ color: "#8a7a63" }}>A cor-base e as mutacoes visuais adicionais ficam registradas para a proxima etapa do motor. Nao marque femeas como portadoras ocultas de genes ligados ao sexo.</p>
+            </details>
           </div>
         )}
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="rounded-2xl p-5" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
-        <div className="ui-mono text-xs mb-2" style={{ color: "#8a7a63" }}>CALCULADORA GENETICA</div>
-        <h2 className="text-2xl font-semibold mb-2" style={{ color: "#2B241C" }}>Cruzamento de Ring Neck</h2>
-        <p className="text-sm" style={{ color: "#6f6254" }}>Use aves do plantel ou simule um casal sem precisar cadastrar os reprodutores.</p>
+        <div className="text-xs font-semibold mb-2" style={{ color: "#8a7a63" }}>CALCULADORA GENÉTICA</div>
+        <h2 className="text-2xl font-semibold mb-2" style={{ color: "#2B241C" }}>Quais filhotes esse casal pode gerar?</h2>
+        <p className="text-sm" style={{ color: "#6f6254" }}>Escolha o pai e a mãe. Se eles não estiverem cadastrados, informe apenas o que você sabe. Os detalhes avançados são opcionais.</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">{renderGenitor("pai")}{renderGenitor("mae")}</div>
-      <button onClick={calcular} className="px-5 py-3 rounded-xl font-semibold" style={{ background: "#C69A2E", color: "#2B241C" }}>Calcular cruzamento</button>
+      <button onClick={calcular} className="w-full sm:w-auto px-6 py-3 rounded-xl font-semibold" style={{ background: "#C69A2E", color: "#2B241C" }}>Ver possíveis filhotes</button>
       {resultado && <div className="rounded-2xl p-5" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
-        {resultado.tipo === "erro" ? <div style={{ color: "#A6402B" }}>{resultado.mensagem}</div> : <>
-          <div className="ui-mono text-xs mb-2" style={{ color: "#8a7a63" }}>RESULTADO TEORICO</div>
+        {resultado.tipo === "erro" ? (
+          <div style={{ color: "#A6402B" }}>
+            <div className="font-semibold mb-1">Ainda não é possível calcular esse casal.</div>
+            <p className="text-sm">{resultado.mensagem}</p>
+          </div>
+        ) : <>
+          <div className="text-xs font-semibold mb-2" style={{ color: "#8a7a63" }}>POSSIBILIDADES TEÓRICAS</div>
           <div className="text-xl font-semibold" style={{ color: "#2B241C" }}>{resultado.cruzamento}</div>
-          <div className="mt-2 text-sm" style={{ color: "#8a7a63" }}>Loci considerados: {resultado.genotipos || "—"}</div>
+          <div className="mt-2 text-sm" style={{ color: "#8a7a63" }}>Características consideradas: {resultado.genotipos || "—"}</div>
           <div className="mt-4 space-y-3">{resultado.possibilidades.map((item, index) => <div key={`${item.nome}-${item.detalhe}-${index}`} className="flex items-center justify-between rounded-xl px-4 py-3 gap-3" style={{ background: "#f2e8d4", border: "1px solid #dfcba7" }}>
             <div><div className="font-semibold">{item.nome}</div><div className="text-xs mt-1" style={{ color: "#8a7a63" }}>{item.detalhe}</div></div><span className="font-semibold">{item.percentual}</span>
           </div>)}</div>
           <div className="mt-5 rounded-xl p-4" style={{ background: "#f5e9c8", border: "1px solid #dfcba7" }}>
-            <div className="font-semibold text-sm mb-2" style={{ color: "#2B241C" }}>Entenda o resultado</div>
-            <p className="text-sm" style={{ color: "#6f6254" }}>As porcentagens sao probabilidades teoricas por filhote, nao garantias. Machos e femeas aparecem separados quando a heranca ligada ao sexo entra no calculo. Portador significa que o filhote pode carregar um gene sem mostrar a mutacao.</p>
+            <div className="font-semibold text-sm mb-2" style={{ color: "#2B241C" }}>Como entender</div>
+            <p className="text-sm" style={{ color: "#6f6254" }}>As porcentagens mostram chances aproximadas por filhote, não garantias. “Portador” significa que o filhote pode carregar uma mutação sem apresentar essa aparência.</p>
           </div>
           <ul className="mt-3 space-y-1 text-xs" style={{ color: "#8a7a63" }}>{resultado.observacoes.map((obs, i) => <li key={i}>• {obs}</li>)}</ul>
         </>}
