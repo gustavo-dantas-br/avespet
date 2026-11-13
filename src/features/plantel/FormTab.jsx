@@ -15,6 +15,16 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
   return (
     <div className="max-w-3xl">
       <SectionTitle>{form.id ? `Editando ${form.nome || "ave"}` : "Nova ave"}</SectionTitle>
+      <div className="rounded-xl p-4 mb-4" style={{ background: "#f5e9c8", border: "1px solid #dfcba7" }}>
+        <h3 className="font-semibold text-sm mb-2" style={{ color: "#2B241C" }}>Como cadastrar sua ave</h3>
+        <p className="text-sm mb-2" style={{ color: "#5e5143" }}>Comece pelo que você consegue identificar. Se não souber alguma informação, deixe sem preencher. Você pode completar depois.</p>
+        <ul className="space-y-1.5 text-sm" style={{ color: "#5e5143" }}>
+          <li><strong>Cor:</strong> é a cor principal que você vê na ave, como verde ou azul.</li>
+          <li><strong>Mutação:</strong> é uma característica genética que altera a aparência, como lutino, albino ou pallid.</li>
+          <li><strong>Portador:</strong> é quando a ave carrega uma mutação nos genes, mas não demonstra essa característica na aparência.</li>
+        </ul>
+        <p className="text-xs mt-2" style={{ color: "#725b32" }}>Não precisa entender tudo de genética para cadastrar. Preencha apenas o que tiver certeza.</p>
+      </div>
       <Card className="p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6">
           <div className="w-28 h-28 sm:w-32 sm:h-32 shrink-0 rounded-lg overflow-hidden flex items-center justify-center relative mx-auto sm:mx-0" style={{ background: "#f1e6d2", border: "1px dashed #d6c39a" }}>
@@ -37,7 +47,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
             <Field label="Sexo">
               <select style={inputStyle} value={form.sexo} onChange={set("sexo")}>{SEXOS.map((s) => <option key={s}>{s}</option>)}</select>
             </Field>
-            <Field label="Mutacao / Cor">
+            <Field label="Mutação que aparece na aparência">
   <select
     style={inputStyle}
     value={mutacaoLivre ? "__outra__" : form.corMutacao}
@@ -63,7 +73,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
       style={{ ...inputStyle, marginTop: 8 }}
       value={form.corMutacao}
       onChange={(e) => setForm((f) => ({ ...f, corMutacao: e.target.value }))}
-      placeholder="Digite a mutacao/cor dessa ave"
+      placeholder="Ex.: Lutino"
     />
   )}
 
@@ -74,7 +84,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
   )}
 </Field>
 
-<Field label="Cor base">
+<Field label="Cor principal (cor-base)">
   <select style={inputStyle} value={form.corBase || ""} onChange={set("corBase")}>
     <option value="">Nao informada / manter cadastro antigo</option>
     <option>Green (Verde)</option>
@@ -82,10 +92,10 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
     <option>Turquoise Blue (Azul Turquesa)</option>
     <option>Turquoise (Turquesa)</option>
   </select>
-  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Registro da cor-base. A previsao da serie azul/turquesa sera conectada ao motor apos validar os alelos e combinacoes.</p>
+  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Escolha a cor principal que você vê na ave. Ex.: verde ou azul. Se estiver em dúvida, deixe sem informar.</p>
 </Field>
 
-<Field label="Fator escuro (Dark Factor)">
+<Field label="Fator escuro (opcional)">
   <select style={inputStyle} value={form.fatoresGeneticos?.darkFactor || ""} onChange={(e) => setForm((f) => ({ ...f, fatoresGeneticos: { ...(f.fatoresGeneticos || {}), darkFactor: e.target.value } }))}>
     <option value="">Nao informado</option>
     <option value="SF">SF — Fator simples</option>
@@ -94,7 +104,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
   <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Registro SF/DF; ainda nao participa dos percentuais da calculadora.</p>
 </Field>
 
-<Field label="Fator violeta (Violet Factor)">
+<Field label="Fator violeta (opcional)">
   <select style={inputStyle} value={form.fatoresGeneticos?.violetFactor || ""} onChange={(e) => setForm((f) => ({ ...f, fatoresGeneticos: { ...(f.fatoresGeneticos || {}), violetFactor: e.target.value } }))}>
     <option value="">Nao informado</option>
     <option value="SF">SF — Fator simples</option>
@@ -103,7 +113,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
   <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Registro SF/DF; ainda nao participa dos percentuais da calculadora.</p>
 </Field>
 
-<Field label="Portador de">
+<Field label="Portador de (só se tiver certeza)">
   <div className="rounded-xl p-3" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
     {mutacoes.filter((m) => m.permitePortador !== false && m.categoria !== "cor_base" && (!m.especie || m.especie === form.especie)).length === 0 ? (
       <div className="text-sm" style={{ color: "#8a7a63" }}>Nenhuma mutacao com portador disponivel no catalogo.</div>
@@ -124,10 +134,10 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
       </div>
     )}
   </div>
-  <p className="text-xs mt-2" style={{ color: "#8a7a63" }}>Portador e uma mutacao que a ave carrega sem expressar. Femeas nao podem ser portadoras ocultas de mutacoes recessivas ligadas ao sexo.</p>
+  <p className="text-xs mt-2" style={{ color: "#8a7a63" }}>Portador é uma mutação que a ave carrega, mas não mostra na aparência. Marque somente se essa informação for conhecida. O sistema bloqueia combinações que não se aplicam ao sexo da ave.</p>
 </Field>
 
-<Field label="Mutacoes visuais adicionais">
+<Field label="Outras mutações que também aparecem (opcional)">
   <div className="rounded-xl p-3 max-h-48 overflow-y-auto" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
     {mutacoes.filter((m) => (!m.especie || m.especie === form.especie) && m.categoria !== "cor_base").length === 0 ? (
       <p className="text-xs" style={{ color: "#8a7a63" }}>Cadastre mutacoes no Banco de Genetica para selecionar.</p>
@@ -145,7 +155,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
       </label>;
     })}
   </div>
-  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Use este campo para registrar mais de uma mutacao visual na mesma ave. A calculadora so usa mutacoes com regra liberada.</p>
+  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Marque somente outras características que você consegue ver na ave. Se não houver, deixe em branco.</p>
 </Field>
           </div>
         </div>
