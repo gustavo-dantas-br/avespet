@@ -50,3 +50,14 @@ test("nao inclui no percentual mutacao marcada como pendente", () => {
   assert.deepEqual(resultado.bloqueadas, ["Pallid"]);
   assert.equal(resultado.resultadoFinal, undefined);
 });
+
+test("nao inventa resultado normal para heranca ainda nao implementada", () => {
+  const emEstudo = { nome: "Dominant Edged", tipoHeranca: "Nao definido / em estudo", calculadoraAtiva: true };
+  const pai = { sexo: "Macho", mutacoesVisuais: ["Dominant Edged"], portadores: [] };
+  const mae = { sexo: "Femea", mutacoesVisuais: [], portadores: [] };
+  const resultado = calcularCruzamentoGenetico(pai, mae, [emEstudo]);
+
+  assert.equal(resultado.semLociRelevantes, true);
+  assert.deepEqual(resultado.naoDefinidos, ["Dominant Edged"]);
+  assert.equal(resultado.resultadoFinal, undefined);
+});
