@@ -78,18 +78,24 @@ do $$
 begin
   if to_regclass('public.mutacoes') is not null then
     execute 'alter table public.mutacoes enable row level security';
+    execute 'drop policy if exists "creator_owns_mutacoes" on public.mutacoes';
+    execute 'create policy "creator_owns_mutacoes" on public.mutacoes for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id)';
     execute 'drop policy if exists "plano permite genetica" on public.mutacoes';
     execute 'create policy "plano permite genetica" on public.mutacoes as restrictive for all to authenticated using ((select private.creator_has_feature(''advanced_genetics''))) with check ((select private.creator_has_feature(''advanced_genetics'')))';
   end if;
 
   if to_regclass('public.posturas') is not null then
     execute 'alter table public.posturas enable row level security';
+    execute 'drop policy if exists "creator_owns_posturas" on public.posturas';
+    execute 'create policy "creator_owns_posturas" on public.posturas for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id)';
     execute 'drop policy if exists "plano permite reproducao" on public.posturas';
     execute 'create policy "plano permite reproducao" on public.posturas as restrictive for all to authenticated using ((select private.creator_has_feature(''reproduction_management''))) with check ((select private.creator_has_feature(''reproduction_management'')))';
   end if;
 
   if to_regclass('public.despesas') is not null then
     execute 'alter table public.despesas enable row level security';
+    execute 'drop policy if exists "creator_owns_despesas" on public.despesas';
+    execute 'create policy "creator_owns_despesas" on public.despesas for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id)';
     execute 'drop policy if exists "plano permite financeiro" on public.despesas';
     execute 'create policy "plano permite financeiro" on public.despesas as restrictive for all to authenticated using ((select private.creator_has_feature(''financial_management''))) with check ((select private.creator_has_feature(''financial_management'')))';
   end if;
