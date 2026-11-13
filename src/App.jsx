@@ -496,11 +496,13 @@ function AppInner({ user, onLogout }) {
     try {
       await saveRow("mutacoes", user.id, toSave);
       setMutacoes((prev) => prev.map((m) => (m.id === id ? { ...m, synced: true } : m)));
+      return true;
     } catch (e) {
       setError(
         `Mutacao ficou na tela, mas nao salvou no banco (${e?.message || "erro desconhecido"}). ` +
         "Se a tabela 'mutacoes' ainda nao existe no seu Supabase, roda o schema_fase2.sql no SQL Editor."
       );
+      return false;
     }
   }
 
