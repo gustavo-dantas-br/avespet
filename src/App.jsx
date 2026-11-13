@@ -1328,12 +1328,13 @@ export default function App() {
     return () => { active = false; };
   }, [session?.user?.id, passwordCheckRetry]);
 
-  // A verificacao de acesso Master acontece somente na rota administrativa /adm.
+  // Verifica a autorização Master para toda sessão autenticada. Assim, a conta Master
+  // também abre o painel administrativo ao entrar pela página inicial, sem depender de /adm.
   const isMasterRoute = caminho === "/adm" || caminho.startsWith("/adm/");
 
   useEffect(() => {
     if (session === undefined) return;
-    if (!isMasterRoute || !session?.user?.id) {
+    if (!session?.user?.id) {
       setMasterAccess(false);
       setMasterAccessError(false);
       return;
@@ -1355,7 +1356,7 @@ export default function App() {
       });
 
     return () => { active = false; };
-  }, [session?.user?.id, masterRetry, isMasterRoute]);
+  }, [session?.user?.id, masterRetry]);
 
   if (session === undefined) {
     return (
@@ -1440,6 +1441,12 @@ if (masterAccess === null) {
   );
 }
 
+// A conta Master sempre abre o painel administrativo, inclusive na rota inicial (/).
+// Contas comuns continuam no painel do criador; /adm permanece restrita.
+if (masterAccess) {
+  return <MasterApp user={session.user} onLogout={() => supabase.auth.signOut()} />;
+}
+
 if (!isMasterRoute) {
   return (
     <>
@@ -1450,10 +1457,6 @@ if (!isMasterRoute) {
       <SuporteWhatsApp />
     </>
   );
-}
-
-if (masterAccess) {
-  return <MasterApp user={session.user} onLogout={() => supabase.auth.signOut()} />;
 }
 
 return (
