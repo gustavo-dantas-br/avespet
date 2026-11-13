@@ -95,6 +95,11 @@ function calcularCruzamentoGenetico(pai, mae, mutacoes) {
     .filter((m) => !autossomicos.includes(m) && !sexLigados.includes(m))
     .map((m) => m.nome);
 
+  // Se nenhum locus tem heranca implementada, nao gerar um falso resultado "normal".
+  if (autossomicos.length === 0 && sexLigados.length === 0) {
+    return { semLociRelevantes: true, naoRegistradas, bloqueadas, naoDefinidos };
+  }
+
   // combinacoes: cada item = { prob, partes: [descricoes de locus], sexo }
   let combinacoes = [{ prob: 1, partes: [], sexo: null }];
 
