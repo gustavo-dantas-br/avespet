@@ -33,7 +33,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     }
     const calc = calcularCruzamentoGenetico(pai, mae, mutacoesRingNeck);
     if (calc.semLociRelevantes) {
-      setResultado({ tipo: "erro", mensagem: "Nenhuma mutacao cadastrada e reconhecida nos dados deste casal. Cadastre ou selecione mutacoes no Banco de Genetica." });
+      setResultado({ tipo: "erro", mensagem: "Nenhuma mutacao com regra liberada foi encontrada. " + (calc.bloqueadas?.length ? "Fora do calculo por validacao pendente: " + calc.bloqueadas.join(", ") + ". " : "") + "Cadastre ou selecione uma mutacao com regra validada no Banco de Genetica." });
       return;
     }
     const possibilidades = calc.resultadoFinal.map((r) => ({
@@ -44,7 +44,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     const observacoes = [
       "Esta versao inicial calcula somente os loci que estao cadastrados e identificados pelo motor atual.",
       "Os loci sao tratados como independentes. Genes ligados, recombinacao, combinacoes alelicas Pallid/Ino e fatores Dark/Violet ainda exigem regras especificas e nao devem ser interpretados como previsao completa.",
-      calc.naoDefinidos?.length ? `Fora do calculo por heranca nao definida: ${calc.naoDefinidos.join(", ")}.` : "",
+      calc.bloqueadas?.length ? `Bloqueadas ate validacao: ${calc.bloqueadas.join(", ")}.` : "",\n      calc.naoDefinidos?.length ? `Fora do calculo por heranca nao definida: ${calc.naoDefinidos.join(", ")}.` : "",
       calc.naoRegistradas?.length ? `Nomes nao encontrados no catalogo: ${calc.naoRegistradas.join(", ")}.` : "",
     ].filter(Boolean);
     setResultado({
