@@ -29,9 +29,10 @@ export default function MutacoesTab({ mutacoes, onSave, onDelete, emptyMutacao, 
     }
   }
 
-  function submit() {
+  async function submit() {
     if (!nova.nome.trim()) return;
-    onSave({ ...nova, id: editId });
+    const salvo = await onSave({ ...nova, id: editId });
+    if (salvo === false) return;
     setNova(emptyMutacao());
     setEditId(null);
   }
