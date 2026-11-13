@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return respond({ error: "Method not allowed" }, 405, origin);
 
   const authorization = req.headers.get("Authorization") || "";
-  const token = authorization.replace(/^Bearer\\s+/i, "");
+  const token = authorization.replace(/^Bearer\s+/i, "");
   if (!token || token === authorization) return respond({ error: "Unauthorized" }, 401, origin);
 
   const url = Deno.env.get("SUPABASE_URL");
@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
 
   const page = Math.max(1, Math.min(10000, Math.floor(Number(body.page) || 1)));
   const pageSize = 25;
-  const search = String(body.search || "").trim().replace(/[,%()]/g, " ").replace(/\\s+/g, " ").slice(0, 80);
+  const search = String(body.search || "").trim().replace(/[,%()]/g, " ").replace(/\s+/g, " ").slice(0, 80);
   const species = String(body.species || "").trim().slice(0, 80);
   const sex = String(body.sex || "").trim().slice(0, 40);
 
