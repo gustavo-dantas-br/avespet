@@ -126,6 +126,27 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
   </div>
   <p className="text-xs mt-2" style={{ color: "#8a7a63" }}>Portador e uma mutacao que a ave carrega sem expressar. Femeas nao podem ser portadoras ocultas de mutacoes recessivas ligadas ao sexo.</p>
 </Field>
+
+<Field label="Mutacoes visuais adicionais">
+  <div className="rounded-xl p-3 max-h-48 overflow-y-auto" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
+    {mutacoes.filter((m) => (!m.especie || m.especie === form.especie) && m.categoria !== "cor_base").length === 0 ? (
+      <p className="text-xs" style={{ color: "#8a7a63" }}>Cadastre mutacoes no Banco de Genetica para selecionar.</p>
+    ) : mutacoes.filter((m) => (!m.especie || m.especie === form.especie) && m.categoria !== "cor_base").map((m) => {
+      const visuais = form.mutacoesVisuais || [];
+      const marcado = visuais.includes(m.nome);
+      return <label key={m.id || m.nome} className="flex items-start gap-2 py-1.5 text-sm" style={{ color: "#4f4336" }}>
+        <input type="checkbox" checked={marcado} onChange={(e) => setForm((f) => ({
+          ...f,
+          mutacoesVisuais: e.target.checked
+            ? [...new Set([...(f.mutacoesVisuais || []), m.nome])]
+            : (f.mutacoesVisuais || []).filter((nome) => nome !== m.nome),
+        }))} />
+        <span>{m.nome}<span className="block text-xs" style={{ color: "#8a7a63" }}>{m.tipoHeranca} · {m.calculadoraAtiva === false ? "registro apenas — regra pendente" : "regra liberada"}</span></span>
+      </label>;
+    })}
+  </div>
+  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Use este campo para registrar mais de uma mutacao visual na mesma ave. A calculadora so usa mutacoes com regra liberada.</p>
+</Field>
           </div>
         </div>
 
