@@ -66,6 +66,149 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { return response({ error: "Invalid request" }, 400, origin); }
   const action = String(body.action || "");
 
+  if (action === "search_creators") {
+    const search = String(body.search || "").trim().slice(0, 100).toLocaleLowerCase("pt-BR");
+    if (search.length < 2) return response({ success: true, creators: [] }, 200, origin);
+    const accounts: any[] = [];
+    for (let page = 1; page <= 100; page += 1) {
+      const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+      if (error) {
+        console.error("Creator search failed", error.message);
+        return response({ error: "Não foi possível pesquisar criadores." }, 503, origin);
+      }
+      accounts.push(...data.users);
+      if (data.users.length < 1000) break;
+    }
+    const [{ data: masters, error: masterListError }, { data: admins, error: adminListError }] = await Promise.all([
+      admin.from("master_admins").select("user_id"),
+      admin.from("admins").select("user_id"),
+    ]);
+    if (masterListError || adminListError) return response({ error: "Não foi possível validar contas administrativas." }, 503, origin);
+    const protectedIds = new Set([...(masters || []).map((item) => item.user_id), ...(admins || []).map((item) => item.user_id)]);
+    const candidates = accounts.filter((account) => !protectedIds.has(account.id));
+    const ids = candidates.map((account) => account.id);
+    const profiles = new Map<string, any>();
+    for (let start = 0; start < ids.length; start += 500) {
+      const { data, error } = await admin.from("perfil_criador").select("user_id,data").in("user_id", ids.slice(start, start + 500));
+      if (error) return response({ error: "Não foi possível consultar os perfis dos criadores." }, 503, origin);
+      for (const profile of data || []) profiles.set(profile.user_id, profile.data || {});
+    }
+    const creators = candidates.map((account) => {
+      const profile = profiles.get(account.id) || {};
+      const name = String(profile.nomeCompleto || [profile.nome, profile.sobrenome].filter(Boolean).join(" ") || account.user_metadata?.name || "Nome não informado");
+      const creatorName = String(profile.nomeCriatorio || "");
+      return { userId: account.id, name, creatorName, email: account.email || "" };
+    }).filter((creator) => [creator.name, creator.creatorName, creator.email].join(" ").toLocaleLowerCase("pt-BR").includes(search))
+      .slice(0, 30);
+    return response({ success: true, creators }, 200, origin);
+  }
+
+  if (action === "list_subscriptions") {
+    const { data: subscriptions, error: subscriptionError } = await admin.from("creator_subscriptions")
+      .select("id,user_id,plan_id,status,starts_at,ends_at,canceled_at,created_at,updated_at")
+      .order("created_at", { ascending: false }).limit(300);
+    if (subscriptionError) {
+      console.error("Subscription listing failed", subscriptionError.message);
+      return response({ error: "Não foi possível carregar assinaturas. Confirme se a migração foi aplicada." }, 503, origin);
+    }
+    const planIds = [...new Set((subscriptions || []).map((item) => item.plan_id))];
+    const userIds = [...new Set((subscriptions || []).map((item) => item.user_id))];
+    const [{ data: plans, error: plansError }, { data: accounts, error: accountsError }] = await Promise.all([
+      planIds.length ? admin.from("platform_plans").select("id,code,name,price_cents,billing_interval,max_birds").in("id", planIds) : Promise.resolve({ data: [], error: null }),
+      admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    ]);
+    if (plansError || accountsError) return response({ error: "Não foi possível carregar os dados relacionados às assinaturas." }, 503, origin);
+    const planMap = new Map((plans || []).map((item) => [item.id, item]));
+    const accountMap = new Map((accounts?.users || []).map((item) => [item.id, item]));
+    const profileMap = new Map<string, any>();
+    for (let start = 0; start < userIds.length; start += 500) {
+      const { data, error } = await admin.from("perfil_criador").select("user_id,data").in("user_id", userIds.slice(start, start + 500));
+      if (error) return response({ error: "Não foi possível carregar os perfis das assinaturas." }, 503, origin);
+      for (const item of data || []) profileMap.set(item.user_id, item.data || {});
+    }
+    const items = (subscriptions || []).map((item) => {
+      const account = accountMap.get(item.user_id);
+      const profile = profileMap.get(item.user_id) || {};
+      return {
+        ...item,
+        creator_name: String(profile.nomeCompleto || [profile.nome, profile.sobrenome].filter(Boolean).join(" ") || account?.user_metadata?.name || "Nome não informado"),
+        creator_name_business: String(profile.nomeCriatorio || ""),
+        email: account?.email || "Conta não localizada",
+        plan: planMap.get(item.plan_id) || null,
+      };
+    });
+    return response({ success: true, subscriptions: items }, 200, origin);
+  }
+
+  if (action === "assign_subscription") {
+    const userId = String(body.user_id || "").trim();
+    const planId = String(body.plan_id || "").trim();
+    const status = String(body.status || "active");
+    const startsAt = body.starts_at ? new Date(String(body.starts_at)) : new Date();
+    const endsAt = body.ends_at ? new Date(String(body.ends_at)) : null;
+    if (!uuid.test(userId) || !uuid.test(planId)) return response({ error: "Selecione um criador e um plano válidos." }, 400, origin);
+    if (!["active", "trialing"].includes(status)) return response({ error: "Situação inicial inválida." }, 400, origin);
+    if (Number.isNaN(startsAt.getTime()) || (endsAt && Number.isNaN(endsAt.getTime())) || (endsAt && endsAt <= startsAt)) {
+      return response({ error: "Confira as datas de início e término da assinatura." }, 400, origin);
+    }
+    const [{ data: account, error: accountError }, { data: plan, error: planError }] = await Promise.all([
+      admin.auth.admin.getUserById(userId),
+      admin.from("platform_plans").select("id,code,name,is_active").eq("id", planId).maybeSingle(),
+    ]);
+    if (accountError || !account?.user) return response({ error: "A conta do criador não foi encontrada." }, 404, origin);
+    if (planError || !plan || !plan.is_active) return response({ error: "O plano selecionado não existe ou está inativo." }, 400, origin);
+    const { data: current, error: currentError } = await admin.from("creator_subscriptions")
+      .select("id").eq("user_id", userId).in("status", ["active", "trialing", "past_due"]);
+    if (currentError) return response({ error: "Não foi possível verificar a assinatura atual do criador." }, 503, origin);
+    if (current?.length) {
+      const { error: closeError } = await admin.from("creator_subscriptions").update({
+        status: "canceled", canceled_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+      }).in("id", current.map((item) => item.id));
+      if (closeError) return response({ error: "Não foi possível encerrar a assinatura anterior. Nenhuma nova assinatura foi criada." }, 503, origin);
+    }
+    const { data: inserted, error: insertError } = await admin.from("creator_subscriptions").insert({
+      user_id: userId, plan_id: planId, status, starts_at: startsAt.toISOString(), ends_at: endsAt?.toISOString() || null,
+    }).select("id").single();
+    if (insertError) {
+      console.error("Subscription assignment failed", insertError.message);
+      return response({ error: "Não foi possível atribuir o plano ao criador." }, 503, origin);
+    }
+    const { error: auditError } = await admin.from("master_audit_log").insert({
+      actor_user_id: authData.user.id, action: "creator_subscription_assigned",
+      resource_type: "creator_subscription", resource_id: inserted.id,
+      metadata: { creator_user_id: userId, plan_id: planId, plan_code: plan.code, plan_name: plan.name, status },
+    });
+    if (auditError) {
+      console.error("Subscription assignment audit failed", auditError.message);
+      return response({ error: "Assinatura criada, mas o registro de auditoria não foi confirmado." }, 503, origin);
+    }
+    return response({ success: true, subscription_id: inserted.id }, 200, origin);
+  }
+
+  if (action === "update_subscription_status") {
+    const id = String(body.id || "").trim();
+    const status = String(body.status || "");
+    if (!uuid.test(id) || !["active", "past_due", "canceled", "expired"].includes(status)) {
+      return response({ error: "Dados inválidos para alterar a assinatura." }, 400, origin);
+    }
+    const update: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
+    if (status === "canceled") update.canceled_at = new Date().toISOString();
+    if (status !== "canceled") update.canceled_at = null;
+    const { data: updated, error: updateError } = await admin.from("creator_subscriptions")
+      .update(update).eq("id", id).select("id,user_id,plan_id,status").single();
+    if (updateError || !updated) {
+      console.error("Subscription status update failed", updateError?.message);
+      return response({ error: "Não foi possível alterar a situação da assinatura." }, 503, origin);
+    }
+    const { error: auditError } = await admin.from("master_audit_log").insert({
+      actor_user_id: authData.user.id, action: "creator_subscription_status_changed",
+      resource_type: "creator_subscription", resource_id: id,
+      metadata: { creator_user_id: updated.user_id, plan_id: updated.plan_id, status },
+    });
+    if (auditError) return response({ error: "Situação alterada, mas a auditoria não foi confirmada." }, 503, origin);
+    return response({ success: true, subscription: updated }, 200, origin);
+  }
+
   if (action === "list_plans") {
     const { data, error } = await admin.from("platform_plans")
       .select("id,code,name,description,price_cents,currency,billing_interval,max_birds,features,is_free,is_active,sort_order,created_at,updated_at")
