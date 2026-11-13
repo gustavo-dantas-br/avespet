@@ -38,7 +38,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     }
     const possibilidades = calc.resultadoFinal.map((r) => ({
       nome: r.descricao,
-      percentual: `${r.percentual.toFixed(1).replace(/\\.0$/, "")}%`,
+      percentual: `${r.percentual.toFixed(1).replace(/\.0$/, "")}%`,
       detalhe: r.sexo,
     }));
     const observacoes = [
