@@ -408,10 +408,10 @@ export default function ReproducaoTab({ aves, posturas, onSave, onDelete, onNasc
           return (
             <div key={k} className="mb-6">
               <div className="mb-2">
-                <div className="ui-sans font-semibold" style={{ color: "#F1E6D2", fontSize: 17 }}>
+                <div className="ui-sans font-semibold" style={{ color: "#173D29", fontSize: 17 }}>
                   {pai ? pai.nome : "(macho removido)"} x {mae ? mae.nome : "(femea removida)"}
                 </div>
-                <div className="ui-mono text-xs" style={{ color: "#475569" }}>
+                <div className="ui-mono text-xs" style={{ color: "#334155", fontWeight: 600 }}>
                   {ps.length} {ps.length === 1 ? "postura" : "posturas"} - {tot.total || 0} ovos - {tot.nasceram || 0} nasceram - {tot.inferteis || 0} inferteis - {tot.perdidos || 0} perdidos
                 </div>
               </div>
