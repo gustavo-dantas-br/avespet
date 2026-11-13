@@ -11,7 +11,7 @@ import { computeFinanceiro, computeFinanceiroPeriodo } from "./features/financei
 import { drawPlaque } from "./features/plantel/utils/desenharPlaca";
 import {
   Bird, Plus, Search, GitBranch, Tag, Upload, Trash2, X, Loader2, Save, ChevronLeft, ChevronRight, Menu, CalendarDays,
-  Download, Feather, DollarSign, LogOut, LayoutDashboard, Dna, Users, Phone, Pencil, ClipboardCheck, Truck, MessageCircle, Handshake, Megaphone, UserCircle, ShieldCheck, Check, Bell, Eye, MousePointerClick, Egg, BookOpen,
+  Download, Feather, DollarSign, LogOut, LayoutDashboard, Dna, Users, Phone, Pencil, ClipboardCheck, Truck, MessageCircle, Handshake, Megaphone, UserCircle, ShieldCheck, Check, Bell, Eye, MousePointerClick, Egg, BookOpen, Lock,
 } from "lucide-react";
 
 import { supabase } from "./supabaseClient";
@@ -105,6 +105,9 @@ function AppInner({ user, onLogout }) {
   const [perfil, setPerfil] = useState(emptyPerfilCriador());
   const [perfilPrivado, setPerfilPrivado] = useState(emptyPerfilPrivado());
   const [isAdminUser, setIsAdminUser] = useState(false);
+  const [entitlements, setEntitlements] = useState(null);
+  const [entitlementsLoading, setEntitlementsLoading] = useState(true);
+  const [entitlementsError, setEntitlementsError] = useState("");
   const [anunciosAprovacao, setAnunciosAprovacao] = useState([]);
   const [perfisPublicos, setPerfisPublicos] = useState([]);
   const [achados, setAchados] = useState([]);
@@ -122,6 +125,36 @@ function AppInner({ user, onLogout }) {
   const [statusFilter, setStatusFilter] = useState(null); // null | "A venda" | "Vendida" | "Falecida" | "casais" | "solteiros" | "plantel"
   const [error, setError] = useState("");
   const canvasRef = useRef(null);
+
+  const loadEntitlements = useCallback(async () => {
+    setEntitlementsLoading(true);
+    setEntitlementsError("");
+    try {
+      const { data, error } = await supabase.rpc("get_my_entitlements");
+      if (error) throw error;
+      setEntitlements(data || null);
+    } catch (e) {
+      setEntitlements(null);
+      setEntitlementsError(e?.message || "Não foi possível consultar seu plano.");
+    } finally {
+      setEntitlementsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadEntitlements(); }, [loadEntitlements]);
+
+  const featureAccess = (feature) => {
+    if (isAdminUser) return true;
+    if (!entitlements || entitlementsLoading) return false;
+    return entitlements.features?.[feature] === true;
+  };
+
+  const featureForTab = {
+    mutacoes: "advanced_genetics",
+    reproducao: "reproduction_management",
+    financeiro: "financial_management",
+    posvenda: "after_sales",
+  };
 
   const loadAves = useCallback(async () => {
     setLoading(true);
@@ -963,15 +996,15 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
       { id: "reservas", label: "Reservas", icon: CalendarDays },
       { id: "form", label: "Cadastrar", icon: Plus },
       { id: "arvore", label: "Árvore genealógica", icon: GitBranch },
-      { id: "reproducao", label: "Reprodução", icon: Egg },
-      { id: "mutacoes", label: "Genética", icon: Dna },
+      { id: "reproducao", label: "Reprodução", icon: Egg, feature: "reproduction_management" },
+      { id: "mutacoes", label: "Genética", icon: Dna, feature: "advanced_genetics" },
       { id: "placa", label: "Placa", icon: Tag },
     ] },
     { title: "GESTÃO", items: [
-      { id: "financeiro", label: "Financeiro", icon: DollarSign },
+      { id: "financeiro", label: "Financeiro", icon: DollarSign, feature: "financial_management" },
       { id: "clientes", label: "Clientes", icon: Users },
       { id: "fornecedores", label: "Fornecedores", icon: Truck },
-      { id: "posvenda", label: "Pós-venda", icon: ClipboardCheck },
+      { id: "posvenda", label: "Pós-venda", icon: ClipboardCheck, feature: "after_sales" },
       { id: "indicacoes", label: "Indicações", icon: Handshake },
     ] },
     { title: "AVESPET", items: [
@@ -992,7 +1025,9 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
     <div key={group.title} className="mb-3">
       {!compact && <div className="ui-sans px-3 pt-3 pb-2 text-[10px] font-bold tracking-[0.14em]" style={{ color: "#526A5B" }}>{group.title}</div>}
       <div className="flex flex-col gap-1">
-        {group.items.map(({ id, label: lbl, icon: Icon }) => (
+        {group.items.map(({ id, label: lbl, icon: Icon, feature }) => {
+          const blocked = !!feature && !featureAccess(feature);
+          return (
           <button
             key={id}
             onClick={() => {
@@ -1013,9 +1048,11 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
           >
             <Icon size={18} />
             {!compact && <span className="truncate">{lbl}</span>}
+            {blocked && <Lock size={13} className={compact ? "absolute" : "ml-auto"} />}
             {!compact && tab === id && <span className="ml-auto h-1.5 w-1.5 rounded-full" style={{ background: "#23935F" }} />}
           </button>
-        ))}
+          );
+        })}
       </div>
     </div>
   ));
@@ -1102,6 +1139,18 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
           </div>
         ) : (
           <>
+            {featureForTab[tab] && !featureAccess(featureForTab[tab]) && (
+              <div className="mx-auto max-w-2xl rounded-2xl border p-6 sm:p-8" style={{ background: "#FFFFFF", borderColor: "#D7E4DA" }}>
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: "#FFF4D8", color: "#9A6A13" }}><Lock size={23} /></div>
+                <h2 className="text-xl font-bold" style={{ color: "#234332" }}>Recurso não liberado no seu plano</h2>
+                <p className="mt-2 text-sm leading-6" style={{ color: "#526A5B" }}>{entitlementsLoading ? "Estamos consultando suas permissões..." : entitlementsError ? "Não foi possível validar suas permissões agora. Atualize a página ou tente novamente." : "Este recurso não está disponível no plano atual. Consulte o AvesPet para conhecer as opções de acesso."}</p>
+                {entitlements?.plan && <p className="mt-3 text-xs font-semibold" style={{ color: "#345442" }}>Plano atual: {entitlements.plan.name}</p>}
+                <button onClick={loadEntitlements} className="mt-5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white" style={{ background: "#1D754B" }}>Atualizar permissões</button>
+              </div>
+            )}
+
+            {(!featureForTab[tab] || featureAccess(featureForTab[tab])) && (
+              <>
             {tab === "dashboard" && <DashboardTab aves={aves} despesas={despesas} clientes={clientes} indicacoes={indicacoes} posturas={posturas} setTab={setTab} goToLista={goToLista} STATUS_PLANTEL={STATUS_PLANTEL} SectionTitle={SectionTitle} StatCard={StatCard} money={money} Card={Card} />}
 
             {tab === "reproducao" && (
@@ -1211,6 +1260,8 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
             {tab === "campanhas-admin" && isAdminUser && <AdminCampanhas />}
 
             {tab === "conteudo" && isAdminUser && <ConteudoAdmin />}
+              </>
+            )}
           </>
         )}
       </main>
