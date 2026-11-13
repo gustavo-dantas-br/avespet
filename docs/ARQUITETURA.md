@@ -297,3 +297,16 @@ A tela `src/features/master/EntitlementsManagement.jsx` permite que o Master con
 - A Edge Function `master-manage-entitlements` valida sessão, vínculo Master e protege contas administrativas.
 - A migração `202611130002_creator_entitlement_overrides.sql` está versionada, mas não aplicada no banco.
 - Esta etapa implementa o cadastro administrativo das exceções. A aplicação efetiva no cadastro de aves e nos módulos premium depende da próxima etapa de integração dos controles server-side.
+
+### Aplicação do limite de aves no banco
+
+A migração `202611130003_enforce_creator_bird_limits.sql` instala o trigger `enforce_creator_bird_limit_before_write` na tabela `aves`.
+
+- A inclusão de uma nova ave consulta a assinatura vigente e usa o plano gratuito quando não há assinatura ativa/em teste.
+- O limite individual do Master prevalece sobre o limite do plano; a liberação ilimitada também é suportada.
+- Exceções expiradas deixam de ser consideradas automaticamente.
+- A validação ocorre no PostgreSQL, inclusive para inclusões feitas fora da interface.
+- Um bloqueio transacional por criador evita ultrapassar o limite com duas inclusões simultâneas.
+- Atualizações de aves existentes não consomem novas vagas.
+- A migração está versionada na branch, mas ainda não foi aplicada no Supabase.
+- O bloqueio de funcionalidades premium ainda será integrado nos módulos e nas respectivas operações de servidor.
