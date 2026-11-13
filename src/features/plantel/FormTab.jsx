@@ -102,7 +102,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
 
 <Field label="Portador de">
   <div className="rounded-xl p-3" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
-    {mutacoes.filter((m) => m.permitePortador !== false && m.categoria !== "cor_base" && m.calculadoraAtiva !== false && (!m.especie || m.especie === form.especie)).length === 0 ? (
+    {mutacoes.filter((m) => m.permitePortador !== false && m.categoria !== "cor_base" && (!m.especie || m.especie === form.especie)).length === 0 ? (
       <div className="text-sm" style={{ color: "#8a7a63" }}>Nenhuma mutacao com portador disponivel no catalogo.</div>
     ) : (
       <div className="space-y-2">
