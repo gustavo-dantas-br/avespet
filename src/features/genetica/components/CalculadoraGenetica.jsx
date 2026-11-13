@@ -74,7 +74,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       calc.naoRegistradas?.length ? `Não encontradas no catálogo: ${calc.naoRegistradas.join(", ")}.` : "",
     ].filter(Boolean);
 
-    const normalizarNome = (valor) => String(valor || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase();
+    const normalizarNome = (valor) => String(valor || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
     const nomesEquivalentes = (mutacao) => [mutacao.nome, mutacao.nomeAlternativo].filter(Boolean).map(normalizarNome);
     const estadoDoGene = (ave, mutacao) => {
       const equivalentes = nomesEquivalentes(mutacao);
