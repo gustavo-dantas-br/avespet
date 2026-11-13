@@ -61,3 +61,19 @@ test("nao inventa resultado normal para heranca ainda nao implementada", () => {
   assert.deepEqual(resultado.naoDefinidos, ["Dominant Edged"]);
   assert.equal(resultado.resultadoFinal, undefined);
 });
+
+test("reconhece nome alternativo da mutacao no cadastro", () => {
+  const ino = {
+    nome: "Ino (Lutino / Albino conforme a serie)",
+    nomeAlternativo: "Ino",
+    tipoHeranca: "Ligada ao sexo (recessiva)",
+    calculadoraAtiva: false,
+  };
+  const pai = { sexo: "Macho", corMutacao: "Ino", portadores: [] };
+  const mae = { sexo: "Femea", corMutacao: "", portadores: [] };
+  const resultado = calcularCruzamentoGenetico(pai, mae, [ino]);
+
+  assert.equal(resultado.semLociRelevantes, true);
+  assert.deepEqual(resultado.bloqueadas, [ino.nome]);
+  assert.deepEqual(resultado.naoRegistradas, []);
+});
