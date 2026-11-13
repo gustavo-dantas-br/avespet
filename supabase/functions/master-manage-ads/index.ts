@@ -145,9 +145,7 @@ Deno.serve(async (req) => {
       return respond({ error: "Could not record administrative audit" }, 503, origin);
     }
 
-    const update = status === "aprovado"
-      ? { status, ativo: true }
-      : { status };
+    const update = { status };
     const { error: updateError } = await admin.from("anuncios").update(update).eq("id", id);
     if (updateError) {
       console.error("Master ad moderation update failed", updateError.message);
