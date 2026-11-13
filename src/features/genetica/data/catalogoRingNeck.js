@@ -232,7 +232,7 @@ export const CATALOGO_MUTACOES_RING_NECK = [
 export function normalizarChaveGenetica(valor) {
   return (valor || "")
     .normalize("NFD")
-    .replace(/[\\u0300-\\u036f]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase();
 }
