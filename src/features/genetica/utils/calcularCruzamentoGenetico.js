@@ -82,7 +82,7 @@ function calcularCruzamentoGenetico(pai, mae, mutacoes) {
   const sexLigados = calculaveis.filter((m) =>
     ["Ligada ao sexo (recessiva)", "Ligada ao sexo (dominante)"].includes(m.tipoHeranca)
   );
-  const naoDefinidos = relevantes
+  const naoDefinidos = calculaveis
     .filter((m) => !autossomicos.includes(m) && !sexLigados.includes(m))
     .map((m) => m.nome);
 
