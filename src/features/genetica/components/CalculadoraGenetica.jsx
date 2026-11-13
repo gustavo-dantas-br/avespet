@@ -43,14 +43,14 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     }));
     const observacoes = [
       "Esta versao inicial calcula somente os loci que estao cadastrados e identificados pelo motor atual.",
-      "Os loci sao tratados como independentes. Genes ligados, recombinacao, combinacoes alelicas Pallid/Ino e fatores Dark/Violet ainda exigem regras especificas e nao devem ser interpretados como previsao completa.",
+      "Os loci ainda sao tratados pelo motor legado. A cor-base, Dark/Violet SF/DF, combinacoes alelicas Pallid/Ino e ligacao/recombinacao entre genes sex-linked estao em registro, mas ainda nao entram integralmente nos percentuais.",
       calc.bloqueadas?.length ? `Bloqueadas ate validacao: ${calc.bloqueadas.join(", ")}.` : "",
       calc.naoDefinidos?.length ? `Fora do calculo por heranca nao definida: ${calc.naoDefinidos.join(", ")}.` : "",
       calc.naoRegistradas?.length ? `Nomes nao encontrados no catalogo: ${calc.naoRegistradas.join(", ")}.` : "",
     ].filter(Boolean);
     setResultado({
       tipo: "sucesso",
-      cruzamento: `${pai.nome || "Pai"} (${pai.corMutacao || "cor nao informada"}) × ${mae.nome || "Mae"} (${mae.corMutacao || "cor nao informada"})`,
+      cruzamento: `${pai.nome || "Pai"} (${pai.corBase || "cor-base nao informada"}; ${pai.corMutacao || "mutacao principal nao informada"}) × ${mae.nome || "Mae"} (${mae.corBase || "cor-base nao informada"}; ${mae.corMutacao || "mutacao principal nao informada"})`,
       genotipos: calc.lociConsiderados.join(", "),
       possibilidades,
       observacoes,
@@ -82,7 +82,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
               <option value="">-- selecione {isPai ? "o pai" : "a mae"} --</option>
               {opcoes.map((a) => <option key={a.id} value={a.id}>{a.nome} — {a.corMutacao || a.corBase || "Cor nao informada"}</option>)}
             </select>
-            {registro && <div className="mt-4 text-sm" style={{ color: "#5e5143" }}><strong>{registro.nome}</strong><br />Cor-base: {registro.corBase || "Nao informada"}<br />Mutacoes visuais: {[registro.corMutacao, ...(registro.mutacoesVisuais || [])].filter(Boolean).join(", ") || "Nao informadas"}<br />Portadores: {(registro.portadores || []).join(", ") || "Nao informados"}</div>}
+            {registro && <div className="mt-4 text-sm" style={{ color: "#5e5143" }}><strong>{registro.nome}</strong><br />Cor-base: {registro.corBase || "Nao informada"}<br />Fatores: Dark {registro.fatoresGeneticos?.darkFactor || "—"} / Violet {registro.fatoresGeneticos?.violetFactor || "—"}<br />Mutacoes visuais: {[registro.corMutacao, ...(registro.mutacoesVisuais || [])].filter(Boolean).join(", ") || "Nao informadas"}<br />Portadores: {(registro.portadores || []).join(", ") || "Nao informados"}</div>}
           </>
         ) : (
           <div className="space-y-3">
@@ -100,6 +100,18 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                   {m.nome}
                 </label>)}
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="text-xs">Dark Factor
+                <select className="w-full rounded-xl px-3 py-2 mt-1" style={campo} value={manual.fatoresGeneticos?.darkFactor || ""} onChange={(e) => setManual((v) => ({ ...v, fatoresGeneticos: { ...(v.fatoresGeneticos || {}), darkFactor: e.target.value } }))}>
+                  <option value="">Nao informado</option><option value="SF">SF</option><option value="DF">DF</option>
+                </select>
+              </label>
+              <label className="text-xs">Violet Factor
+                <select className="w-full rounded-xl px-3 py-2 mt-1" style={campo} value={manual.fatoresGeneticos?.violetFactor || ""} onChange={(e) => setManual((v) => ({ ...v, fatoresGeneticos: { ...(v.fatoresGeneticos || {}), violetFactor: e.target.value } }))}>
+                  <option value="">Nao informado</option><option value="SF">SF</option><option value="DF">DF</option>
+                </select>
+              </label>
             </div>
             <input className="w-full rounded-xl px-3 py-3" style={campo} placeholder="Portadores separados por virgula" value={(manual.portadores || []).join(", ")} onChange={(e) => setManual((v) => ({ ...v, portadores: normalizarLista(e.target.value) }))} />
             <p className="text-xs" style={{ color: "#8a7a63" }}>A cor-base e as mutacoes visuais adicionais ficam registradas para a proxima etapa do motor. Nao marque femeas como portadoras ocultas de genes ligados ao sexo.</p>
