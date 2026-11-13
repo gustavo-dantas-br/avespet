@@ -74,57 +74,78 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
   )}
 </Field>
 
+<Field label="Cor base">
+  <select style={inputStyle} value={form.corBase || ""} onChange={set("corBase")}>
+    <option value="">Nao informada / manter cadastro antigo</option>
+    <option>Green (Verde)</option>
+    <option>Blue (Azul)</option>
+    <option>Turquoise Blue (Azul Turquesa)</option>
+    <option>Turquoise (Turquesa)</option>
+  </select>
+  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Registro da cor-base. A previsao da serie azul/turquesa sera conectada ao motor apos validar os alelos e combinacoes.</p>
+</Field>
+
+<Field label="Fator escuro (Dark Factor)">
+  <select style={inputStyle} value={form.fatoresGeneticos?.darkFactor || ""} onChange={(e) => setForm((f) => ({ ...f, fatoresGeneticos: { ...(f.fatoresGeneticos || {}), darkFactor: e.target.value } }))}>
+    <option value="">Nao informado</option>
+    <option value="SF">SF — Fator simples</option>
+    <option value="DF">DF — Duplo fator</option>
+  </select>
+  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Registro SF/DF; ainda nao participa dos percentuais da calculadora.</p>
+</Field>
+
+<Field label="Fator violeta (Violet Factor)">
+  <select style={inputStyle} value={form.fatoresGeneticos?.violetFactor || ""} onChange={(e) => setForm((f) => ({ ...f, fatoresGeneticos: { ...(f.fatoresGeneticos || {}), violetFactor: e.target.value } }))}>
+    <option value="">Nao informado</option>
+    <option value="SF">SF — Fator simples</option>
+    <option value="DF">DF — Duplo fator</option>
+  </select>
+  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Registro SF/DF; ainda nao participa dos percentuais da calculadora.</p>
+</Field>
+
 <Field label="Portador de">
-  <div
-    className="rounded-xl p-3"
-    style={{
-      background: "#fffaf0",
-      border: "1px solid #d8c6a5",
-    }}
-  >
-    {mutacoes.length === 0 ? (
-      <div className="text-sm" style={{ color: "#8a7a63" }}>
-        Nenhuma mutacao cadastrada.
-      </div>
+  <div className="rounded-xl p-3" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
+    {mutacoes.filter((m) => m.permitePortador !== false && m.categoria !== "cor_base" && (!m.especie || m.especie === form.especie)).length === 0 ? (
+      <div className="text-sm" style={{ color: "#8a7a63" }}>Nenhuma mutacao com portador disponivel no catalogo.</div>
     ) : (
       <div className="space-y-2">
-        {mutacoes.map((mutacao) => {
+        {mutacoes.filter((m) => m.permitePortador !== false && m.categoria !== "cor_base" && (!m.especie || m.especie === form.especie)).map((mutacao) => {
           const selecionado = (form.portadores || []).includes(mutacao.nome);
-
-          return (
-            <label
-              key={mutacao.id}
-              className="flex items-center gap-2 text-sm cursor-pointer"
-              style={{ color: "#4f4336" }}
-            >
-              <input
-                type="checkbox"
-                checked={selecionado}
-                onChange={(e) => {
-                  const atuais = form.portadores || [];
-
-                  const novos = e.target.checked
-                    ? [...new Set([...atuais, mutacao.nome])]
-                    : atuais.filter((nome) => nome !== mutacao.nome);
-
-                  setForm({
-                    ...form,
-                    portadores: novos,
-                  });
-                }}
-              />
-
-              <span>{mutacao.nome}</span>
-            </label>
-          );
+          return <label key={mutacao.id || mutacao.nome} className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: "#4f4336" }}>
+            <input type="checkbox" checked={selecionado} disabled={form.sexo === "Femea" && (mutacao.tipoHeranca || "").startsWith("Ligada ao sexo")} onChange={(e) => {
+              const atuais = form.portadores || [];
+              const novos = e.target.checked ? [...new Set([...atuais, mutacao.nome])] : atuais.filter((nome) => nome !== mutacao.nome);
+              setForm((f) => ({ ...f, portadores: novos }));
+            }} />
+            <span>{mutacao.nome}</span>
+            <span className="text-xs" style={{ color: "#8a7a63" }}>{form.sexo === "Femea" && (mutacao.tipoHeranca || "").startsWith("Ligada ao sexo") ? "nao se aplica a femeas" : mutacao.tipoHeranca}</span>
+          </label>;
         })}
       </div>
     )}
   </div>
+  <p className="text-xs mt-2" style={{ color: "#8a7a63" }}>Portador e uma mutacao que a ave carrega sem expressar. Femeas nao podem ser portadoras ocultas de mutacoes recessivas ligadas ao sexo.</p>
+</Field>
 
-  <p className="text-xs mt-2" style={{ color: "#8a7a63" }}>
-    Marque as mutacoes que a ave carrega sem apresentar visualmente.
-  </p>
+<Field label="Mutacoes visuais adicionais">
+  <div className="rounded-xl p-3 max-h-48 overflow-y-auto" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
+    {mutacoes.filter((m) => (!m.especie || m.especie === form.especie) && m.categoria !== "cor_base").length === 0 ? (
+      <p className="text-xs" style={{ color: "#8a7a63" }}>Cadastre mutacoes no Banco de Genetica para selecionar.</p>
+    ) : mutacoes.filter((m) => (!m.especie || m.especie === form.especie) && m.categoria !== "cor_base").map((m) => {
+      const visuais = form.mutacoesVisuais || [];
+      const marcado = visuais.includes(m.nome);
+      return <label key={m.id || m.nome} className="flex items-start gap-2 py-1.5 text-sm" style={{ color: "#4f4336" }}>
+        <input type="checkbox" checked={marcado} onChange={(e) => setForm((f) => ({
+          ...f,
+          mutacoesVisuais: e.target.checked
+            ? [...new Set([...(f.mutacoesVisuais || []), m.nome])]
+            : (f.mutacoesVisuais || []).filter((nome) => nome !== m.nome),
+        }))} />
+        <span>{m.nome}<span className="block text-xs" style={{ color: "#8a7a63" }}>{m.tipoHeranca} · {m.calculadoraAtiva === false ? "registro apenas — regra pendente" : "regra liberada"}</span></span>
+      </label>;
+    })}
+  </div>
+  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Use este campo para registrar mais de uma mutacao visual na mesma ave. A calculadora so usa mutacoes com regra liberada.</p>
 </Field>
           </div>
         </div>
@@ -242,7 +263,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
               {femeaOptions.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
             </select>
           </Field>
-          <Field label="Mãe (não cadastrada)"><input style={inputStyle} value={form.maeExterno} onChange={set("maeExterno")} placeholder="Nome da mãe" /></Field>
+          <Field label="Mae (se nao estiver no sistema)"><input style={inputStyle} value={form.maeExterno} onChange={set("maeExterno")} placeholder="ex: emprestada do Anderson" /></Field>
           <Field label="Parceiro(a) / casal">
             <select style={inputStyle} value={form.parceiroId} onChange={set("parceiroId")}>
               <option value="">-- nenhum --</option>
