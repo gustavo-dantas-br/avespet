@@ -62,13 +62,23 @@ function CartaoServico({ foto, alt, etiqueta, titulo, descricao, href, acao }) {
 
 export default function Inicio({ BuscaAnilha, VitrinePublica, GuiasEmDestaque, onEntrar }) {
   const galeriaRef = React.useRef(null);
-  const galeriaPausadaRef = React.useRef(false);
+  const [galeriaPausada, setGaleriaPausada] = React.useState(false);
+  const [interacaoGaleria, setInteracaoGaleria] = React.useState(false);
+  const [movimentoReduzido, setMovimentoReduzido] = React.useState(false);
+
+  React.useEffect(() => {
+    const preferencia = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const atualizarPreferencia = () => setMovimentoReduzido(preferencia.matches);
+    atualizarPreferencia();
+    preferencia.addEventListener("change", atualizarPreferencia);
+    return () => preferencia.removeEventListener("change", atualizarPreferencia);
+  }, []);
+
   React.useEffect(() => {
     const galeria = galeriaRef.current;
-    if (!galeria) return undefined;
+    if (!galeria || galeriaPausada || interacaoGaleria || movimentoReduzido) return undefined;
 
     const avancarGaleria = () => {
-      if (galeriaPausadaRef.current) return;
       const primeiroCartao = galeria.querySelector("article");
       if (!primeiroCartao) return;
 
@@ -83,9 +93,17 @@ export default function Inicio({ BuscaAnilha, VitrinePublica, GuiasEmDestaque, o
 
     const intervalo = window.setInterval(avancarGaleria, 6500);
     return () => window.clearInterval(intervalo);
-  }, []);
+  }, [galeriaPausada, interacaoGaleria, movimentoReduzido]);
 
-  const irPara = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const rolarGaleria = (distancia) => galeriaRef.current?.scrollBy({
+    left: distancia,
+    behavior: movimentoReduzido ? "auto" : "smooth",
+  });
+
+  const irPara = (id) => document.getElementById(id)?.scrollIntoView({
+    behavior: movimentoReduzido ? "auto" : "smooth",
+    block: "start",
+  });
 
   return (
     <div className="pb-16" style={{ background: "#F5F7F3", color: tinta }}>
@@ -112,22 +130,32 @@ export default function Inicio({ BuscaAnilha, VitrinePublica, GuiasEmDestaque, o
               <div className="text-xs font-bold uppercase tracking-[.16em]" style={{ color: verde }}>Galeria Avespet</div>
               <div className="mt-1 text-lg font-bold" style={{ color: tinta }}>A beleza dos psitacídeos</div>
             </div>
-            <div className="flex gap-2">
-              <button type="button" aria-label="Ver aves anteriores" onClick={() => galeriaRef.current?.scrollBy({ left: -290, behavior: "smooth" })} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg shadow-sm" style={{ border: "1px solid #DCE7DE", color: verde }}>‹</button>
-              <button type="button" aria-label="Ver próximas aves" onClick={() => galeriaRef.current?.scrollBy({ left: 290, behavior: "smooth" })} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg shadow-sm" style={{ border: "1px solid #DCE7DE", color: verde }}>›</button>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button type="button" aria-label="Ver aves anteriores" onClick={() => rolarGaleria(-290)} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg shadow-sm" style={{ border: "1px solid #DCE7DE", color: verde }}>‹</button>
+              <button type="button" aria-label="Ver próximas aves" onClick={() => rolarGaleria(290)} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg shadow-sm" style={{ border: "1px solid #DCE7DE", color: verde }}>›</button>
+              <button
+                type="button"
+                onClick={() => setGaleriaPausada((pausada) => !pausada)}
+                disabled={movimentoReduzido}
+                aria-pressed={galeriaPausada}
+                className="rounded-full bg-white px-3 py-2 text-xs font-semibold shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+                style={{ border: "1px solid #DCE7DE", color: verde }}
+              >
+                {movimentoReduzido ? "Movimento reduzido" : galeriaPausada ? "Retomar" : "Pausar"}
+              </button>
             </div>
           </div>
           <div
             ref={galeriaRef}
-            onMouseEnter={() => { galeriaPausadaRef.current = true; }}
-            onMouseLeave={() => { galeriaPausadaRef.current = false; }}
-            onFocusCapture={() => { galeriaPausadaRef.current = true; }}
-            onBlurCapture={() => { galeriaPausadaRef.current = false; }}
-            onTouchStart={() => { galeriaPausadaRef.current = true; }}
-            onTouchEnd={() => { galeriaPausadaRef.current = false; }}
+            onMouseEnter={() => setInteracaoGaleria(true)}
+            onMouseLeave={() => setInteracaoGaleria(false)}
+            onFocusCapture={() => setInteracaoGaleria(true)}
+            onBlurCapture={() => setInteracaoGaleria(false)}
+            onTouchStart={() => setInteracaoGaleria(true)}
+            onTouchEnd={() => setInteracaoGaleria(false)}
             className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-4"
             style={{ scrollbarWidth: "thin" }}
-            aria-label="Carrossel automático de psitacídeos"
+            aria-label="Galeria de psitacídeos" aria-live="off"
           >
             {GALERIA_PSITACIDEOS.map((ave, index) => (
               <article key={ave.nome} className="w-[78%] shrink-0 snap-start overflow-hidden rounded-[1.6rem] bg-white shadow-lg sm:w-[62%] md:w-[72%]" style={{ border: "1px solid #E3EAE4" }}>
