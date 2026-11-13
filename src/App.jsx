@@ -492,7 +492,7 @@ function AppInner({ user, onLogout }) {
   }
 
   async function handleSaveMutacao(mutacao) {
-    if (!mutacao.nome.trim()) return;
+    if (!mutacao.nome.trim()) return false;
     const id = mutacao.id || uid();
     const toSave = { ...mutacao, id };
     setMutacoes((prev) => {
@@ -502,11 +502,13 @@ function AppInner({ user, onLogout }) {
     try {
       await saveRow("mutacoes", user.id, toSave);
       setMutacoes((prev) => prev.map((m) => (m.id === id ? { ...m, synced: true } : m)));
+      return true;
     } catch (e) {
       setError(
         `Mutacao ficou na tela, mas nao salvou no banco (${e?.message || "erro desconhecido"}). ` +
         "Se a tabela 'mutacoes' ainda nao existe no seu Supabase, roda o schema_fase2.sql no SQL Editor."
       );
+      return false;
     }
   }
 
@@ -1146,8 +1148,8 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
 
             {tab === "mutacoes" && (
   <>
-              {isAdminUser && <CalculadoraGenetica aves={aves} mutacoes={mutacoes} />}
-              {isAdminUser && <div className="my-8 h-px" style={{ background: "#e3d3b4" }} />}
+              <CalculadoraGenetica aves={aves} mutacoes={mutacoes} />
+              <div className="my-8 h-px" style={{ background: "#e3d3b4" }} />
 
               <MutacoesTab
                 mutacoes={mutacoes}
