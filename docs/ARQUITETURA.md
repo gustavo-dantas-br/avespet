@@ -313,9 +313,9 @@ A migração `202611130003_enforce_creator_bird_limits.sql` instala o trigger `e
 
 ### Aplicação de permissões nos módulos do criador
 
-As migrações `202611130004_enforce_premium_feature_access.sql`, `202611130005_get_my_entitlements.sql` e `202611130006_enforce_after_sales_feature.sql` completam a primeira integração dos recursos premium.
+As migrações `202611130004_enforce_premium_feature_access.sql` e `202611130006_enforce_after_sales_feature.sql`, junto da Edge Function `creator-get-entitlements`, completam a primeira integração dos recursos premium.
 
-- O painel do criador consulta a RPC `get_my_entitlements`, que retorna apenas o plano e as permissões efetivas do próprio usuário.
+- O painel do criador consulta a Edge Function `creator-get-entitlements`, que valida o token e retorna apenas o plano e as permissões efetivas do usuário autenticado.
 - O menu identifica com cadeado os módulos de genética, reprodução, financeiro e pós-venda quando não liberados.
 - A navegação direta também é bloqueada e apresenta uma explicação com opção de atualizar as permissões.
 - Genética (`mutacoes`), reprodução (`posturas`) e financeiro (`despesas`) recebem políticas RLS: cada criador continua limitado aos próprios registros e precisa ter a funcionalidade liberada pelo plano ou por exceção válida.
