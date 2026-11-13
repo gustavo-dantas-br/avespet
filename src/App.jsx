@@ -130,8 +130,8 @@ function AppInner({ user, onLogout }) {
     setEntitlementsLoading(true);
     setEntitlementsError("");
     try {
-      const { data, error } = await supabase.rpc("get_my_entitlements");
-      if (error) throw error;
+      const { data, error } = await supabase.functions.invoke("creator-get-entitlements", { body: {} });
+      if (error || data?.error || !data?.success) throw new Error(data?.error || error?.message || "Não foi possível consultar seu plano.");
       setEntitlements(data || null);
     } catch (e) {
       setEntitlements(null);
