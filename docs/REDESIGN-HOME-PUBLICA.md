@@ -197,3 +197,19 @@ O usuário informou que as verificações mencionadas nesta etapa já foram real
 - URL Preview: https://avespet-deoe314by-gustavo-dantas.vercel.app
 - A implantação foi criada como Preview; não foi solicitado nem executado merge ou publicação manual em produção.
 - Supabase: conferido o projeto `tnnpzitijvklbnwptsuq`; as tabelas consultadas estavam com RLS habilitada. A função `concluir_reserva_ave` valida sessão, propriedade da reserva, vínculo de cliente e ave, impede conclusão duplicada e calcula saldo usando somente pagamentos com status `recebido`. Nenhuma alteração foi feita no banco.
+
+
+### Otimização de carregamento sob demanda — 13/11/2026
+
+- As telas do painel foram convertidas para carregamento sob demanda com `React.lazy` e `React.Suspense`.
+- Separadas em arquivos próprios as áreas de Reservas, Financeiro, Reprodução, Clientes, Fornecedores, Plantel, Genética, Anúncios, Perfil, Pós-venda, Indicações e áreas administrativas.
+- A tela Master também passou a carregar somente quando acessada.
+- Vercel Preview: `READY`, commit `3b17624b183b2015796a239c0e8e3240048cbad4`.
+- Bundle principal caiu de aproximadamente 737,18 kB para 525,60 kB minificados (redução aproximada de 28,8%); gzip caiu de 196,36 kB para 149,54 kB (redução aproximada de 23,8%).
+- As telas passaram a gerar arquivos independentes; por exemplo, Reservas 26,70 kB, Reprodução 14,36 kB e Financeiro 8,79 kB.
+- O bundle principal ainda fica ligeiramente acima do aviso de 500 kB do Vite. Próxima etapa: avaliar divisão adicional de bibliotecas e módulos compartilhados sem forçar fragmentação excessiva.
+- Build Vite e service worker/PWA concluídos; não houve alteração no Supabase.
+- Preview: https://avespet-2pqx7koqe-gustavo-dantas.vercel.app
+- [ ] Testar login e navegação entre Dashboard, Plantel, Reservas, Financeiro, Reprodução e Genética.
+- [ ] Conferir carregamento de áreas administrativas apenas com perfil autorizado.
+- [ ] Validar atualização do PWA e funcionamento em celular.
