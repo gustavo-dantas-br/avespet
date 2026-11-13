@@ -97,6 +97,8 @@ const STATUS_ANUNCIO_LABEL = { pendente: "EM ANALISE", aprovado: "APROVADO", rej
 function AppInner({ user, onLogout }) {
   const [aves, setAves] = useState([]);
   const [despesas, setDespesas] = useState([]);
+  const [reservasFinanceiro, setReservasFinanceiro] = useState([]);
+  const [pagamentosReservasFinanceiro, setPagamentosReservasFinanceiro] = useState([]);
   const [mutacoes, setMutacoes] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
@@ -120,7 +122,7 @@ function AppInner({ user, onLogout }) {
   const [saving, setSaving] = useState(false);
   const [placaId, setPlacaId] = useState("");
   const [arvoreId, setArvoreId] = useState("");
-  const [statusFilter, setStatusFilter] = useState(null); // null | "A venda" | "Vendida" | "Falecida" | "casais" | "solteiros" | "plantel"
+  const [statusFilter, setStatusFilter] = useState("plantel"); // categoria inicial do Meu plantel"
   const [error, setError] = useState("");
   const canvasRef = useRef(null);
 
@@ -143,6 +145,21 @@ function AppInner({ user, onLogout }) {
       setDespesas(items.map((d) => ({ ...d, synced: true })).sort((a, b) => (a.data || "").localeCompare(b.data || "")));
     } catch {
       // silencioso
+    }
+  }, [user.id]);
+
+  const loadReservasFinanceiro = useCallback(async () => {
+    try {
+      const [r, p] = await Promise.all([
+        supabase.from("reservas_aves").select("id, cliente_id, ave_id, valor_total, status, data_reserva, updated_at").eq("user_id", user.id).eq("status", "concluida"),
+        supabase.from("reserva_pagamentos").select("id, reserva_id, valor, data_pagamento, status, descricao, forma_pagamento").eq("user_id", user.id),
+      ]);
+      if (r.error) throw r.error;
+      if (p.error) throw p.error;
+      setReservasFinanceiro(r.data || []);
+      setPagamentosReservasFinanceiro(p.data || []);
+    } catch (e) {
+      setError("Não foi possível atualizar os recebimentos das reservas (" + (e?.message || "erro desconhecido") + ").");
     }
   }, [user.id]);
 
@@ -268,6 +285,7 @@ function AppInner({ user, onLogout }) {
   useEffect(() => {
     loadAves();
     loadDespesas();
+    loadReservasFinanceiro();
     loadMutacoes();
     loadClientes();
     loadFornecedores();
@@ -277,7 +295,7 @@ function AppInner({ user, onLogout }) {
     loadAdminStatus();
     loadPerdidas();
     loadPosturas();
-  }, [loadAves, loadDespesas, loadMutacoes, loadClientes, loadFornecedores, loadIndicacoes, loadAnuncios, loadPerfil, loadAdminStatus, loadPerdidas, loadPosturas]);
+  }, [loadAves, loadDespesas, loadReservasFinanceiro, loadMutacoes, loadClientes, loadFornecedores, loadIndicacoes, loadAnuncios, loadPerfil, loadAdminStatus, loadPerdidas, loadPosturas]);
 
   function startNew() {
     setForm(emptyAve());
@@ -285,7 +303,7 @@ function AppInner({ user, onLogout }) {
   }
 
   function goToLista(filter) {
-    setStatusFilter(filter);
+    setStatusFilter(filter || "plantel");
     setTab("lista");
   }
 
@@ -733,30 +751,35 @@ function AppInner({ user, onLogout }) {
     }
   }
 
-  function handleSavePerfil(novoPerfil) {
+  async function handleSavePerfil(novoPerfil) {
     setPerfil({ ...novoPerfil, synced: false });
-    savePerfil(user.id, (() => { const { email, ...publico } = novoPerfil; return publico; })())
-      .then(() => setPerfil({ ...novoPerfil, synced: true }))
-      .catch((e) => setError(
-        `Perfil ficou na tela, mas nao salvou no banco (${e?.message || "erro desconhecido"}). ` +
-        "Se a tabela 'perfil_criador' ainda nao existe no seu Supabase, roda o schema_fase_anuncios.sql no SQL Editor."
-      ));
+    try {
+      const { email, ...publico } = novoPerfil;
+      await savePerfil(user.id, publico);
+      setPerfil({ ...novoPerfil, synced: true });
+    } catch (e) {
+      setError(
+        `Nao foi possivel salvar o perfil no banco (${e?.message || "erro desconhecido"}). ` +
+        "Confira se a tabela 'perfil_criador' esta disponivel."
+      );
+      throw e;
+    }
   }
 
   async function handleSavePerfilPrivado(dados) {
-    setPerfilPrivado(dados);
     try {
       await savePerfilPrivado(user.id, dados);
-      setError("");
+      setPerfilPrivado(dados);
     } catch (e) {
       setError("Nao foi possivel salvar o endereco privado (" + (e?.message || "erro desconhecido") + ").");
+      throw e;
     }
   }
 
   async function handleUpdateEmail(novoEmail) {
     const { error: authError } = await supabase.auth.updateUser({ email: novoEmail });
-    if (authError) setError("Nao foi possivel solicitar a troca de e-mail: " + authError.message);
-    else setError("Solicitacao enviada. Confirme o novo e-mail pelo link enviado pelo Supabase para concluir a alteracao.");
+    if (authError) throw new Error("Nao foi possivel solicitar a troca de e-mail: " + authError.message);
+    return "A solicitacao de troca de e-mail foi enviada; confirme pelo link recebido para concluir a alteracao.";
   }
 
   async function handleModerarAnuncio(id, novoStatus) {
@@ -926,11 +949,11 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
   });
 
   const filtered = bySearch.filter((a) => {
-    if (!statusFilter) return true;
+    const status = a.status || "No plantel";
+    if (!statusFilter || statusFilter === "plantel") return STATUS_PLANTEL.includes(status);
     if (statusFilter === "casais") return !!a.parceiroId || !!a.casalLabel?.trim();
     if (statusFilter === "solteiros") return !a.parceiroId && !a.casalLabel?.trim();
-    if (statusFilter === "plantel") return STATUS_PLANTEL.includes(a.status);
-    return a.status === statusFilter;
+    return status === statusFilter;
   });
 
   const casaisAgrupados = (() => {
@@ -1067,9 +1090,33 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
               <div className="hidden text-[11px] sm:block" style={{ color: "#526A5B" }}>Gestão do seu criatório</div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="hidden sm:block text-right"><div className="text-xs font-semibold" style={{ color: "#345442" }}>{perfil.nome || "Criador"}</div><div className="text-[10px]" style={{ color: "#526A5B" }}>Área do criador</div></div>
-            <div className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold" style={{ background: "#E5F2E9", color: "#267A50" }}>{(perfil.nome || user.email || "C").slice(0,1).toUpperCase()}</div>
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="hidden sm:flex items-center gap-1.5 shrink-0" aria-label="Plataforma Avespet">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: "#E5F2E9", color: "#1D754B" }}><Feather size={15} /></div>
+              <span className="text-xs font-extrabold tracking-tight" style={{ color: "#1D3B2B" }}>Aves<span style={{ color: "#26945F" }}>pet</span></span>
+            </div>
+            {perfil.logoUrl ? (
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <img
+                  src={perfil.logoUrl}
+                  alt={perfil.nome ? `Logo de ${perfil.nome}` : "Logo do criatório"}
+                  className="h-12 w-12 sm:h-16 sm:w-16 shrink-0 rounded-2xl border-2 object-contain bg-white p-1 sm:p-1.5 shadow-sm"
+                  style={{ borderColor: "#D7E4DA", boxShadow: "0 3px 12px rgba(28,67,43,0.10)" }}
+                />
+                <div className="hidden sm:block min-w-0">
+                  <div className="max-w-[180px] truncate text-sm font-bold" style={{ color: "#234332" }}>{perfil.nome || "Meu criatório"}</div>
+                  <div className="text-[10px] font-medium" style={{ color: "#526A5B" }}>Identidade do criador</div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold" style={{ background: "#E5F2E9", color: "#267A50" }}>{(perfil.nome || user.email || "C").slice(0,1).toUpperCase()}</div>
+                <div className="hidden sm:block text-right">
+                  <div className="text-xs font-semibold" style={{ color: "#345442" }}>{perfil.nome || "Criador"}</div>
+                  <div className="text-[10px]" style={{ color: "#526A5B" }}>Área do criador</div>
+                </div>
+              </div>
+            )}
           </div>
         </header>
 
@@ -1110,11 +1157,11 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
               <ReproducaoTab aves={aves} posturas={posturas} onSave={handleSavePostura} onDelete={handleDeletePostura} onNascimento={handleRegistrarNascimento} Card={Card} Field={Field} inputStyle={inputStyle} SectionTitle={SectionTitle} />
             )}
 
-            {tab === "reservas" && <ReservasTab userId={user.id} perfil={perfil} clientes={clientes} aves={aves} posturas={posturas} Card={Card} SectionTitle={SectionTitle} />}
+            {tab === "reservas" && <ReservasTab userId={user.id} perfil={perfil} clientes={clientes} aves={aves} posturas={posturas} onReservaConcluida={loadAves} onFinanceiroAtualizado={loadReservasFinanceiro} Card={Card} SectionTitle={SectionTitle} />}
 
             {tab === "lista" && (
               <ListaTab
-                aves={filtered} search={search} setSearch={setSearch}
+                aves={filtered} todasAves={aves} search={search} setSearch={setSearch}
                 onEdit={startEdit} onDelete={handleDelete} onNew={startNew}
                 onSync={handleSync} onExport={handleExport} onImport={handleImport}
                 statusFilter={statusFilter} setStatusFilter={setStatusFilter}
@@ -1143,7 +1190,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
             )}
 
             {tab === "financeiro" && (
-              <FinanceiroTab aves={aves} despesas={despesas} onSaveDespesa={handleSaveDespesa} onDeleteDespesa={handleDeleteDespesa} emptyDespesa={emptyDespesa} primeiroDiaMesISO={primeiroDiaMesISO} hojeISO={hojeISO} ultimoDiaMesISO={ultimoDiaMesISO} primeiroDiaAnoISO={primeiroDiaAnoISO} computeFinanceiro={computeFinanceiro} computeFinanceiroPeriodo={computeFinanceiroPeriodo} money={money} DESPESA_TIPOS={DESPESA_TIPOS} inputStyle={inputStyle} SectionTitle={SectionTitle} Card={Card} Field={Field} />
+              <FinanceiroTab aves={aves} despesas={despesas} reservasFinanceiro={reservasFinanceiro} pagamentosReservasFinanceiro={pagamentosReservasFinanceiro} clientes={clientes} onSaveDespesa={handleSaveDespesa} onDeleteDespesa={handleDeleteDespesa} emptyDespesa={emptyDespesa} primeiroDiaMesISO={primeiroDiaMesISO} hojeISO={hojeISO} ultimoDiaMesISO={ultimoDiaMesISO} primeiroDiaAnoISO={primeiroDiaAnoISO} computeFinanceiro={computeFinanceiro} computeFinanceiroPeriodo={computeFinanceiroPeriodo} money={money} DESPESA_TIPOS={DESPESA_TIPOS} inputStyle={inputStyle} SectionTitle={SectionTitle} Card={Card} Field={Field} />
             )}
 
             {tab === "mutacoes" && (
@@ -1230,12 +1277,14 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
 // ---------------------------------------------------------------------------
 
 const FILTER_LABELS = {
-  "A venda": "Aves a venda",
+  plantel: "Aves no plantel",
+  "A venda": "Aves à venda",
+  Reservada: "Aves reservadas",
   Vendida: "Aves vendidas",
   Falecida: "Aves falecidas",
+  Perdida: "Aves perdidas",
   casais: "Casais",
   solteiros: "Solteiros (sem parceiro)",
-  plantel: "Plantel (sob sua responsabilidade)",
 };
 
 // ---------------------------------------------------------------------------
