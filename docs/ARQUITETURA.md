@@ -310,3 +310,17 @@ A migração `202611130003_enforce_creator_bird_limits.sql` instala o trigger `e
 - Atualizações de aves existentes não consomem novas vagas.
 - A migração está versionada na branch, mas ainda não foi aplicada no Supabase.
 - O bloqueio de funcionalidades premium ainda será integrado nos módulos e nas respectivas operações de servidor.
+
+### Aplicação de permissões nos módulos do criador
+
+As migrações `202611130004_enforce_premium_feature_access.sql`, `202611130005_get_my_entitlements.sql` e `202611130006_enforce_after_sales_feature.sql` completam a primeira integração dos recursos premium.
+
+- O painel do criador consulta a RPC `get_my_entitlements`, que retorna apenas o plano e as permissões efetivas do próprio usuário.
+- O menu identifica com cadeado os módulos de genética, reprodução, financeiro e pós-venda quando não liberados.
+- A navegação direta também é bloqueada e apresenta uma explicação com opção de atualizar as permissões.
+- Genética (`mutacoes`), reprodução (`posturas`) e financeiro (`despesas`) recebem políticas RLS: cada criador continua limitado aos próprios registros e precisa ter a funcionalidade liberada pelo plano ou por exceção válida.
+- As políticas permissivas de propriedade são criadas explicitamente para manter o acesso normal aos próprios dados; políticas restritivas adicionam a checagem do recurso.
+- Pós-venda é protegido por trigger que bloqueia alterações nos campos de acompanhamento quando o recurso não estiver liberado, sem impedir outras edições da ave.
+- As exceções expiradas voltam a herdar as permissões do plano.
+- As migrações estão apenas versionadas na branch. Nenhuma foi aplicada ao banco de produção.
+- A integração de campanhas e de outros recursos ainda precisa ser feita quando seus fluxos e operações de servidor forem definidos.
