@@ -115,7 +115,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
               setForm((f) => ({ ...f, portadores: novos }));
             }} />
             <span>{mutacao.nome}</span>
-            <span className="text-xs" style={{ color: "#8a7a63" }}>{mutacao.tipoHeranca}</span>
+            <span className="text-xs" style={{ color: "#8a7a63" }}>{form.sexo === "Femea" && (mutacao.tipoHeranca || "").startsWith("Ligada ao sexo") ? "nao se aplica a femeas" : mutacao.tipoHeranca}</span>
           </label>;
         })}
       </div>
