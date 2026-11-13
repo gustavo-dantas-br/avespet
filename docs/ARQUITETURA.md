@@ -283,3 +283,17 @@ A tela `src/features/master/SubscriptionsManagement.jsx` utiliza a Edge Function
 - O módulo não gera cobrança nem confirma pagamento; esses estados dependerão de integração de pagamentos e regras próprias.
 - O histórico apresentado é limitado aos 500 registros mais recentes nesta primeira versão.
 - A implementação está somente na branch de desenvolvimento e depende da migração `202611130001_platform_plans_subscriptions.sql`; não foi implantada no Supabase nem publicada em produção.
+
+### Exceções individuais de permissões e limites
+
+A tela `src/features/master/EntitlementsManagement.jsx` permite que o Master conceda ou retire permissões específicas de um criador sem trocar seu plano.
+
+- A tabela `creator_entitlement_overrides` guarda exceções por usuário, separadas do catálogo e da assinatura.
+- Cada funcionalidade aceita três estados: herdar do plano, liberar ou bloquear.
+- O limite de aves pode herdar o plano, receber um novo limite numérico ou ficar ilimitado.
+- Exceções podem ter data de expiração; após esse instante deixam de ser consideradas pela camada de autorização.
+- O motivo da concessão é obrigatório e as operações são registradas em `master_audit_log`.
+- O Master pode remover todas as exceções para retornar o criador às regras do plano.
+- A Edge Function `master-manage-entitlements` valida sessão, vínculo Master e protege contas administrativas.
+- A migração `202611130002_creator_entitlement_overrides.sql` está versionada, mas não aplicada no banco.
+- Esta etapa implementa o cadastro administrativo das exceções. A aplicação efetiva no cadastro de aves e nos módulos premium depende da próxima etapa de integração dos controles server-side.
