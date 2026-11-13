@@ -50,7 +50,9 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       setResultado({ tipo: "erro", mensagem: "Escolha uma ave para o pai e outra para a mãe." });
       return;
     }
-    const calc = calcularCruzamentoGenetico(pai, mae, mutacoesRingNeck);
+    const paiParaCalculo = { ...pai, corMutacao: pai.corMutacao || pai.corLivre || "" };
+    const maeParaCalculo = { ...mae, corMutacao: mae.corMutacao || mae.corLivre || "" };
+    const calc = calcularCruzamentoGenetico(paiParaCalculo, maeParaCalculo, mutacoesRingNeck);
     if (calc.semLociRelevantes) {
       const detalhes = [
         calc.bloqueadas?.length ? "Ainda estamos validando: " + calc.bloqueadas.join(", ") + "." : "",
@@ -99,7 +101,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       } else if (heranca === "Codominante") {
         motivo = "Uma ou duas cópias desse fator podem produzir resultados visuais diferentes.";
       }
-      return `${mutacao.nome}: ${motivo} Pai: ${estadoDoGene(pai, mutacao)}; mãe: ${estadoDoGene(mae, mutacao)}.`;
+      return `${mutacao.nome}: ${motivo} Pai: ${estadoDoGene(paiParaCalculo, mutacao)}; mãe: ${estadoDoGene(maeParaCalculo, mutacao)}.`;
     }).filter(Boolean);
     setResultado({
       tipo: "sucesso",
@@ -161,7 +163,9 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                 className="w-full rounded-xl px-3 py-3"
                 style={campo}
                 value={
-                  manual.corMutacao === "Ino"
+                  manual.corLivre
+                    ? "__outra__"
+                    : manual.corMutacao === "Ino"
                     ? (String(manual.corBase || "").toLowerCase().includes("blue") ? "popular|Albino" : "popular|Lutino")
                     : manual.corMutacao === "Cremino"
                       ? "popular|Cremino"
@@ -172,7 +176,8 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                 onChange={(e) => {
                   const value = e.target.value;
                   if (value === "__outra__") {
-                    atualizarManual(setManual, "corMutacao", "Outra");
+                    setManual((atual) => ({ ...atual, corMutacao: "", corLivre: "" }));
+                    setResultado(null);
                   } else if (value.startsWith("popular|")) {
                     const popular = value.split("|")[1];
                     setManual((atual) => ({
