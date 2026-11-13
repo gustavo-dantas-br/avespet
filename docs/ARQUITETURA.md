@@ -269,3 +269,17 @@ A tela `src/features/master/BillingManagement.jsx` administra o catálogo por me
 - A interface não possui exclusão física de planos para preservar referências futuras em assinaturas e histórico.
 - A tela não atribui planos a criadores, não registra pagamentos e não realiza cobranças. Essas etapas dependem de regras comerciais e de integração próprias.
 - A Edge Function e a interface estão versionadas na branch de desenvolvimento e ainda não foram implantadas.
+
+### Gestão de assinaturas no Painel Master
+
+A tela `src/features/master/SubscriptionsManagement.jsx` utiliza a Edge Function `master-manage-subscriptions`, que valida a sessão e a permissão em `master_admins` antes de qualquer consulta ou alteração.
+
+- Consulta o histórico recente de assinaturas, plano vinculado, criador, período e situação.
+- Permite pesquisar criadores por nome, nome do criatório ou e-mail.
+- Permite atribuir plano ativo, com situação inicial e datas de início/término.
+- Ao atribuir um novo plano, assinaturas anteriores em situação ativa, em teste ou com pagamento pendente são encerradas antes da criação do novo vínculo.
+- Permite alterar a situação de uma assinatura e registra as operações em `master_audit_log`.
+- Contas Master e administradores legados não podem receber planos de criador.
+- O módulo não gera cobrança nem confirma pagamento; esses estados dependerão de integração de pagamentos e regras próprias.
+- O histórico apresentado é limitado aos 500 registros mais recentes nesta primeira versão.
+- A implementação está somente na branch de desenvolvimento e depende da migração `202611130001_platform_plans_subscriptions.sql`; não foi implantada no Supabase nem publicada em produção.
