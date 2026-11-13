@@ -33,7 +33,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     }
     const calc = calcularCruzamentoGenetico(pai, mae, mutacoesRingNeck);
     if (calc.semLociRelevantes) {
-      setResultado({ tipo: "erro", mensagem: "Nenhuma mutacao com regra liberada foi encontrada. " + (calc.bloqueadas?.length ? "Fora do calculo por validacao pendente: " + calc.bloqueadas.join(", ") + ". " : "") + "Cadastre ou selecione uma mutacao com regra validada no Banco de Genetica." });
+      setResultado({ tipo: "erro", mensagem: "Nenhum locus selecionado possui uma regra de heranca liberada para calculo. " + (calc.bloqueadas?.length ? "Bloqueadas por validacao pendente: " + calc.bloqueadas.join(", ") + ". " : "") + (calc.naoDefinidos?.length ? "Heranca ainda nao implementada: " + calc.naoDefinidos.join(", ") + ". " : "") + "Cadastre ou selecione uma mutacao com regra validada no Banco de Genetica." });
       return;
     }
     const possibilidades = calc.resultadoFinal.map((r) => ({
