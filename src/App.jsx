@@ -1456,7 +1456,11 @@ if (!isMasterRoute) {
 }
 
 if (masterAccess) {
-  return <MasterApp user={session.user} onLogout={() => supabase.auth.signOut()} />;
+  return (
+    <React.Suspense fallback={<div className="min-h-screen w-full flex items-center justify-center" style={{ background: "#2B1D14" }}><Loader2 className="animate-spin" color="#C69A2E" size={28} /></div>}>
+      <MasterApp user={session.user} onLogout={() => supabase.auth.signOut()} />
+    </React.Suspense>
+  );
 }
 
 return (
