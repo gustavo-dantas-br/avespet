@@ -3,6 +3,14 @@ import { supabase } from "../../supabaseClient";
 import { RefreshCw, Search, Bird, ChevronLeft, ChevronRight, AlertCircle, ShieldCheck } from "lucide-react";
 
 const dateLabel = (value) => value ? new Date(value).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—";
+const statusStyle = {
+  "No plantel": "bg-emerald-50 text-emerald-700",
+  "A venda": "bg-sky-50 text-sky-700",
+  "Reservada": "bg-amber-50 text-amber-700",
+  "Vendida": "bg-violet-50 text-violet-700",
+  "Falecida": "bg-slate-100 text-slate-600",
+  "Perdida": "bg-rose-50 text-rose-700",
+};
 
 export default function BirdsManagement() {
   const [searchInput, setSearchInput] = useState("");
@@ -61,13 +69,13 @@ export default function BirdsManagement() {
 
     {loading ? <div className="rounded-2xl border bg-white p-10 text-center text-sm text-slate-500">Carregando registros…</div> : result.items.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center"><Bird size={28} className="mx-auto text-slate-300"/><p className="mt-3 text-sm text-slate-600">Nenhuma ave encontrada com esses filtros.</p></div> :
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-        <div className="hidden grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_110px_minmax(0,1fr)_140px] gap-3 border-b bg-slate-50 px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 md:grid"><span>Ave</span><span>Espécie / mutação</span><span>Sexo</span><span>Criador</span><span>Atualização</span></div>
-        <div className="divide-y divide-slate-100">{result.items.map((item)=> <article key={item.id} className="grid gap-2 px-4 py-4 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_110px_minmax(0,1fr)_140px] md:items-center md:gap-3">
+        <div className="hidden grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_90px_minmax(0,1fr)_115px_140px] gap-3 border-b bg-slate-50 px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 md:grid"><span>Ave</span><span>Espécie / mutação</span><span>Sexo</span><span>Criador</span><span>Status</span><span>Atualização</span></div>
+        <div className="divide-y divide-slate-100">{result.items.map((item)=> <article key={item.id} className="grid gap-2 px-4 py-4 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_90px_minmax(0,1fr)_115px_140px] md:items-center md:gap-3">
           <div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-900">{item.name || "Ave sem nome"}</p><p className="mt-1 text-[11px] text-slate-400">Anilha: {item.ring || "Não informada"}</p></div>
           <div className="min-w-0"><p className="text-xs text-slate-700">{item.species || "Espécie não informada"}</p><p className="mt-1 truncate text-[11px] text-slate-400">{item.mutation || "Mutação não informada"}</p></div>
           <div><span className="text-xs text-slate-600">{item.sex || "Indefinido"}</span></div>
           <div className="min-w-0"><p className="truncate text-xs text-slate-600">{item.creator}</p></div>
-          <div><p className="text-xs text-slate-600">{dateLabel(item.updatedAt)}</p></div>
+          <div><span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusStyle[item.status] || "bg-slate-100 text-slate-600"}`}>{item.status || "Não informado"}</span></div>\n          <div><p className="text-xs text-slate-600">{dateLabel(item.updatedAt)}</p></div>
         </article>)}</div>
       </div>}
 
