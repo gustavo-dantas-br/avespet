@@ -1067,19 +1067,31 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0" aria-label="Avespet">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ background: "#E5F2E9", color: "#1D754B" }}><Feather size={17} /></div>
-              <div className="hidden lg:block text-sm font-extrabold tracking-tight" style={{ color: "#1D3B2B" }}>Aves<span style={{ color: "#26945F" }}>pet</span></div>
-            </div>
-            <div className="hidden sm:block h-8 w-px shrink-0" style={{ background: "#E2EBE4" }} />
-            <div className="min-w-0 text-right hidden sm:block">
-              <div className="truncate max-w-[150px] text-xs font-semibold" style={{ color: "#345442" }}>{perfil.nome || "Criador"}</div>
-              <div className="text-[10px]" style={{ color: "#526A5B" }}>Área do criador</div>
+            <div className="hidden sm:flex items-center gap-1.5 shrink-0" aria-label="Plataforma Avespet">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: "#E5F2E9", color: "#1D754B" }}><Feather size={15} /></div>
+              <span className="text-xs font-extrabold tracking-tight" style={{ color: "#1D3B2B" }}>Aves<span style={{ color: "#26945F" }}>pet</span></span>
             </div>
             {perfil.logoUrl ? (
-              <img src={perfil.logoUrl} alt={perfil.nome ? `Logo de ${perfil.nome}` : "Logo do criatório"} className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-xl border object-contain bg-white p-0.5" style={{ borderColor: "#D7E4DA" }} />
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <img
+                  src={perfil.logoUrl}
+                  alt={perfil.nome ? `Logo de ${perfil.nome}` : "Logo do criatório"}
+                  className="h-12 w-12 sm:h-16 sm:w-16 shrink-0 rounded-2xl border-2 object-contain bg-white p-1 sm:p-1.5 shadow-sm"
+                  style={{ borderColor: "#D7E4DA", boxShadow: "0 3px 12px rgba(28,67,43,0.10)" }}
+                />
+                <div className="hidden sm:block min-w-0">
+                  <div className="max-w-[180px] truncate text-sm font-bold" style={{ color: "#234332" }}>{perfil.nome || "Meu criatório"}</div>
+                  <div className="text-[10px] font-medium" style={{ color: "#526A5B" }}>Identidade do criador</div>
+                </div>
+              </div>
             ) : (
-              <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold" style={{ background: "#E5F2E9", color: "#267A50" }}>{(perfil.nome || user.email || "C").slice(0,1).toUpperCase()}</div>
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold" style={{ background: "#E5F2E9", color: "#267A50" }}>{(perfil.nome || user.email || "C").slice(0,1).toUpperCase()}</div>
+                <div className="hidden sm:block text-right">
+                  <div className="text-xs font-semibold" style={{ color: "#345442" }}>{perfil.nome || "Criador"}</div>
+                  <div className="text-[10px]" style={{ color: "#526A5B" }}>Área do criador</div>
+                </div>
+              </div>
             )}
           </div>
         </header>
