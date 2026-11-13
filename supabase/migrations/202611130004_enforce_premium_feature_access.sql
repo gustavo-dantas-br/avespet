@@ -30,6 +30,12 @@ begin
     return false;
   end if;
 
+  -- Administradores da plataforma mantêm acesso administrativo aos módulos.
+  if exists (select 1 from public.admins a where a.user_id = v_user_id)
+     or exists (select 1 from public.master_admins m where m.user_id = v_user_id) then
+    return true;
+  end if;
+
   select p.features into v_features
   from public.creator_subscriptions s
   join public.platform_plans p on p.id = s.plan_id
