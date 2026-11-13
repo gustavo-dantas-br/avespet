@@ -82,6 +82,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
     <option>Turquoise Blue (Azul Turquesa)</option>
     <option>Turquoise (Turquesa)</option>
   </select>
+  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Registro da cor-base. A previsao da serie azul/turquesa sera conectada ao motor apos validar os alelos e combinacoes.</p>
 </Field>
 
 <Field label="Fator escuro (Dark Factor)">
@@ -90,6 +91,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
     <option value="SF">SF — Fator simples</option>
     <option value="DF">DF — Duplo fator</option>
   </select>
+  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Registro SF/DF; ainda nao participa dos percentuais da calculadora.</p>
 </Field>
 
 <Field label="Fator violeta (Violet Factor)">
@@ -98,6 +100,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
     <option value="SF">SF — Fator simples</option>
     <option value="DF">DF — Duplo fator</option>
   </select>
+  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Registro SF/DF; ainda nao participa dos percentuais da calculadora.</p>
 </Field>
 
 <Field label="Portador de">
@@ -106,7 +109,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
       <div className="text-sm" style={{ color: "#8a7a63" }}>Nenhuma mutacao com portador disponivel no catalogo.</div>
     ) : (
       <div className="space-y-2">
-        {mutacoes.filter((m) => m.permitePortador !== false && m.categoria !== "cor_base" && m.calculadoraAtiva !== false && (!m.especie || m.especie === form.especie)).map((mutacao) => {
+        {mutacoes.filter((m) => m.permitePortador !== false && m.categoria !== "cor_base" && (!m.especie || m.especie === form.especie)).map((mutacao) => {
           const selecionado = (form.portadores || []).includes(mutacao.nome);
           return <label key={mutacao.id || mutacao.nome} className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: "#4f4336" }}>
             <input type="checkbox" checked={selecionado} disabled={form.sexo === "Femea" && (mutacao.tipoHeranca || "").startsWith("Ligada ao sexo")} onChange={(e) => {
