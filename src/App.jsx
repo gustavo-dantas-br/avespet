@@ -1067,11 +1067,11 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="hidden xs:flex items-center gap-1.5 sm:gap-2 shrink-0" aria-label="Avespet">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0" aria-label="Avespet">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ background: "#E5F2E9", color: "#1D754B" }}><Feather size={17} /></div>
               <div className="hidden lg:block text-sm font-extrabold tracking-tight" style={{ color: "#1D3B2B" }}>Aves<span style={{ color: "#26945F" }}>pet</span></div>
             </div>
-            <div className="hidden xs:block h-8 w-px shrink-0" style={{ background: "#E2EBE4" }} />
+            <div className="hidden sm:block h-8 w-px shrink-0" style={{ background: "#E2EBE4" }} />
             <div className="min-w-0 text-right hidden sm:block">
               <div className="truncate max-w-[150px] text-xs font-semibold" style={{ color: "#345442" }}>{perfil.nome || "Criador"}</div>
               <div className="text-[10px]" style={{ color: "#526A5B" }}>Área do criador</div>
