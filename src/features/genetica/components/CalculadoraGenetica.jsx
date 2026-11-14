@@ -132,7 +132,8 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       return "não foi informado como portador nem como visual";
     };
 
-    const explicacoes = [...new Set((calc.lociConsiderados || []).map((nome) => normalizarNome(nome)))].map((nomeNormalizado) => {\n      const nome = (calc.lociConsiderados || []).find((item) => normalizarNome(item) === nomeNormalizado);
+    const explicacoes = [...new Set((calc.lociConsiderados || []).map((nome) => normalizarNome(nome)))].map((nomeNormalizado) => {
+      const nome = (calc.lociConsiderados || []).find((item) => normalizarNome(item) === nomeNormalizado);
       const mutacao = mutacoesRingNeck.find((m) => nomesEquivalentes(m).includes(normalizarNome(nome)));
       if (!mutacao) return "";
       const heranca = mutacao.tipoHeranca || "";
