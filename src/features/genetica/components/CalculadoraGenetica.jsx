@@ -59,14 +59,28 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     const serieCor = genotipoPai && genotipoMae ? cruzarSerieCor(genotipoPai, genotipoMae) : null;
     // Quando a série de cor está escondida por Ino (Lutino/Albino), mostrar
     // cenários condicionais possíveis sem atribuir probabilidades inventadas.
-    const genotiposPossiveis = ["G/G", "G/T", "G/B", "T/T", "T/B", "B/B"];
+    const genotiposDaAparencia = (ave) => {
+      const texto = [ave.corAparencia, ave.corMutacao, ...(ave.mutacoesVisuais || []), ave.corBase]
+        .filter(Boolean).join(" ").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase();
+      // Ino mascara a série parblue; não é possível deduzir a cor-base pela aparência Lutino/Albino.
+      if (texto.includes("ino") || texto.includes("lutino") || texto.includes("albino")) {
+        return ["G/G", "G/T", "G/B", "T/T", "T/B", "B/B"];
+      }
+      if (texto.includes("turquoise blue") || texto.includes("azul turquesa")) return ["T/B"];
+      if (texto.includes("turquoise") || texto.includes("turquesa")) return ["T/T", "T/B"];
+      if (texto.includes("blue") || texto.includes("azul")) return ["B/B"];
+      if (texto.includes("green") || texto.includes("verde")) return ["G/G", "G/T", "G/B"];
+      return [];
+    };
+    const genotiposPossiveisMae = genotiposDaAparencia(maeParaCalculo);
+    const genotiposPossiveisPai = genotiposDaAparencia(paiParaCalculo);
     const cenariosSerieCor = genotipoPai && !genotipoMae
-      ? genotiposPossiveis.map((genotipoMaePossivel) => ({
+      ? genotiposPossiveisMae.map((genotipoMaePossivel) => ({
           genotipoMae: genotipoMaePossivel,
           resultados: cruzarSerieCor(genotipoPai, genotipoMaePossivel.split("/")),
         }))
       : !genotipoPai && genotipoMae
-        ? genotiposPossiveis.map((genotipoPaiPossivel) => ({
+        ? genotiposPossiveisPai.map((genotipoPaiPossivel) => ({
             genotipoPai: genotipoPaiPossivel,
             resultados: cruzarSerieCor(genotipoPaiPossivel.split("/"), genotipoMae),
           }))
