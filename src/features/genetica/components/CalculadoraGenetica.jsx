@@ -57,6 +57,20 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     const genotipoPai = genotipoSerieDaAve(paiParaCalculo);
     const genotipoMae = genotipoSerieDaAve(maeParaCalculo);
     const serieCor = genotipoPai && genotipoMae ? cruzarSerieCor(genotipoPai, genotipoMae) : null;
+    // Quando a série de cor está escondida por Ino (Lutino/Albino), mostrar
+    // cenários condicionais possíveis sem atribuir probabilidades inventadas.
+    const genotiposPossiveis = ["G/G", "G/T", "G/B", "T/T", "T/B", "B/B"];
+    const cenariosSerieCor = genotipoPai && !genotipoMae
+      ? genotiposPossiveis.map((genotipoMaePossivel) => ({
+          genotipoMae: genotipoMaePossivel,
+          resultados: cruzarSerieCor(genotipoPai, genotipoMaePossivel.split("/")),
+        }))
+      : !genotipoPai && genotipoMae
+        ? genotiposPossiveis.map((genotipoPaiPossivel) => ({
+            genotipoPai: genotipoPaiPossivel,
+            resultados: cruzarSerieCor(genotipoPaiPossivel.split("/"), genotipoMae),
+          }))
+        : [];
     const fatores = ["darkFactor", "violetFactor"].map((chave) => {
       const nome = chave === "darkFactor" ? "Dark Factor (Fator escuro)" : "Violet Factor (Fator violeta)";
       const dosePai = dosagemFator(paiParaCalculo.fatoresGeneticos?.[chave]);
@@ -97,7 +111,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       return "não foi informado como portador nem como visual";
     };
 
-    const explicacoes = calc.lociConsiderados.map((nome) => {
+    const explicacoes = [...new Set((calc.lociConsiderados || []).map((nome) => normalizarNome(nome)))].map((nomeNormalizado) => {\n      const nome = (calc.lociConsiderados || []).find((item) => normalizarNome(item) === nomeNormalizado);
       const mutacao = mutacoesRingNeck.find((m) => nomesEquivalentes(m).includes(normalizarNome(nome)));
       if (!mutacao) return "";
       const heranca = mutacao.tipoHeranca || "";
@@ -116,7 +130,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     setResultado({
       tipo: "sucesso",
       cruzamento: `${pai.nome || "Pai"} × ${mae.nome || "Mãe"}`,
-      genotipos: (calc.lociConsiderados || []).join(", "),
+      genotipos: [...new Set(calc.lociConsiderados || [])].join(", "),
       serieCor,
       genotipoPai,
       genotipoMae,
@@ -181,7 +195,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                     ? "__outra__"
                     : manual.corMutacao === "Ino"
                     ? (String(manual.corBase || "").toLowerCase().includes("blue") ? "popular|Albino" : "popular|Lutino")
-                    : manual.corMutacao === "Cremino"
+                    : manual.corAparencia === "Lutino"\n                    ? "popular|Lutino"\n                    : manual.corAparencia === "Albino"\n                      ? "popular|Albino"\n                      : manual.corMutacao === "Cremino"
                       ? "popular|Cremino"
                       : manual.corMutacao
                         ? (extras.some((m) => m.nome === manual.corMutacao) ? manual.corMutacao : "__outra__")
@@ -340,8 +354,17 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
               <p className="text-xs mb-3" style={{ color: "#8a7a63" }}>Genótipos considerados: pai {resultado.genotipoPai.join("/")}; mãe {resultado.genotipoMae.join("/")}</p>
               <div className="space-y-2">{resultado.serieCor.map((item) => <div key={item.genotipo} className="flex justify-between gap-3 text-sm" style={{ color: "#5e5143" }}><span>{item.nome} · {item.genotipo}</span><strong>{item.percentual}%</strong></div>)}</div>
             </div>
+          ) : resultado.cenariosSerieCor?.length ? (
+            <div className="mt-4 rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
+              <div className="font-semibold text-sm mb-1" style={{ color: "#2B241C" }}>Cores possíveis conforme a série escondida</div>
+              <p className="text-xs mb-3" style={{ color: "#8a7a63" }}>O genótipo de um dos pais não foi confirmado. Cada bloco mostra um cenário possível, não uma chance entre os cenários. Só será possível definir o percentual real quando esse genótipo for conhecido.</p>
+              <div className="space-y-3">{resultado.cenariosSerieCor.map((cenario) => <div key={cenario.genotipoMae || cenario.genotipoPai} className="rounded-lg p-3" style={{ background: "#FAF3E6" }}>
+                <div className="text-xs font-semibold mb-2" style={{ color: "#5e5143" }}>Se {cenario.genotipoMae ? "a mãe" : "o pai"} for {cenario.genotipoMae || cenario.genotipoPai}</div>
+                {cenario.resultados.map((item) => <div key={item.genotipo} className="flex justify-between gap-3 text-sm py-1" style={{ color: "#5e5143" }}><span>{item.nome}</span><strong>{item.percentual}%</strong></div>)}
+              </div>)}</div>
+            </div>
           ) : (
-            <div className="mt-4 rounded-xl p-3 text-xs" style={{ background: "#fffaf0", color: "#8a7a63" }}>Série de cor não calculada: falta confirmar o genótipo de um ou dos dois pais. Uma ave verde pode carregar azul ou turquesa; a aparência sozinha não confirma G/G.</div>
+            <div className="mt-4 rounded-xl p-3 text-xs" style={{ background: "#fffaf0", color: "#8a7a63" }}>Não há dados suficientes para calcular a série de cor. Informe o genótipo confirmado de pelo menos um dos pais; a aparência Lutino/Albino pode esconder a cor-base.</div>
           )}
           <div className="mt-3 rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
             <div className="font-semibold text-sm mb-2" style={{ color: "#2B241C" }}>Fatores Dark e Violet</div>
