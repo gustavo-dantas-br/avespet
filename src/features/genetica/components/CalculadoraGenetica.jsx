@@ -217,7 +217,11 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                     ? "__outra__"
                     : manual.corMutacao === "Ino"
                     ? (String(manual.corBase || "").toLowerCase().includes("blue") ? "popular|Albino" : "popular|Lutino")
-                    : manual.corAparencia === "Lutino"\n                    ? "popular|Lutino"\n                    : manual.corAparencia === "Albino"\n                      ? "popular|Albino"\n                      : manual.corMutacao === "Cremino"
+                    : manual.corAparencia === "Lutino"
+                    ? "popular|Lutino"
+                    : manual.corAparencia === "Albino"
+                      ? "popular|Albino"
+                      : manual.corMutacao === "Cremino"
                       ? "popular|Cremino"
                       : manual.corMutacao
                         ? (extras.some((m) => m.nome === manual.corMutacao) ? manual.corMutacao : "__outra__")
