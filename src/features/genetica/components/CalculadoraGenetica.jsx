@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { calcularCruzamentoGenetico } from "../utils/calcularCruzamentoGenetico";
-import { genotipoSerieDaAve, cruzarSerieCor, dosagemFator, cruzarDosagemFator } from "../utils/serieCorRingNeck";
+import { genotipoSerieDaAve, cruzarSerieCor, dosagemFator, cruzarDosagemFator, descricaoGenotipoSerie } from "../utils/serieCorRingNeck";
 
 const campo = {
   border: "1px solid #d8c6a5",
@@ -61,7 +61,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     // cenários condicionais possíveis sem atribuir probabilidades inventadas.
     const genotiposDaAparencia = (ave) => {
       const texto = [ave.corAparencia, ave.corMutacao, ...(ave.mutacoesVisuais || []), ave.corBase]
-        .filter(Boolean).join(" ").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase();
+        .filter(Boolean).join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
       // Ino mascara a série parblue; não é possível deduzir a cor-base pela aparência Lutino/Albino.
       if (texto.includes("ino") || texto.includes("lutino") || texto.includes("albino")) {
         return ["G/G", "G/T", "G/B", "T/T", "T/B", "B/B"];
@@ -91,7 +91,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       const doseMae = dosagemFator(maeParaCalculo.fatoresGeneticos?.[chave]);
       return { nome, resultados: cruzarDosagemFator(dosePai, doseMae, nome), conhecido: dosePai !== null && doseMae !== null };
     });
-    if (calc.semLociRelevantes && !serieCor && !fatores.some((f) => f.conhecido && f.resultados.length)) {
+    if (calc.semLociRelevantes && !serieCor && !cenariosSerieCor.length && !fatores.some((f) => f.conhecido && f.resultados.length)) {
       const detalhes = [
         calc.bloqueadas?.length ? "Ainda estamos validando: " + calc.bloqueadas.join(", ") + "." : "",
         calc.naoDefinidos?.length ? "A regra genética ainda não está pronta para: " + calc.naoDefinidos.join(", ") + "." : "",
@@ -154,6 +154,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       cruzamento: `${pai.nome || "Pai"} × ${mae.nome || "Mãe"}`,
       genotipos: [...new Set(calc.lociConsiderados || [])].join(", "),
       serieCor,
+      cenariosSerieCor,
       genotipoPai,
       genotipoMae,
       fatores,
@@ -305,24 +306,24 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                   <label className="block text-sm font-medium mb-1" style={{ color: "#5e5143" }}>Genótipo da série de cor (se confirmado)</label>
                   <select className="w-full rounded-xl px-3 py-2" style={campo} value={manual.serieCorGenotipo || ""} onChange={(e) => atualizarManual(setManual, "serieCorGenotipo", e.target.value)}>
                     <option value="">Não sei / não confirmado</option>
-                    <option value="G/G">G/G — Verde sem alelo azul/turquesa conhecido</option>
-                    <option value="G/T">G/T — Verde portador de turquesa</option>
-                    <option value="G/B">G/B — Verde portador de azul</option>
-                    <option value="T/T">T/T — Turquesa</option>
-                    <option value="T/B">T/B — Azul turquesa</option>
-                    <option value="B/B">B/B — Azul</option>
+                    <option value="G/G">Verde sem azul ou turquesa conhecido (confirmado)</option>
+                    <option value="G/T">Verde que carrega turquesa</option>
+                    <option value="G/B">Verde que carrega azul</option>
+                    <option value="T/T">Turquesa</option>
+                    <option value="T/B">Azul-turquesa</option>
+                    <option value="B/B">Azul</option>
                   </select>
-                  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Não escolha G/G apenas pela aparência verde. Use o histórico genético ou a descendência conhecida.</p>
+                  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Escolha uma opção somente se houver confirmação por histórico ou descendência. A aparência verde, sozinha, não revela se a ave também carrega azul ou turquesa.</p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <label className="text-sm" style={{ color: "#5e5143" }}>Fator escuro
                     <select className="w-full rounded-xl px-3 py-2 mt-1" style={campo} value={manual.fatoresGeneticos?.darkFactor || ""} onChange={(e) => setManual((v) => ({ ...v, fatoresGeneticos: { ...(v.fatoresGeneticos || {}), darkFactor: e.target.value } }))}>
-                      <option value="">Não sei</option><option value="NONE">Sem fator (confirmado)</option><option value="SF">Simples (SF)</option><option value="DF">Duplo (DF)</option>
+                      <option value="">Não sei</option><option value="NONE">Sem fator (confirmado)</option><option value="SF">Fator simples (uma cópia)</option><option value="DF">Fator duplo (duas cópias)</option>
                     </select>
                   </label>
                   <label className="text-sm" style={{ color: "#5e5143" }}>Fator violeta
                     <select className="w-full rounded-xl px-3 py-2 mt-1" style={campo} value={manual.fatoresGeneticos?.violetFactor || ""} onChange={(e) => setManual((v) => ({ ...v, fatoresGeneticos: { ...(v.fatoresGeneticos || {}), violetFactor: e.target.value } }))}>
-                      <option value="">Não sei</option><option value="SF">Simples (SF)</option><option value="DF">Duplo (DF)</option>
+                      <option value="">Não sei</option><option value="SF">Fator simples (uma cópia)</option><option value="DF">Fator duplo (duas cópias)</option>
                     </select>
                   </label>
                 </div>
@@ -377,15 +378,14 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
           {resultado.serieCor ? (
             <div className="mt-4 rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
               <div className="font-semibold text-sm mb-2" style={{ color: "#2B241C" }}>Série de cor — Ring Neck</div>
-              <p className="text-xs mb-3" style={{ color: "#8a7a63" }}>Genótipos considerados: pai {resultado.genotipoPai.join("/")}; mãe {resultado.genotipoMae.join("/")}</p>
-              <div className="space-y-2">{resultado.serieCor.map((item) => <div key={item.genotipo} className="flex justify-between gap-3 text-sm" style={{ color: "#5e5143" }}><span>{item.nome} · {item.genotipo}</span><strong>{item.percentual}%</strong></div>)}</div>
+              <div className="space-y-2">{resultado.serieCor.map((item) => <div key={item.genotipo} className="flex justify-between gap-3 text-sm" style={{ color: "#5e5143" }}><span>{item.nome}</span><strong>{item.percentual}%</strong></div>)}</div>
             </div>
           ) : resultado.cenariosSerieCor?.length ? (
             <div className="mt-4 rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
               <div className="font-semibold text-sm mb-1" style={{ color: "#2B241C" }}>Cores possíveis conforme a série escondida</div>
               <p className="text-xs mb-3" style={{ color: "#8a7a63" }}>O genótipo de um dos pais não foi confirmado. Cada bloco mostra um cenário possível, não uma chance entre os cenários. Só será possível definir o percentual real quando esse genótipo for conhecido.</p>
               <div className="space-y-3">{resultado.cenariosSerieCor.map((cenario) => <div key={cenario.genotipoMae || cenario.genotipoPai} className="rounded-lg p-3" style={{ background: "#FAF3E6" }}>
-                <div className="text-xs font-semibold mb-2" style={{ color: "#5e5143" }}>Se {cenario.genotipoMae ? "a mãe" : "o pai"} for {cenario.genotipoMae || cenario.genotipoPai}</div>
+                <div className="text-sm font-semibold mb-2" style={{ color: "#5e5143" }}>Se {cenario.genotipoMae ? "a mãe" : "o pai"} tiver: {descricaoGenotipoSerie(cenario.genotipoMae || cenario.genotipoPai)}</div>
                 {cenario.resultados.map((item) => <div key={item.genotipo} className="flex justify-between gap-3 text-sm py-1" style={{ color: "#5e5143" }}><span>{item.nome}</span><strong>{item.percentual}%</strong></div>)}
               </div>)}</div>
             </div>

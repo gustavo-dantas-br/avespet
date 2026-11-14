@@ -23,14 +23,26 @@ export function normalizarGenotipoSerie(genotipo) {
   return alelos.sort((a, b) => ORDEM.indexOf(a) - ORDEM.indexOf(b));
 }
 
+export function descricaoGenotipoSerie(genotipo) {
+  const nomes = {
+    "G/G": "Verde sem azul ou turquesa conhecido",
+    "G/T": "Verde que carrega turquesa",
+    "G/B": "Verde que carrega azul",
+    "T/T": "Turquesa",
+    "T/B": "Azul-turquesa",
+    "B/B": "Azul",
+  };
+  return nomes[genotipo] || "combinação genética não identificada";
+}
+
 export function fenotipoSerieCor(genotipo) {
   const [a, b] = normalizarGenotipoSerie(genotipo);
-  if (a === "G" && b === "G") return { nome: "Green (Verde)", genotipo: "G/G", visual: "Green", portador: null };
-  if (a === "G" && b === "T") return { nome: "Green (Verde) split Turquoise (Turquesa)", genotipo: "G/T", visual: "Green", portador: "Turquoise" };
-  if (a === "G" && b === "B") return { nome: "Green (Verde) split Blue (Azul)", genotipo: "G/B", visual: "Green", portador: "Blue" };
-  if (a === "T" && b === "T") return { nome: "Turquoise (Turquesa)", genotipo: "T/T", visual: "Turquoise", portador: null };
-  if (a === "T" && b === "B") return { nome: "Turquoise Blue (Azul Turquesa)", genotipo: "T/B", visual: "Turquoise Blue", portador: null };
-  return { nome: "Blue (Azul)", genotipo: "B/B", visual: "Blue", portador: null };
+  if (a === "G" && b === "G") return { nome: "Verde", genotipo: "G/G", visual: "Green", portador: null };
+  if (a === "G" && b === "T") return { nome: "Verde portador de turquesa", genotipo: "G/T", visual: "Green", portador: "Turquoise" };
+  if (a === "G" && b === "B") return { nome: "Verde portador de azul", genotipo: "G/B", visual: "Green", portador: "Blue" };
+  if (a === "T" && b === "T") return { nome: "Turquesa", genotipo: "T/T", visual: "Turquoise", portador: null };
+  if (a === "T" && b === "B") return { nome: "Azul-turquesa", genotipo: "T/B", visual: "Turquoise Blue", portador: null };
+  return { nome: "Azul", genotipo: "B/B", visual: "Blue", portador: null };
 }
 
 // Retorna [G,G], [G,T], [G,B], [T,T], [T,B] ou [B,B].
@@ -107,6 +119,6 @@ export function cruzarDosagemFator(dosagemPai, dosagemMae, nome) {
 export const NOTAS_SERIE_COR = [
   "A cor visivel nem sempre revela o genotipo: aves verdes podem carregar alelos azul ou turquesa.",
   "Turquoise Blue e representado aqui pelo heterozigoto T/B.",
-  "A inferencia automatica de verde sem portador informado assume G/G; informe o portador apenas quando confirmado.",
+  "A aparência verde, sem histórico ou descendência, não permite confirmar se a ave carrega azul ou turquesa.",
   "Dark Factor e Violet Factor sao modificadores independentes e seus resultados sao apresentados como fatores, sem prometer uma tonalidade visual especifica.",
 ];
