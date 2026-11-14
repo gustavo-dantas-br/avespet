@@ -88,11 +88,18 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       });
       return;
     }
-    const possibilidades = (calc.resultadoFinal || []).map((r) => ({
-      nome: r.descricao,
-      percentual: `${r.percentual.toFixed(1).replace(/\.0$/, "")}%`,
-      detalhe: r.sexo,
-    }));
+    const possibilidades = (calc.resultadoFinal || []).map((r) => {
+      // O motor retorna percentual sobre todos os filhotes (inclui 50% de cada sexo).
+      // Exibir também a chance dentro do sexo evita confundir 50% total com 100% dos machos.
+      const percentualTotal = r.percentual;
+      const percentualNoSexo = percentualTotal / 50 * 100;
+      const fmt = (n) => `${n.toFixed(1).replace(/\\.0$/, "")}%`;
+      return {
+        nome: r.descricao,
+        percentual: `${fmt(percentualNoSexo)} dos ${r.sexo === "Macho" ? "machos" : "fêmeas"}`,
+        detalhe: `${fmt(percentualTotal)} do total de filhotes`,
+      };
+    });
     const observacoes = [
       "O resultado é uma estimativa genética, não uma garantia do que vai nascer.",
       calc.bloqueadas?.length ? `Não incluídas porque ainda estão em validação: ${calc.bloqueadas.join(", ")}.` : "",
