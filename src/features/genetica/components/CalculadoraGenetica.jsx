@@ -93,7 +93,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       // Exibir também a chance dentro do sexo evita confundir 50% total com 100% dos machos.
       const percentualTotal = r.percentual;
       const percentualNoSexo = percentualTotal / 50 * 100;
-      const fmt = (n) => `${n.toFixed(1).replace(/\\.0$/, "")}%`;
+      const fmt = (n) => `${n.toFixed(1).replace(/\.0$/, "")}%`;
       return {
         nome: r.descricao,
         percentual: `${fmt(percentualNoSexo)} dos ${r.sexo === "Macho" ? "machos" : "fêmeas"}`,
