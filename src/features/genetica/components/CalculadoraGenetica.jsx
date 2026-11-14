@@ -216,12 +216,12 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                 value={
                   manual.aparenciaOutra
                     ? "__outra__"
-                    : manual.corMutacao === "Ino"
-                    ? (String(manual.corBase || "").toLowerCase().includes("blue") ? "popular|Albino" : "popular|Lutino")
                     : manual.corAparencia === "Lutino"
                     ? "popular|Lutino"
                     : manual.corAparencia === "Albino"
                       ? "popular|Albino"
+                      : manual.corMutacao === "Ino"
+                        ? "popular|Lutino"
                       : manual.corMutacao === "Cremino"
                       ? "popular|Cremino"
                       : manual.corMutacao
@@ -240,11 +240,13 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                       aparenciaOutra: false,
                       corLivre: "",
                       corMutacao: popular === "Lutino" || popular === "Albino" ? "Ino" : popular,
-                      corBase: popular === "Lutino" ? "Green (Verde)" : popular === "Albino" ? "Blue (Azul)" : atual.corBase || "",
+                      corAparencia: popular === "Lutino" || popular === "Albino" ? popular : "",
+                      // Ino esconde a série de cor: não presumir Verde para Lutino nem Azul para Albino.
+                      corBase: popular === "Lutino" || popular === "Albino" ? "" : atual.corBase || "",
                     }));
                     setResultado(null);
                   } else if (CORES_BASE.some((c) => c.value === value)) {
-                    setManual((atual) => ({ ...atual, corBase: value, corMutacao: "", corLivre: "", aparenciaOutra: false }));
+                    setManual((atual) => ({ ...atual, corBase: value, corMutacao: "", corAparencia: "", corLivre: "", aparenciaOutra: false }));
                     setResultado(null);
                   } else {
                     setManual((atual) => ({
