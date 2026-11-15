@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - integration/genetica-sobre-producao
+      - feature/agente-genetico-avespet
   pull_request:
     branches:
       - main
