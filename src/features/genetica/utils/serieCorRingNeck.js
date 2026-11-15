@@ -108,8 +108,16 @@ export function dosagemFator(valor) {
 // Azul = sem fator; Cobalto = fator simples; Mauve = fator duplo.
 // Não infere Violet nem tenta deduzir fatores a partir de cores ambíguas.
 export function dosagemFatorDaAve(ave = {}, chave = "darkFactor") {
-  const informada = dosagemFator(ave.fatoresGeneticos?.[chave]);
+  const valorInformado = ave.fatoresGeneticos?.[chave];
+  const informada = dosagemFator(valorInformado);
   if (informada !== null) return informada;
+
+  // Regra de produto aprovada para o Avespet: quando o criador não informa
+  // Violet Factor, considerar SF por padrão. DF só será usado quando escolhido.
+  // NONE continua disponível para representar ausência confirmada.
+  if (chave === "violetFactor" && (valorInformado === undefined || valorInformado === null || valorInformado === "")) {
+    return 1;
+  }
   if (chave !== "darkFactor") return null;
 
   const nomes = [ave.corMutacao, ...(ave.mutacoesVisuais || []), ave.corBase, ave.corAparencia]
