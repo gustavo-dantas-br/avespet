@@ -46,7 +46,7 @@ O motor será a única fonte dos percentuais e combinações calculadas. Deve re
 - Percentuais por filhote e, quando útil, percentuais dentro de cada sexo.
 - Fenótipos previstos.
 - Portadores possíveis.
-- Fatores simples e duplos quando a regra estiver validada.
+- Fatores simples e duplos quando a regra estiver validada. Para o Violet Factor no fluxo Ring Neck, a regra de produto aprovada é assumir SF quando o campo estiver vazio; DF somente quando o criador selecionar DF explicitamente.
 - Dados desconhecidos, cenários condicionais e regras não suportadas.
 - Explicação técnica suficiente para a IA comunicar o resultado sem alterar os números.
 
@@ -110,6 +110,7 @@ A auditoria inicial foi feita na branch `integration/genetica-sobre-producao`, q
 ### Fase 1 — consolidar a base existente
 - [ ] Confirmar a branch e o Preview que serão a referência funcional.
 - [ ] Executar os testes existentes e registrar o resultado.
+- [x] Registrar a regra aprovada do Violet Factor: SF por padrão quando não informado; DF somente quando selecionado explicitamente.
 - [ ] Revisar os casos de referência de Ring Neck.
 - [ ] Corrigir inconsistências do motor antes de conectar IA.
 - [ ] Consolidar testes duplicados sem remover cobertura útil.
