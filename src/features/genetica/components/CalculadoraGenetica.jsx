@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { calcularCruzamentoGenetico } from "../utils/calcularCruzamentoGenetico";
-import { genotipoSerieDaAve, cruzarSerieCor, dosagemFator, cruzarDosagemFator, descricaoGenotipoSerie } from "../utils/serieCorRingNeck";
+import { genotipoSerieDaAve, cruzarSerieCor, dosagemFator, dosagemFatorDaAve, cruzarDosagemFator, descricaoGenotipoSerie } from "../utils/serieCorRingNeck";
 
 const campo = {
   border: "1px solid #d8c6a5",
@@ -87,8 +87,8 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
         : [];
     const fatores = ["darkFactor", "violetFactor"].map((chave) => {
       const nome = chave === "darkFactor" ? "Dark Factor (Fator escuro)" : "Violet Factor (Fator violeta)";
-      const dosePai = dosagemFator(paiParaCalculo.fatoresGeneticos?.[chave]);
-      const doseMae = dosagemFator(maeParaCalculo.fatoresGeneticos?.[chave]);
+      const dosePai = dosagemFatorDaAve(paiParaCalculo, chave);
+      const doseMae = dosagemFatorDaAve(maeParaCalculo, chave);
       return { nome, resultados: cruzarDosagemFator(dosePai, doseMae, nome), conhecido: dosePai !== null && doseMae !== null };
     });
     if (calc.semLociRelevantes && !serieCor && !cenariosSerieCor.length && !fatores.some((f) => f.conhecido && f.resultados.length)) {
@@ -102,6 +102,23 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       });
       return;
     }
+    // Combina a série de cor com o Dark Factor para formar o nome visual
+    // esperado, sem tratar Cobalto como uma mutação autossômica independente.
+    const serieParaFenotipo = serieCor || [];
+    const dark = fatores.find((f) => f.nome.startsWith("Dark Factor"));
+    const nomesFenotipo = (genotipo, dose) => {
+      if (genotipo === "B/B") return dose === 2 ? "Mauve" : dose === 1 ? "Cobalto" : "Azul";
+      if (genotipo === "T/B") return dose === 2 ? "Azul-turquesa com fator escuro duplo" : dose === 1 ? "Azul-turquesa com fator escuro simples" : "Azul-turquesa";
+      if (genotipo === "T/T") return dose === 2 ? "Turquesa com fator escuro duplo" : dose === 1 ? "Turquesa com fator escuro simples" : "Turquesa";
+      return descricaoGenotipoSerie(genotipo);
+    };
+    const fenotiposCombinados = serieParaFenotipo.length && dark?.resultados?.length
+      ? serieParaFenotipo.flatMap((cor) => dark.resultados.map((fator) => ({
+          nome: nomesFenotipo(cor.genotipo, fator.dosagem),
+          percentual: cor.percentual * fator.percentual / 100,
+        }))).filter((item) => item.percentual > 0)
+      : [];
+
     const possibilidades = (calc.resultadoFinal || []).map((r) => {
       // O motor retorna percentual sobre todos os filhotes (inclui 50% de cada sexo).
       // Exibir também a chance dentro do sexo evita confundir 50% total com 100% dos machos.
@@ -154,6 +171,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       cruzamento: `${pai.nome || "Pai"} × ${mae.nome || "Mãe"}`,
       genotipos: [...new Set(calc.lociConsiderados || [])].join(", "),
       serieCor,
+      fenotiposCombinados,
       cenariosSerieCor,
       genotipoPai,
       genotipoMae,
@@ -379,8 +397,12 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
 
           {resultado.serieCor ? (
             <div className="mt-4 rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
-              <div className="font-semibold text-sm mb-2" style={{ color: "#2B241C" }}>Série de cor — Ring Neck</div>
-              <div className="space-y-2">{resultado.serieCor.map((item) => <div key={item.genotipo} className="flex justify-between gap-3 text-sm" style={{ color: "#5e5143" }}><span>{item.nome}</span><strong>{item.percentual}%</strong></div>)}</div>
+              <div className="font-semibold text-sm mb-2" style={{ color: "#2B241C" }}>Possíveis cores dos filhotes — Ring Neck</div>
+              {resultado.fenotiposCombinados?.length ? (
+                <div className="space-y-2">{resultado.fenotiposCombinados.map((item) => <div key={item.nome} className="flex justify-between gap-3 text-sm" style={{ color: "#5e5143" }}><span>{item.nome}</span><strong>{item.percentual}%</strong></div>)}</div>
+              ) : (
+                <div className="space-y-2">{resultado.serieCor.map((item) => <div key={item.genotipo} className="flex justify-between gap-3 text-sm" style={{ color: "#5e5143" }}><span>{item.nome}</span><strong>{item.percentual}%</strong></div>)}</div>
+              )}
             </div>
           ) : resultado.cenariosSerieCor?.length ? (
             <div className="mt-4 rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
