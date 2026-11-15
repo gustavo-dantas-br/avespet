@@ -1,0 +1,44 @@
+name: Avespet - Supabase Keep Alive
+
+on:
+  schedule:
+    # A cada 6 horas, fora do início da hora (UTC).
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-keepalive
+  cancel-in-progress: false
+
+jobs:
+  keepalive:
+    name: Consulta leve e somente leitura no Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Validar configuração
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          test -n "$SUPABASE_URL" || { echo "::error::Configure o secret SUPABASE_URL."; exit 1; }
+          test -n "$SUPABASE_ANON_KEY" || { echo "::error::Configure o secret SUPABASE_ANON_KEY."; exit 1; }
+
+      - name: Consultar um artigo publicado (somente leitura)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          BASE_URL="${SUPABASE_URL%/}"
+          curl --fail --silent --show-error \
+            --retry 3 --retry-delay 5 --max-time 25 \
+            "${BASE_URL}/rest/v1/artigos?select=id&publicado=eq.true&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "Accept: application/json" \
+            -o /dev/null
+          echo "Consulta read-only concluída com sucesso."
