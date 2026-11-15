@@ -87,3 +87,14 @@ test("Violeta SF × Azul mantém a previsão de Violet mesmo com Dark desconheci
     [[0, 50], [1, 50]],
   );
 });
+
+test("Violeta mantém o fator separado e usa a cor-base informada para a série", () => {
+  assert.deepEqual(
+    genotipoSerieDaAve({ corMutacao: "Violeta", corBase: "Blue (Azul)" }),
+    ["B", "B"],
+  );
+  assert.deepEqual(
+    genotipoSerieDaAve({ corMutacao: "Violeta", corBase: "Green (Verde)" }),
+    null,
+  );
+});

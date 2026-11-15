@@ -57,7 +57,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     // Não devem entrar novamente como mutações autossômicas genéricas.
     const mutacoesDoMotor = mutacoesRingNeck.filter((m) => {
       const nome = String(m.nome || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase();
-      return !["azul", "blue", "turquesa", "turquoise", "azul turquesa", "turquoise blue", "cobalto", "cobalt", "mauve", "malva", "dark factor", "violet factor"].includes(nome);
+      return !["azul", "blue", "turquesa", "turquoise", "azul turquesa", "turquoise blue", "cobalto", "cobalt", "mauve", "malva", "violeta", "violet", "dark factor", "violet factor"].includes(nome);
     });
     const calc = calcularCruzamentoGenetico(paiParaCalculo, maeParaCalculo, mutacoesDoMotor);
     const genotipoPai = genotipoSerieDaAve(paiParaCalculo);
@@ -338,6 +338,25 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                 />
               )}
             </div>
+            {manual.corMutacao === "Violeta" && (
+              <div className="rounded-xl p-3 space-y-2" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
+                <label className="block text-sm font-semibold" style={{ color: "#5e5143" }}>
+                  Qual é a cor-base da ave Violeta?
+                </label>
+                <p className="text-xs" style={{ color: "#8a7a63" }}>
+                  O fator violeta modifica a cor, mas não revela sozinho a série genética. Informe a cor-base se souber.
+                </p>
+                <select
+                  className="w-full rounded-xl px-3 py-3"
+                  style={campo}
+                  value={manual.corBase || ""}
+                  onChange={(e) => atualizarManual(setManual, "corBase", e.target.value)}
+                >
+                  <option value="">Não sei informar a cor-base</option>
+                  {CORES_BASE.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </div>
+            )}
             <div className="rounded-xl p-3 text-xs" style={{ background: "#fffaf0", color: "#8a7a63" }}>
               A aparência principal já foi selecionada acima. Para informar outras mutações visíveis, abra “Se souber mais detalhes (opcional)”.
             </div>
