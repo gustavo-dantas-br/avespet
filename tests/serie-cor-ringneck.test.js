@@ -40,8 +40,8 @@ test("informação genética explícita tem prioridade sobre inferência visual"
   }, "darkFactor"), 0);
 });
 
-test("Violet Factor não é presumido pela aparência Cobalto", () => {
-  assert.equal(dosagemFatorDaAve({ corMutacao: "Cobalto" }, "violetFactor"), null);
+test("Cobalto sem indicação de violeta é considerado sem Violet Factor", () => {
+  assert.equal(dosagemFatorDaAve({ corMutacao: "Cobalto" }, "violetFactor"), 0);
 });
 
 test("Violeta sem dosagem informada assume SF; DF explícito é respeitado", () => {
