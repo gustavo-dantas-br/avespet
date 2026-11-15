@@ -176,7 +176,8 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       explicacoes.push("Série de cor: os dois pais foram identificados na série azul. Por isso, os filhotes previstos também pertencem à série azul.");
     }
     if (dark?.resultados?.length) {
-      explicacoes.push("Fator escuro: Cobalto corresponde a uma cópia do fator Dark; Azul sem fator escuro corresponde a zero cópias. A combinação dos dois gera metade dos filhotes sem fator (Azul) e metade com fator simples (Cobalto).");
+      const resumoDark = dark.resultados.map((item) => `${item.percentual}%: ${item.dosagem === 0 ? "sem fator escuro" : item.dosagem === 1 ? "fator escuro simples" : "fator escuro duplo"}`).join("; ");
+      explicacoes.push(`Fator escuro: Cobalto corresponde a uma cópia do fator Dark e Azul sem fator corresponde a zero cópias. Neste cruzamento, as possibilidades são: ${resumoDark}.`);
     }
     setResultado({
       tipo: "sucesso",
