@@ -58,6 +58,10 @@ export function genotipoSerieDaAve(ave = {}) {
   const visuais = [ave.corMutacao, ...(ave.mutacoesVisuais || []), ave.corBase]
     .map(normalizarTexto).filter(Boolean);
   const texto = visuais.join(" ");
+  // Cobalto e Mauve são apresentações da série azul com dosagem Dark:
+  // Cobalto = um fator escuro; Mauve = dois fatores escuros.
+  // A cor-base continua sendo Azul (B/B).
+  if (texto.includes("cobalto") || texto.includes("cobalt") || texto.includes("mauve") || texto.includes("malva")) return ["B", "B"];
   if (texto.includes("turquoise blue") || texto.includes("azul turquesa")) return ["T", "B"];
   if (texto.includes("blue") || texto.includes("azul")) return ["B", "B"];
   if (texto.includes("turquoise") || texto.includes("turquesa")) return ["T", "T"];
@@ -96,6 +100,23 @@ export function dosagemFator(valor) {
   if (valor === "NONE" || valor === "0" || valor === 0) return 0;
   if (valor === "SF" || valor === 1) return 1;
   if (valor === "DF" || valor === 2) return 2;
+  return null;
+}
+
+// Usa a dosagem informada pelo criador quando existe. Quando a aparência
+// identifica inequivocamente um modificador conhecido, pode inferir o Dark:
+// Azul = sem fator; Cobalto = fator simples; Mauve = fator duplo.
+// Não infere Violet nem tenta deduzir fatores a partir de cores ambíguas.
+export function dosagemFatorDaAve(ave = {}, chave = "darkFactor") {
+  const informada = dosagemFator(ave.fatoresGeneticos?.[chave]);
+  if (informada !== null) return informada;
+  if (chave !== "darkFactor") return null;
+
+  const nomes = [ave.corMutacao, ...(ave.mutacoesVisuais || []), ave.corBase, ave.corAparencia]
+    .map(normalizarTexto).filter(Boolean);
+  if (nomes.some((nome) => nome.includes("cobalto") || nome.includes("cobalt"))) return 1;
+  if (nomes.some((nome) => nome.includes("mauve") || nome.includes("malva"))) return 2;
+  if (nomes.some((nome) => nome === "azul" || nome === "blue" || nome === "blue (azul)")) return 0;
   return null;
 }
 
