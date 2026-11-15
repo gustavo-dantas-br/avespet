@@ -113,13 +113,28 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     const serieParaFenotipo = serieCor || [];
     const dark = fatores.find((f) => f.nome.startsWith("Dark Factor"));
     const violet = fatores.find((f) => f.nome.startsWith("Violet Factor"));
-    const fenotiposCombinados = serieParaFenotipo.length && dark?.resultados?.length && violet?.resultados?.length
+    const darkConhecido = Boolean(dark?.resultados?.length);
+    const violetConhecido = Boolean(violet?.resultados?.length);
+    const resultadosDark = darkConhecido ? dark.resultados : [{ dosagem: null, percentual: 100 }];
+    const resultadosViolet = violetConhecido ? violet.resultados : [{ dosagem: null, percentual: 100 }];
+    const fenotiposCombinados = serieParaFenotipo.length
       ? serieParaFenotipo.flatMap((cor) =>
-          dark.resultados.flatMap((fatorDark) =>
-            violet.resultados.map((fatorViolet) => ({
-              nome: nomeFenotipoComFatoresRingNeck(cor.genotipo, fatorDark.dosagem, fatorViolet.dosagem),
-              percentual: cor.percentual * fatorDark.percentual * fatorViolet.percentual / 10000,
-            }))
+          resultadosDark.flatMap((fatorDark) =>
+            resultadosViolet.map((fatorViolet) => {
+              const nomeBase = nomeFenotipoComFatoresRingNeck(
+                cor.genotipo,
+                fatorDark.dosagem,
+                fatorViolet.dosagem
+              );
+              const pendencias = [
+                !darkConhecido ? "Dark não determinado" : "",
+                !violetConhecido ? "Violet não determinado" : "",
+              ].filter(Boolean);
+              return {
+                nome: pendencias.length ? `${nomeBase} (${pendencias.join("; ")})` : nomeBase,
+                percentual: cor.percentual * fatorDark.percentual * fatorViolet.percentual / 10000,
+              };
+            })
           )
         ).filter((item) => item.percentual > 0)
       : [];
@@ -172,7 +187,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       return `${mutacao.nome}: ${motivo} Pai: ${estadoDoGene(paiParaCalculo, mutacao)}; mãe: ${estadoDoGene(maeParaCalculo, mutacao)}.`;
     }).filter(Boolean);
     if (serieCor) {
-      explicacoes.push("Série de cor: os dois pais foram identificados na série azul. Por isso, os filhotes previstos também pertencem à série azul.");
+      explicacoes.push("Série de cor: os percentuais abaixo vêm da combinação dos genótipos informados ou inferidos para pai e mãe. Quando a série de um dos pais não pode ser identificada, o sistema não inventa percentuais para ela.");
     }
     if (dark?.resultados?.length) {
       const resumoDark = dark.resultados.map((item) => `${item.percentual}%: ${item.dosagem === 0 ? "sem fator escuro" : item.dosagem === 1 ? "fator escuro simples" : "fator escuro duplo"}`).join("; ");

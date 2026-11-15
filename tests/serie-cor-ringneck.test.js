@@ -76,3 +76,14 @@ test("Violeta DF x Azul sem Violet transmite 100% Violet SF", () => {
     [[1, 100]],
   );
 });
+
+test("Violeta SF × Azul mantém a previsão de Violet mesmo com Dark desconhecido", () => {
+  const pai = dosagemFatorDaAve({ corMutacao: "Violeta" }, "violetFactor");
+  const mae = dosagemFatorDaAve({ corMutacao: "Azul" }, "violetFactor");
+  assert.equal(pai, 1);
+  assert.equal(mae, 0);
+  assert.deepEqual(
+    cruzarDosagemFator(pai, mae, "Violet Factor").map((r) => [r.dosagem, r.percentual]),
+    [[0, 50], [1, 50]],
+  );
+});
