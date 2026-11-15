@@ -53,7 +53,13 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     }
     const paiParaCalculo = { ...pai, corMutacao: pai.corMutacao || pai.corLivre || "" };
     const maeParaCalculo = { ...mae, corMutacao: mae.corMutacao || mae.corLivre || "" };
-    const calc = calcularCruzamentoGenetico(paiParaCalculo, maeParaCalculo, mutacoesRingNeck);
+    // Série parblue e fatores Dark/Violet são calculados em módulos próprios.
+    // Não devem entrar novamente como mutações autossômicas genéricas.
+    const mutacoesDoMotor = mutacoesRingNeck.filter((m) => {
+      const nome = String(m.nome || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase();
+      return !["azul", "blue", "turquesa", "turquoise", "azul turquesa", "turquoise blue", "cobalto", "cobalt", "mauve", "malva", "dark factor", "violet factor"].includes(nome);
+    });
+    const calc = calcularCruzamentoGenetico(paiParaCalculo, maeParaCalculo, mutacoesDoMotor);
     const genotipoPai = genotipoSerieDaAve(paiParaCalculo);
     const genotipoMae = genotipoSerieDaAve(maeParaCalculo);
     const serieCor = genotipoPai && genotipoMae ? cruzarSerieCor(genotipoPai, genotipoMae) : null;
