@@ -172,10 +172,20 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       }
       return `${mutacao.nome}: ${motivo} Pai: ${estadoDoGene(paiParaCalculo, mutacao)}; mãe: ${estadoDoGene(maeParaCalculo, mutacao)}.`;
     }).filter(Boolean);
+    if (serieCor) {
+      explicacoes.push("Série de cor: os dois pais foram identificados na série azul. Por isso, os filhotes previstos também pertencem à série azul.");
+    }
+    if (dark?.resultados?.length) {
+      explicacoes.push("Fator escuro: Cobalto corresponde a uma cópia do fator Dark; Azul sem fator escuro corresponde a zero cópias. A combinação dos dois gera metade dos filhotes sem fator (Azul) e metade com fator simples (Cobalto).");
+    }
     setResultado({
       tipo: "sucesso",
       cruzamento: `${pai.nome || "Pai"} × ${mae.nome || "Mãe"}`,
-      genotipos: [...new Set(calc.lociConsiderados || [])].join(", "),
+      genotipos: [
+        ...(serieCor ? ["Série de cor azul"] : []),
+        ...(dark?.resultados?.length ? ["Dark Factor"] : []),
+        ...(calc.lociConsiderados || []),
+      ].join(", "),
       serieCor,
       fenotiposCombinados,
       cenariosSerieCor,
