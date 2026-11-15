@@ -40,6 +40,20 @@ test("informação genética explícita tem prioridade sobre inferência visual"
   }, "darkFactor"), 0);
 });
 
-test("Violet Factor não é presumido pela aparência Cobalto", () => {
-  assert.equal(dosagemFatorDaAve({ corMutacao: "Cobalto" }, "violetFactor"), null);
+test("Violet Factor assume SF quando não foi informado, conforme regra do Avespet", () => {
+  assert.equal(dosagemFatorDaAve({ corMutacao: "Cobalto" }, "violetFactor"), 1);
+  assert.equal(dosagemFatorDaAve({ fatoresGeneticos: { violetFactor: "" } }, "violetFactor"), 1);
+  assert.equal(dosagemFatorDaAve({ fatoresGeneticos: { violetFactor: "DF" } }, "violetFactor"), 2);
+  assert.equal(dosagemFatorDaAve({ fatoresGeneticos: { violetFactor: "NONE" } }, "violetFactor"), 0);
+});
+
+test("Violet Factor SF x SF gera 25% sem fator, 50% SF e 25% DF", () => {
+  const pai = dosagemFatorDaAve({}, "violetFactor");
+  const mae = dosagemFatorDaAve({}, "violetFactor");
+  const resultado = cruzarDosagemFator(pai, mae, "Violet Factor");
+  assert.deepEqual(resultado.map((item) => [item.dosagem, item.percentual]), [
+    [0, 25],
+    [1, 50],
+    [2, 25],
+  ]);
 });
