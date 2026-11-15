@@ -106,7 +106,7 @@ export function dosagemFator(valor) {
 // Usa a dosagem informada pelo criador quando existe. Quando a aparência
 // identifica inequivocamente um modificador conhecido, pode inferir o Dark:
 // Azul = sem fator; Cobalto = fator simples; Mauve = fator duplo.
-// Não infere Violet nem tenta deduzir fatores a partir de cores ambíguas.
+// Violet é SF por padrão quando a aparência informa Violeta; DF exige seleção explícita.
 export function dosagemFatorDaAve(ave = {}, chave = "darkFactor") {
   const informada = dosagemFator(ave.fatoresGeneticos?.[chave]);
   if (informada !== null) return informada;
@@ -127,7 +127,8 @@ export function dosagemFatorDaAve(ave = {}, chave = "darkFactor") {
     // Violet é um modificador visual. Quando a cor conhecida não é violeta,
     // consideramos ausência do fator; aparências desconhecidas continuam null.
     const corConhecida = nomes.some((nome) =>
-      /(^|\\b)(green|verde|blue|azul|turquoise|turquesa|cobalto|cobalt|mauve|malva)(\\b|$)/.test(nome)
+      ["green", "verde", "blue", "azul", "turquoise", "turquesa", "cobalto", "cobalt", "mauve", "malva"]
+        .some((termo) => nome.includes(termo))
     );
     return corConhecida ? 0 : null;
   }
