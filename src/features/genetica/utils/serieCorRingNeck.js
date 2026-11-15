@@ -110,10 +110,29 @@ export function dosagemFator(valor) {
 export function dosagemFatorDaAve(ave = {}, chave = "darkFactor") {
   const informada = dosagemFator(ave.fatoresGeneticos?.[chave]);
   if (informada !== null) return informada;
-  if (chave !== "darkFactor") return null;
 
-  const nomes = [ave.corMutacao, ...(ave.mutacoesVisuais || []), ave.corBase, ave.corAparencia]
-    .map(normalizarTexto).filter(Boolean);
+  const nomes = [
+    ave.corMutacao,
+    ...(ave.mutacoesVisuais || []),
+    ave.corBase,
+    ave.corAparencia,
+    ave.corLivre,
+  ].map(normalizarTexto).filter(Boolean);
+
+  if (chave === "violetFactor") {
+    // Regra definida para o AvesPet: uma ave identificada visualmente como
+    // Violeta é SF por padrão. Somente a seleção explícita DF eleva para 2.
+    if (nomes.some((nome) => nome.includes("violet") || nome.includes("violeta"))) return 1;
+
+    // Violet é um modificador visual. Quando a cor conhecida não é violeta,
+    // consideramos ausência do fator; aparências desconhecidas continuam null.
+    const corConhecida = nomes.some((nome) =>
+      /(^|\\b)(green|verde|blue|azul|turquoise|turquesa|cobalto|cobalt|mauve|malva)(\\b|$)/.test(nome)
+    );
+    return corConhecida ? 0 : null;
+  }
+
+  if (chave !== "darkFactor") return null;
   if (nomes.some((nome) => nome.includes("cobalto") || nome.includes("cobalt"))) return 1;
   if (nomes.some((nome) => nome.includes("mauve") || nome.includes("malva"))) return 2;
   if (nomes.some((nome) => nome === "azul" || nome === "blue" || nome === "blue (azul)")) return 0;
@@ -135,6 +154,31 @@ export function cruzarDosagemFator(dosagemPai, dosagemMae, nome) {
     nome: dose === 0 ? `${nome}: sem fator` : `${nome}: ${dose === 1 ? "SF (fator simples)" : "DF (duplo fator)"}`,
     percentual,
   })).sort((a, b) => a.dosagem - b.dosagem);
+}
+
+
+export function nomeFenotipoComFatoresRingNeck(genotipo, doseDark = 0, doseViolet = 0) {
+  const bases = {
+    "G/G": "Verde",
+    "G/T": "Verde portador de turquesa",
+    "G/B": "Verde portador de azul",
+    "T/T": "Turquesa",
+    "T/B": "Azul-turquesa",
+    "B/B": "Azul",
+  };
+  let nome = bases[genotipo] || descricaoGenotipoSerie(genotipo);
+
+  if (genotipo === "B/B") {
+    nome = doseDark === 2 ? "Mauve" : doseDark === 1 ? "Cobalto" : "Azul";
+  } else if (genotipo === "T/B" && doseDark > 0) {
+    nome += doseDark === 2 ? " com fator escuro duplo" : " com fator escuro simples";
+  } else if (genotipo === "T/T" && doseDark > 0) {
+    nome += doseDark === 2 ? " com fator escuro duplo" : " com fator escuro simples";
+  }
+
+  if (doseViolet === 1) nome += "-violeta SF";
+  if (doseViolet === 2) nome += "-violeta DF";
+  return nome;
 }
 
 export const NOTAS_SERIE_COR = [

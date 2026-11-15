@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { calcularCruzamentoGenetico } from "../utils/calcularCruzamentoGenetico";
-import { genotipoSerieDaAve, cruzarSerieCor, dosagemFator, dosagemFatorDaAve, cruzarDosagemFator, descricaoGenotipoSerie } from "../utils/serieCorRingNeck";
+import { genotipoSerieDaAve, cruzarSerieCor, dosagemFatorDaAve, cruzarDosagemFator, nomeFenotipoComFatoresRingNeck, descricaoGenotipoSerie } from "../utils/serieCorRingNeck";
 
 const campo = {
   border: "1px solid #d8c6a5",
@@ -108,21 +108,20 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       });
       return;
     }
-    // Combina a série de cor com o Dark Factor para formar o nome visual
-    // esperado, sem tratar Cobalto como uma mutação autossômica independente.
+    // Combina a série de cor com Dark e Violet. Os dois fatores são
+    // loci independentes e seus percentuais são multiplicados entre si.
     const serieParaFenotipo = serieCor || [];
     const dark = fatores.find((f) => f.nome.startsWith("Dark Factor"));
-    const nomesFenotipo = (genotipo, dose) => {
-      if (genotipo === "B/B") return dose === 2 ? "Mauve" : dose === 1 ? "Cobalto" : "Azul";
-      if (genotipo === "T/B") return dose === 2 ? "Azul-turquesa com fator escuro duplo" : dose === 1 ? "Azul-turquesa com fator escuro simples" : "Azul-turquesa";
-      if (genotipo === "T/T") return dose === 2 ? "Turquesa com fator escuro duplo" : dose === 1 ? "Turquesa com fator escuro simples" : "Turquesa";
-      return descricaoGenotipoSerie(genotipo);
-    };
-    const fenotiposCombinados = serieParaFenotipo.length && dark?.resultados?.length
-      ? serieParaFenotipo.flatMap((cor) => dark.resultados.map((fator) => ({
-          nome: nomesFenotipo(cor.genotipo, fator.dosagem),
-          percentual: cor.percentual * fator.percentual / 100,
-        }))).filter((item) => item.percentual > 0)
+    const violet = fatores.find((f) => f.nome.startsWith("Violet Factor"));
+    const fenotiposCombinados = serieParaFenotipo.length && dark?.resultados?.length && violet?.resultados?.length
+      ? serieParaFenotipo.flatMap((cor) =>
+          dark.resultados.flatMap((fatorDark) =>
+            violet.resultados.map((fatorViolet) => ({
+              nome: nomeFenotipoComFatoresRingNeck(cor.genotipo, fatorDark.dosagem, fatorViolet.dosagem),
+              percentual: cor.percentual * fatorDark.percentual * fatorViolet.percentual / 10000,
+            }))
+          )
+        ).filter((item) => item.percentual > 0)
       : [];
 
     const possibilidades = (calc.resultadoFinal || []).map((r) => {
@@ -177,7 +176,11 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     }
     if (dark?.resultados?.length) {
       const resumoDark = dark.resultados.map((item) => `${item.percentual}%: ${item.dosagem === 0 ? "sem fator escuro" : item.dosagem === 1 ? "fator escuro simples" : "fator escuro duplo"}`).join("; ");
-      explicacoes.push(`Fator escuro: Cobalto corresponde a uma cópia do fator Dark e Azul sem fator corresponde a zero cópias. Neste cruzamento, as possibilidades são: ${resumoDark}.`);
+      explicacoes.push(`Fator escuro: Cobalto corresponde a uma cópia do fator Dark e Mauve a duas cópias na série azul. Neste cruzamento: ${resumoDark}.`);
+    }
+    if (violet?.resultados?.length) {
+      const resumoViolet = violet.resultados.map((item) => `${item.percentual}%: ${item.dosagem === 0 ? "sem fator violeta" : item.dosagem === 1 ? "Violet Factor SF" : "Violet Factor DF"}`).join("; ");
+      explicacoes.push(`Fator violeta: quando a ave está identificada visualmente como Violeta e a dosagem não foi preenchida, o AvesPet considera SF. DF só é considerado quando selecionado explicitamente. Neste cruzamento: ${resumoViolet}.`);
     }
     setResultado({
       tipo: "sucesso",
@@ -185,6 +188,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       genotipos: [
         ...(serieCor ? ["Série de cor azul"] : []),
         ...(dark?.resultados?.length ? ["Dark Factor"] : []),
+        ...(violet?.resultados?.length ? ["Violet Factor"] : []),
         ...(calc.lociConsiderados || []),
       ].join(", "),
       serieCor,
@@ -302,6 +306,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                   <option value="popular|Lutino">Lutino</option>
                   <option value="popular|Albino">Albino</option>
                   <option value="popular|Cremino">Cremino</option>
+                  <option value="Violeta">Violeta</option>
                   {mutacoesRingNeck.filter((m) => m.nome !== "Ino").map((m) => (
                     <option key={m.id || m.nome} value={m.nome}>{m.nome}</option>
                   ))}

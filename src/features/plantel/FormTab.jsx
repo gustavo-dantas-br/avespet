@@ -87,6 +87,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
                   <option value="popular|Lutino">Lutino</option>
                   <option value="popular|Albino">Albino</option>
                   <option value="popular|Cremino">Cremino</option>
+                  <option value="Violeta">Violeta</option>
                   {mutacoes.filter((m) => !["Ino", "Pallid (Palido)"].includes(m.nome)).map((m) => (
                     <option key={m.id || m.nome} value={m.nome}>{m.nome}</option>
                   ))}
