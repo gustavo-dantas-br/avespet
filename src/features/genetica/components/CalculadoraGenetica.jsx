@@ -56,8 +56,14 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     // Série parblue e fatores Dark/Violet são calculados em módulos próprios.
     // Não devem entrar novamente como mutações autossômicas genéricas.
     const mutacoesDoMotor = mutacoesRingNeck.filter((m) => {
-      const nome = String(m.nome || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase();
-      return !["azul", "blue", "turquesa", "turquoise", "azul turquesa", "turquoise blue", "cobalto", "cobalt", "mauve", "malva", "violeta", "violet", "dark factor", "violet factor"].includes(nome);
+      const normalizar = (valor) => String(valor || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim();
+      const nomes = [m.nome, m.nomeAlternativo, m.key, m.chave, m.gene].map(normalizar).filter(Boolean);
+      const fatorOuSerieEspecial = nomes.some((nome) =>
+        /(^|\\b)(azul|blue|turquesa|turquoise|cobalto|cobalt|mauve|malva|violeta|violet)(\\b|$)/.test(nome) ||
+        nome.includes("dark factor") ||
+        nome.includes("violet factor")
+      );
+      return !fatorOuSerieEspecial;
     });
     const calc = calcularCruzamentoGenetico(paiParaCalculo, maeParaCalculo, mutacoesDoMotor);
     const genotipoPai = genotipoSerieDaAve(paiParaCalculo);
@@ -154,7 +160,9 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     const observacoes = [
       "O resultado é uma estimativa genética, não uma garantia do que vai nascer.",
       calc.bloqueadas?.length ? `Não incluídas porque ainda estão em validação: ${calc.bloqueadas.join(", ")}.` : "",
-      calc.naoDefinidos?.length ? `Não calculadas porque a regra ainda está em estudo: ${calc.naoDefinidos.join(", ")}.` : "",
+      calc.naoDefinidos?.filter((nome) => !/violet|violeta|dark factor|fator escuro|fator violeta/i.test(nome)).length
+        ? `Não calculadas porque a regra ainda está em estudo: ${calc.naoDefinidos.filter((nome) => !/violet|violeta|dark factor|fator escuro|fator violeta/i.test(nome)).join(", ")}.`
+        : "",
       calc.naoRegistradas?.length ? `Não encontradas no catálogo: ${calc.naoRegistradas.join(", ")}.` : "",
     ].filter(Boolean);
 
@@ -479,7 +487,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
               {fator.conhecido && fator.resultados.length ? fator.resultados.map((r) => <div key={r.dosagem} className="flex justify-between text-xs mt-1" style={{ color: "#6f6254" }}><span>{r.nome}</span><strong>{r.percentual}%</strong></div>) : <p className="text-xs" style={{ color: "#8a7a63" }}>Não calculado: informe a dosagem dos dois pais, inclusive “sem fator” quando confirmada.</p>}
             </div>)}
           </div>
-          <div className="mt-4 space-y-3">{resultado.possibilidades.length === 0 ? <p className="text-sm" style={{ color: "#6f6254" }}>Não há mutações adicionais com herança validada informadas para este casal. As possibilidades acima mostram apenas a série de cor e os fatores que puderam ser calculados.</p> : resultado.possibilidades.map((item, index) => <div key={`${item.nome}-${item.detalhe}-${index}`} className="flex items-center justify-between rounded-xl px-4 py-3 gap-3" style={{ background: "#f2e8d4", border: "1px solid #dfcba7" }}>
+          <div className="mt-4 space-y-3">{resultado.possibilidades.length === 0 ? <p className="text-sm" style={{ color: "#6f6254" }}>{resultado.serieCor?.length ? "Não há mutações adicionais com herança validada informadas para este casal. As cores e os fatores calculados aparecem nas seções acima." : "Não há mutações adicionais com herança validada informadas para este casal. O fator Violet foi calculado; para prever as cores dos filhotes, informe também a cor-base da ave Violeta."}</p> : resultado.possibilidades.map((item, index) => <div key={`${item.nome}-${item.detalhe}-${index}`} className="flex items-center justify-between rounded-xl px-4 py-3 gap-3" style={{ background: "#f2e8d4", border: "1px solid #dfcba7" }}>
             <div><div className="font-semibold">{item.nome}</div><div className="text-xs mt-1" style={{ color: "#8a7a63" }}>{item.detalhe}</div></div><span className="font-semibold">{item.percentual}</span>
           </div>)}</div>
           <div className="mt-5 rounded-xl p-4" style={{ background: "#f5e9c8", border: "1px solid #dfcba7" }}>
