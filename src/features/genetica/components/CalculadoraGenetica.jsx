@@ -203,7 +203,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     }
     if (violet?.resultados?.length) {
       const resumoViolet = violet.resultados.map((item) => `${item.percentual}%: ${item.dosagem === 0 ? "sem fator violeta" : item.dosagem === 1 ? "Violet Factor SF" : "Violet Factor DF"}`).join("; ");
-      explicacoes.push(`Fator violeta: quando a ave está identificada visualmente como Violeta e a dosagem não foi preenchida, o AvesPet considera SF. DF só é considerado quando selecionado explicitamente. Neste cruzamento: ${resumoViolet}.`);
+      explicacoes.push(`Fator violeta: a aparência Violeta confirma a presença do fator, mas não permite distinguir sozinha SF de DF. Sem dosagem confirmada, o cálculo fica pendente; não presumimos uma dose. Neste cruzamento: ${resumoViolet}.`);
     }
     setResultado({
       tipo: "sucesso",
@@ -460,7 +460,8 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
 
           {resultado.fenotiposCombinados?.length ? (
             <div className="mt-4 rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
-              <div className="font-semibold text-base mb-3" style={{ color: "#2B241C" }}>Probabilidade de cada tipo de filhote</div>
+              <div className="font-semibold text-base mb-1" style={{ color: "#2B241C" }}>Probabilidade de cada tipo de filhote</div>
+              <p className="text-xs mb-3" style={{ color: "#8a7a63" }}>As cores da série e os fatores Dark/Violet não são ligados ao sexo: cada possibilidade pode nascer macho ou fêmea. Os percentuais abaixo representam a chance no total da ninhada.</p>
               <div className="space-y-3">{resultado.fenotiposCombinados.map((item) => <div key={item.nome} className="flex items-center justify-between gap-3 text-sm" style={{ color: "#5e5143" }}><span className="font-medium">{item.nome}</span><strong className="text-lg">{item.percentual}%</strong></div>)}</div>
             </div>
           ) : resultado.fatores.some((f) => f.nome.startsWith("Violet") && f.conhecido && f.resultados.length) ? (
