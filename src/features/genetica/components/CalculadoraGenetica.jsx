@@ -114,8 +114,8 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       });
       return;
     }
-    // Combina a série de cor com Dark e Violet. Os dois fatores são
-    // loci independentes e seus percentuais são multiplicados entre si.
+    // Combina série e fatores apenas quando não há ligação genética conhecida
+    // que torne a multiplicação simples de percentuais inadequada.
     const serieParaFenotipo = serieCor || [];
     const dark = fatores.find((f) => f.nome.startsWith("Dark Factor"));
     const violet = fatores.find((f) => f.nome.startsWith("Violet Factor"));
@@ -125,7 +125,8 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     const resultadosViolet = violetConhecido ? violet.resultados : [{ dosagem: null, percentual: 100 }];
     // Dark e azul/parblue apresentam ligação física no mesmo cromossomo.
     // Sem fase/haplótipo dos pais, não multiplicar esses percentuais como loci independentes.
-    const combinacaoDarkSeriePendente = darkConhecido && serieParaFenotipo.length > 0;
+    const darkSegregando = darkConhecido && dark.resultados.some((item) => item.dosagem > 0);
+    const combinacaoDarkSeriePendente = darkSegregando && serieParaFenotipo.length > 0;
     const fenotiposCombinados = serieParaFenotipo.length && !combinacaoDarkSeriePendente
       ? serieParaFenotipo.flatMap((cor) =>
           resultadosDark.flatMap((fatorDark) =>
