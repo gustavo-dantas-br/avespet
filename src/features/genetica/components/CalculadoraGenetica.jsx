@@ -114,9 +114,26 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       return /violeta|violet/.test(texto) && !genotipoSerieDaAve(ave);
     });
     if (cruzamentoVioletaSemBase && !serieCor) {
+      const violetaPai = /violeta|violet/i.test([paiParaCalculo.corMutacao, paiParaCalculo.corAparencia, paiParaCalculo.corLivre].filter(Boolean).join(" "));
+      const aveVioleta = violetaPai ? paiParaCalculo : maeParaCalculo;
+      const outraAve = violetaPai ? maeParaCalculo : paiParaCalculo;
+      const outraSerie = genotipoSerieDaAve(outraAve);
+      const cenarios = outraSerie
+        ? ["G/G", "G/T", "G/B", "T/T", "T/B", "B/B"].map((genotipo) => ({
+            genotipo,
+            resultados: violetaPai
+              ? cruzarSerieCor(genotipo.split("/"), outraSerie)
+              : cruzarSerieCor(outraSerie, genotipo.split("/")),
+          }))
+        : [];
       setResultado({
-        tipo: "erro",
-        mensagem: "O pai ou a mãe foi informado como Violeta, mas sua série de cor ainda é desconhecida. O fator Violeta pode aparecer em machos e fêmeas; porém não é seguro calcular as cores dos filhotes nem as porcentagens sem identificar a cor-base e, para o fator Violeta, a dosagem SF/DF. Abra 'Se souber mais detalhes (opcional)' para informar esses dados. Se não souber, o resultado permanece indeterminado — não significa que os filhotes serão apenas portadores de Azul.",
+        tipo: "condicional",
+        cruzamento: `${pai.nome || "Pai"} × ${mae.nome || "Mãe"}`,
+        cenarios,
+        violetaPai,
+        fatorVioleta: dosagemFatorDaAve(aveVioleta, "violetFactor"),
+        fatorOutro: dosagemFatorDaAve(outraAve, "violetFactor"),
+        serieOutraConhecida: Boolean(outraSerie),
       });
       return;
     }
@@ -475,6 +492,40 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
           <div style={{ color: "#A6402B" }}>
             <div className="font-semibold mb-1">Ainda não é possível calcular esse casal.</div>
             <p className="text-sm">{resultado.mensagem}</p>
+          </div>
+        ) : resultado.tipo === "condicional" ? (
+          <div className="space-y-4" style={{ color: "#2B241C" }}>
+            <div className="text-xs font-semibold" style={{ color: "#8a7a63" }}>CENÁRIOS POSSÍVEIS — NÃO SÃO UMA PREVISÃO DEFINITIVA</div>
+            <div className="text-xl font-semibold">{resultado.cruzamento}</div>
+            <div className="rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
+              <div className="font-semibold mb-2">O que sabemos</div>
+              <p className="text-sm">Uma das aves apresenta fator Violeta, mas sua série de cor não foi informada. O fator Violeta não é ligado ao sexo: machos e fêmeas podem herdá-lo. A aparência Violeta, sozinha, não confirma se o fator é SF ou DF.</p>
+              <p className="text-sm mt-2">Não vamos presumir que a ave Violeta seja Azul, nem afirmar que os filhotes serão portadores de Azul.</p>
+            </div>
+            {resultado.cenarios.length ? (
+              <details className="rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
+                <summary className="cursor-pointer font-semibold">Explorar possibilidades conforme a cor-base desconhecida</summary>
+                <p className="text-xs mt-3 mb-3" style={{ color: "#8a7a63" }}>Cada cenário supõe um genótipo diferente para a ave Violeta. Os percentuais abaixo são condicionais à hipótese escolhida e se referem apenas à série de cor, sem os fatores Dark/Violet ou outras mutações. Não são as probabilidades definitivas do casal.</p>
+                <div className="space-y-3">
+                  {resultado.cenarios.map((cenario) => (
+                    <div key={cenario.genotipo} className="rounded-lg p-3" style={{ background: "#f2e8d4" }}>
+                      <div className="font-semibold text-sm mb-1">Se a ave Violeta tiver série {descricaoGenotipoSerie(cenario.genotipo)}</div>
+                      {cenario.resultados.map((item) => (
+                        <div key={item.genotipo} className="flex justify-between gap-2 text-sm py-1">
+                          <span>{item.nome}</span><strong>{item.percentual}%</strong>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            ) : <p className="text-sm">A série de cor da outra ave também não foi confirmada. Informe a cor-base de pelo menos uma delas para explorar cenários.</p>}
+            <div className="rounded-xl p-4" style={{ background: "#f5e9c8", border: "1px solid #dfcba7" }}>
+              <div className="font-semibold mb-2">Entenda o resultado</div>
+              <p className="text-sm">A cor que vemos nem sempre mostra todos os genes que a ave possui. Por isso, os cenários acima mostram o que mudaria se a série genética da ave Violeta fosse conhecida.</p>
+              <p className="text-sm mt-2">Para calcular o fator Violeta, informe se a ave é SF ou DF e, quando conhecido, se a outra ave tem esse fator. Sem essas informações, não há porcentagem confiável para filhotes violetas.</p>
+              <p className="text-sm mt-2">Cada cor possível pode ocorrer em machos e fêmeas. Os resultados são estimativas genéticas, não garantias de uma ninhada.</p>
+            </div>
           </div>
         ) : <>
           <div className="text-xs font-semibold mb-2" style={{ color: "#8a7a63" }}>POSSIBILIDADES TEÓRICAS</div>
