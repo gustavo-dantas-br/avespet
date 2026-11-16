@@ -34,6 +34,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
   const [paiManual, setPaiManual] = useState(novaAve("Pai"));
   const [maeManual, setMaeManual] = useState(novaAve("Mãe"));
   const [resultado, setResultado] = useState(null);
+  const [cenarioSelecionado, setCenarioSelecionado] = useState("");
 
   const machos = useMemo(() => aves.filter((a) => a.sexo === "Macho"), [aves]);
   const femeas = useMemo(() => aves.filter((a) => a.sexo === "Femea"), [aves]);
@@ -47,6 +48,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
   }
 
   function calcular() {
+    setCenarioSelecionado("");
     if (!pai || !mae || (modoPai === "cadastro" && !paiId) || (modoMae === "cadastro" && !maeId)) {
       setResultado({ tipo: "erro", mensagem: "Escolha uma ave para o pai e outra para a mãe." });
       return;
@@ -134,6 +136,10 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
         fatorVioleta: dosagemFatorDaAve(aveVioleta, "violetFactor"),
         fatorOutro: dosagemFatorDaAve(outraAve, "violetFactor"),
         serieOutraConhecida: Boolean(outraSerie),
+        outraSerieAzul: outraSerie?.every((alelo) => alelo === "B") || false,
+        coresPossiveis: [...new Set(cenarios.flatMap((cenario) =>
+          cenario.resultados.map((item) => item.nome)
+        ))],
       });
       return;
     }
@@ -495,36 +501,76 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
           </div>
         ) : resultado.tipo === "condicional" ? (
           <div className="space-y-4" style={{ color: "#2B241C" }}>
-            <div className="text-xs font-semibold" style={{ color: "#8a7a63" }}>CENÁRIOS POSSÍVEIS — NÃO SÃO UMA PREVISÃO DEFINITIVA</div>
+            <div className="text-xs font-semibold" style={{ color: "#8a7a63" }}>PREVISÃO PARCIAL — DADOS A CONFIRMAR</div>
             <div className="text-xl font-semibold">{resultado.cruzamento}</div>
-            <div className="rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
-              <div className="font-semibold mb-2">O que sabemos</div>
-              <p className="text-sm">Uma das aves apresenta fator Violeta, mas sua série de cor não foi informada. O fator Violeta não é ligado ao sexo: machos e fêmeas podem herdá-lo. A aparência Violeta, sozinha, não confirma se o fator é SF ou DF.</p>
-              <p className="text-sm mt-2">Não vamos presumir que a ave Violeta seja Azul, nem afirmar que os filhotes serão portadores de Azul.</p>
+            <div className="rounded-xl p-4 space-y-2" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
+              <div className="font-semibold">O que já podemos dizer?</div>
+              <p className="text-sm">Uma das aves apresenta o fator Violeta, mas sua cor-base ainda não foi confirmada. Não é possível dar porcentagens definitivas das cores dos filhotes.</p>
+              {resultado.outraSerieAzul && (
+                <p className="text-sm">Como a outra ave é Azul, ela transmite o alelo Azul aos filhotes. Dependendo dos genes da ave Violeta, podem nascer aves da série <strong>Azul, Azul-turquesa ou Verde portador de Azul</strong>.</p>
+              )}
+              {!resultado.outraSerieAzul && resultado.coresPossiveis.length > 0 && (
+                <p className="text-sm">Considerando apenas a série de cor, os cenários abaixo incluem estas possibilidades: <strong>{resultado.coresPossiveis.join(", ")}</strong>.</p>
+              )}
+              <p className="text-sm"><strong>Machos e fêmeas:</strong> todas essas possibilidades de série de cor podem ocorrer nos dois sexos. Ter o fator Violeta também não depende do sexo.</p>
+            </div>
+            <div className="rounded-xl p-4 space-y-2" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
+              <div className="font-semibold">E o fator Violeta?</div>
+              {resultado.fatorVioleta === null && resultado.fatorOutro === 0 ? (
+                <>
+                  <p className="text-sm">A ave Violeta pode ter uma cópia do fator (SF) ou duas (DF). Como a outra ave está informada sem o fator:</p>
+                  <p className="text-sm">• <strong>Se for SF:</strong> 50% dos filhotes herdam o fator Violeta.</p>
+                  <p className="text-sm">• <strong>Se for DF:</strong> 100% dos filhotes herdam o fator Violeta (SF).</p>
+                  <p className="text-xs" style={{ color: "#8a7a63" }}>Estas são hipóteses de herança do fator, não percentuais das cores visíveis.</p>
+                </>
+              ) : resultado.fatorVioleta !== null && resultado.fatorOutro !== null ? (
+                <>
+                  {cruzarDosagemFator(resultado.fatorVioleta, resultado.fatorOutro, "Violet Factor").map((item) => (
+                    <div key={item.dosagem} className="flex justify-between gap-2 text-sm">
+                      <span>{item.nome}</span><strong>{item.percentual}%</strong>
+                    </div>
+                  ))}
+                  <p className="text-xs" style={{ color: "#8a7a63" }}>Percentuais apenas do fator Violeta, sem prever o fenótipo completo.</p>
+                </>
+              ) : (
+                <p className="text-sm">A aparência Violeta não confirma SF ou DF. Para dar percentuais, precisamos da dosagem de ambos os pais ou de dados de descendência.</p>
+              )}
             </div>
             {resultado.cenarios.length ? (
               <details className="rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
-                <summary className="cursor-pointer font-semibold">Explorar possibilidades conforme a cor-base desconhecida</summary>
-                <p className="text-xs mt-3 mb-3" style={{ color: "#8a7a63" }}>Cada cenário supõe um genótipo diferente para a ave Violeta. Os percentuais abaixo são condicionais à hipótese escolhida e se referem apenas à série de cor, sem os fatores Dark/Violet ou outras mutações. Não são as probabilidades definitivas do casal.</p>
-                <div className="space-y-3">
+                <summary className="cursor-pointer font-semibold">Simular uma cor-base para a ave Violeta (opcional)</summary>
+                <p className="text-xs mt-3 mb-2" style={{ color: "#8a7a63" }}>Escolha apenas uma hipótese. O Avespet não considera nenhuma delas confirmada, nem atribui a todas a mesma chance.</p>
+                <select
+                  aria-label="Hipótese genética da ave Violeta"
+                  className="w-full rounded-xl px-3 py-3"
+                  style={campo}
+                  value={cenarioSelecionado}
+                  onChange={(e) => setCenarioSelecionado(e.target.value)}
+                >
+                  <option value="">Escolher uma hipótese para simular</option>
                   {resultado.cenarios.map((cenario) => (
-                    <div key={cenario.genotipo} className="rounded-lg p-3" style={{ background: "#f2e8d4" }}>
-                      <div className="font-semibold text-sm mb-1">Se a ave Violeta tiver série {descricaoGenotipoSerie(cenario.genotipo)}</div>
-                      {cenario.resultados.map((item) => (
-                        <div key={item.genotipo} className="flex justify-between gap-2 text-sm py-1">
-                          <span>{item.nome}</span><strong>{item.percentual}%</strong>
-                        </div>
-                      ))}
-                    </div>
+                    <option key={cenario.genotipo} value={cenario.genotipo}>{descricaoGenotipoSerie(cenario.genotipo)} ({cenario.genotipo})</option>
                   ))}
-                </div>
+                </select>
+                {resultado.cenarios.filter((cenario) => cenario.genotipo === cenarioSelecionado).map((cenario) => (
+                  <div key={cenario.genotipo} className="rounded-lg p-3 mt-3 space-y-2" style={{ background: "#f2e8d4" }}>
+                    <div className="font-semibold text-sm">Se a ave Violeta tiver este genótipo:</div>
+                    {cenario.resultados.map((item) => (
+                      <div key={item.genotipo} className="flex justify-between gap-2 text-sm">
+                        <span>{item.nome}</span><strong>{item.percentual}%</strong>
+                      </div>
+                    ))}
+                    <p className="text-xs" style={{ color: "#6f6254" }}>Percentuais somente da série de cor nesta hipótese, sem incluir Dark, Violeta nem outras mutações. Não são porcentagens finais do cruzamento.</p>
+                  </div>
+                ))}
               </details>
-            ) : <p className="text-sm">A série de cor da outra ave também não foi confirmada. Informe a cor-base de pelo menos uma delas para explorar cenários.</p>}
-            <div className="rounded-xl p-4" style={{ background: "#f5e9c8", border: "1px solid #dfcba7" }}>
-              <div className="font-semibold mb-2">Entenda o resultado</div>
-              <p className="text-sm">A cor que vemos nem sempre mostra todos os genes que a ave possui. Por isso, os cenários acima mostram o que mudaria se a série genética da ave Violeta fosse conhecida.</p>
-              <p className="text-sm mt-2">Para calcular o fator Violeta, informe se a ave é SF ou DF e, quando conhecido, se a outra ave tem esse fator. Sem essas informações, não há porcentagem confiável para filhotes violetas.</p>
-              <p className="text-sm mt-2">Cada cor possível pode ocorrer em machos e fêmeas. Os resultados são estimativas genéticas, não garantias de uma ninhada.</p>
+            ) : (
+              <p className="text-sm">A série de cor da outra ave também não foi confirmada. Informe uma cor-base para explorar hipóteses.</p>
+            )}
+            <div className="rounded-xl p-4 space-y-2" style={{ background: "#f5e9c8", border: "1px solid #dfcba7" }}>
+              <div className="font-semibold">Entenda o resultado</div>
+              <p className="text-sm">A cor que vemos não mostra todos os genes de uma ave. Os percentuais só ficam completos quando sabemos quais variantes cada pai pode transmitir.</p>
+              <p className="text-sm">Você não precisa adivinhar: se não souber a cor-base ou SF/DF, pode deixar em branco. As hipóteses acima servem para aprender, e não para garantir o nascimento de uma cor.</p>
             </div>
           </div>
         ) : <>
