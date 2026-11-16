@@ -304,7 +304,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
               {femeaOptions.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
             </select>
           </Field>
-          <Field label="Mae (se nao estiver no sistema)"><input style={inputStyle} value={form.maeExterno} onChange={set("maeExterno")} placeholder="ex: emprestada do Anderson" /></Field>
+          <Field label="Mae (se nao estiver no sistema)"><input style={inputStyle} value={form.maeExterno} onChange={set("maeExterno")} placeholder="ex: emprestada de um amigo" /></Field>
           <Field label="Parceiro(a) / casal">
             <select style={inputStyle} value={form.parceiroId} onChange={set("parceiroId")}>
               <option value="">-- nenhum --</option>
