@@ -56,14 +56,17 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     // Série parblue e fatores Dark/Violet são calculados em módulos próprios.
     // Não devem entrar novamente como mutações autossômicas genéricas.
     const mutacoesDoMotor = mutacoesRingNeck.filter((m) => {
-      const normalizar = (valor) => String(valor || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim();
-      const nomes = [m.nome, m.nomeAlternativo, m.key, m.chave, m.gene].map(normalizar).filter(Boolean);
-      const fatorOuSerieEspecial = nomes.some((nome) =>
-        /(^|\\b)(azul|blue|turquesa|turquoise|cobalto|cobalt|mauve|malva|violeta|violet)(\\b|$)/.test(nome) ||
-        nome.includes("dark factor") ||
-        nome.includes("violet factor")
+      // Série de cor e fatores são calculados exclusivamente pelo módulo
+      // Ring Neck, nunca como mutações genéricas (inclusive registros duplicados).
+      const normalizar = (valor) => String(valor || "")
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+      const nomes = [m.nome, m.nomeAlternativo, m.key, m.chave, m.gene]
+        .map(normalizar).filter(Boolean);
+      const especial = nomes.some((nome) =>
+        /(?:^|[^a-z])(azul|blue|turquesa|turquoise|cobalto|cobalt|mauve|malva|violeta|violet)(?:$|[^a-z])/.test(nome) ||
+        nome.includes("dark factor") || nome.includes("violet factor")
       );
-      return !fatorOuSerieEspecial;
+      return !especial;
     });
     const calc = calcularCruzamentoGenetico(paiParaCalculo, maeParaCalculo, mutacoesDoMotor);
     const genotipoPai = genotipoSerieDaAve(paiParaCalculo);
@@ -103,6 +106,20 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       const doseMae = dosagemFatorDaAve(maeParaCalculo, chave);
       return { nome, resultados: cruzarDosagemFator(dosePai, doseMae, nome), conhecido: dosePai !== null && doseMae !== null };
     });
+    // Não apresentar apenas portadores ou 100% de cada sexo como resultado
+    // completo quando a série de cor dos pais ainda é desconhecida.
+    const cruzamentoVioletaSemBase = [paiParaCalculo, maeParaCalculo].some((ave) => {
+      const texto = [ave.corMutacao, ave.corAparencia, ave.corLivre]
+        .filter(Boolean).join(" ").toLowerCase();
+      return /violeta|violet/.test(texto) && !genotipoSerieDaAve(ave);
+    });
+    if (cruzamentoVioletaSemBase && !serieCor) {
+      setResultado({
+        tipo: "erro",
+        mensagem: "O pai ou a mãe foi informado como Violeta, mas sua série de cor ainda é desconhecida. O fator Violeta pode aparecer em machos e fêmeas; porém não é seguro calcular as cores dos filhotes nem as porcentagens sem identificar a cor-base e, para o fator Violeta, a dosagem SF/DF. Abra 'Se souber mais detalhes (opcional)' para informar esses dados. Se não souber, o resultado permanece indeterminado — não significa que os filhotes serão apenas portadores de Azul.",
+      });
+      return;
+    }
     if (calc.semLociRelevantes && !serieCor && !cenariosSerieCor.length && !fatores.some((f) => f.conhecido && f.resultados.length)) {
       const detalhes = [
         calc.bloqueadas?.length ? "Ainda estamos validando: " + calc.bloqueadas.join(", ") + "." : "",
