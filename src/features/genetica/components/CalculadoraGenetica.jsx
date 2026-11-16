@@ -457,7 +457,19 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
         ) : <>
           <div className="text-xs font-semibold mb-2" style={{ color: "#8a7a63" }}>POSSIBILIDADES TEÓRICAS</div>
           <div className="text-xl font-semibold" style={{ color: "#2B241C" }}>{resultado.cruzamento}</div>
-          <div className="mt-2 text-sm" style={{ color: "#8a7a63" }}>Características consideradas: {resultado.genotipos || "—"}</div>
+
+          {resultado.fenotiposCombinados?.length ? (
+            <div className="mt-4 rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
+              <div className="font-semibold text-base mb-3" style={{ color: "#2B241C" }}>Probabilidade de cada tipo de filhote</div>
+              <div className="space-y-3">{resultado.fenotiposCombinados.map((item) => <div key={item.nome} className="flex items-center justify-between gap-3 text-sm" style={{ color: "#5e5143" }}><span className="font-medium">{item.nome}</span><strong className="text-lg">{item.percentual}%</strong></div>)}</div>
+            </div>
+          ) : resultado.fatores.some((f) => f.nome.startsWith("Violet") && f.conhecido && f.resultados.length) ? (
+            <div className="mt-4 rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
+              <div className="font-semibold text-base mb-2" style={{ color: "#2B241C" }}>Probabilidade genética já calculável</div>
+              <p className="text-xs mb-3" style={{ color: "#8a7a63" }}>O fator Violet pode ser calculado, mas a cor-base do macho Violeta ainda não foi confirmada. Por isso, estes percentuais não devem ser apresentados como cores finais dos filhotes.</p>
+              {resultado.fatores.find((f) => f.nome.startsWith("Violet"))?.resultados.map((r) => <div key={r.dosagem} className="flex justify-between gap-3 py-1 text-sm" style={{ color: "#5e5143" }}><span>{r.dosagem === 0 ? "Sem fator Violet" : r.dosagem === 1 ? "Violet SF" : "Violet DF"}</span><strong>{r.percentual}%</strong></div>)}
+            </div>
+          ) : null}
 
           {resultado.serieCor ? (
             <div className="mt-4 rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
@@ -480,13 +492,17 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
           ) : (
             <div className="mt-4 rounded-xl p-3 text-xs" style={{ background: "#fffaf0", color: "#8a7a63" }}>Não há dados suficientes para calcular a série de cor. Informe o genótipo confirmado de pelo menos um dos pais; a aparência Lutino/Albino pode esconder a cor-base.</div>
           )}
-          <div className="mt-3 rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
-            <div className="font-semibold text-sm mb-2" style={{ color: "#2B241C" }}>Fatores Dark e Violet</div>
+          <details className="mt-3 rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
+            <summary className="cursor-pointer font-semibold text-sm" style={{ color: "#2B241C" }}>Ver detalhes dos fatores Dark e Violet</summary>
             {resultado.fatores.map((fator) => <div key={fator.nome} className="mb-2">
               <div className="text-sm font-medium" style={{ color: "#5e5143" }}>{fator.nome}</div>
               {fator.conhecido && fator.resultados.length ? fator.resultados.map((r) => <div key={r.dosagem} className="flex justify-between text-xs mt-1" style={{ color: "#6f6254" }}><span>{r.nome}</span><strong>{r.percentual}%</strong></div>) : <p className="text-xs" style={{ color: "#8a7a63" }}>Não calculado: informe a dosagem dos dois pais, inclusive “sem fator” quando confirmada.</p>}
             </div>)}
-          </div>
+          </details>
+          <details className="mt-3 rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
+            <summary className="cursor-pointer font-semibold text-sm" style={{ color: "#2B241C" }}>Ver características genéticas consideradas</summary>
+            <p className="mt-2 text-xs" style={{ color: "#8a7a63" }}>{resultado.genotipos || "Nenhuma característica adicional informada."}</p>
+          </details>
           <div className="mt-4 space-y-3">{resultado.possibilidades.length === 0 ? <p className="text-sm" style={{ color: "#6f6254" }}>{resultado.serieCor?.length ? "Não há mutações adicionais com herança validada informadas para este casal. As cores e os fatores calculados aparecem nas seções acima." : "Não há mutações adicionais com herança validada informadas para este casal. O fator Violet foi calculado; para prever as cores dos filhotes, informe também a cor-base da ave Violeta."}</p> : resultado.possibilidades.map((item, index) => <div key={`${item.nome}-${item.detalhe}-${index}`} className="flex items-center justify-between rounded-xl px-4 py-3 gap-3" style={{ background: "#f2e8d4", border: "1px solid #dfcba7" }}>
             <div><div className="font-semibold">{item.nome}</div><div className="text-xs mt-1" style={{ color: "#8a7a63" }}>{item.detalhe}</div></div><span className="font-semibold">{item.percentual}</span>
           </div>)}</div>
