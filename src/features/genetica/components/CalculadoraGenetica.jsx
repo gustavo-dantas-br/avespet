@@ -123,7 +123,10 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     const violetConhecido = Boolean(violet?.resultados?.length);
     const resultadosDark = darkConhecido ? dark.resultados : [{ dosagem: null, percentual: 100 }];
     const resultadosViolet = violetConhecido ? violet.resultados : [{ dosagem: null, percentual: 100 }];
-    const fenotiposCombinados = serieParaFenotipo.length
+    // Dark e azul/parblue apresentam ligação física no mesmo cromossomo.
+    // Sem fase/haplótipo dos pais, não multiplicar esses percentuais como loci independentes.
+    const combinacaoDarkSeriePendente = darkConhecido && serieParaFenotipo.length > 0;
+    const fenotiposCombinados = serieParaFenotipo.length && !combinacaoDarkSeriePendente
       ? serieParaFenotipo.flatMap((cor) =>
           resultadosDark.flatMap((fatorDark) =>
             resultadosViolet.map((fatorViolet) => {
@@ -216,6 +219,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       ].join(", "),
       serieCor,
       fenotiposCombinados,
+      combinacaoDarkSeriePendente,
       cenariosSerieCor,
       genotipoPai,
       genotipoMae,
@@ -463,6 +467,13 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
               <div className="font-semibold text-base mb-1" style={{ color: "#2B241C" }}>Probabilidade de cada tipo de filhote</div>
               <p className="text-xs mb-3" style={{ color: "#8a7a63" }}>As cores da série e os fatores Dark/Violet não são ligados ao sexo: cada possibilidade pode nascer macho ou fêmea. Os percentuais abaixo representam a chance no total da ninhada.</p>
               <div className="space-y-3">{resultado.fenotiposCombinados.map((item) => <div key={item.nome} className="flex items-center justify-between gap-3 text-sm" style={{ color: "#5e5143" }}><span className="font-medium">{item.nome}</span><strong className="text-lg">{item.percentual}%</strong></div>)}</div>
+            </div>
+          ) : resultado.combinacaoDarkSeriePendente ? (
+            <div className="mt-4 rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
+              <div className="font-semibold text-base mb-2" style={{ color: "#2B241C" }}>Resultados calculados separadamente</div>
+              <p className="text-xs mb-3" style={{ color: "#8a7a63" }}>A série de cor e o fator Dark foram calculados separadamente. Não exibimos uma porcentagem combinada porque esses genes têm ligação física e o cálculo correto depende da fase genética dos pais.</p>
+              {resultado.serieCor.map((r) => <div key={r.genotipo} className="flex justify-between gap-3 py-1 text-sm" style={{ color: "#5e5143" }}><span>{r.nome} ({r.genotipo})</span><strong>{r.percentual}%</strong></div>)}
+              {resultado.fatores.find((f) => f.nome.startsWith("Dark"))?.resultados.map((r) => <div key={r.dosagem} className="flex justify-between gap-3 py-1 text-sm" style={{ color: "#5e5143" }}><span>{r.nome}</span><strong>{r.percentual}%</strong></div>)}
             </div>
           ) : resultado.fatores.some((f) => f.nome.startsWith("Violet") && f.conhecido && f.resultados.length) ? (
             <div className="mt-4 rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
