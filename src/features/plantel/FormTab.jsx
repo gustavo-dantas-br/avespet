@@ -87,6 +87,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
                   <option value="popular|Lutino">Lutino</option>
                   <option value="popular|Albino">Albino</option>
                   <option value="popular|Cremino">Cremino</option>
+                  <option value="Violeta">Violeta</option>
                   {mutacoes.filter((m) => !["Ino", "Pallid (Palido)"].includes(m.nome)).map((m) => (
                     <option key={m.id || m.nome} value={m.nome}>{m.nome}</option>
                   ))}
@@ -120,9 +121,21 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
                     <option value="Turquoise Blue (Azul Turquesa)">Azul turquesa</option>
                   </select>
                 </Field>
+                <Field label="Genótipo da série de cor (se confirmado)">
+                  <select style={inputStyle} value={form.serieCorGenotipo || ""} onChange={set("serieCorGenotipo")}>
+                    <option value="">Não informado / não confirmado</option>
+                    <option value="G/G">G/G — Verde</option>
+                    <option value="G/T">G/T — Verde split Turquoise (Turquesa)</option>
+                    <option value="G/B">G/B — Verde split Blue (Azul)</option>
+                    <option value="T/T">T/T — Turquoise (Turquesa)</option>
+                    <option value="T/B">T/B — Turquoise Blue (Azul Turquesa)</option>
+                    <option value="B/B">B/B — Blue (Azul)</option>
+                  </select>
+                  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Não presuma G/G pela aparência verde. Informe apenas com histórico ou descendência confirmada.</p>
+                </Field>
                 <Field label="Fator escuro (opcional)">
                   <select style={inputStyle} value={form.fatoresGeneticos?.darkFactor || ""} onChange={(e) => setForm((f) => ({ ...f, fatoresGeneticos: { ...(f.fatoresGeneticos || {}), darkFactor: e.target.value } }))}>
-                    <option value="">Não informado</option><option value="SF">Simples (SF)</option><option value="DF">Duplo (DF)</option>
+                    <option value="">Não informado</option><option value="NONE">Sem fator (confirmado)</option><option value="SF">Simples (SF)</option><option value="DF">Duplo (DF)</option>
                   </select>
                   <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Modifica a intensidade da cor.</p>
                 </Field>
@@ -291,7 +304,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
               {femeaOptions.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
             </select>
           </Field>
-          <Field label="Mae (se nao estiver no sistema)"><input style={inputStyle} value={form.maeExterno} onChange={set("maeExterno")} placeholder="ex: emprestada do Anderson" /></Field>
+          <Field label="Mae (se nao estiver no sistema)"><input style={inputStyle} value={form.maeExterno} onChange={set("maeExterno")} placeholder="ex: emprestada de um amigo" /></Field>
           <Field label="Parceiro(a) / casal">
             <select style={inputStyle} value={form.parceiroId} onChange={set("parceiroId")}>
               <option value="">-- nenhum --</option>

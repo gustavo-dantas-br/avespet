@@ -31,7 +31,7 @@ test("G/T x B/B produz 50% G/B e 50% T/B", () => {
   assert.deepEqual(resultado.map((r) => [r.genotipo, r.percentual]), [["G/B", 50], ["T/B", 50]]);
 });
 
-import { genotipoSerieDaAve, dosagemFator, cruzarDosagemFator } from "../src/features/genetica/utils/serieCorRingNeck.js";
+import { genotipoSerieDaAve, dosagemFator, cruzarDosagemFator, dosagemFatorDaAve } from "../src/features/genetica/utils/serieCorRingNeck.js";
 
 test("nao presume genotipo verde quando portadores nao foram informados", () => {
   assert.equal(genotipoSerieDaAve({ corBase: "Green (Verde)", portadores: [] }), null);
@@ -50,4 +50,20 @@ test("cruza fatores escuros/violetas por dosagem mendeliana", () => {
   assert.deepEqual(cruzarDosagemFator(1, 1, "Dark Factor").map((r) => [r.dosagem, r.percentual]), [[0, 25], [1, 50], [2, 25]]);
   assert.deepEqual(cruzarDosagemFator(2, 0, "Violet Factor").map((r) => [r.dosagem, r.percentual]), [[1, 100]]);
   assert.deepEqual(cruzarDosagemFator(null, 0, "Dark Factor"), []);
+});
+
+test("não presume SF ou DF apenas pela aparência Violeta", () => {
+  assert.equal(dosagemFatorDaAve({ corMutacao: "Violeta" }, "violetFactor"), null);
+  assert.equal(dosagemFatorDaAve({ corMutacao: "Violeta", fatoresGeneticos: { violetFactor: "SF" } }, "violetFactor"), 1);
+  assert.equal(dosagemFatorDaAve({ corMutacao: "Violeta", fatoresGeneticos: { violetFactor: "DF" } }, "violetFactor"), 2);
+});
+
+test("todas as combinações válidas da série de cor somam 100%", () => {
+  const genotipos = [["G","G"], ["G","T"], ["G","B"], ["T","T"], ["T","B"], ["B","B"]];
+  for (const pai of genotipos) {
+    for (const mae of genotipos) {
+      const resultado = cruzarSerieCor(pai, mae);
+      assert.equal(resultado.reduce((total, item) => total + item.percentual, 0), 100);
+    }
+  }
 });
