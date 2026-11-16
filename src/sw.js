@@ -1,5 +1,13 @@
-import { precacheAndRoute } from "workbox-precaching";
+import { clientsClaim } from "workbox-core";
+import {
+  cleanupOutdatedCaches,
+  precacheAndRoute,
+} from "workbox-precaching";
 
+// Ativa a nova versão e remove caches de versões antigas do Workbox.
+self.skipWaiting();
+clientsClaim();
+cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST || []);
 
 self.addEventListener("push", (event) => {

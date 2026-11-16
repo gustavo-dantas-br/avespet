@@ -1,0 +1,190 @@
+// Modelo do locus parblue e dos modificadores de dosagem em Ring Neck.
+// G = verde, T = turquesa, B = azul. O fenotipo segue a hierarquia G > T > B.
+// A inferencia a partir da cor visual so e feita quando nao ha genotipo explicito.
+
+export const ALELOS_SERIE_COR = Object.freeze({
+  GREEN: "G",
+  TURQUOISE: "T",
+  BLUE: "B",
+});
+
+const ORDEM = ["G", "T", "B"];
+const normalizarTexto = (valor) => String(valor || "")
+  .normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+
+export function normalizarGenotipoSerie(genotipo) {
+  if (!Array.isArray(genotipo) || genotipo.length !== 2) {
+    throw new Error("Informe dois alelos para o locus da serie de cor.");
+  }
+  const alelos = genotipo.map((alelo) => String(alelo).toUpperCase());
+  if (alelos.some((alelo) => !ORDEM.includes(alelo))) {
+    throw new Error("Alelo invalido. Use G, T ou B.");
+  }
+  return alelos.sort((a, b) => ORDEM.indexOf(a) - ORDEM.indexOf(b));
+}
+
+export function descricaoGenotipoSerie(genotipo) {
+  const nomes = {
+    "G/G": "Verde sem azul ou turquesa conhecido",
+    "G/T": "Verde que carrega turquesa",
+    "G/B": "Verde que carrega azul",
+    "T/T": "Turquesa",
+    "T/B": "Azul-turquesa",
+    "B/B": "Azul",
+  };
+  return nomes[genotipo] || "combinação genética não identificada";
+}
+
+export function fenotipoSerieCor(genotipo) {
+  const [a, b] = normalizarGenotipoSerie(genotipo);
+  if (a === "G" && b === "G") return { nome: "Verde", genotipo: "G/G", visual: "Green", portador: null };
+  if (a === "G" && b === "T") return { nome: "Verde portador de turquesa", genotipo: "G/T", visual: "Green", portador: "Turquoise" };
+  if (a === "G" && b === "B") return { nome: "Verde portador de azul", genotipo: "G/B", visual: "Green", portador: "Blue" };
+  if (a === "T" && b === "T") return { nome: "Turquesa", genotipo: "T/T", visual: "Turquoise", portador: null };
+  if (a === "T" && b === "B") return { nome: "Azul-turquesa", genotipo: "T/B", visual: "Turquoise Blue", portador: null };
+  return { nome: "Azul", genotipo: "B/B", visual: "Blue", portador: null };
+}
+
+// Retorna [G,G], [G,T], [G,B], [T,T], [T,B] ou [B,B].
+// Para aves verdes, o campo portadores deve identificar apenas um alelo parblue.
+// Quando a informacao nao e suficiente, retorna null em vez de presumir G/G.
+export function genotipoSerieDaAve(ave = {}) {
+  const explicito = ave.serieCorGenotipo;
+  if (Array.isArray(explicito)) return normalizarGenotipoSerie(explicito);
+  if (typeof explicito === "string" && explicito.includes("/")) {
+    return normalizarGenotipoSerie(explicito.split("/"));
+  }
+
+  const visuais = [ave.corMutacao, ...(ave.mutacoesVisuais || []), ave.corBase]
+    .map(normalizarTexto).filter(Boolean);
+  const texto = visuais.join(" ");
+  // Cobalto e Mauve são apresentações da série azul com dosagem Dark:
+  // Cobalto = um fator escuro; Mauve = dois fatores escuros.
+  // A cor-base continua sendo Azul (B/B).
+  if (texto.includes("cobalto") || texto.includes("cobalt") || texto.includes("mauve") || texto.includes("malva")) return ["B", "B"];
+  if (texto.includes("turquoise blue") || texto.includes("azul turquesa")) return ["T", "B"];
+  if (texto.includes("blue") || texto.includes("azul")) return ["B", "B"];
+  if (texto.includes("turquoise") || texto.includes("turquesa")) return ["T", "T"];
+
+  if (texto.includes("green") || texto.includes("verde")) {
+    const portadores = (ave.portadores || []).map(normalizarTexto);
+    const carregaT = portadores.some((p) => p === "turquoise" || p === "turquesa");
+    const carregaB = portadores.some((p) => p === "blue" || p === "azul");
+    if (carregaT && carregaB) return null;
+    if (carregaT) return ["G", "T"];
+    if (carregaB) return ["G", "B"];
+    return null;
+  }
+  return null;
+}
+
+export function cruzarSerieCor(genotipoPai, genotipoMae) {
+  const pai = normalizarGenotipoSerie(genotipoPai);
+  const mae = normalizarGenotipoSerie(genotipoMae);
+  const resultados = new Map();
+  for (const aleloPai of pai) {
+    for (const aleloMae of mae) {
+      const fenotipo = fenotipoSerieCor([aleloPai, aleloMae]);
+      const atual = resultados.get(fenotipo.genotipo) || { ...fenotipo, probabilidade: 0 };
+      atual.probabilidade += 25;
+      resultados.set(fenotipo.genotipo, atual);
+    }
+  }
+  return [...resultados.values()]
+    .map(({ probabilidade, ...fenotipo }) => ({ ...fenotipo, percentual: probabilidade }))
+    .sort((a, b) => b.percentual - a.percentual || a.genotipo.localeCompare(b.genotipo));
+}
+
+// NONE representa ausencia confirmada; campo vazio significa informacao desconhecida.
+export function dosagemFator(valor) {
+  if (valor === "NONE" || valor === "0" || valor === 0) return 0;
+  if (valor === "SF" || valor === 1) return 1;
+  if (valor === "DF" || valor === 2) return 2;
+  return null;
+}
+
+// Usa a dosagem informada pelo criador quando existe. Quando a aparência
+// identifica inequivocamente um modificador conhecido, pode inferir o Dark:
+// Azul = sem fator; Cobalto = fator simples; Mauve = fator duplo.
+// A aparência Violeta sozinha não distingue com segurança SF de DF.
+export function dosagemFatorDaAve(ave = {}, chave = "darkFactor") {
+  const informada = dosagemFator(ave.fatoresGeneticos?.[chave]);
+  if (informada !== null) return informada;
+
+  const nomes = [
+    ave.corMutacao,
+    ...(ave.mutacoesVisuais || []),
+    ave.corBase,
+    ave.corAparencia,
+    ave.corLivre,
+  ].map(normalizarTexto).filter(Boolean);
+
+  if (chave === "violetFactor") {
+    // A aparência Violeta confirma a presença do fator, mas não determina
+    // sozinha se a ave é SF ou DF. Sem dosagem/pedigree, manter desconhecido.
+    if (nomes.some((nome) => nome.includes("violet") || nome.includes("violeta"))) return null;
+
+    // Para outras cores conhecidas, a ausência visual do fator é considerada
+    // somente quando a cor foi informada de forma explícita.
+    const corConhecida = nomes.some((nome) =>
+      ["green", "verde", "blue", "azul", "turquoise", "turquesa", "cobalto", "cobalt", "mauve", "malva"]
+        .some((termo) => nome.includes(termo))
+    );
+    return corConhecida ? 0 : null;
+  }
+
+  if (chave !== "darkFactor") return null;
+  if (nomes.some((nome) => nome.includes("cobalto") || nome.includes("cobalt"))) return 1;
+  if (nomes.some((nome) => nome.includes("mauve") || nome.includes("malva"))) return 2;
+  if (nomes.some((nome) => nome === "azul" || nome === "blue" || nome === "blue (azul)")) return 0;
+  return null;
+}
+
+export function cruzarDosagemFator(dosagemPai, dosagemMae, nome) {
+  if (![0, 1, 2].includes(dosagemPai) || ![0, 1, 2].includes(dosagemMae)) return [];
+  const gametas = (dose) => dose === 0 ? [0, 0] : dose === 1 ? [0, 1] : [1, 1];
+  const resultados = new Map();
+  for (const a of gametas(dosagemPai)) {
+    for (const b of gametas(dosagemMae)) {
+      const dose = a + b;
+      resultados.set(dose, (resultados.get(dose) || 0) + 25);
+    }
+  }
+  return [...resultados.entries()].map(([dose, percentual]) => ({
+    dosagem: dose,
+    nome: dose === 0 ? `${nome}: sem fator` : `${nome}: ${dose === 1 ? "SF (fator simples)" : "DF (duplo fator)"}`,
+    percentual,
+  })).sort((a, b) => a.dosagem - b.dosagem);
+}
+
+
+export function nomeFenotipoComFatoresRingNeck(genotipo, doseDark = 0, doseViolet = 0) {
+  const bases = {
+    "G/G": "Verde",
+    "G/T": "Verde portador de turquesa",
+    "G/B": "Verde portador de azul",
+    "T/T": "Turquesa",
+    "T/B": "Azul-turquesa",
+    "B/B": "Azul",
+  };
+  let nome = bases[genotipo] || descricaoGenotipoSerie(genotipo);
+
+  if (genotipo === "B/B") {
+    nome = doseDark === 2 ? "Mauve" : doseDark === 1 ? "Cobalto" : "Azul";
+  } else if (genotipo === "T/B" && doseDark > 0) {
+    nome += doseDark === 2 ? " com fator escuro duplo" : " com fator escuro simples";
+  } else if (genotipo === "T/T" && doseDark > 0) {
+    nome += doseDark === 2 ? " com fator escuro duplo" : " com fator escuro simples";
+  }
+
+  if (doseViolet === 1) nome += "-violeta SF";
+  if (doseViolet === 2) nome += "-violeta DF";
+  return nome;
+}
+
+export const NOTAS_SERIE_COR = [
+  "A cor visivel nem sempre revela o genotipo: aves verdes podem carregar alelos azul ou turquesa.",
+  "Turquoise Blue e representado aqui pelo heterozigoto T/B.",
+  "A aparência verde, sem histórico ou descendência, não permite confirmar se a ave carrega azul ou turquesa.",
+  "Dark Factor e Violet Factor sao modificadores independentes e seus resultados sao apresentados como fatores, sem prometer uma tonalidade visual especifica.",
+];

@@ -6,7 +6,12 @@ function emptyAve() {
     nome: "",
     especie: "Ring Neck",
     sexo: "Indefinido",
+    // Campos genéticos opcionais, mantendo compatibilidade com cadastros antigos.
+    corBase: "",
+    serieCorGenotipo: "",
     corMutacao: "",
+    mutacoesVisuais: [],
+    fatoresGeneticos: { darkFactor: "", violetFactor: "" },
     portadores: [],
     pesos: [],
     corAnilha: "",
@@ -66,6 +71,13 @@ function emptyMutacao() {
     combinaCom: "",
     comoIdentificar: "",
     observacoes: "",
+    categoria: "mutacao",
+    especie: "Ring Neck",
+    statusValidacao: "em_validacao",
+    calculadoraAtiva: false,
+    permitePortador: true,
+    descricaoIniciante: "",
+    grupoAlelico: "",
   };
 }
 
@@ -100,7 +112,7 @@ function emptyAnuncio() {
 }
 
 function emptyPerfilCriador() {
-  return { nomeCriatorio: "", nome: "", sobrenome: "", nomeCompleto: "", cidade: "", uf: "", whatsapp: "", email: "" };
+  return { nomeCriatorio: "", nome: "", sobrenome: "", nomeCompleto: "", cidade: "", uf: "", whatsapp: "", email: "", logoUrl: "" };
 }
 
 function emptyPerfilPrivado() {

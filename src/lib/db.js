@@ -33,8 +33,8 @@ export async function getPerfil(userId) {
 }
 
 export async function savePerfil(userId, perfilData) {
-  const { nomeCriatorio = "", nome = "", sobrenome = "", nomeCompleto = "", whatsapp = "", cidade = "", uf = "" } = perfilData || {};
-  const dataPublica = { nomeCriatorio, nome, sobrenome, nomeCompleto, whatsapp, cidade, uf };
+  const { nomeCriatorio = "", nome = "", sobrenome = "", nomeCompleto = "", whatsapp = "", cidade = "", uf = "", logoUrl = "" } = perfilData || {};
+  const dataPublica = { nomeCriatorio, nome, sobrenome, nomeCompleto, whatsapp, cidade, uf, logoUrl };
   const { error } = await supabase.from("perfil_criador").upsert({
     user_id: userId,
     data: dataPublica,
