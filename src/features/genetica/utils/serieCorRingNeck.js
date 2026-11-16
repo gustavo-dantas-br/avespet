@@ -106,7 +106,7 @@ export function dosagemFator(valor) {
 // Usa a dosagem informada pelo criador quando existe. Quando a aparência
 // identifica inequivocamente um modificador conhecido, pode inferir o Dark:
 // Azul = sem fator; Cobalto = fator simples; Mauve = fator duplo.
-// Violet é SF por padrão quando a aparência informa Violeta; DF exige seleção explícita.
+// A aparência Violeta sozinha não distingue com segurança SF de DF.
 export function dosagemFatorDaAve(ave = {}, chave = "darkFactor") {
   const informada = dosagemFator(ave.fatoresGeneticos?.[chave]);
   if (informada !== null) return informada;
@@ -120,12 +120,12 @@ export function dosagemFatorDaAve(ave = {}, chave = "darkFactor") {
   ].map(normalizarTexto).filter(Boolean);
 
   if (chave === "violetFactor") {
-    // Regra definida para o AvesPet: uma ave identificada visualmente como
-    // Violeta é SF por padrão. Somente a seleção explícita DF eleva para 2.
-    if (nomes.some((nome) => nome.includes("violet") || nome.includes("violeta"))) return 1;
+    // A aparência Violeta confirma a presença do fator, mas não determina
+    // sozinha se a ave é SF ou DF. Sem dosagem/pedigree, manter desconhecido.
+    if (nomes.some((nome) => nome.includes("violet") || nome.includes("violeta"))) return null;
 
-    // Violet é um modificador visual. Quando a cor conhecida não é violeta,
-    // consideramos ausência do fator; aparências desconhecidas continuam null.
+    // Para outras cores conhecidas, a ausência visual do fator é considerada
+    // somente quando a cor foi informada de forma explícita.
     const corConhecida = nomes.some((nome) =>
       ["green", "verde", "blue", "azul", "turquoise", "turquesa", "cobalto", "cobalt", "mauve", "malva"]
         .some((termo) => nome.includes(termo))
