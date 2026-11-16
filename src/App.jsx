@@ -127,7 +127,8 @@ function AppInner({ user, onLogout }) {
   const canvasRef = useRef(null);
 
   const loadAves = useCallback(async () => {
-    setLoading(true);
+    // Os dados continuam visíveis enquanto são sincronizados. O estado
+    // loading=true já cobre somente o carregamento inicial do componente.
     setError("");
     try {
       const items = await listRows("aves", user.id);
@@ -210,7 +211,13 @@ function AppInner({ user, onLogout }) {
     }
   }, [user.id]);
 
-    const loadPerfil = useCallback(async () => {
+  // Depender de valores primitivos evita recriar o callback quando o Supabase
+  // devolve um novo objeto user_metadata ao confirmar uma sessão existente.
+  const metadataNome = user.user_metadata?.nome || "";
+  const metadataSobrenome = user.user_metadata?.sobrenome || "";
+  const metadataTelefone = user.user_metadata?.telefone || user.user_metadata?.whatsapp || "";
+
+  const loadPerfil = useCallback(async () => {
     try {
       const [p, privado] = await Promise.all([getPerfil(user.id), getPerfilPrivado(user.id)]);
       setPerfilPrivado({ ...emptyPerfilPrivado(), ...privado });
@@ -220,10 +227,9 @@ function AppInner({ user, onLogout }) {
       }
 
       // Dados do cadastro ficam no Auth metadata ate o primeiro acesso.
-      const metadata = user.user_metadata || {};
-      const nome = (metadata.nome || "").trim();
-      const sobrenome = (metadata.sobrenome || "").trim();
-      const telefone = (metadata.telefone || metadata.whatsapp || "").trim();
+      const nome = metadataNome.trim();
+      const sobrenome = metadataSobrenome.trim();
+      const telefone = metadataTelefone.trim();
       if (nome || sobrenome || telefone) {
         const perfilInicial = {
           ...emptyPerfilCriador(),
@@ -239,7 +245,7 @@ function AppInner({ user, onLogout }) {
     } catch {
       // Mantem o cadastro funcional mesmo se a tabela de perfil estiver indisponivel.
     }
-  }, [user.id, user.user_metadata]);
+  }, [user.id, metadataNome, metadataSobrenome, metadataTelefone]);
 
   const loadAdminStatus = useCallback(async () => {
     try {
@@ -291,11 +297,15 @@ function AppInner({ user, onLogout }) {
     loadFornecedores();
     loadIndicacoes();
     loadAnuncios();
-    loadPerfil();
     loadAdminStatus();
     loadPerdidas();
     loadPosturas();
-  }, [loadAves, loadDespesas, loadReservasFinanceiro, loadMutacoes, loadClientes, loadFornecedores, loadIndicacoes, loadAnuncios, loadPerfil, loadAdminStatus, loadPerdidas, loadPosturas]);
+  }, [loadAves, loadDespesas, loadReservasFinanceiro, loadMutacoes, loadClientes, loadFornecedores, loadIndicacoes, loadAnuncios, loadAdminStatus, loadPerdidas, loadPosturas]);
+
+  // Atualizar dados do perfil não deve recarregar o plantel nem o financeiro.
+  useEffect(() => {
+    loadPerfil();
+  }, [loadPerfil]);
 
   function startNew() {
     setForm(emptyAve());
@@ -1321,12 +1331,29 @@ export default function App() {
   const caminho = usePath();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    let ativo = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (ativo) setSession((atual) => atual === undefined ? data.session : atual);
+    }).catch(() => {
+      if (ativo) setSession((atual) => atual === undefined ? null : atual);
+    });
     const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
-      setSession(newSession);
+      // SIGNED_IN pode ser emitido ao retornar para a aba; TOKEN_REFRESHED
+      // renova os tokens internamente no Supabase. Nenhum desses eventos deve
+      // reinicializar os cadastros quando o usuário continua sendo o mesmo.
+      setSession((atual) => {
+        if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") &&
+            atual?.user?.id && atual.user.id === newSession?.user?.id) {
+          return atual;
+        }
+        return newSession;
+      });
       if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
     });
-    return () => listener.subscription.unsubscribe();
+    return () => {
+      ativo = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   // Confere no banco a exigência de troca de senha; não depende do app_metadata possivelmente antigo da sessão.
@@ -1474,6 +1501,7 @@ if (!isMasterRoute) {
   return (
     <>
       <AppInner
+        key={session.user.id}
         user={session.user}
         onLogout={() => supabase.auth.signOut()}
       />
