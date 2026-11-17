@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { atualizarMeuAnuncioPerdida, criarAnuncioPerdida, listarMinhasAvesPerdidas } from "../services/avesPerdidasService";
 import { comprimirEEnviarImagemPublica } from "../utils/comprimirImagem";
 import { supabase } from "../../../supabaseClient";
+import { guardarCadastroPendente, lerCadastroPendente } from "../services/cadastroPendenteAvePerdida";
 
 const input = { width: "100%", padding: "12px", borderRadius: 8, border: "1px solid #e3d3b4", background: "#fff", color: "#2B241C" };
 const STATUS = {
@@ -25,6 +26,10 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
   const [mensagem, setMensagem] = useState("");
   const [anuncioCriadoId, setAnuncioCriadoId] = useState("");
   const [erro, setErro] = useState("");
+  const [contaEmail, setContaEmail] = useState("");
+  const [contaSenha, setContaSenha] = useState("");
+  const [modoConta, setModoConta] = useState("cadastro");
+  const [aguardandoConfirmacao, setAguardandoConfirmacao] = useState(false);
   const alterar = (campo, valor) => setForm((atual) => ({ ...atual, [campo]: valor }));
 
   useEffect(() => {
@@ -49,6 +54,12 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
   }, [userId]);
 
   useEffect(() => { if (userId !== undefined) carregarAnuncios(); }, [carregarAnuncios, userId]);
+  useEffect(() => {
+    if (!userId) return;
+    const atualizar = () => carregarAnuncios();
+    window.addEventListener("avespet:anuncio-perdida-criado", atualizar);
+    return () => window.removeEventListener("avespet:anuncio-perdida-criado", atualizar);
+  }, [userId, carregarAnuncios]);
 
   function iniciarEdicao(anuncio) {
     const dados = anuncio.data || {};
@@ -82,6 +93,53 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
     }
     setEnviando(true);
     try {
+      if (!userId) {
+        // O anúncio só será enviado quando existir uma conta autenticada.
+        // Guarda o rascunho temporário sem armazenar a senha.
+        const email = contaEmail.trim().toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          throw new Error("Informe um e-mail válido para acompanhar o anúncio.");
+        }
+        if (contaSenha.length < 8) {
+          throw new Error("Informe uma senha com pelo menos 8 caracteres.");
+        }
+        const anterior = lerCadastroPendente();
+        const novoId = anterior?.email === email ? anterior.anuncio.id : globalThis.crypto.randomUUID();
+        guardarCadastroPendente(email, { ...form, id: novoId, criadoEm: new Date().toISOString() });
+        if (modoConta === "entrar") {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email, password: contaSenha
+          });
+          if (signInError) throw new Error("Não foi possível entrar. Confira e-mail e senha ou recupere a senha no login.");
+          setMensagem("Conta identificada. Estamos vinculando o anúncio ao seu perfil.");
+        } else {
+          const nomeCompleto = form.contatoNome.trim();
+          const partes = nomeCompleto.split(/\s+/);
+          const nome = partes.shift() || nomeCompleto;
+          const sobrenome = partes.join(" ");
+          const { data, error: signupError } = await supabase.auth.signUp({
+            email,
+            password: contaSenha,
+            options: {
+              emailRedirectTo: window.location.origin + "/",
+              data: {
+                nome, sobrenome, nomeCompleto,
+                telefone: form.whatsapp.trim(),
+                whatsapp: form.whatsapp.trim(),
+              },
+            },
+          });
+          if (signupError) throw signupError;
+          if (data?.session) {
+            setMensagem("Conta criada. Estamos enviando seu anúncio para análise.");
+          } else {
+            setAguardandoConfirmacao(true);
+            setMensagem("Conta solicitada! Confira seu e-mail, confirme o cadastro e entre na sua conta neste navegador. O anúncio será enviado após entrar.");
+          }
+        }
+        setContaSenha("");
+        return;
+      }
       if (edicaoId) {
         await atualizarMeuAnuncioPerdida(userId, edicaoId, { ...form, id: edicaoId });
         setAnuncioCriadoId("");
@@ -121,7 +179,7 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
 
   return <section ref={formularioRef} className="ui-sans max-w-3xl">
     <h1 className="mb-2" style={{ color: "#F1E6D2", fontFamily: "'Fraunces',serif", fontSize: 28, fontWeight: 700 }}>{edicaoId ? "Editar anúncio de ave perdida" : "Cadastrar ave perdida"}</h1>
-    <p className="mb-6" style={{ color: "#b09a78" }}>{edicaoId ? "Atualize a foto e os dados da sua ave. Após salvar, o anúncio será reenviado para análise do Avespet." : "Você pode enviar um novo cadastro sem criar uma conta. Para editar um anúncio já publicado, entre na conta utilizada no cadastro e acesse Meus anúncios abaixo."}</p>
+    <p className="mb-6" style={{ color: "#b09a78" }}>{edicaoId ? "Atualize a foto e os dados da sua ave. Após salvar, o anúncio será reenviado para análise do Avespet." : "Preencha os dados da ave gratuitamente. No final, crie sua conta Avespet para acompanhar o anúncio e fazer alterações."}</p>
     <form onSubmit={enviar} className="rounded-xl p-5 flex flex-col gap-3" style={{ background: "#FAF3E6" }}>
       <div className="grid sm:grid-cols-2 gap-3">
         <label className="text-sm">Nome da ave<input style={input} value={form.nomeAve} onChange={e=>alterar("nomeAve",e.target.value)} placeholder="Ex.: Mel" /></label>
@@ -147,13 +205,31 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
           <label className="text-sm">Seu nome<input required style={input} value={form.contatoNome} onChange={e=>alterar("contatoNome",e.target.value)} /></label>
           <label className="text-sm">Seu WhatsApp<input required style={input} value={form.whatsapp} onChange={e=>alterar("whatsapp",e.target.value)} placeholder="DDD + número" /></label>
         </div>
-        <p className="text-xs mt-2" style={{color:"#8a7a63"}}>Esses dados não serão exibidos no anúncio. Somente a equipe do Avespet terá acesso para intermediar o contato e ajudar na recuperação da ave.</p>
+        <p className="text-xs mt-2" style={{color:"#8a7a63"}}>Esses dados não serão exibidos no anúncio público. O e-mail da conta será usado para avisos sobre o andamento da busca.</p>
+        {!userId && !edicaoId && <div className="mt-5 rounded-xl p-4" style={{ background: "#E8F1E9", border: "1px solid #CAE1D0" }}>
+          <h2 className="font-bold" style={{ color: "#174B3B" }}>Crie sua conta gratuita para acompanhar o anúncio</h2>
+          <p className="mt-1 text-xs leading-5" style={{ color: "#405D49" }}>Vamos aproveitar seu nome e WhatsApp informados acima. Você só precisa acrescentar e-mail e senha.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" onClick={() => { setModoConta("cadastro"); setAguardandoConfirmacao(false); setErro(""); }} className="rounded-lg px-3 py-2 text-xs font-bold" style={{ background: modoConta === "cadastro" ? "#174B3B" : "#FFFFFF", color: modoConta === "cadastro" ? "#FFFFFF" : "#174B3B" }}>Criar conta grátis</button>
+            <button type="button" onClick={() => { setModoConta("entrar"); setAguardandoConfirmacao(false); setErro(""); }} className="rounded-lg px-3 py-2 text-xs font-bold" style={{ background: modoConta === "entrar" ? "#174B3B" : "#FFFFFF", color: modoConta === "entrar" ? "#FFFFFF" : "#174B3B" }}>Já tenho conta</button>
+          </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <label className="text-sm font-semibold" style={{ color: "#1D2B25" }}>Seu e-mail
+              <input type="email" required autoComplete="email" maxLength={254} style={input} value={contaEmail} onChange={(e) => setContaEmail(e.target.value)} placeholder="voce@exemplo.com" />
+            </label>
+            <label className="text-sm font-semibold" style={{ color: "#1D2B25" }}>{modoConta === "cadastro" ? "Crie sua senha" : "Sua senha"}
+              <input type="password" required minLength={8} autoComplete={modoConta === "cadastro" ? "new-password" : "current-password"} style={input} value={contaSenha} onChange={(e) => setContaSenha(e.target.value)} placeholder="Mínimo 8 caracteres" />
+            </label>
+          </div>
+          <p className="mt-3 text-xs leading-5" style={{ color: "#405D49" }}>O cadastro e a publicação para análise são gratuitos. Enviaremos apenas avisos relacionados ao anúncio; nenhuma campanha paga será contratada automaticamente. Se for necessária confirmação por e-mail, volte a este navegador depois de confirmar para concluir o envio.</p>
+        </div>}
       </div>
       {erro && <p role="alert" className="text-sm" style={{color:"#a6402b"}}>{erro}</p>}
       {mensagem && <div role="status" className="text-sm p-3 rounded-lg" style={{background:"#e4ead9",color:"#405331"}}><p>{mensagem}</p>{anuncioCriadoId && <a href={`/campanha-ave-perdida?anuncio=${anuncioCriadoId}`} className="inline-block mt-2 font-semibold underline" style={{color:"#405331"}}>Quero ampliar a divulgação da minha busca</a>}</div>}
-      <button disabled={enviando || enviandoFoto || userId === undefined} className="rounded-lg py-3 font-semibold disabled:opacity-60" style={{background:"#C69A2E",color:"#2B1D14"}}>{enviando ? "Enviando..." : edicaoId ? "Salvar e enviar para análise" : "Enviar para análise"}</button>
+      <button disabled={enviando || enviandoFoto || userId === undefined || aguardandoConfirmacao} className="rounded-lg py-3 font-semibold disabled:opacity-60" style={{background:"#C69A2E",color:"#2B1D14"}}>{enviando ? "Processando..." : edicaoId ? "Salvar e enviar para análise" : !userId ? (modoConta === "entrar" ? "Entrar e enviar anúncio" : "Criar conta e enviar anúncio") : "Enviar para análise"}</button>
+      {aguardandoConfirmacao && !userId && <button type="button" onClick={() => { setModoConta("entrar"); setAguardandoConfirmacao(false); setMensagem("Depois de confirmar seu e-mail, entre na conta para concluir o envio do anúncio."); }} className="rounded-lg px-4 py-2 text-sm font-semibold" style={{background:"#e4ead9",color:"#405331"}}>Já confirmei o e-mail — entrar na conta</button>}
       {edicaoId && <button type="button" disabled={enviando || enviandoFoto} onClick={cancelarEdicao} className="rounded-lg py-2 text-sm font-semibold" style={{background:"#e3d3b4",color:"#2B1D14"}}>Cancelar edição</button>}
-      <p className="text-xs" style={{color:"#8a7a63"}}>Toda alteração em anúncio publicado passará por nova análise. O anúncio ficará temporariamente indisponível até a aprovação.</p>
+      <p className="text-xs" style={{color:"#8a7a63"}}>O anúncio será enviado para análise após a autenticação da conta. Toda alteração em anúncio publicado passará por nova análise.</p>
     </form>
 
     {userId && (
