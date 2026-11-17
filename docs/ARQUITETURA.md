@@ -337,3 +337,12 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - Backend `master-support-operations`, `master-audit-events`, `master-manage-entitlements` e `master-resend-test` exigem JWT e autorização na tabela `master_admins`. Somente `service_role` recebe acesso às tabelas internas; na auditoria foi concedida consulta somente às colunas necessárias para operações Master.
 - **Central de e-mails**: envio de teste `suporte@avespet.com.br` para a conta Master confirmado pelo usuário. As caixas Resend `suporte@avespet.com.br` e `financeiro@avespet.com.br` foram criadas, mas a leitura de conversas e respostas dentro do Master seguem pendentes da API de Inboxes e da verificação completa de recebimento MX; sem disparos de marketing.
 - Atualizar esta documentação antes de ativar cobrança ou bloqueios. Alterações na produção não devem sobrescrever funcionalidades de genética nem ativar campanhas sem consentimento.
+
+### Correção do cadastro de clientes e criação durante a reserva — 17/11/2026
+
+- [x] Corrigida a tela branca de **Novo cliente** em `ClientesTab`: o componente agora recebe `inputStyle` de `App.jsx`, evitando `ReferenceError` quando o formulário é aberto.
+- [x] Na tela de **Reservas**, adicionada a opção **Cadastrar novo cliente** ao lado da seleção. Os campos incluem nome, telefone/WhatsApp, endereço e observações.
+- [x] O novo cadastro é persistido em `clientes` antes de liberar seu `id` para a reserva; o cliente aparece automaticamente selecionado após o sucesso.
+- [x] Regras de nome obrigatório e telefone duplicado mantidas também no fluxo de reserva. Se a gravação do cliente falhar, a reserva não recebe um `cliente_id` sem cadastro.
+- [x] Nenhuma alteração na tabela de aves, pagamentos, fluxo de reserva, genética, Master, redefinição de senha ou integração de e-mail.
+- [ ] Conferir build Vite e testar o cadastro no desktop e no celular com usuário criador autenticado.

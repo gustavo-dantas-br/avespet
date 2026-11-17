@@ -574,6 +574,35 @@ function AppInner({ user, onLogout }) {
     return { ok: true };
   }
 
+  // Cadastro rapido da reserva: aguarda o banco confirmar o cliente antes de
+  // liberar o ID para uma reserva, evitando referencias a um cadastro nao salvo.
+  async function handleCreateClienteReserva(cliente) {
+    const nome = String(cliente?.nome || "").trim();
+    if (!nome) return { ok: false, error: "Informe o nome do cliente." };
+    const telefone = String(cliente?.telefone || "").trim();
+    const telNorm = normalizeTelefone(telefone);
+    if (telNorm) {
+      const duplicado = clientes.find((c) => normalizeTelefone(c.telefone) === telNorm);
+      if (duplicado) return { ok: false, error: `Ja existe um cliente com esse telefone: ${duplicado.nome}. Selecione ele na lista.` };
+    }
+    const toSave = {
+      ...emptyCliente(),
+      ...cliente,
+      id: uid(),
+      nome,
+      telefone,
+      criadoEm: new Date().toISOString(),
+    };
+    try {
+      await saveRow("clientes", user.id, toSave);
+      setClientes((prev) => [...prev.filter((c) => c.id !== toSave.id), { ...toSave, synced: true }]
+        .sort((a, b) => (a.nome || "").localeCompare(b.nome || "")));
+      return { ok: true, id: toSave.id };
+    } catch (e) {
+      return { ok: false, error: "Nao foi possivel salvar o cliente: " + (e?.message || "erro desconhecido") };
+    }
+  }
+
   async function handleDeleteCliente(id) {
     setClientes((prev) => prev.filter((c) => c.id !== id));
     try {
@@ -1147,7 +1176,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
               <ReproducaoTab aves={aves} posturas={posturas} onSave={handleSavePostura} onDelete={handleDeletePostura} onNascimento={handleRegistrarNascimento} Card={Card} Field={Field} inputStyle={inputStyle} SectionTitle={SectionTitle} />
             )}
 
-            {tab === "reservas" && <ReservasTab userId={user.id} perfil={perfil} clientes={clientes} aves={aves} posturas={posturas} onReservaConcluida={loadAves} onFinanceiroAtualizado={loadReservasFinanceiro} Card={Card} SectionTitle={SectionTitle} />}
+            {tab === "reservas" && <ReservasTab userId={user.id} perfil={perfil} clientes={clientes} aves={aves} posturas={posturas} onCreateCliente={handleCreateClienteReserva} emptyCliente={emptyCliente} onReservaConcluida={loadAves} onFinanceiroAtualizado={loadReservasFinanceiro} Card={Card} SectionTitle={SectionTitle} />}
 
             {tab === "lista" && (
               <ListaTab

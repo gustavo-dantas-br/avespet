@@ -226,7 +226,7 @@ function ClienteDetalhe({ cliente, historico, onBack, onEdit, onDelete, Card, Su
   );
 }
 
-export default function ClientesTab({ clientes, aves, onSave, onDelete, onImportar, Card, Field, SectionTitle, SummaryCard, money, whatsappUrl, emptyCliente }) {
+export default function ClientesTab({ clientes, aves, onSave, onDelete, onImportar, Card, Field, SectionTitle, SummaryCard, money, whatsappUrl, emptyCliente, inputStyle }) {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editando, setEditando] = useState(null);
