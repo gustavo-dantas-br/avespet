@@ -2,7 +2,7 @@ import { supabase } from "../../../supabaseClient";
 
 /**
  * Reduz fotos no próprio navegador antes do upload.
- * Prioriza WebP (menor arquivo com boa qualidade), com fallback para JPEG.
+ * Usa JPEG para ser compatível com as regras atuais do Storage.
  * O banco recebe somente a URL pública, nunca o conteúdo Base64.
  */
 export async function comprimirEEnviarImagemPublica(arquivo, pasta = "aves", limiteBytes = 350 * 1024) {
@@ -21,13 +21,14 @@ export async function comprimirEEnviarImagemPublica(arquivo, pasta = "aves", lim
   }
 
   let blobFinal = null;
-  let tipoFinal = "image/webp";
+  let tipoFinal = "image/jpeg";
   try {
     const maxDim = 1280;
     const escala = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
     const larguraBase = Math.max(1, Math.round(bitmap.width * escala));
     const alturaBase = Math.max(1, Math.round(bitmap.height * escala));
-    const formatos = ["image/webp", "image/jpeg"];
+    const formatos = ["image/jpeg"];
+    const limitePermitido = Math.min(limiteBytes, 150 * 1024);
 
     for (const formato of formatos) {
       for (const fator of [1, 0.9, 0.8, 0.7]) {
@@ -44,7 +45,7 @@ export async function comprimirEEnviarImagemPublica(arquivo, pasta = "aves", lim
 
         for (const qualidade of [0.84, 0.76, 0.68, 0.60, 0.52]) {
           const blob = await new Promise((resolve) => canvas.toBlob(resolve, formato, qualidade));
-          if (blob && blob.size <= limiteBytes && blob.type === formato) {
+          if (blob && blob.size <= limitePermitido && blob.type === formato) {
             blobFinal = blob;
             tipoFinal = formato;
             break;
