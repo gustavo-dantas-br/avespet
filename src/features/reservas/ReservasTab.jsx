@@ -212,7 +212,7 @@ export default function ReservasTab({ userId, perfil = {}, clientes = [], aves =
         </div>
         {mostrarNovoCliente && <div className="space-y-3 rounded-xl border p-4 sm:col-span-2" style={{background:"#F5FAF6",borderColor:"#D8E5DB"}}>
           <h4 className="text-sm font-bold" style={{color:"#244532"}}>Novo cliente da reserva</h4>
-          <p className="text-xs" style={{color:"#668071"}}>Cadastre aqui, sem sair da reserva. O cliente será selecionado automaticamente apos salvar.</p>
+          <p className="text-xs" style={{color:"#668071"}}>Cadastre aqui, sem sair da reserva. O cliente será selecionado automaticamente após salvar.</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs font-semibold" style={{color:"#496653"}}>Nome completo
               <input value={novoCliente.nome} onChange={e=>setNovoCliente(v=>({...v,nome:e.target.value}))} maxLength={120} placeholder="Nome do cliente" className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}} />
@@ -232,7 +232,7 @@ export default function ReservasTab({ userId, perfil = {}, clientes = [], aves =
             <button type="button" disabled={salvandoCliente || saving} onClick={salvarNovoCliente} className="rounded-lg px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50" style={{background:"#18764B"}}>{salvandoCliente ? "Salvando cliente..." : "Salvar e selecionar cliente"}</button>
             <button type="button" disabled={salvandoCliente} onClick={() => { setMostrarNovoCliente(false); setErroCliente(""); }} className="rounded-lg border px-3 py-2.5 text-xs font-semibold" style={{borderColor:"#D8E5DB",color:"#496653"}}>Cancelar cadastro</button>
           </div>
-        </div>
+        </div>}
         {form.tipo === "ave_existente" ? <label className="text-xs font-semibold sm:col-span-2" style={{color:"#496653"}}>Ave<select required value={form.ave_id} onChange={e=>setForm(v=>({...v,ave_id:e.target.value}))} className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}}><option value="">Selecione a ave</option>{aves.filter(a=>!["Vendida","Falecida","Perdida"].includes(a.status)).map(a=><option key={a.id} value={a.id}>{a.nome || "Sem nome"} · {a.especie || "Espécie não informada"}</option>)}</select></label> :
           <><label className="text-xs font-semibold" style={{color:"#496653"}}>Postura / ninhada (opcional)<select value={form.postura_id} onChange={e=>setForm(v=>({...v,postura_id:e.target.value}))} className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}}><option value="">Não vincular agora</option>{posturas.map(p=><option key={p.id} value={p.id}>{nomePostura(p.id) || "Postura"}</option>)}</select></label><label className="text-xs font-semibold" style={{color:"#496653"}}>Casal / descrição da futura ave<input value={form.descricao_futura} onChange={e=>setForm(v=>({...v,descricao_futura:e.target.value}))} placeholder="Ex.: filhote do casal Mel × Zazur" className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}}/></label></>}
         <label className="text-xs font-semibold" style={{color:"#496653"}}>Valor total combinado (R$)<input required type="number" min="0.01" step="0.01" value={form.valor_total} onChange={e=>setForm(v=>({...v,valor_total:e.target.value}))} className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}}/></label>
