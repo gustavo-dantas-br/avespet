@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
-import { LifeBuoy, Search, RefreshCw, Save, ChevronLeft, ChevronRight, AlertCircle, UserCheck, UserX, ClipboardList } from "lucide-react";
+import { LifeBuoy, Search, RefreshCw, Save, ChevronLeft, ChevronRight, AlertCircle, UserCheck, UserX, ClipboardList, Mail } from "lucide-react";
 
 const kindLabels = { achado: "Ave encontrada", perdida: "Ave perdida", campanha: "Campanha" };
 const states = [["novo", "Novo"], ["em_andamento", "Em andamento"], ["aguardando", "Aguardando retorno"], ["concluido", "Concluído"]];
@@ -13,7 +13,7 @@ const formatDate = (value) => {
 const selectClass = "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800";
 const empty = { items: [], total: 0, totalPages: 1, page: 1, partial: false };
 
-export default function SupportOperations() {
+export default function SupportOperations({ onPrepareEmail }) {
   const [kind, setKind] = useState("all");
   const [state, setState] = useState("all");
   const [search, setSearch] = useState("");
@@ -27,6 +27,7 @@ export default function SupportOperations() {
   const [form, setForm] = useState({ status: "novo", priority: "normal", note: "", assignment: "keep" });
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
+  const [preparingEmailId, setPreparingEmailId] = useState("");
 
   const load = useCallback(async () => {
     setError("");
@@ -61,6 +62,27 @@ export default function SupportOperations() {
     setSelected(null);
   };
 
+  const prepareEmail = async (item) => {
+    if (item.source !== "perdida" || preparingEmailId) return;
+    setError("");
+    setNotice("");
+    setPreparingEmailId(item.id);
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke("master-support-operations", {
+        body: { action: "prepare-email", source_id: item.id },
+      });
+      if (invokeError || data?.error || !data?.success || !data.draft) {
+        throw new Error(data?.error || "Não foi possível preparar a solicitação por e-mail.");
+      }
+      if (typeof onPrepareEmail !== "function") throw new Error("Central de Comunicação indisponível.");
+      onPrepareEmail(data.draft);
+    } catch (err) {
+      setError(err?.message || "Falha ao preparar o atendimento.");
+    } finally {
+      setPreparingEmailId("");
+    }
+  };
+
   const save = async (event) => {
     event.preventDefault();
     if (!selected || saving) return;
@@ -87,7 +109,7 @@ export default function SupportOperations() {
       <div>
         <p className="text-[10px] font-bold uppercase tracking-[.2em] text-amber-700">Atendimento interno</p>
         <h1 className="mt-2 flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-[28px]"><LifeBuoy size={25} /> Suporte operacional</h1>
-        <p className="mt-2 max-w-3xl text-sm text-slate-500">Acompanhe ocorrências de aves encontradas, anúncios de aves perdidas e solicitações de campanhas. Este módulo não envia e-mails ou mensagens.</p>
+        <p className="mt-2 max-w-3xl text-sm text-slate-500">Acompanhe ocorrências de aves encontradas, anúncios de aves perdidas e solicitações de campanhas. Este módulo permite preparar uma solicitação de informações; o envio exige revisão e confirmação na Central de Comunicação.</p>
       </div>
       <button type="button" onClick={() => setReload((n) => n + 1)} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 disabled:opacity-50"><RefreshCw size={15} className={loading ? "animate-spin" : ""} /> Atualizar</button>
     </div>
@@ -137,7 +159,23 @@ export default function SupportOperations() {
               <p><strong>Responsável:</strong> {item.assigneeLabel}</p>
             </div>
             {item.details && <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-slate-500">{item.details}</p>}
-            <button type="button" onClick={() => startEdit(item)} className="mt-3 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700">Acompanhar caso</button>
+            {item.source === "perdida" && item.missingFields?.length > 0 && (
+              <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                Faltam para ajudar na busca: {item.missingFields.join(", ")}.
+              </p>
+            )}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" onClick={() => startEdit(item)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700">Acompanhar caso</button>
+              {item.source === "perdida" && item.missingFields?.length > 0 && item.originStatus !== "encerrado" && item.hasOwner && (
+                <button type="button" disabled={Boolean(preparingEmailId)} onClick={() => prepareEmail(item)}
+                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">
+                  <Mail size={14} /> {preparingEmailId === item.id ? "Preparando..." : "Solicitar dados por e-mail"}
+                </button>
+              )}
+              {item.source === "perdida" && item.missingFields?.length > 0 && !item.hasOwner && (
+                <p className="self-center text-xs text-slate-500">Sem conta vinculada: atendimento manual necessário.</p>
+              )}
+            </div>
           </article>) : null}
       </div>
       {!loading && !error && result.totalPages > 1 && <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
@@ -184,6 +222,6 @@ export default function SupportOperations() {
         </form>
       </div>
     </div>}
-    <p className="text-[11px] leading-5 text-slate-500">Acesso restrito ao Master. Contatos e notas internas não são públicos. Este módulo não realiza comunicações por e-mail, WhatsApp ou SMS.</p>
+    <p className="text-[11px] leading-5 text-slate-500">Acesso restrito ao Master. Contatos e notas internas não são públicos. Os pedidos de complementação abrem um rascunho na Central de Comunicação; nada é enviado sem confirmação manual.</p>
   </section>;
 }

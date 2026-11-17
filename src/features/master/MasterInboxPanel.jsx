@@ -17,7 +17,7 @@ const newId = () => {
   return "00000000-0000-4000-8000-" + String(Date.now()).padStart(12, "0").slice(-12);
 };
 
-export default function MasterInboxPanel({ user }) {
+export default function MasterInboxPanel({ user, initialDraft = null, onDraftUsed }) {
   const [box, setBox] = useState("suporte");
   const [threads, setThreads] = useState([]);
   const [thread, setThread] = useState(null);
@@ -66,6 +66,22 @@ export default function MasterInboxPanel({ user }) {
     setThreads([]);
     load(box);
   }, [box, load]);
+
+  useEffect(() => {
+    if (!initialDraft) return;
+    // Uma solicitação do Suporte abre somente um rascunho, nunca efetua envio.
+    setBox("suporte");
+    setThread(null);
+    setMessages([]);
+    setComposeTo(initialDraft.to || "");
+    setComposeSubject(initialDraft.subject || "");
+    setComposeText(initialDraft.text || "");
+    setComposeRequestId(newId());
+    setError("");
+    setNotice("Solicitação preparada pelo Suporte. Confira destinatário e mensagem antes de enviar.");
+    setComposing(true);
+    onDraftUsed?.();
+  }, [initialDraft, onDraftUsed]);
 
   async function openThread(item) {
     setOpening(true);
