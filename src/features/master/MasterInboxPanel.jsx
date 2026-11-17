@@ -69,8 +69,12 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
 
   useEffect(() => {
     if (!initialDraft) return;
-    // Uma solicitação do Suporte abre somente um rascunho, nunca efetua envio.
-    setBox("suporte");
+    // Primeiro troca para Suporte; depois do efeito de troca de caixa,
+    // carrega o rascunho para evitar que ele seja fechado ao mudar de caixa.
+    if (box !== "suporte") {
+      setBox("suporte");
+      return;
+    }
     setThread(null);
     setMessages([]);
     setComposeTo(initialDraft.to || "");
@@ -81,7 +85,7 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
     setNotice("Solicitação preparada pelo Suporte. Confira destinatário e mensagem antes de enviar.");
     setComposing(true);
     onDraftUsed?.();
-  }, [initialDraft, onDraftUsed]);
+  }, [initialDraft, box, onDraftUsed]);
 
   async function openThread(item) {
     setOpening(true);
