@@ -30,6 +30,12 @@ function reply(body: unknown, status: number, origin: string | null) {
   return new Response(JSON.stringify(body), { status, headers });
 }
 const safeText = (value: unknown, size: number) => String(value ?? "").trim().slice(0, size);
+const missingLostFields = (data: Record<string, unknown>) => ([
+  ["foto", "foto da ave"],
+  ["bairro", "bairro ou região do desaparecimento"],
+  ["cor", "cor da ave"],
+  ["caracteristicas", "características de identificação (marcas, sons ou comportamento)"],
+] as const).filter(([key]) => !safeText(data[key], 100)).map(([key, label]) => ({ key, label }));
 const defaultState = (source: Source, original: string) => {
   if (["resolvido", "encerrado", "concluido", "finalizada"].includes(original)) return "concluido";
   if (source === "achado" && original === "contatado") return "em_andamento";
@@ -68,6 +74,57 @@ Deno.serve(async (req) => {
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return reply({ error: "Invalid request" }, 400, origin); }
   const action = safeText(body.action, 20);
+
+  if (action === "prepare-email") {
+    const id = safeText(body.source_id, 40);
+    if (!validId.test(id)) return reply({ error: "Anúncio inválido." }, 400, origin);
+    const { data: ad, error: adError } = await admin.from("anuncios_aves_perdidas")
+      .select("id,user_id,status,data").eq("id", id).maybeSingle();
+    if (adError) return reply({ error: "Não foi possível consultar o anúncio." }, 503, origin);
+    if (!ad) return reply({ error: "Anúncio não encontrado." }, 404, origin);
+    if (ad.status === "encerrado") return reply({ error: "Esta busca está encerrada." }, 409, origin);
+    const details: Record<string, unknown> = ad.data || {};
+    const missing = missingLostFields(details);
+    if (!missing.length) return reply({ error: "Este anúncio já contém as informações principais." }, 409, origin);
+    if (!ad.user_id) {
+      return reply({ error: "O anúncio não tem conta associada. Faça o acompanhamento manual com o tutor." }, 409, origin);
+    }
+    const { data: owner, error: ownerError } = await admin.auth.admin.getUserById(ad.user_id);
+    if (ownerError) return reply({ error: "Não foi possível validar o e-mail do tutor." }, 503, origin);
+    const email = owner?.user?.email?.trim().toLowerCase() || "";
+    if (!owner?.user?.email_confirmed_at || !/^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/.test(email)) {
+      return reply({ error: "A conta do tutor não possui um e-mail confirmado para atendimento." }, 409, origin);
+    }
+    const ave = safeText(details.nomeAve || details.especie || "sua ave", 60).replace(/[\r\n]/g, " ");
+    const nome = safeText(details.contatoNome, 70).replace(/[\r\n]/g, " ");
+    const greeting = nome ? "Olá, " + nome + "!" : "Olá!";
+    const fields = missing.map(({ label }) => "- " + label).join("\n");
+    const subject = "Avespet | Complete as informações da ave " + ave;
+    const text = [
+      greeting,
+      "",
+      "Estamos acompanhando o anúncio de " + ave + " no Avespet e percebemos que algumas informações podem ajudar na identificação e na busca:",
+      "",
+      fields,
+      "",
+      "Você pode complementar esses dados diretamente no seu anúncio. Entre na sua conta em https://www.avespet.com.br/, abra a opção Ave perdida no painel, localize o anúncio em Meus anúncios de aves perdidas e clique em Editar anúncio.",
+      "",
+      "Não é necessário responder com fotos por e-mail: envie a foto no próprio anúncio. Após salvar, a atualização será analisada pela equipe Avespet antes de voltar à página pública.",
+      "",
+      "Se possuir anilha, informe a numeração no campo reservado do formulário, nunca na descrição pública.",
+      "",
+      "Atenciosamente,",
+      "Equipe de Suporte Avespet",
+    ].join("\n");
+    // A operação registra apenas a preparação. O envio depende de confirmação no Master.
+    const { error: auditError } = await admin.from("master_audit_log").insert({
+      actor_user_id: identity.user.id, action: "master_support_email_draft_prepared",
+      resource_type: "support_case", resource_id: id,
+      metadata: { source: "perdida", missing: missing.map(({ key }) => key) },
+    });
+    if (auditError) return reply({ error: "Não foi possível registrar a preparação no histórico do Master." }, 503, origin);
+    return reply({ success: true, draft: { box: "suporte", to: email, subject, text, source_id: id } }, 200, origin);
+  }
 
   if (action === "save") {
     const source = safeText(body.source, 20) as Source;
@@ -144,7 +201,7 @@ Deno.serve(async (req) => {
       .select("id,anilha_buscada,nome_encontrador,telefone_encontrador,mensagem,ave_nome,status,criado_em")
       .order("criado_em", { ascending: false, nullsFirst: false });
     else if (source === "perdida") query = admin.from("anuncios_aves_perdidas")
-      .select("id,data,status,created_at").order("created_at", { ascending: false });
+      .select("id,user_id,data,status,created_at").order("created_at", { ascending: false });
     else query = admin.from("solicitacoes_campanhas_aves")
       .select("id,nome_contato,whatsapp,email,cidade,uf,descricao_ave,pacote,status,created_at")
       .order("created_at", { ascending: false });
@@ -169,6 +226,10 @@ Deno.serve(async (req) => {
     const originStatus = safeText(r.status, 40);
     return {
       id: r.id, source, title, originStatus,
+      ...(source === "perdida" ? {
+        missingFields: missingLostFields(d).map(({ label }) => label),
+        hasOwner: Boolean(r.user_id),
+      } : {}),
       createdAt: source === "achado" ? r.criado_em : r.created_at,
       contactName, contactPhone,
       city: source === "perdida" ? safeText(d.cidade, 80) : source === "campanha" ? safeText(r.cidade, 80) : "",

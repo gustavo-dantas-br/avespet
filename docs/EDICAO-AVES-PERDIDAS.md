@@ -25,3 +25,13 @@
 - O cartão público mostra nome da ave, espécie, cor, sexo/idade informados, bairro, data do desaparecimento, características e descrição; nunca exibe contato nem anilha.
 - O Master vê avisos de cadastro incompleto e os detalhes enviados pelo tutor antes da aprovação.
 - A RPC `listar_aves_perdidas_publicas()` deve continuar projetando apenas campos públicos permitidos; anilha e contato ficam no JSON protegido pelo RLS.
+
+## Solicitação de complementação pelo Suporte Master
+
+- O Suporte operacional (somente Master) mostra as informações incompletas dos anúncios de aves perdidas.
+- O botão **Solicitar dados por e-mail** chama a Edge Function autenticada `master-support-operations` com `action: prepare-email`; a função exige Master e confere a titularidade e o e-mail confirmado em `auth.users`.
+- O atendimento abre um **rascunho** na Central de Comunicação, caixa Suporte, para revisão do destinatário, assunto e texto. **Nunca há envio automático**; o operador precisa clicar em **Enviar e-mail** e confirmar novamente na Central.
+- A mensagem orienta o tutor a incluir fotos diretamente no próprio anúncio, sem mandar arquivos por e-mail. O formulário preserva a anilha e o contato fora da listagem pública.
+- O histórico `master_audit_log` registra apenas a preparação, identificação do caso e campos incompletos, sem copiar destinatário nem texto do e-mail.
+- Cadastros sem `user_id` ou sem e-mail verificado precisam de atendimento manual; não se atribui acesso a partir de WhatsApp.
+- **Teste de regressão:** após executar `npm run build` e `npm run test:genetica`, abrir Suporte no Master, localizar uma ave com dados incompletos, preparar e-mail, confirmar que o formulário está preenchido e **não enviar** durante a validação. Ações comuns de listagem e acompanhamento devem continuar funcionando.
