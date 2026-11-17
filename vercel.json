@@ -33,5 +33,10 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "feature/master-permissoes-20261117": false
+    }
+  }
 }

@@ -325,3 +325,16 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - `master-manage-creator` permanece idêntica à implementação preexistente da `main`, inclusive no fluxo de redefinição de senha, atendendo à decisão explícita de não alterá-la.
 - A função de perfil não modifica senha, telefone Auth, `user_metadata` ou `app_metadata`, somente o perfil comercial.
 - Configuração temporária para suprimir previews foi retirada de `vercel.json` antes da publicação.
+
+### Integração 6 — Permissões especiais por criador (17/11/2026)
+
+- Implementação isolada na branch `feature/master-permissoes-20261117`, partindo de `main` no commit `482a9bf`. Não interfere na outra frente de integração de e-mail.
+- A aba **Permissões especiais** foi adicionada dentro de **Planos e assinaturas**, sem alterar `MasterApp.jsx`, suporte, e-mail, notificações ou redefinição de senha.
+- Recuperado o editor histórico de exceções por criador: pesquisa de contas, limite individual ou ilimitado, permissões por recurso, motivo e data de validade; remoção de exceção cadastrada.
+- Criada a função `master-manage-entitlements`, protegida por JWT e consulta de `master_admins`, com proteção adicional contra consulta/edição de contas administrativas e auditoria das escritas.
+- Recuperada, apenas como arquivo versionado, a migração `202611130002_creator_entitlement_overrides.sql`. Tabela protegida por RLS e acessível à `service_role`; nenhuma tabela atual de aves é alterada.
+- Se não existir assinatura vigente, a interface identifica corretamente o plano Gratuito de referência, sem alterar qualquer plano ou assinatura.
+- **Importante:** essas permissões são apenas cadastro preparatório. Não ativamos `enforce_creator_bird_limit` nem restrições nos módulos do criador; o limite gratuito de 10 aves continua referência, sem bloqueio. Preços seguem em R$ 0,00 e não há cobrança.
+- [ ] Confirmar build, testes e autorização de acesso Master. Não ativar a migração ou publicar a função sem ciclo específico de testes.
+- [ ] Na futura publicação, revisar mudanças em `main` feitas pela frente paralela de e-mail antes do merge; evitar sobrescrever trabalho concorrente.
+- A `vercel.json` desta branch desabilita deployments automáticos para `feature/master-permissoes-20261117`, permitindo trabalhar sem novos deploys a cada alteração.
