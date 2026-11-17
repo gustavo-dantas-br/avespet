@@ -189,6 +189,50 @@ Deno.serve(async (req) => {
       if (auditError) return reply({ error: "Não foi possível registrar o acesso administrativo." }, 503, origin);
       return reply({ success: true, messages, has_more: Boolean(result?.has_more) }, 200, origin);
     }
+    if (action === "compose") {
+      // Individual, manual operational emails only; campaigns require a separate, consent-based flow.
+      const recipient = typeof body.to === "string" ? body.to.trim().toLowerCase() : "";
+      const subject = typeof body.subject === "string" ? body.subject.trim() : "";
+      const content = typeof body.text === "string" ? body.text.trim() : "";
+      const idempotency = str(body.idempotency_key, 50);
+      if (!/^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/.test(recipient) || recipient.length > 254 ||
+          !subject || subject.length > 180 || /[\r\n]/.test(subject) ||
+          !content || content.length > 5000 || !uuid.test(idempotency)) {
+        return reply({ error: "Informe um destinatário, assunto e mensagem válidos (até 5.000 caracteres)." }, 400, origin);
+      }
+      const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { count, error: limitError } = await admin.from("master_audit_log")
+        .select("id", { count: "exact", head: true })
+        .eq("actor_user_id", identity.user.id)
+        .eq("action", "resend_inbox_compose_requested")
+        .gte("created_at", since);
+      if (limitError) return reply({ error: "Não foi possível conferir o limite de envio." }, 503, origin);
+      if ((count || 0) >= 10) return reply({ error: "Limite de 10 novos e-mails por hora alcançado." }, 429, origin);
+      const signed = composeSignedReply(content, box);
+      // Audit intention before creating the draft; neither addresses nor bodies are stored in the log.
+      const { error: requestedError } = await admin.from("master_audit_log").insert({
+        actor_user_id: identity.user.id, action: "resend_inbox_compose_requested",
+        resource_type: "communication",
+        metadata: { box, idempotency },
+      });
+      if (requestedError) return reply({ error: "Não foi possível registrar o envio administrativo." }, 503, origin);
+      const draft = await resend(base + "/drafts", key, "POST",
+        { to: [recipient], subject, text: signed.text, html: signed.html },
+        idempotency + "-draft");
+      if (!uuid.test(String(draft?.id || ""))) {
+        return reply({ error: "O rascunho foi criado, mas a resposta do Resend é inválida. Verifique o Resend antes de repetir." }, 503, origin);
+      }
+      // Use a stable idempotency key for the second step; avoid blind retries on uncertain outcomes.
+      const sent = await resend(base + "/drafts/" + draft.id + "/send", key, "POST", {},
+        idempotency + "-send");
+      const { error: completedError } = await admin.from("master_audit_log").insert({
+        actor_user_id: identity.user.id, action: "resend_inbox_compose_sent",
+        resource_type: "communication",
+        metadata: { box, idempotency, provider_id: str(sent?.id, 50) },
+      });
+      if (completedError) console.error("New inbox email sent; audit confirmation failed");
+      return reply({ success: true, sent: true, audit_warning: Boolean(completedError) }, 200, origin);
+    }
     if (action === "reply") {
       if (!uuid.test(thread) || !uuid.test(email)) return reply({ error: "Mensagem inválida." }, 400, origin);
       const content = typeof body.text === "string" ? body.text.trim() : "";
