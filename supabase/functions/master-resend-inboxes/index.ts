@@ -195,6 +195,18 @@ Deno.serve(async (req) => {
       const subject = typeof body.subject === "string" ? body.subject.trim() : "";
       const content = typeof body.text === "string" ? body.text.trim() : "";
       const idempotency = str(body.idempotency_key, 50);
+      const sourceId = str(body.source_id, 40);
+      if (sourceId) {
+        if (box !== "suporte" || !uuid.test(sourceId)) return reply({ error:"Referência da ave inválida." },400,origin);
+        const {data:ad,error:adError}=await admin.from("anuncios_aves_perdidas")
+          .select("user_id").eq("id",sourceId).maybeSingle();
+        if (adError || !ad?.user_id) return reply({error:"Não foi possível validar a titularidade."},409,origin);
+        const {data:account,error:accountError}=await admin.auth.admin.getUserById(ad.user_id);
+        if (accountError || !account?.user?.email_confirmed_at ||
+            account.user.email?.trim().toLowerCase() !== recipient) {
+          return reply({error:"O destinatário não corresponde ao e-mail confirmado do titular."},409,origin);
+        }
+      }
       if (!/^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/.test(recipient) || recipient.length > 254 ||
           !subject || subject.length > 180 || /[\r\n]/.test(subject) ||
           !content || content.length > 5000 || !uuid.test(idempotency)) {
@@ -228,10 +240,19 @@ Deno.serve(async (req) => {
       const { error: completedError } = await admin.from("master_audit_log").insert({
         actor_user_id: identity.user.id, action: "resend_inbox_compose_sent",
         resource_type: "communication",
-        metadata: { box, idempotency, provider_id: str(sent?.id, 50) },
+        metadata: { box, idempotency, provider_id: str(sent?.id, 50), ...(sourceId ? {source_id:sourceId} : {}) },
       });
-      if (completedError) console.error("New inbox email sent; audit confirmation failed");
-      return reply({ success: true, sent: true, audit_warning: Boolean(completedError) }, 200, origin);
+      let historyError = null;
+      if (sourceId) {
+        const saved = await admin.from("master_support_events").insert({
+          source:"perdida",source_id:sourceId,event_type:"email_sent",
+          summary:"Solicitação de informações enviada por e-mail",actor_user_id:identity.user.id,
+          details:{provider_id:str(sent?.id,50),box:"suporte"},
+        });
+        historyError = saved.error;
+      }
+      if (completedError || historyError) console.error("New inbox email sent; audit/history confirmation failed");
+      return reply({ success: true, sent: true, audit_warning: Boolean(completedError || historyError) }, 200, origin);
     }
     if (action === "reply") {
       if (!uuid.test(thread) || !uuid.test(email)) return reply({ error: "Mensagem inválida." }, 400, origin);

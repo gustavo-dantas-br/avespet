@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
-import { LifeBuoy, Search, RefreshCw, Save, ChevronLeft, ChevronRight, AlertCircle, UserCheck, UserX, ClipboardList, Mail } from "lucide-react";
+import { LifeBuoy, Search, RefreshCw, Save, ChevronLeft, ChevronRight, AlertCircle, UserCheck, UserX, ClipboardList, Mail, History } from "lucide-react";
 
 const kindLabels = { achado: "Ave encontrada", perdida: "Ave perdida", campanha: "Campanha" };
 const states = [["novo", "Novo"], ["em_andamento", "Em andamento"], ["aguardando", "Aguardando retorno"], ["concluido", "Concluído"]];
@@ -28,6 +28,7 @@ export default function SupportOperations({ onPrepareEmail }) {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const [preparingEmailId, setPreparingEmailId] = useState("");
+  const [history, setHistory] = useState({ entries:[], loading:false, error:"" });
 
   const load = useCallback(async () => {
     setError("");
@@ -48,11 +49,22 @@ export default function SupportOperations({ onPrepareEmail }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const startEdit = (item) => {
+  const startEdit = async (item) => {
     setSelected(item);
     setForm({ status: item.status, priority: item.priority, note: item.note || "", assignment: "keep" });
     setError("");
     setNotice("");
+    setHistory({entries:[],loading:item.source==="perdida",error:""});
+    if (item.source !== "perdida") return;
+    try {
+      const {data,error:invokeError}=await supabase.functions.invoke("master-support-operations",{
+        body:{action:"timeline",source:"perdida",source_id:item.id}
+      });
+      if (invokeError || data?.error || !data?.success) throw new Error(data?.error || "Histórico indisponível.");
+      setHistory({entries:data.entries||[],loading:false,error:""});
+    } catch(err) {
+      setHistory({entries:[],loading:false,error:err?.message||"Não foi possível carregar o histórico."});
+    }
   };
   const updateFilter = (setter, value) => { setter(value); setPage(1); setSelected(null); };
   const doSearch = (event) => {
@@ -194,6 +206,22 @@ export default function SupportOperations({ onPrepareEmail }) {
           <button type="button" onClick={() => setSelected(null)} aria-label="Fechar" className="rounded-xl border border-slate-200 px-3 py-1.5 text-lg text-slate-600">×</button>
         </div>
         <p className="mt-3 text-xs leading-5 text-slate-500">As alterações aqui não mudam o status original do anúncio, achado ou campanha e não enviam mensagens.</p>
+        {selected.source === "perdida" && (
+          <section className="mt-4 rounded-xl border border-slate-200 p-3" aria-label="Histórico da ave">
+            <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800"><History size={16} /> Histórico do atendimento</h3>
+            {history.loading ? <p className="mt-2 text-xs text-slate-500">Carregando eventos...</p>
+              : history.error ? <p role="alert" className="mt-2 text-xs text-rose-700">{history.error}</p>
+              : history.entries.length ? (
+                <ol className="mt-3 max-h-48 space-y-2 overflow-y-auto border-l border-slate-200 pl-3">
+                  {history.entries.map(event => <li key={event.id} className="text-xs text-slate-700">
+                    <strong>{event.summary}</strong>
+                    <p className="text-slate-400">{formatDate(event.createdAt)}</p>
+                  </li>)}
+                </ol>
+              ) : <p className="mt-2 text-xs text-slate-500">Ainda sem registros adicionais.</p>}
+            <p className="mt-2 text-[11px] text-slate-500">Somente envios confirmados pelo serviço são marcados como enviados. Respostas não vinculadas ainda devem ser consultadas na Central de Comunicação.</p>
+          </section>
+        )}
         <form onSubmit={save} className="mt-5 space-y-4">
           <label className="block text-xs font-semibold text-slate-700">Situação do atendimento
             <select className={"mt-1.5 " + selectClass} value={form.status} onChange={(e) => setForm((f) => ({...f, status: e.target.value}))}>

@@ -126,6 +126,36 @@ Deno.serve(async (req) => {
     return reply({ success: true, draft: { box: "suporte", to: email, subject, text, source_id: id } }, 200, origin);
   }
 
+  if (action === "timeline") {
+    const source = safeText(body.source, 20);
+    const id = safeText(body.source_id, 40);
+    if (source !== "perdida" || !validId.test(id)) return reply({ error: "Caso inválido." }, 400, origin);
+    const { data: ad, error: adError } = await admin.from("anuncios_aves_perdidas")
+      .select("id,created_at,status").eq("id",id).maybeSingle();
+    if (adError) return reply({ error: "Falha ao consultar o anúncio." }, 503, origin);
+    if (!ad) return reply({ error: "Anúncio não encontrado." }, 404, origin);
+    const [eventsResult,auditResult] = await Promise.all([
+      admin.from("master_support_events").select("id,event_type,summary,created_at,details")
+        .eq("source","perdida").eq("source_id",id).order("created_at",{ascending:false}).limit(100),
+      admin.from("master_audit_log").select("id,action,created_at")
+        .eq("resource_type","support_case").eq("resource_id",id)
+        .eq("action","master_support_email_draft_prepared")
+        .order("created_at",{ascending:false}).limit(50),
+    ]);
+    if (eventsResult.error || auditResult.error) return reply({ error: "Histórico indisponível." }, 503, origin);
+    const hasCreatedEvent = (eventsResult.data || []).some((event) => event.event_type === "created");
+    const entries = [
+      ...(!hasCreatedEvent ? [{ id: "created-" + ad.id, type:"created", summary:"Anúncio cadastrado", createdAt:ad.created_at }] : []),
+      ...(eventsResult.data || []).map((event) => ({
+        id:"event-"+event.id, type:event.event_type, summary:event.summary, createdAt:event.created_at,
+      })),
+      ...(auditResult.data || []).map((event) => ({
+        id:"legacy-"+event.id, type:"draft_prepared", summary:"Solicitação de dados preparada para revisão",createdAt:event.created_at,
+      })),
+    ].sort((a,b) => Date.parse(b.createdAt || "") - Date.parse(a.createdAt || "")).slice(0,100);
+    return reply({ success:true, entries, truncated:(eventsResult.data || []).length===100 },200,origin);
+  }
+
   if (action === "save") {
     const source = safeText(body.source, 20) as Source;
     const id = safeText(body.source_id, 40);
@@ -167,6 +197,11 @@ Deno.serve(async (req) => {
       return reply({ error: "Não foi possível salvar o acompanhamento" }, 503, origin);
     }
 
+    const { error: historyError } = source === "perdida" ? await admin.from("master_support_events").insert({
+      source, source_id:id, event_type:"support_updated", summary:"Acompanhamento interno atualizado",
+      actor_user_id:identity.user.id, details:{ status, priority },
+    }) : { error:null };
+    if (historyError) console.error("Could not append support event");
     const { error: afterAudit } = await admin.from("master_audit_log").insert({
       actor_user_id: identity.user.id, action: "master_support_case_updated",
       resource_type: "support_case", resource_id: id,
