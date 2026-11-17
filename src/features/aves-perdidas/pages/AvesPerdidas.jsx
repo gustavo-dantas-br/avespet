@@ -37,8 +37,8 @@ export default function AvesPerdidas() {
         ) : lista.length === 0 ? (
           <div className="rounded-2xl p-8 text-center" style={{ background: "#FFFFFF", border: `1px solid ${TEMA_PUBLICO.borda}` }}>
             <h2 className="text-lg font-bold" style={{ color: TEMA_PUBLICO.tinta }}>Nenhum anúncio publicado no momento</h2>
-            <p className="mt-2 text-sm" style={{ color: TEMA_PUBLICO.texto }}>Se sua ave desapareceu, você pode registrar a ocorrência gratuitamente, sem precisar criar uma conta. Após análise, o anúncio poderá aparecer nesta página.</p>
-            <p className="mt-4 text-xs" style={{ color: TEMA_PUBLICO.texto }}>Você não precisa entrar ou criar uma conta para enviar o cadastro.</p>
+            <p className="mt-2 text-sm" style={{ color: TEMA_PUBLICO.texto }}>Se sua ave desapareceu, você pode registrar a ocorrência gratuitamente. Se já publicou, entre na conta utilizada no cadastro para editar seus dados.</p>
+            <p className="mt-4 text-xs" style={{ color: TEMA_PUBLICO.texto }}>Para editar um anúncio antigo, é necessário acessar a conta responsável.</p>
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -75,8 +75,8 @@ export default function AvesPerdidas() {
             style={{ background: TEMA_PUBLICO.verdeEscuro }}
           >
             <span className="block text-xl font-bold md:text-2xl" style={{ color: "#FFFFFF", fontFamily: "'Fraunces', Georgia, serif" }}>Sua ave desapareceu?</span>
-            <span className="mt-2 block max-w-2xl text-sm leading-6" style={{ color: "#D2E1D6" }}>Preencha o cadastro diretamente por aqui, sem precisar entrar ou criar uma conta. O anúncio passa por análise antes de ser publicado.</span>
-            <span className="mt-5 inline-flex rounded-xl px-5 py-3 text-sm font-bold" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}>Cadastrar ave perdida</span>
+            <span className="mt-2 block max-w-2xl text-sm leading-6" style={{ color: "#D2E1D6" }}>Cadastre gratuitamente sua ave. Para editar um anúncio existente, entre em sua conta e acesse a opção Ave perdida no painel. As alterações passam por nova análise.</span>
+            <span className="mt-5 inline-flex rounded-xl px-5 py-3 text-sm font-bold" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}>Cadastrar ou editar anúncio</span>
           </button>
         )}
       </PaginaPublica>
