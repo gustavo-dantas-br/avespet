@@ -45,3 +45,13 @@
 - Rascunhos preparados antes da implementação aparecem pela auditoria legada; envios anteriores que não possuíam `source_id` **não são automaticamente atribuídos a um anúncio**.
 - Respostas na caixa de e-mail sem associação validada continuam na Central de Comunicação: não afirmar que o cliente respondeu ou leu a mensagem sem verificação.
 - A migração `20261117_master_support_events_lost_birds.sql` deve ser aplicada antes da publicação das funções.
+
+## Associação das respostas recebidas (17/11/2026)
+
+- Ao abrir o histórico de uma ave perdida no Master, o backend consulta a caixa `suporte@avespet.com.br` no Resend e procura respostas relacionadas à solicitação enviada. O botão **Conferir respostas** permite repetir a consulta sem fechar a janela; não há monitoramento em segundo plano nem webhook nesta etapa.
+- A vinculação exige conta do tutor com e-mail confirmado, conversa iniciada pelo Suporte para esse e-mail e remetente coincidente na resposta. Quando existe ID de envio confirmado, ele é a âncora preferencial. Em conversas antigas sem ID persistido, o sistema exige assunto exato da solicitação, envio posterior ao preparo registrado e **nome da ave único entre os anúncios do tutor**.
+- A resposta é registrada uma vez em `master_support_events`, com tipo `email_received`. Somente ID da mensagem, ID da conversa e instante de recebimento ficam no histórico, **sem conteúdo, endereço de e-mail ou anexos**.
+- O endereço no campo `From` não equivale a prova criptográfica da identidade da pessoa. Por isso essa associação é exclusivamente informativa: **não altera a titularidade, o acesso à conta nem o status do anúncio**.
+- Conversas sem provas suficientes permanecem na Central de Comunicação para revisão manual. O histórico não afirma que mensagens foram lidas nem que uma resposta existe quando não foi encontrada.
+- A busca é limitada às conversas recentes da caixa Suporte; casos antigos fora da janela podem necessitar conferência na Central. A falta temporária do Resend não bloqueia o histórico já armazenado.
+- Aplicar a migração `20261117_master_support_incoming_replies.sql` antes do deploy da Edge Function com `replyMatching.mjs`.

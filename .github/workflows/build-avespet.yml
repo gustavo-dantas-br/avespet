@@ -23,5 +23,7 @@ jobs:
         run: npm ci
       - name: Verificar renderizacao dos modulos do criador
         run: npm run test:painel
+      - name: Testar vinculação de respostas do suporte
+        run: node --test tests/master-support-replies.test.js
       - name: Build
         run: npm run build
