@@ -6,6 +6,43 @@ const inboxes = { suporte: "suporte@avespet.com.br", financeiro: "financeiro@ave
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 type Box = keyof typeof inboxes;
 
+const instagramUrl = "https://www.instagram.com/avespet.oficial/";
+const websiteUrl = "https://www.avespet.com.br/";
+// Logo provisório com pena verde, versionado em commit imutável e hospedado publicamente.
+const signatureLogoUrl = "https://raw.githubusercontent.com/gustavo-dantas-br/avespet/dfb04394f801976cf2a0148c8db49280876e5403/public/avespet-assinatura.png";
+function escapeHtml(text: string) {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+function composeSignedReply(body: string, box: Box) {
+  const department = box === "suporte" ? "Suporte" : "Financeiro";
+  const fromEmail = inboxes[box];
+  const message = body.replace(/\r\n?/g, "\n").trim();
+  const sigText = [
+    "Atenciosamente,",
+    "Equipe Avespet | " + department,
+    fromEmail,
+    "www.avespet.com.br",
+    "Instagram: @avespet.oficial (" + instagramUrl + ")",
+  ].join("\n");
+  // O HTML é criado no servidor: texto do atendente recebe escape para não executar markup.
+  const text = message + "\n\n" + sigText;
+  const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#20352a">' +
+    '<div>' + escapeHtml(message).replace(/\n/g, "<br>") + '</div>' +
+    '<table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-top:22px;border-top:1px solid #d7e6dc;padding-top:14px"><tr>' +
+    '<td style="vertical-align:top;padding-right:14px">' +
+    '<img src="' + signatureLogoUrl + '" alt="Pena Avespet" width="66" height="66" style="width:66px;height:66px;display:block;border:0;border-radius:12px" />' +
+    '</td><td style="vertical-align:top;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.65;color:#4b6354">' +
+    'Atenciosamente,<br>' +
+    '<strong style="font-size:15px;color:#1d3b2b">Aves<span style="color:#26945f">pet</span></strong> &nbsp;|&nbsp; <strong style="color:#1d754b">' + department + '</strong><br>' +
+    '<a href="mailto:' + fromEmail + '" style="color:#1d754b;text-decoration:none">' + fromEmail + '</a><br>' +
+    '<a href="' + websiteUrl + '" style="color:#1d754b;text-decoration:none">www.avespet.com.br</a><br>' +
+    '<a href="' + instagramUrl + '" style="color:#1d754b;text-decoration:none">Instagram @avespet.oficial</a>' +
+    '</td></tr></table></div>';
+  return { text, html };
+}
+
 function allowedOrigin(origin: string | null) {
   if (!origin || originAllow.has(origin)) return true;
   try {
@@ -156,6 +193,7 @@ Deno.serve(async (req) => {
       if (!uuid.test(thread) || !uuid.test(email)) return reply({ error: "Mensagem inválida." }, 400, origin);
       const content = typeof body.text === "string" ? body.text.trim() : "";
       const idempotency = str(body.idempotency_key, 50);
+      const signed = composeSignedReply(content, box);
       if (!content || content.length > 5000 || !uuid.test(idempotency)) {
         return reply({ error: "Informe uma resposta de até 5.000 caracteres." }, 400, origin);
       }
@@ -177,7 +215,7 @@ Deno.serve(async (req) => {
       });
       if (beforeError) return reply({ error: "Não foi possível registrar a autorização para resposta." }, 503, origin);
       const response = await resend(base + "/threads/" + thread + "/emails/" + email + "/reply",
-        key, "POST", { text: content }, idempotency);
+        key, "POST", { text: signed.text, html: signed.html, reply_all: false }, idempotency);
       const { error: afterError } = await admin.from("master_audit_log").insert({
         actor_user_id: identity.user.id, action: "resend_inbox_reply_sent",
         resource_type: "communication", resource_id: thread,
