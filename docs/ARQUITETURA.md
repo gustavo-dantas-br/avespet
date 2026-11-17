@@ -302,3 +302,20 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - [ ] Conferir paginação, estados vazios, conta sem perfil e audit trail depois da publicação.
 
 **Situação:** somente código preparado em `feature/master-modulos-20261116`; nenhum deploy Vercel/Supabase e nenhuma alteração em tabelas ou usuários em produção.
+
+
+### Integração 5 — Planos provisórios a R$ 0,00 (17/11/2026)
+
+- [x] Módulo **Planos e assinaturas** integrado à navegação do Master, recuperando a interface já desenvolvida na branch histórica.
+- [x] Catálogo inicial preparado com **Gratuito**, **Essencial** e **Profissional**, todos com `price_cents = 0` (R$ 0,00); nomes Essencial/Profissional são provisórios.
+- [x] Somente o plano Gratuito (`free`) é cadastrado como ativo; Essencial e Profissional permanecem **inativos**, não contratáveis e sem receita.
+- [x] O plano gratuito tem limite **configurado como referência** de 10 aves na tabela de futuros planos; **nenhum limite novo é imposto aos criadores da produção** nesta implementação.
+- [x] Campos de preço e disponibilidade indisponíveis na interface, enquanto a precificação não for aprovada.
+- [x] Regras adicionais nos arquivos de backend e SQL rejeitam preços diferentes de R$ 0,00 e ativação de modalidades futuras; funções disponíveis: consultar, cadastrar e editar catálogo (Master).
+- [x] Estrutura histórica do catálogo versionada para implantação futura. **Não há processamento de pagamentos, atribuição automática de assinaturas nem checkout.**
+- [ ] Validar build e testar a Edge Function `master-manage-billing` depois de configurar um ambiente de teste com as tabelas.
+- [ ] Conferir rigorosamente política de leitura autenticada e auditoria de operações em ambiente de teste.
+- [ ] Antes de publicar: revisar/aprovar aplicação da migração `202611130001_platform_plans_subscriptions.sql`, implantação da função e integração de UI em um lote único, sem alterar políticas existentes de aves.
+- [ ] Após definir preços, criar uma **nova migração** para retirar os bloqueios provisórios de preço/ativação, nunca simplesmente alterar valores na produção.
+
+**Importante:** nem a migração nem a função foram executadas em produção. Não há qualquer mudança financeira nem cobrança nos criadores atuais. A redefinição de senhas permanece intocada.
