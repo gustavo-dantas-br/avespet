@@ -25,7 +25,6 @@ export default function CreatorManagement() {
   const [actionError, setActionError] = useState("");
   const [actionSuccess, setActionSuccess] = useState("");
   const [editing, setEditing] = useState(false);
-  const [temporaryPassword, setTemporaryPassword] = useState("");
   const [editForm, setEditForm] = useState({ name: "", whatsapp: "", creatorName: "", city: "", state: "" });
 
   const load = useCallback(async () => {
@@ -59,16 +58,12 @@ export default function CreatorManagement() {
       if (invokeError || data?.error || !data?.success) {
         throw new Error(data?.error || "Não foi possível concluir a ação.");
       }
-      if (manageAction === "reset_password") {
-        if (!data.temporaryPassword) throw new Error("A senha foi redefinida, mas a senha provisória não foi retornada. Procure o suporte administrativo.");
-        setTemporaryPassword(data.temporaryPassword);
-      }
       const blocked = manageAction === "block" ? true : manageAction === "unblock" ? false : selected.blocked;
       if (manageAction !== "reset_password") {
         setSelected((current) => current ? { ...current, blocked, blockedUntil: null } : current);
         setResult((current) => ({ ...current, items: current.items.map((item) => item.userId === selected.userId ? { ...item, blocked, blockedUntil: null } : item) }));
       }
-      setActionSuccess(manageAction === "reset_password" ? "Senha temporária gerada. Copie-a agora e entregue ao titular por um canal privado. Ela não será mostrada novamente." : blocked ? "Conta bloqueada com sucesso." : "Conta desbloqueada com sucesso.");
+      setActionSuccess(manageAction === "reset_password" ? "Senha temporária definida. O titular deverá trocá-la no próximo acesso." : blocked ? "Conta bloqueada com sucesso." : "Conta desbloqueada com sucesso.");
       setManageAction("");
       setReason("");
       await load();
@@ -134,7 +129,7 @@ export default function CreatorManagement() {
                 <td className="px-3 py-4"><span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700"><Bird size={14} className="text-slate-400" />{item.birdsCount}</span></td>
                 <td className="px-3 py-4"><Status blocked={item.blocked} confirmed={item.emailConfirmed} /></td>
                 <td className="px-3 py-4 text-xs text-slate-500">{fmtDate(item.createdAt)}</td>
-                <td className="px-3 py-4 text-right"><button onClick={() => { setSelected(item); setTemporaryPassword(""); setActionSuccess(""); setActionError(""); setManageAction(""); setEditing(false); }} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-white">Ver conta</button></td>
+                <td className="px-3 py-4 text-right"><button onClick={() => setSelected(item)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-white">Ver conta</button></td>
               </tr>) : <tr><td colSpan="7" className="px-3 py-12 text-center"><Users size={26} className="mx-auto text-slate-300" /><p className="mt-3 text-sm font-semibold text-slate-600">Nenhuma conta encontrada</p><p className="mt-1 text-xs text-slate-400">Tente outro termo de busca.</p></td></tr>}
             </tbody>
           </table>
@@ -142,8 +137,8 @@ export default function CreatorManagement() {
         <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4"><p className="text-xs text-slate-400">Mostrando {result.items.length} de {result.total} contas</p><div className="flex items-center gap-2"><button disabled={page <= 1 || loading} onClick={() => setPage((value) => Math.max(1, value - 1))} aria-label="Página anterior" className="rounded-lg border border-slate-200 p-2 text-slate-600 disabled:opacity-30"><ChevronLeft size={16} /></button><span className="min-w-14 text-center text-xs font-semibold text-slate-600">{page} / {result.totalPages}</span><button disabled={page >= result.totalPages || loading} onClick={() => setPage((value) => value + 1)} aria-label="Próxima página" className="rounded-lg border border-slate-200 p-2 text-slate-600 disabled:opacity-30"><ChevronRight size={16} /></button></div></div>
       </div>
 
-      {selected && <div className="fixed inset-0 z-[70] flex justify-end bg-slate-950/40" onClick={() => { setSelected(null); setTemporaryPassword(""); }}><aside role="dialog" aria-modal="true" aria-label="Detalhes do criador" onClick={(event) => event.stopPropagation()} className="h-full w-full max-w-md overflow-y-auto bg-white p-6 shadow-2xl">
-        <div className="flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-amber-700">Ficha da conta</p><h2 className="mt-2 text-xl font-bold text-slate-900">{selected.name}</h2><p className="mt-1 text-sm text-slate-500">{selected.creatorName || "Criatório não informado"}</p></div><button onClick={() => { setSelected(null); setTemporaryPassword(""); }} aria-label="Fechar detalhes" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={19} /></button></div>
+      {selected && <div className="fixed inset-0 z-[70] flex justify-end bg-slate-950/40" onClick={() => setSelected(null)}><aside role="dialog" aria-modal="true" aria-label="Detalhes do criador" onClick={(event) => event.stopPropagation()} className="h-full w-full max-w-md overflow-y-auto bg-white p-6 shadow-2xl">
+        <div className="flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-amber-700">Ficha da conta</p><h2 className="mt-2 text-xl font-bold text-slate-900">{selected.name}</h2><p className="mt-1 text-sm text-slate-500">{selected.creatorName || "Criatório não informado"}</p></div><button onClick={() => setSelected(null)} aria-label="Fechar detalhes" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={19} /></button></div>
         <div className="mt-6"><Status blocked={selected.blocked} confirmed={selected.emailConfirmed} /></div>
         <div className="mt-6 space-y-4">
           <div className="flex gap-3"><Mail size={17} className="mt-0.5 text-slate-400" /><div className="min-w-0"><p className="text-[11px] text-slate-400">E-mail da conta</p><p className="break-all text-sm font-medium text-slate-800">{selected.email || "Não informado"}</p></div></div>
@@ -159,7 +154,6 @@ export default function CreatorManagement() {
           {selected.blocked && <div className="rounded-xl bg-rose-50 p-3 text-xs text-rose-700">Bloqueio válido até: {fmtDateTime(selected.blockedUntil)}</div>}
         </div>
         {actionSuccess && <div role="status" className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{actionSuccess}</div>}
-        {temporaryPassword && <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4"><p className="text-xs font-semibold text-amber-900">Senha provisória — exibição única</p><code className="mt-2 block select-all break-all rounded-lg bg-white p-3 text-sm text-slate-900">{temporaryPassword}</code><button type="button" onClick={() => navigator.clipboard.writeText(temporaryPassword).catch(() => {})} className="mt-2 rounded-lg border border-amber-300 px-3 py-2 text-xs font-semibold text-amber-900">Copiar senha</button><p className="mt-2 text-[11px] text-amber-900">Entregue ao titular por canal privado. Não salve nem compartilhe em locais públicos.</p></div>}
         {actionError && <div role="alert" className="mt-6 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{actionError}</div>}
         <div className="mt-7 border-t border-slate-100 pt-6">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Cadastro e acesso</p>
@@ -172,7 +166,7 @@ export default function CreatorManagement() {
           ) : (
             <button type="button" onClick={() => { setManageAction("block"); setActionError(""); setActionSuccess(""); }} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800 hover:bg-rose-100"><Ban size={16} /> Bloquear conta</button>
           )}
-          <button type="button" onClick={() => { setManageAction("reset_password"); setTemporaryPassword(""); setActionError(""); setActionSuccess(""); setReason(""); }} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 hover:bg-amber-100"><KeyRound size={16} /> Redefinir senha temporária</button>
+          <button type="button" onClick={() => { setManageAction("reset_password"); setActionError(""); setActionSuccess(""); setReason(""); }} className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 hover:bg-amber-100"><KeyRound size={16} /> Redefinir senha temporária</button>
           <p className="mt-2 text-[11px] leading-5 text-slate-400">Define uma senha temporária. A troca é obrigatória no próximo acesso.</p>
           <p className="mt-2 text-[11px] leading-5 text-slate-400">O bloqueio impede novos logins e renovações de sessão. Uma sessão que já tenha um token ativo poderá permanecer válida até o vencimento desse token. Contas administrativas são protegidas.</p>
         </div>

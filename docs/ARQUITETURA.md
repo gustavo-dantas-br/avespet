@@ -275,14 +275,13 @@ A tentativa de criar uma implantação Preview foi bloqueada pela Vercel por lim
 
 A branch `feature/master-modulos-20261116` continua sem publicação automática pela configuração presente em `vercel.json`. Produção e banco não foram alterados nesta etapa.
 
-### Integração 3 — Contato do criador e segurança do acesso Master
-- [x] Exibe coluna **Contato** na lista de Criadores e usuários, com preferência pelo WhatsApp comercial salvo em `perfil_criador.data.whatsapp`, e telefone da conta Auth apenas como alternativa claramente identificada.
-- [x] Sempre exibe o campo WhatsApp na ficha, inclusive vazio, e separa do telefone de autenticação.
-- [x] Inclui WhatsApp e telefone da conta na pesquisa administrativa (com correspondência por dígitos).
-- [x] A edição do WhatsApp passa a atualizar apenas o perfil comercial `perfil_criador.data.whatsapp`; não altera o campo `auth.users.phone`, que pode servir ao login. O formulário informa que o WhatsApp pode aparecer nos anúncios públicos.
-- [x] A recuperação de acesso foi reforçada no código: substituída uma senha provisória fixa legada por senha aleatória criptograficamente forte, apresentada apenas ao Master após a operação, sem persistência no cliente; exige troca no próximo login.
-- [ ] Antes de usar em produção, **publicar em conjunto** o novo frontend e as Edge Functions `master-list-creators` e `master-manage-creator`. O backend atualmente publicado ainda não inclui estas alterações.
-- [ ] Executar build, validar login, atualização de WhatsApp, busca por número, tratamento de conta sem contato, segregação de contas administrativas e fluxo completo de senha provisória.
-- [ ] **Prioridade de segurança:** até a atualização da função `master-manage-creator`, evitar utilizar a redefinição administrativa de senha legada, que usa credencial provisória fixa.
+### Integração 3 — Contato de criadores (sem alterações em senhas)
+- [x] Criada a coluna **Contato**, priorizando o WhatsApp comercial do criador; o telefone da conta Auth aparece como alternativa identificada.
+- [x] A ficha mostra o WhatsApp mesmo quando não cadastrado e o separa do telefone de autenticação.
+- [x] O WhatsApp é editável no perfil comercial, sem modificar o login nem o e-mail de autenticação.
+- [x] Pesquisa administrativa pode localizar criadores por número.
+- [x] Conforme decisão do projeto, o fluxo existente de **redefinição de senha permanece inalterado** em relação à versão anterior a esta integração.
+- [ ] Validar build, busca, edição e campos vazios em um ciclo de testes agrupado antes da publicação.
+- [ ] O ajuste do backend de listagem e edição do WhatsApp deve ser publicado junto com o frontend em futura atualização controlada.
 
-**Não foi realizado deploy Vercel, Supabase Functions nem alteração de banco.** Os arquivos foram preparados somente na branch `feature/master-modulos-20261116`.
+Esta alteração é apenas código em branch; **sem deploy na Vercel, sem alteração no Supabase em execução e sem mudanças no banco**.
