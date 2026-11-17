@@ -319,3 +319,9 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - [ ] Após definir preços, criar uma **nova migração** para retirar os bloqueios provisórios de preço/ativação, nunca simplesmente alterar valores na produção.
 
 **Importante:** nem a migração nem a função foram executadas em produção. Não há qualquer mudança financeira nem cobrança nos criadores atuais. A redefinição de senhas permanece intocada.
+
+### Publicação controlada — edição de contato separada da senha
+- A atualização do contato comercial utiliza a função específica `master-update-creator-profile`, protegida por autenticação e validação Master.
+- `master-manage-creator` permanece idêntica à implementação preexistente da `main`, inclusive no fluxo de redefinição de senha, atendendo à decisão explícita de não alterá-la.
+- A função de perfil não modifica senha, telefone Auth, `user_metadata` ou `app_metadata`, somente o perfil comercial.
+- Configuração temporária para suprimir previews foi retirada de `vercel.json` antes da publicação.

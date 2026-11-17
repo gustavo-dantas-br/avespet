@@ -33,10 +33,5 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "git": {
-    "deploymentEnabled": {
-      "feature/master-modulos-20261116": false
-    }
-  }
+  ]
 }

@@ -80,7 +80,7 @@ export default function CreatorManagement() {
     if (!selected || actionLoading) return;
     setActionLoading(true); setActionError(""); setActionSuccess("");
     try {
-      const { data, error: invokeError } = await supabase.functions.invoke("master-manage-creator", { body: { user_id: selected.userId, action: "update_account", profile: editForm } });
+      const { data, error: invokeError } = await supabase.functions.invoke("master-update-creator-profile", { body: { user_id: selected.userId, profile: editForm } });
       if (invokeError || data?.error || !data?.success) throw new Error(data?.error || "Não foi possível salvar os dados.");
       setSelected((current) => current ? { ...current, name: editForm.name, whatsapp: editForm.whatsapp, creatorName: editForm.creatorName, city: editForm.city, state: editForm.state, hasProfile: true } : current);
       setResult((current) => ({ ...current, items: current.items.map((item) => item.userId === selected.userId ? { ...item, name: editForm.name, whatsapp: editForm.whatsapp, creatorName: editForm.creatorName, city: editForm.city, state: editForm.state, hasProfile: true } : item) }));
