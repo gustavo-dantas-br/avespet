@@ -58,7 +58,7 @@ async function syncLostBirdReplies(
   const account = await admin.auth.admin.getUserById(ad.user_id);
   const ownerEmail = account.data?.user?.email_confirmed_at ? emailAddress(account.data.user.email) : "";
   if (account.error || !ownerEmail) return { checked:false, linked:0, note:"E-mail do tutor não confirmado." };
-  const name = safeText(ad.data?.nomeAve || ad.data?.especie || "", 60).replace(/[\\r\\n]/g," ");
+  const name = safeText(ad.data?.nomeAve || ad.data?.especie || "", 60).replace(/[\r\n]/g," ");
   if (!name) return { checked:false, linked:0, note:"Anúncio sem identificação." };
   const expectedSubject = "Avespet | Complete as informações da ave " + name;
   const linkedSentIds = sentEvents.map(event => safeText(event.details?.provider_id,50)).filter(Boolean);
