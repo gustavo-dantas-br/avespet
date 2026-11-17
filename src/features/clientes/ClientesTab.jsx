@@ -1,9 +1,6 @@
 import React, { useState } from "react";
+import { normalizeTelefone } from "../../lib/telefone";
 import { Phone, Pencil, Save, Trash2, MessageCircle, Plus, Search, Users } from "lucide-react";
-
-function normalizeTelefone(t) {
-  return (t || "").replace(/\\D/g, "");
-}
 
 function historicoCliente(cliente, aves) {
   const porId = aves.filter((a) => a.status === "Vendida" && a.clienteId === cliente.id);
@@ -348,4 +345,4 @@ export default function ClientesTab({ clientes, aves, onSave, onDelete, onImport
     </div>
   );
 }
-
+export { historicoCliente, clientesCandidatosDeVendas };
