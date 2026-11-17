@@ -308,3 +308,26 @@ Criar um módulo de comunicação inteiramente operado dentro do **Avespet / Mas
 - [ ] Planejar publicação somente após revisão e aceite; evitar deploys desnecessários.
 
 **Registro de alterações desta etapa:** apenas documentação no GitHub. **Não** foi configurada API Key, webhook, SMTP/Auth, Edge Function, SQL, campanha, recebimento, serviço de envio ou interface do Master. Não alterar o ambiente de produção apenas por causa deste registro.
+
+### 13.6 Teste transacional Master — código preparado em 17/11/2026
+
+Branch de desenvolvimento: `feature/resend-email-test-master`. Alterações nesta etapa são **somente código não publicado**.
+
+- Menu Master: entrada `Central de e-mails`, sem substituir ou alterar `Suporte`.
+- Componente `src/features/master/EmailTestPanel.jsx`: permite disparar apenas um teste ao próprio e-mail da sessão Master.
+- Edge Function `supabase/functions/master-resend-test/index.ts`: valida o JWT do usuário com Supabase Auth, consulta `master_admins` pelo UUID, limita a três envios por Master por hora e audita em `master_audit_log`.
+- Remetente fixo: `Avespet Suporte <suporte@avespet.com.br>`. Sem destinatários arbitrários, campanhas ou envio de listas.
+- A variável `RESEND_API_KEY` deve ser cadastrada **somente** em Secrets no Supabase; nunca colocar no frontend, no GitHub nem em conversas.
+- Envio usa API oficial Resend por HTTPS e chave de idempotência para reduzir duplicidade por clique repetido.
+- **Não foi alterado o fluxo de redefinição de senha**. Automações e recebimento seguem desativados.
+
+Antes do primeiro envio real:
+1. Criar API Key de envio no Resend com menor escopo possível para o domínio.
+2. Configurar `RESEND_API_KEY` nos Secrets do projeto Supabase `tnnpzitijvklbnwptsuq`.
+3. Após revisão, publicar a Edge Function com **Verify JWT ativo**.
+4. Validar build/Preview do frontend e sessão Master; depois testar envio para a própria conta.
+5. Confirmar no Resend e na caixa de entrada; conferir o registro de auditoria.
+6. Só então desenvolver caixas de entrada, webhooks, automações e campanhas consentidas.
+
+Não foi realizado deploy, criação de Secrets, alteração de DNS ou de banco nesta etapa.
+
