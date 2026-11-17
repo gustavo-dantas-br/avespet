@@ -316,6 +316,17 @@ export async function listAnunciosAvesPerdidasAdmin() {
 export async function atualizarStatusAnuncioAvePerdida(id, status) {
   const permitidos = ["pendente", "aprovado", "rejeitado", "encerrado"];
   if (!permitidos.includes(status)) throw new Error("Status inválido.");
+  if (status === "aprovado") {
+    // Aprovacao concentrada no servidor: confirma mudança de status e registra
+    // uma unica tentativa de e-mail, sem expor chaves ou destinatarios no browser.
+    const { data, error } = await supabase.functions.invoke("notify-approved-lost-bird", {
+      body: { anuncio_id: id },
+    });
+    if (error || !data?.success || !data?.approved) {
+      throw new Error(data?.error || "Não foi possível aprovar e publicar o anúncio.");
+    }
+    return data;
+  }
   const { error } = await supabase
     .from("anuncios_aves_perdidas")
     .update({ status })
