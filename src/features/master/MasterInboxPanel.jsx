@@ -26,6 +26,11 @@ export default function MasterInboxPanel({ user }) {
   const [opening, setOpening] = useState(false);
   const [sending, setSending] = useState(false);
   const [reply, setReply] = useState("");
+  const [composing, setComposing] = useState(false);
+  const [composeTo, setComposeTo] = useState("");
+  const [composeSubject, setComposeSubject] = useState("");
+  const [composeText, setComposeText] = useState("");
+  const [composeRequestId, setComposeRequestId] = useState(() => newId());
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [hasMore, setHasMore] = useState(false);
@@ -56,6 +61,7 @@ export default function MasterInboxPanel({ user }) {
     setThread(null);
     setMessages([]);
     setReply("");
+    setComposing(false);
     setNotice("");
     setThreads([]);
     load(box);
@@ -101,6 +107,45 @@ export default function MasterInboxPanel({ user }) {
       setSending(false);
     }
   }
+  async function sendNewEmail(e) {
+    e.preventDefault();
+    if (sending || !composeTo.trim() || !composeSubject.trim() || !composeText.trim()) return;
+    if (!window.confirm("Enviar novo e-mail de " + boxes.find((b) => b.key === box)?.address + " para " + composeTo.trim() + "?")) return;
+    setSending(true);
+    setError("");
+    setNotice("");
+    try {
+      const data = await invoke({
+        action: "compose", box, to: composeTo.trim(), subject: composeSubject.trim(),
+        text: composeText.trim(), idempotency_key: composeRequestId,
+      });
+      setNotice(data.audit_warning ? "E-mail enviado; confirmação da auditoria pendente." : "Novo e-mail enviado com sucesso.");
+      setComposeTo("");
+      setComposeSubject("");
+      setComposeText("");
+      setComposeRequestId(newId());
+      setComposing(false);
+      await load(box);
+    } catch (err) {
+      setError(err.message + " Em caso de dúvida sobre a entrega, confira o Resend antes de enviar novamente.");
+    } finally {
+      setSending(false);
+    }
+  }
+  function startCompose() {
+    setComposing(true);
+    setThread(null);
+    setMessages([]);
+    setError("");
+    setNotice("");
+  }
+  function cancelCompose() {
+    setComposing(false);
+    setComposeTo("");
+    setComposeSubject("");
+    setComposeText("");
+    setComposeRequestId(newId());
+  }
   const selected = boxes.find((b) => b.key === box);
   const canReply = messages.some((m) => m.direction === "inbound");
   return (
@@ -124,14 +169,47 @@ export default function MasterInboxPanel({ user }) {
           <div className="flex items-center gap-2 text-slate-800">
             <Mail size={19} /><strong className="text-sm">{selected.label} · Caixa de entrada</strong>
           </div>
-          <button type="button" onClick={() => thread ? openThread(thread) : load(box)} disabled={loading || opening || sending}
+          <div className="flex items-center gap-2">
+          <button type="button" onClick={startCompose} disabled={sending} className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">
+            <Send size={14} /> Novo e-mail
+          </button>
+          <button type="button" onClick={() => composing ? load(box) : thread ? openThread(thread) : load(box)} disabled={loading || opening || sending}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 disabled:opacity-50">
             <RefreshCw size={14} className={loading || opening ? "animate-spin" : ""} /> Atualizar
           </button>
+          </div>
         </div>
         {error && <p role="alert" className="mx-4 mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 sm:mx-6"><AlertCircle size={18} className="shrink-0" />{error}</p>}
         {notice && <p role="status" className="mx-4 mt-4 flex items-start gap-2 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-900 sm:mx-6"><CheckCircle2 size={18} className="shrink-0" />{notice}</p>}
-        {!thread ? (
+        {composing ? (
+          <form onSubmit={sendNewEmail} className="space-y-4 p-4 sm:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-lg font-bold text-slate-900">Escrever novo e-mail</h2>
+              <button type="button" disabled={sending} onClick={cancelCompose} className="text-xs font-semibold text-slate-600 hover:text-slate-900">Cancelar</button>
+            </div>
+            <p className="text-xs text-slate-500">Remetente: <strong>{selected.address}</strong>. Envio individual, sem cópias ou campanhas.</p>
+            <label className="block text-xs font-semibold text-slate-700">Para
+              <input type="email" required maxLength={254} autoComplete="off" value={composeTo}
+                onChange={(e) => { setComposeTo(e.target.value); setComposeRequestId(newId()); }}
+                placeholder="cliente@exemplo.com" className="mt-2 w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-200" />
+            </label>
+            <label className="block text-xs font-semibold text-slate-700">Assunto
+              <input type="text" required maxLength={180} value={composeSubject}
+                onChange={(e) => { setComposeSubject(e.target.value); setComposeRequestId(newId()); }}
+                placeholder="Assunto do atendimento" className="mt-2 w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-200" />
+            </label>
+            <label className="block text-xs font-semibold text-slate-700">Mensagem
+              <textarea required maxLength={5000} rows={7} value={composeText}
+                onChange={(e) => { setComposeText(e.target.value); setComposeRequestId(newId()); }}
+                placeholder="Escreva sua mensagem..." className="mt-2 w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-200" />
+            </label>
+            <p className="text-xs text-slate-500">A assinatura Avespet com a pena verde, site e Instagram será incluída automaticamente. Limite: 10 novos e-mails por hora por Master.</p>
+            <button disabled={sending || !composeTo.trim() || !composeSubject.trim() || !composeText.trim()} type="submit"
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">
+              {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}{sending ? "Enviando..." : "Enviar e-mail"}
+            </button>
+          </form>
+        ) : !thread ? (
           <div className="min-h-56">
             {loading ? <div className="flex items-center justify-center gap-2 p-12 text-sm text-slate-500"><Loader2 className="animate-spin" size={19} /> Carregando conversas...</div>
               : threads.length ? threads.map((item) => (
