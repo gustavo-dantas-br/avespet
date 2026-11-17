@@ -358,3 +358,14 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - [ ] Integrar a correção na produção após validação e conferir a atualização dos assets pela Vercel.
 
 **Observação:** a falha de carregamento de chunk/PWA é uma hipótese compatível com os sintomas, não foi reproduzida com acesso a uma sessão real. O erro exato no navegador deve ser verificado caso persista.
+
+
+### Publicação — Central de Comunicação Resend (17/11/2026)
+
+- [x] Integrada à `main` atual, preservando correções do Plantel, cadastro de clientes, reservas, genética e redefinição de senha.
+- [x] Caixa de entrada Suporte e Financeiro com leitura de conversas e mensagens, resposta manual e botão **Novo e-mail** (destinatário, assunto e texto), sempre com confirmação antes de enviar.
+- [x] Assinatura automática HTML e alternativa texto: pena verde provisória hospedada no site, Avespet, setor, endereço, site oficial e Instagram `@avespet.oficial`.
+- [x] Edge Function `master-resend-inboxes`: JWT e autorização Master, chave `RESEND_INBOX_API_KEY` apenas no servidor, destinatário único, limites de 10 novos e-mails/hora e 15 respostas/hora por Master e registros de auditoria sem corpo da mensagem.
+- [x] Envio de novo e-mail e resposta ao Gmail/Yahoo validados manualmente pelo proprietário em Preview. Validação de autenticação nos cabeçalhos Yahoo mostrou SPF/DKIM/DMARC PASS, mas classificação na pasta spam ainda requer monitoramento da reputação e boas práticas.
+- [ ] Conferir acesso com sessão Master na produção, validar carregamento da imagem e testar também a caixa Financeiro.
+- [ ] Campanhas e disparos em massa continuam desligados até existir consentimento explícito, descadastro, segmentação e acompanhamento de entregabilidade.

@@ -6,7 +6,7 @@ import BirdsManagement from "./BirdsManagement";
 import BillingManagement from "./BillingManagement";
 import MasterAudit from "./MasterAudit";
 import SupportOperations from "./SupportOperations";
-import EmailTestPanel from "./EmailTestPanel";
+import MasterInboxPanel from "./MasterInboxPanel";
 import {
   LayoutDashboard, Users, Bird, Megaphone, CreditCard, LifeBuoy, Mail,
   Settings, LogOut, ShieldCheck, RefreshCw, Menu, X, Activity,
@@ -21,7 +21,7 @@ const navigation = [
   { id: "ads", label: "Anúncios e moderação", icon: Megaphone, description: "Aprovação e situação dos anúncios de aves" },
   { id: "billing", label: "Planos e assinaturas", icon: CreditCard, description: "Catálogo provisório, ainda sem cobranças" },
   { id: "support", label: "Suporte operacional", icon: LifeBuoy, description: "Triagem de casos, sem integração automática com e-mail" },
-  { id: "communications", label: "Central de e-mails", icon: Mail, description: "Teste de envio; caixas em integração" },
+  { id: "communications", label: "Central de Comunicação", icon: Mail, description: "Caixas Suporte e Financeiro, novos e-mails e respostas" },
   { id: "settings", label: "Auditoria e segurança", icon: Settings, description: "Histórico de ações administrativas" },
 ];
 
@@ -173,7 +173,7 @@ export default function MasterApp({ user, onLogout }) {
         </header>
 
         <main className="mx-auto max-w-[1500px] px-4 py-7 sm:px-7 lg:px-9">
-          {activeSection === "creators" ? <CreatorManagement /> : activeSection === "ads" ? <AdsModeration /> : activeSection === "birds" ? <BirdsManagement /> : activeSection === "billing" ? <BillingManagement /> : activeSection === "support" ? <SupportOperations /> : activeSection === "settings" ? <MasterAudit /> : activeSection === "communications" ? <EmailTestPanel user={user} /> : activeSection === "overview" ? (
+          {activeSection === "creators" ? <CreatorManagement /> : activeSection === "ads" ? <AdsModeration /> : activeSection === "birds" ? <BirdsManagement /> : activeSection === "billing" ? <BillingManagement /> : activeSection === "support" ? <SupportOperations /> : activeSection === "settings" ? <MasterAudit /> : activeSection === "communications" ? <MasterInboxPanel user={user} /> : activeSection === "overview" ? (
             <>
               <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
                 <div><p className="text-[10px] font-bold uppercase tracking-[.2em]" style={{ color: "#a27b2e" }}>Central de gestão</p><h1 className="mt-2 text-[26px] font-bold tracking-tight text-slate-900 sm:text-[32px]">Visão geral</h1><p className="mt-1.5 max-w-2xl text-sm text-slate-500">Acompanhe o crescimento, a atividade e a saúde operacional do Avespet em um só lugar.</p></div>
