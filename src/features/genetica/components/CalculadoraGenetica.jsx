@@ -463,7 +463,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                   </label>
                   <label className="text-sm" style={{ color: "#5e5143" }}>Fator violeta
                     <select className="w-full rounded-xl px-3 py-2 mt-1" style={campo} value={manual.fatoresGeneticos?.violetFactor || ""} onChange={(e) => setManual((v) => ({ ...v, fatoresGeneticos: { ...(v.fatoresGeneticos || {}), violetFactor: e.target.value } }))}>
-                      <option value="">Não sei</option><option value="SF">Fator simples (uma cópia)</option><option value="DF">Fator duplo (duas cópias)</option>
+                      <option value="">Não sei</option><option value="NONE">Sem fator (confirmado)</option><option value="SF">Fator simples (uma cópia)</option><option value="DF">Fator duplo (duas cópias)</option>
                     </select>
                   </label>
                 </div>
@@ -529,7 +529,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
               <div className="font-semibold">E o fator Violeta?</div>
               {resultado.fatorVioleta === null && resultado.fatorOutro === 0 ? (
                 <>
-                  <p className="text-sm">A ave Violeta pode ter uma cópia do fator (SF) ou duas (DF). Como a outra ave está informada sem o fator:</p>
+                  <p className="text-sm">A ave Violeta pode ter uma cópia do fator (SF) ou duas (DF). Como a ausência do fator na outra ave foi confirmada:</p>
                   <p className="text-sm">• <strong>Se for SF:</strong> 50% dos filhotes herdam o fator Violeta.</p>
                   <p className="text-sm">• <strong>Se for DF:</strong> 100% dos filhotes herdam o fator Violeta (SF).</p>
                   <p className="text-xs" style={{ color: "#8a7a63" }}>Estas são hipóteses de herança do fator, não percentuais das cores visíveis.</p>
@@ -544,7 +544,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                   <p className="text-xs" style={{ color: "#8a7a63" }}>Percentuais apenas do fator Violeta, sem prever o fenótipo completo.</p>
                 </>
               ) : (
-                <p className="text-sm">A aparência Violeta não confirma SF ou DF. Para dar percentuais, precisamos da dosagem de ambos os pais ou de dados de descendência.</p>
+                <p className="text-sm">A aparência Violeta não revela se o fator é simples (SF) ou duplo (DF). Uma ave descrita apenas como Azul também não está comprovadamente sem Violeta. Sem esses dados, não podemos afirmar que 50% ou 100% dos filhotes serão violetas. Se conhecer a dosagem dos pais, informe em “Se souber mais detalhes (opcional)”.</p>
               )}
             </div>
             {resultado.cenarios.length ? (
