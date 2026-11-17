@@ -346,3 +346,15 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - [x] Regras de nome obrigatório e telefone duplicado mantidas também no fluxo de reserva. Se a gravação do cliente falhar, a reserva não recebe um `cliente_id` sem cadastro.
 - [x] Nenhuma alteração na tabela de aves, pagamentos, fluxo de reserva, genética, Master, redefinição de senha ou integração de e-mail.
 - [ ] Conferir build Vite e testar o cadastro no desktop e no celular com usuário criador autenticado.
+
+### Correção preventiva de telas brancas no Painel do Criador — 17/11/2026
+
+- [x] Reforçado o carregamento de **Meu Plantel** e dos cartões de aves com importação estática, evitando erro de download de chunk após a atualização do PWA neste menu crítico.
+- [x] Novo componente de segurança `PanelErrorBoundary` envolve o conteúdo dos menus e a raiz do aplicativo. Em falhas de renderização ou importação mostra uma mensagem de recuperação, com botão para atualizar a aplicação, sem apagar dados.
+- [x] Proteção reinicializada quando o usuário troca de aba (chave `tab`), evitando que um problema numa tela paralise todas as outras.
+- [x] Incluído teste de renderização SSR das principais telas do criador, inclusive os filtros do Plantel, no CI do build.
+- [x] Dados das aves verificados em leitura no Supabase: 58 registros com campos principais em tipos JSON compatíveis, sem alteração de dados.
+- [ ] Validar os testes CI após abertura de PR e executar teste interativo com criador autenticado (PWA/celular e desktop).
+- [ ] Integrar a correção na produção após validação e conferir a atualização dos assets pela Vercel.
+
+**Observação:** a falha de carregamento de chunk/PWA é uma hipótese compatível com os sintomas, não foi reproduzida com acesso a uma sessão real. O erro exato no navegador deve ser verificado caso persista.

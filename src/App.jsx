@@ -1,6 +1,8 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from "react";
 import { StatCard, TreeCard } from "./features/dashboard/components/CardsDashboard";
-const AveCard = React.lazy(() => import("./features/plantel/components/AveCard"));
+import AveCard from "./features/plantel/components/AveCard";
+import ListaTab from "./features/plantel/components/ListaTab";
+import PanelErrorBoundary from "./components/ui/PanelErrorBoundary";
 import { Card, SectionTitle, inputStyle, Field } from "./components/ui/SharedUI";
 import SuporteWhatsApp from "./components/SuporteWhatsApp";
 import { compressPhoto } from "./features/plantel/utils/comprimirFoto";
@@ -36,7 +38,6 @@ const ModeracaoAvesPerdidasTab = React.lazy(() => import("./features/aves-perdid
 const AchadosTab = React.lazy(() => import("./features/aves-perdidas/components/AchadosTab"));
 const AprovacoesTab = React.lazy(() => import("./features/anuncios/components/AprovacoesTab"));
 const CalculadoraGenetica = React.lazy(() => import("./features/genetica/components/CalculadoraGenetica"));
-const ListaTab = React.lazy(() => import("./features/plantel/components/ListaTab"));
 const ReservasTab = React.lazy(() => import("./features/reservas/ReservasTab"));
 const DashboardTab = React.lazy(() => import("./features/dashboard/components/DashboardTab"));
 const FinanceiroTab = React.lazy(() => import("./features/financeiro/components/FinanceiroTab"));
@@ -1169,6 +1170,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
           </div>
         ) : (
           <>
+            <PanelErrorBoundary key={tab} area={navGroups.flatMap((group) => group.items).find((item) => item.id === tab)?.label || "Painel do criador"} onGoHome={() => setTab("dashboard")}>
             <React.Suspense fallback={<div className="flex items-center gap-2 ui-sans py-6" style={{ color: "#F1E6D2" }}><Loader2 className="animate-spin" size={18} /> Carregando funcionalidade...</div>}>
             {tab === "dashboard" && <DashboardTab aves={aves} despesas={despesas} clientes={clientes} indicacoes={indicacoes} posturas={posturas} setTab={setTab} goToLista={goToLista} STATUS_PLANTEL={STATUS_PLANTEL} SectionTitle={SectionTitle} StatCard={StatCard} money={money} Card={Card} />}
 
@@ -1280,6 +1282,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
 
             {tab === "conteudo" && isAdminUser && <ConteudoAdmin />}
             </React.Suspense>
+            </PanelErrorBoundary>
           </>
         )}
       </main>
