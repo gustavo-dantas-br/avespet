@@ -379,3 +379,16 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - [ ] Executar testes da PR antes de integrar ao site oficial. Testes de interface com sessão real de criador continuam como validação complementar.
 
 **Escopo:** não altera registros, reservas, plantas, permissões de Master, e-mail nem redefinição de senha. Sem migrações ou novo serviço.
+
+
+### E-mail automático de aprovação de aves perdidas — 17/11/2026
+
+- Escopo isolado em `feature/email-aprovacao-ave-perdida-20261117`: **somente e-mail transacional de acolhimento** ao aprovar um anúncio de ave perdida, sem publicidade, campanhas, cobrança ou redefinição de senha.
+- A aprovação no painel administrativo tradicional passa a chamar a Edge Function `notify-approved-lost-bird` a partir de `src/lib/db.js`. Outras transições de estado permanecem como antes.
+- A Edge Function valida JWT e vínculo às tabelas `admins` ou `master_admins`, lê o anúncio no banco, atualiza o status apenas se ainda não estiver aprovado e registra a intenção de envio na tabela privada `aves_perdidas_emails_aprovacao`.
+- Destinatário: primeiro um e-mail válido nos dados do anúncio (`contatoEmail`/`email`); se não houver, e-mail **confirmado** da conta autenticada vinculada ao anúncio. Se não existir, o anúncio é aprovado normalmente **sem disparar** e a função devolve `email_status: no_email`.
+- Só um registro por anúncio e `Idempotency-Key` do Resend evitam duplicação quando o anúncio é reaprovado. Falhas de provedor ou resultado de rede incerto são mantidos para verificação administrativa, sem tentativas automáticas cegas.
+- Mensagem: solidariedade, confirmação de publicação gratuita, orientações práticas e referência à lista pública `/aves-perdidas`; **não gera links de edição não autorizados** enquanto a funcionalidade de edição está sendo desenvolvida separadamente.
+- A API privada usa `RESEND_API_KEY` já configurada no Supabase. Não registra endereço do destinatário nem conteúdo do e-mail na tabela de controle.
+- Importante: os anúncios já aprovados não são disparados retroativamente. A página de cadastro atual permite envio anônimo e não captura e-mail; a captura e validação de endereço devem ser integradas ao fluxo de cadastro antes de esperar e-mails para anúncios sem conta.
+- Ainda exige instalação e verificação da migração `202611170006_aves_perdidas_emails_aprovacao.sql`, implantação da Edge Function e publicação controlada do código do `db.js`. Não anunciar como ativo enquanto essas etapas não forem concluídas.
