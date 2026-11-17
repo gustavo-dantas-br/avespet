@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Feather, Loader2, Search, Phone, ArrowLeft, MessageCircle, X } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { lerCadastroPendente } from "../features/aves-perdidas/services/cadastroPendenteAvePerdida";
 import {
   buscarPerdidaPorAnilha, listAnunciosPublicos, listPerfisPublicos,
   incrementarVisualizacaoAnuncio, incrementarCliqueAnuncio, registrarAchadoAnilha, registrarVisita,
@@ -320,7 +321,7 @@ function VitrinePublica() {
 
 function LoginModal({ onFechar }) {
   const [mode, setMode] = useState("login");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => lerCadastroPendente()?.email || "");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
   const [sobrenome, setSobrenome] = useState("");

@@ -410,3 +410,12 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - O provedor integrado de demonstração do Supabase impõe 2 e-mails de autenticação por hora para todo o projeto e restringe destinatários. Para produção, habilitar SMTP próprio do Resend em **Supabase > Authentication > SMTP Settings**; configurar remetente verificado, `smtp.resend.com`, porta `465` (ou `587` se necessário), usuário `resend`, senha = chave de API Resend. Não compartilhar a chave em código, chat ou commit; configurar somente no dashboard e ajustar os limites de Auth de forma conservadora.
 - Não desabilitar a verificação de e-mail para contornar a limitação. O registro da ave fica temporariamente no navegador durante a confirmação e é vinculado ao perfil após entrar na conta.
 - Correção visual do formulário de cadastro de ave perdida: rótulos de e-mail e senha separados e mensagem amigável de limite de envio. O problema do SMTP continuará até completar a configuração no Auth do Supabase.
+
+
+### Pós-cadastro de ave perdida: confirmação de e-mail (17/11/2026)
+
+- Após `auth.signUp` aceito com sessão nula, o formulário público é substituído por uma tela de confirmação com título destacado, e-mail utilizado, instruções para conferir spam e aviso de que a ave ainda não foi submetida ao Master.
+- A confirmação pendente persiste em `localStorage` com o rascunho (sem senha). Ao retornar ou recarregar, a tela continua; após confirmar, o botão de login abre o modal Avespet preenchido com o endereço do rascunho.
+- **Não recebi o e-mail** chama `supabase.auth.resend({type: "signup"})`, com bloqueio local de repetição em 60 segundos e mensagens adequadas de erro.
+- **Digitei o e-mail errado/não tenho acesso** volta ao formulário preservado para criação de nova conta com outro endereço; não tenta alterar a identidade de uma conta sem autenticação.
+- O anúncio só é criado após uma sessão válida, com `user_id` do titular e status `pendente`; após autenticar, o usuário abre a área do criador. Manter SMTP Resend e confirmação de e-mail ativados.

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { atualizarMeuAnuncioPerdida, criarAnuncioPerdida, listarMinhasAvesPerdidas } from "../services/avesPerdidasService";
 import { comprimirEEnviarImagemPublica } from "../utils/comprimirImagem";
 import { supabase } from "../../../supabaseClient";
-import { guardarCadastroPendente, lerCadastroPendente } from "../services/cadastroPendenteAvePerdida";
+import { guardarCadastroPendente, lerCadastroPendente, marcarConfirmacaoSolicitada } from "../services/cadastroPendenteAvePerdida";
 
 const input = { width: "100%", padding: "12px", borderRadius: 8, border: "1px solid #e3d3b4", background: "#fff", color: "#2B241C" };
 const STATUS = {
@@ -14,7 +14,7 @@ const STATUS = {
 
 const FORM_INICIAL = { nomeAve: "", especie: "Ring Neck", cor: "", sexo: "", idadeAproximada: "", caracteristicas: "", anilha: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", bairro: "", foto: "" };
 
-export default function PerdiUmaAve({ userId: userIdInicial }) {
+export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
   const formularioRef = useRef(null);
   const [userId, setUserId] = useState(userIdInicial ?? undefined);
   const [form, setForm] = useState({ ...FORM_INICIAL });
@@ -26,10 +26,15 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
   const [mensagem, setMensagem] = useState("");
   const [anuncioCriadoId, setAnuncioCriadoId] = useState("");
   const [erro, setErro] = useState("");
-  const [contaEmail, setContaEmail] = useState("");
+  const [contaEmail, setContaEmail] = useState(() => lerCadastroPendente()?.email || "");
   const [contaSenha, setContaSenha] = useState("");
   const [modoConta, setModoConta] = useState("cadastro");
-  const [aguardandoConfirmacao, setAguardandoConfirmacao] = useState(false);
+  const [aguardandoConfirmacao, setAguardandoConfirmacao] = useState(
+    () => Boolean(lerCadastroPendente()?.confirmacaoSolicitada)
+  );
+  const [reenviandoConfirmacao, setReenviandoConfirmacao] = useState(false);
+  const [ultimoReenvio, setUltimoReenvio] = useState(0);
+  const [emailNovo, setEmailNovo] = useState(false);
   const alterar = (campo, valor) => setForm((atual) => ({ ...atual, [campo]: valor }));
 
   useEffect(() => {
@@ -133,8 +138,10 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
           if (data?.session) {
             setMensagem("Conta criada. Estamos enviando seu anúncio para análise.");
           } else {
+            marcarConfirmacaoSolicitada(email);
             setAguardandoConfirmacao(true);
-            setMensagem("Conta solicitada! Confira seu e-mail, confirme o cadastro e entre na sua conta neste navegador. O anúncio será enviado após entrar.");
+            setMensagem("");
+            setErro("");
           }
         }
         setContaSenha("");
@@ -166,6 +173,42 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
     }
   }
 
+  async function reenviarConfirmacao() {
+    const email = contaEmail.trim().toLowerCase();
+    if (!email || reenviandoConfirmacao || Date.now() - ultimoReenvio < 60000) return;
+    setReenviandoConfirmacao(true);
+    setErro("");
+    setMensagem("");
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: window.location.origin + "/" },
+      });
+      if (error) throw error;
+      setUltimoReenvio(Date.now());
+      setMensagem("Solicitação de reenvio recebida! Confira sua caixa de entrada, spam e lixo eletrônico.");
+    } catch (e) {
+      const limite = e?.status === 429 || /rate limit|security purposes/i.test(e?.message || "");
+      setErro(limite
+        ? "Muitas tentativas de envio. Aguarde um pouco antes de reenviar o e-mail."
+        : "Não conseguimos reenviar agora. Confira seu endereço de e-mail ou tente novamente mais tarde.");
+    } finally {
+      setReenviandoConfirmacao(false);
+    }
+  }
+
+  function trocarEmailCadastro() {
+    // Permite refazer o cadastro em outro endereço sem perder os dados digitados.
+    // O usuário não consegue alterar o endereço de uma conta não confirmada sem acesso a ela.
+    setAguardandoConfirmacao(false);
+    setModoConta("cadastro");
+    setEmailNovo(true);
+    setContaSenha("");
+    setMensagem("Se você não tem mais acesso ao e-mail anterior, informe outro endereço e crie uma nova conta. Os dados da ave continuam preenchidos.");
+    setErro("");
+  }
+
   async function fotoSelecionada(e) {
     const arquivo = e.target.files?.[0];
     if (!arquivo) return;
@@ -181,6 +224,29 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
     } finally {
       setEnviandoFoto(false);
     }
+  }
+
+  if (!userId && aguardandoConfirmacao) {
+    return <section ref={formularioRef} className="ui-sans mx-auto max-w-2xl">
+      <div role="status" className="rounded-2xl bg-white p-6 text-center shadow-lg sm:p-10" style={{ border: "2px solid #B2D8BF", color: "#1D2B25" }}>
+        <div aria-hidden="true" className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full text-3xl" style={{ background: "#E8F1E9" }}>✉️</div>
+        <h1 className="text-2xl font-extrabold sm:text-3xl" style={{ color: "#174B3B" }}>Confirme seu e-mail para ativar a conta</h1>
+        <p className="mx-auto mt-4 max-w-lg text-base leading-7">Enviamos um link de confirmação para <strong className="break-all">{contaEmail}</strong>.</p>
+        <p className="mx-auto mt-3 max-w-lg text-sm leading-6" style={{ color: "#526A5B" }}>Abra sua caixa de entrada e clique no link. Verifique também o spam e a lixeira.</p>
+        <div className="mt-6 rounded-xl p-4 text-left text-sm leading-6" style={{ background: "#F1F7F2", color: "#294D39" }}>
+          <strong>Seus dados da ave foram preservados neste navegador.</strong> O anúncio ainda não foi enviado à moderação. Depois de confirmar o e-mail, entre na sua conta para concluir o envio automaticamente.
+        </div>
+        {erro && <p role="alert" className="mt-4 rounded-lg p-3 text-sm" style={{ color: "#9D3F30", background: "#FFF1ED" }}>{erro}</p>}
+        {mensagem && <p className="mt-4 rounded-lg p-3 text-sm" style={{ color: "#174B3B", background: "#E8F1E9" }}>{mensagem}</p>}
+        <div className="mt-7 flex flex-col gap-3">
+          <button type="button" onClick={() => onEntrar ? onEntrar() : window.location.assign("/")} className="rounded-xl px-5 py-3.5 text-base font-bold text-white" style={{ background: "#174B3B" }}>Já confirmei — entrar na minha conta</button>
+          <button type="button" disabled={reenviandoConfirmacao || Date.now() - ultimoReenvio < 60000} onClick={reenviarConfirmacao} className="rounded-xl border px-5 py-3 text-sm font-bold disabled:opacity-60" style={{ borderColor: "#B2D8BF", color: "#174B3B" }}>
+            {reenviandoConfirmacao ? "Reenviando..." : "Não recebi o e-mail — reenviar confirmação"}
+          </button>
+          <button type="button" onClick={trocarEmailCadastro} className="px-3 py-2 text-sm font-semibold underline" style={{ color: "#526A5B" }}>Digitei o e-mail errado ou não tenho mais acesso</button>
+        </div>
+      </div>
+    </section>;
   }
 
   return <section ref={formularioRef} className="ui-sans max-w-3xl">

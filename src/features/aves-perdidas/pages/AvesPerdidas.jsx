@@ -10,7 +10,7 @@ function dataBrasil(valor) {
   return `${dia}/${mes}/${ano}`;
 }
 
-export default function AvesPerdidas() {
+export default function AvesPerdidas({ onEntrar }) {
   const [lista, setLista] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
@@ -74,7 +74,7 @@ export default function AvesPerdidas() {
         {mostrarCadastro ? (
           <div className="mt-10 rounded-2xl p-6 md:p-8" style={{ background: TEMA_PUBLICO.verdeEscuro }}>
             <button type="button" onClick={() => setMostrarCadastro(false)} className="mb-5 rounded-lg px-3 py-2 text-sm font-semibold" style={{ background: "#D2E1D6", color: TEMA_PUBLICO.verde }}>Voltar para os anúncios</button>
-            <PerdiUmaAve />
+            <PerdiUmaAve onEntrar={onEntrar} />
           </div>
         ) : (
           <button

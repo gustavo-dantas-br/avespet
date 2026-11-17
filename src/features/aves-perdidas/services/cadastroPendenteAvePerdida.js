@@ -37,10 +37,21 @@ export function guardarCadastroPendente(email, anuncio) {
   }
   const dados = Object.fromEntries(FIELDS.filter((key) => Object.hasOwn(anuncio, key))
     .map((key) => [key, anuncio[key]]));
-  const json = JSON.stringify({ versao: 1, email: normalizado, criadoEmMs: Date.now(), anuncio: dados });
+  const anterior = lerCadastroPendente();
+  const confirmacaoSolicitada = anterior?.email === normalizado && anterior?.anuncio?.id === dados.id
+    ? Boolean(anterior.confirmacaoSolicitada) : false;
+  const json = JSON.stringify({ versao: 1, email: normalizado, criadoEmMs: Date.now(), anuncio: dados, confirmacaoSolicitada });
   if (json.length > 100000) throw new Error("Os dados informados excedem o limite de armazenamento temporário.");
   try { window.localStorage.setItem(KEY, json); }
   catch { throw new Error("Seu navegador bloqueou o armazenamento temporário. Libere-o antes de criar a conta."); }
+}
+
+// Registra apenas que o Supabase aceitou a solicitação de confirmação.
+// Não armazena senhas, tokens ou links de confirmação.
+export function marcarConfirmacaoSolicitada(email, solicitada = true) {
+  const atual = lerCadastroPendente();
+  if (!atual || atual.email !== norm(email)) return;
+  window.localStorage.setItem(KEY, JSON.stringify({ ...atual, confirmacaoSolicitada: solicitada }));
 }
 
 export async function finalizarCadastroPendente(user, criarAnuncio) {
