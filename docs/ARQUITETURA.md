@@ -2,7 +2,7 @@
 
 > Documento vivo da arquitetura. Atualizar este arquivo sempre que uma mudança estrutural, funcional ou de dados for feita.
 >
-> **Última revisão:** 11/11/2026  
+> **Última revisão:** 17/11/2026  
 > **Estado desta revisão:** documentação alinhada ao código encontrado na branch padrão `main`. Não representa uma refatoração completa.
 
 ## 1. Objetivo arquitetural
@@ -241,3 +241,70 @@ A tentativa de criar uma implantação Preview foi bloqueada pela Vercel por lim
 - A página `src/features/aves-perdidas/pages/AvesPerdidas.jsx` foi adaptada para consumir esses componentes, mantendo seu serviço de listagem e suas regras de acesso.
 - O botão de cadastro dessa página reutiliza o modal de autenticação existente via propriedade `onEntrar`.
 - O plano e checklist detalhados estão em [REDESIGN-HOME-PUBLICA.md](./REDESIGN-HOME-PUBLICA.md).
+
+## 13. Central de Comunicação por e-mail — Resend (17/11/2026)
+
+> **Fase atual:** domínio verificado no Resend para **envio**. A Central de Comunicação, o recebimento de e-mails e as automações de campanhas **ainda não foram implementados**. Este registro é uma decisão arquitetural e um checklist de execução, não uma declaração de funcionalidade publicada.
+
+### 13.1 Objetivo aprovado
+
+Criar um módulo de comunicação inteiramente operado dentro do **Avespet / Master**, sem depender de Gmail como caixa operacional. A interface deve oferecer:
+
+- Caixa de **Suporte**: receber, ler, classificar e responder a mensagens de `suporte@avespet.com.br`;
+- Caixa de **Financeiro**: atendimento e comunicação relativa a cobranças/assinaturas em `financeiro@avespet.com.br`;
+- Possível endereço `contato@avespet.com.br` para contato institucional;
+- E-mails **transacionais**: boas-vindas, confirmação e avisos de conta, notificações operacionais e suporte. **Não alterar ou reimplementar o fluxo de redefinição de senha já estabelecido no projeto**;
+- E-mails **de marketing**: convites para conhecer o Avespet, novidades e campanhas direcionadas a contatos autorizados, com descadastramento;
+- Processamento **diário e automático** de filas e critérios de envio (não significa enviar um e-mail de marketing a cada contato todos os dias);
+- Histórico, status, respostas, modelos, agendamento, relatórios, limites, auditoria e opção de pausar campanhas.
+
+**Divisão de responsabilidades:** React/Vite no painel Master (interface); Supabase/PostgreSQL e Edge Functions (dados, autorização, filas, agendamentos); Resend (API de envio e serviço de recebimento). **Resend não é, por si só, uma caixa de entrada estilo Gmail**; a interface e a persistência de mensagens deverão ser implementadas pelo Avespet.
+
+### 13.2 Configuração externa observada
+
+- **Domínio:** `avespet.com.br`
+- **Resend:** conta criada pelo responsável, região **São Paulo — sa-east-1**.
+- **Status informado em 17/11/2026:** **Verified / Ready**. O painel indicou `DNS verified` às **00:16** e `Domain verified: Your domain is ready to send emails.`
+- **DNS:** usuário cadastrou os registros no **Registro.br**; o painel Resend confirmou a verificação para envio. Não há validação de recebimento ainda.
+- **Registro de autenticação:** TXT `resend._domainkey` (DKIM; chave pública omitida aqui para evitar repetição); CNAME `rsend` → `rsend-sae1.forge.rmta.net`; CNAME `send` → `send.forge.rmta.net`; TXT `_dmarc` → `v=DMARC1; p=none;`.
+- **Site existente:** registros A `avespet.com.br` → `216.198.79.1` e CNAME `www.avespet.com.br` → `b1ef5ccfab51c26a.vercel-dns-017.com.` foram preservados conforme informado pelo usuário.
+- **Vercel:** projeto `avespet`, domínios `avespet.com.br` e `www.avespet.com.br` associados e verificados. DNS externo com nameservers `a.sec.dns.br` e `c.sec.dns.br`.
+- **Atenção:** status `Verified` do Resend significa aptidão para **envio**, não recebimento, integração com o Supabase, nem campanhas automáticas já ativas. A opção `Enable receiving` requer configuração adicional e verificação de MX/roteamento, sem sobrescrever registros usados por outros serviços.
+
+### 13.3 Levantamento de código e banco antes da implementação
+
+- **GitHub:** repositório atual `gustavo-dantas-br/avespet`. O documento preserva registros históricos do antigo nome; o repositório atual está confirmado.
+- **Frontend:** `src/features/master/MasterApp.jsx` já lista a seção `Suporte`, mas em análise da branch `main` essa seção consta como funcionalidade prevista, não como caixa de e-mail implementada.
+- **Supabase:** projeto principal `tnnpzitijvklbnwptsuq` com estado `ACTIVE_HEALTHY`, conferido em 17/11/2026.
+- **Banco:** foram vistas `public.notificacoes`, `public.master_admins` e `public.master_audit_log`, todas com RLS, mas não foram identificadas tabelas específicas de conversas, caixas de entrada, consentimentos ou fila de e-mails.
+- **Funções:** existem `send-push-notification` e funções Master; na lista inspecionada **não havia Edge Function de integração Resend**.
+- **Limites:** não assumir volume gratuito ilimitado; parametrizar cotas, monitorar retorno da API e preservar margem para envio de e-mails essenciais.
+
+### 13.4 Arquitetura proposta (a implementar)
+
+1. **Persistência própria:** definir migrações versionadas para `comunicacao_contatos`, `comunicacao_conversas`, `comunicacao_mensagens`, `comunicacao_templates`, `comunicacao_campanhas`, `comunicacao_fila_envios`, `comunicacao_eventos` e `comunicacao_consentimentos` (nomes provisórios; verificar reutilização com tabelas existentes).
+2. **Acesso:** autorização de Master deve ocorrer no servidor a partir de fonte confiável, com RLS nas tabelas expostas, políticas por recurso e logs na auditoria administrativa. Não autorizar a partir de dados editáveis no perfil.
+3. **Envio:** criar Edge Function server-side com chave `RESEND_API_KEY` guardada em Supabase Secrets; validar destinatários, templates, permissões e limite; registrar ID externo, status, tentativas e erros. Não expor credenciais no React nem em variáveis `VITE_*`.
+4. **Recebimento:** ativar recebimento no Resend quando adequado e criar webhook HTTPS com **verificação de assinatura**, deduplicação pelo ID do evento, recuperação segura do conteúdo da mensagem, proteção contra anexos perigosos e associação à conversa no banco. Prever falhas/reprocessamento.
+5. **Automação diária:** `pg_cron` + `pg_net` chamando função autorizada, com segredo no Vault, ou outro agendador suportado. Selecionar somente itens elegíveis na fila, respeitando fuso `America/Sao_Paulo`, janela, consentimento e limite contratado. Operação idempotente para evitar duplicações.
+6. **Marketing e LGPD:** consentimento/base legal documentada, origem e data de inscrição, mecanismo de cancelamento e lista de supressão; tratar descadastros, bounces e reclamações. Evitar listas compradas e disparo não solicitado; **separar identidade/fluxo de marketing dos e-mails essenciais de conta**.
+7. **Interface:** nova seção `Central de Comunicação` no Master, reaproveitando padrão de menu e autenticação atuais; abas `Suporte`, `Financeiro`, `Campanhas`, `Modelos`, `Automações` e `Relatórios`, com estados de carregamento, histórico e filtros. Confirmar integrações com módulos de notificações e suporte existentes antes de alterar.
+8. **Monitoramento:** logs sem tokens ou conteúdo sensível desnecessário, taxa de entrega, limites e alertas, tentativas com backoff, prevenção de envio repetido, botão de parada e auditoria.
+
+### 13.5 Checklist de implementação e aceite
+
+- [x] Criar conta Resend e selecionar região São Paulo.
+- [x] Configurar DNS de envio no Registro.br.
+- [x] Confirmar status `Verified / Ready` no Resend (relatado pelo responsável em 17/11/2026).
+- [x] Conferir em leitura GitHub, Vercel e projeto Supabase correto.
+- [ ] Testar envio de mensagem transacional controlada para endereço autorizado.
+- [ ] Definir e validar endereços finais e política de remetentes/subdomínios.
+- [ ] Avaliar `Enable receiving`, registros MX e webhooks sem quebrar DNS existente.
+- [ ] Criar migrações/RLS, serviços, funções, UI de atendimento e templates.
+- [ ] Separar marketing de transacionais, aplicar consentimento, descadastro e supressões.
+- [ ] Implementar execução diária segura com limites e política de reprocessamento.
+- [ ] Testar entrega/recebimento, autorização Master, falhas e integração no Preview.
+- [ ] Atualizar README e, se útil, extrair a especificação para documento dedicado.
+- [ ] Planejar publicação somente após revisão e aceite; evitar deploys desnecessários.
+
+**Registro de alterações desta etapa:** apenas documentação no GitHub. **Não** foi configurada API Key, webhook, SMTP/Auth, Edge Function, SQL, campanha, recebimento, serviço de envio ou interface do Master. Não alterar o ambiente de produção apenas por causa deste registro.
