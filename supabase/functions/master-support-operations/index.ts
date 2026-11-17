@@ -143,8 +143,9 @@ Deno.serve(async (req) => {
         .order("created_at",{ascending:false}).limit(50),
     ]);
     if (eventsResult.error || auditResult.error) return reply({ error: "Histórico indisponível." }, 503, origin);
+    const hasCreatedEvent = (eventsResult.data || []).some((event) => event.event_type === "created");
     const entries = [
-      { id: "created-" + ad.id, type:"created", summary:"Anúncio cadastrado", createdAt:ad.created_at },
+      ...(!hasCreatedEvent ? [{ id: "created-" + ad.id, type:"created", summary:"Anúncio cadastrado", createdAt:ad.created_at }] : []),
       ...(eventsResult.data || []).map((event) => ({
         id:"event-"+event.id, type:event.event_type, summary:event.summary, createdAt:event.created_at,
       })),
