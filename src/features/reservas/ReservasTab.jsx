@@ -5,7 +5,7 @@ import { supabase } from "../../supabaseClient";
 const moneyBR = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const dateBR = (v) => v ? new Date(v + "T12:00:00").toLocaleDateString("pt-BR") : "—";
 
-export default function ReservasTab({ userId, perfil = {}, clientes = [], aves = [], posturas = [], onReservaConcluida, onFinanceiroAtualizado, Card, SectionTitle }) {
+export default function ReservasTab({ userId, perfil = {}, clientes = [], aves = [], posturas = [], onCreateCliente, emptyCliente, onReservaConcluida, onFinanceiroAtualizado, Card, SectionTitle }) {
   const [reservas, setReservas] = useState([]);
   const [pagamentos, setPagamentos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,6 +13,10 @@ export default function ReservasTab({ userId, perfil = {}, clientes = [], aves =
   const [erro, setErro] = useState("");
   const [filtro, setFiltro] = useState("ativas");
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [mostrarNovoCliente, setMostrarNovoCliente] = useState(false);
+  const [novoCliente, setNovoCliente] = useState(() => emptyCliente());
+  const [salvandoCliente, setSalvandoCliente] = useState(false);
+  const [erroCliente, setErroCliente] = useState("");
   const [form, setForm] = useState({ tipo: "ave_existente", cliente_id: "", ave_id: "", postura_id: "", descricao_futura: "", valor_total: "", valor_sinal: "", data_reserva: new Date().toISOString().slice(0,10), previsao_nascimento: "", observacoes: "" });
   const [pagamentoForm, setPagamentoForm] = useState({});
   const [expandida, setExpandida] = useState("");
@@ -38,8 +42,38 @@ export default function ReservasTab({ userId, perfil = {}, clientes = [], aves =
     return acc;
   }, { ativas: 0, recebido: 0, saldo: 0 }), [reservas, pagamentos]);
 
+  const salvarNovoCliente = async () => {
+    if (salvandoCliente) return;
+    setErroCliente("");
+    if (!novoCliente.nome.trim()) {
+      setErroCliente("Informe o nome do cliente.");
+      return;
+    }
+    if (typeof onCreateCliente !== "function") {
+      setErroCliente("O cadastro de clientes esta indisponivel.");
+      return;
+    }
+    setSalvandoCliente(true);
+    try {
+      const result = await onCreateCliente(novoCliente);
+      if (!result?.ok || !result.id) {
+        setErroCliente(result?.error || "Nao foi possivel cadastrar o cliente.");
+        return;
+      }
+      setForm((prev) => ({ ...prev, cliente_id: result.id }));
+      setNovoCliente(emptyCliente());
+      setMostrarNovoCliente(false);
+      setErroCliente("");
+    } catch (error) {
+      setErroCliente(error?.message || "Nao foi possivel cadastrar o cliente.");
+    } finally {
+      setSalvandoCliente(false);
+    }
+  };
+
   const criar = async (e) => {
     e.preventDefault(); setErro("");
+    if (saving || salvandoCliente) return;
     const total = Number(String(form.valor_total).replace(",", "."));
     const sinal = Number(String(form.valor_sinal || 0).replace(",", "."));
     if (!form.cliente_id || !(total > 0) || sinal < 0 || sinal > total) { setErro("Selecione o cliente e informe valores válidos. O sinal não pode superar o valor total."); return; }
@@ -167,7 +201,38 @@ export default function ReservasTab({ userId, perfil = {}, clientes = [], aves =
     {mostrarForm && <Card className="p-4 sm:p-5"><h3 className="mb-4 font-bold" style={{color:"#244532"}}>Dados da reserva</h3>
       <form onSubmit={criar} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="text-xs font-semibold" style={{color:"#496653"}}>Tipo de reserva<select value={form.tipo} onChange={e=>setForm(v=>({...v,tipo:e.target.value,ave_id:""}))} className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}}><option value="ave_existente">Ave já nascida</option><option value="antecipada">Futura ninhada / ave ainda não nascida</option></select></label>
-        <label className="text-xs font-semibold" style={{color:"#496653"}}>Cliente<select required value={form.cliente_id} onChange={e=>setForm(v=>({...v,cliente_id:e.target.value}))} className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}}><option value="">Selecione o cliente</option>{clientes.map(c=><option key={c.id} value={c.id}>{c.nome}{c.telefone ? " · "+c.telefone : ""}</option>)}</select></label>
+        <div className="space-y-2">
+          <label className="block text-xs font-semibold" style={{color:"#496653"}}>Cliente
+            <select required value={form.cliente_id} onChange={e=>setForm(v=>({...v,cliente_id:e.target.value}))} className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}}>
+              <option value="">Selecione o cliente</option>
+              {clientes.map(c=><option key={c.id} value={c.id}>{c.nome}{c.telefone ? " · "+c.telefone : ""}</option>)}
+            </select>
+          </label>
+          <button type="button" onClick={() => { setMostrarNovoCliente(v => !v); setErroCliente(""); }} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-bold" style={{borderColor:"#18764B",color:"#18764B",background:"#F5FAF6"}}><Plus size={14} />{mostrarNovoCliente ? "Fechar cadastro" : "Cadastrar novo cliente"}</button>
+        </div>
+        {mostrarNovoCliente && <div className="space-y-3 rounded-xl border p-4 sm:col-span-2" style={{background:"#F5FAF6",borderColor:"#D8E5DB"}}>
+          <h4 className="text-sm font-bold" style={{color:"#244532"}}>Novo cliente da reserva</h4>
+          <p className="text-xs" style={{color:"#668071"}}>Cadastre aqui, sem sair da reserva. O cliente será selecionado automaticamente apos salvar.</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-xs font-semibold" style={{color:"#496653"}}>Nome completo
+              <input value={novoCliente.nome} onChange={e=>setNovoCliente(v=>({...v,nome:e.target.value}))} maxLength={120} placeholder="Nome do cliente" className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}} />
+            </label>
+            <label className="text-xs font-semibold" style={{color:"#496653"}}>Telefone / WhatsApp
+              <input type="tel" value={novoCliente.telefone} onChange={e=>setNovoCliente(v=>({...v,telefone:e.target.value}))} maxLength={30} placeholder="(11) 99999-9999" className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}} />
+            </label>
+            <label className="text-xs font-semibold" style={{color:"#496653"}}>Endereço (opcional)
+              <input value={novoCliente.endereco} onChange={e=>setNovoCliente(v=>({...v,endereco:e.target.value}))} maxLength={240} className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}} />
+            </label>
+            <label className="text-xs font-semibold" style={{color:"#496653"}}>Observações (opcional)
+              <input value={novoCliente.observacoes} onChange={e=>setNovoCliente(v=>({...v,observacoes:e.target.value}))} maxLength={300} className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}} />
+            </label>
+          </div>
+          {erroCliente && <p role="alert" className="rounded-lg px-3 py-2 text-xs" style={{background:"#FFF1EF",color:"#9B5148"}}>{erroCliente}</p>}
+          <div className="flex flex-wrap gap-2">
+            <button type="button" disabled={salvandoCliente || saving} onClick={salvarNovoCliente} className="rounded-lg px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50" style={{background:"#18764B"}}>{salvandoCliente ? "Salvando cliente..." : "Salvar e selecionar cliente"}</button>
+            <button type="button" disabled={salvandoCliente} onClick={() => { setMostrarNovoCliente(false); setErroCliente(""); }} className="rounded-lg border px-3 py-2.5 text-xs font-semibold" style={{borderColor:"#D8E5DB",color:"#496653"}}>Cancelar cadastro</button>
+          </div>
+        </div>
         {form.tipo === "ave_existente" ? <label className="text-xs font-semibold sm:col-span-2" style={{color:"#496653"}}>Ave<select required value={form.ave_id} onChange={e=>setForm(v=>({...v,ave_id:e.target.value}))} className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}}><option value="">Selecione a ave</option>{aves.filter(a=>!["Vendida","Falecida","Perdida"].includes(a.status)).map(a=><option key={a.id} value={a.id}>{a.nome || "Sem nome"} · {a.especie || "Espécie não informada"}</option>)}</select></label> :
           <><label className="text-xs font-semibold" style={{color:"#496653"}}>Postura / ninhada (opcional)<select value={form.postura_id} onChange={e=>setForm(v=>({...v,postura_id:e.target.value}))} className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}}><option value="">Não vincular agora</option>{posturas.map(p=><option key={p.id} value={p.id}>{nomePostura(p.id) || "Postura"}</option>)}</select></label><label className="text-xs font-semibold" style={{color:"#496653"}}>Casal / descrição da futura ave<input value={form.descricao_futura} onChange={e=>setForm(v=>({...v,descricao_futura:e.target.value}))} placeholder="Ex.: filhote do casal Mel × Zazur" className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}}/></label></>}
         <label className="text-xs font-semibold" style={{color:"#496653"}}>Valor total combinado (R$)<input required type="number" min="0.01" step="0.01" value={form.valor_total} onChange={e=>setForm(v=>({...v,valor_total:e.target.value}))} className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}}/></label>
@@ -175,7 +240,7 @@ export default function ReservasTab({ userId, perfil = {}, clientes = [], aves =
         <label className="text-xs font-semibold" style={{color:"#496653"}}>Data da reserva / sinal<input type="date" value={form.data_reserva} onChange={e=>setForm(v=>({...v,data_reserva:e.target.value}))} className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}}/></label>
         {form.tipo === "antecipada" && <label className="text-xs font-semibold" style={{color:"#496653"}}>Previsão de nascimento<input type="date" value={form.previsao_nascimento} onChange={e=>setForm(v=>({...v,previsao_nascimento:e.target.value}))} className="mt-1 min-h-10 w-full rounded-xl border px-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}}/></label>}
         <label className="text-xs font-semibold sm:col-span-2" style={{color:"#496653"}}>Observações<textarea value={form.observacoes} onChange={e=>setForm(v=>({...v,observacoes:e.target.value}))} rows="2" className="mt-1 w-full rounded-xl border p-3 text-sm" style={{borderColor:"#D8E5DB",color:"#203B2C"}}/></label>
-        <div className="flex flex-wrap gap-2 sm:col-span-2"><button disabled={saving} className="rounded-xl px-4 py-2.5 text-sm font-bold disabled:opacity-50" style={{background:"#18764B",color:"#fff"}}>{saving ? "Salvando..." : "Salvar reserva"}</button><button type="button" onClick={()=>setMostrarForm(false)} className="rounded-xl border px-4 py-2.5 text-sm font-semibold" style={{borderColor:"#D8E5DB",color:"#496653"}}>Cancelar</button></div>
+        <div className="flex flex-wrap gap-2 sm:col-span-2"><button disabled={saving || salvandoCliente} className="rounded-xl px-4 py-2.5 text-sm font-bold disabled:opacity-50" style={{background:"#18764B",color:"#fff"}}>{saving ? "Salvando..." : "Salvar reserva"}</button><button type="button" onClick={()=>setMostrarForm(false)} className="rounded-xl border px-4 py-2.5 text-sm font-semibold" style={{borderColor:"#D8E5DB",color:"#496653"}}>Cancelar</button></div>
       </form>
     </Card>}
     <div className="flex flex-wrap gap-2">{[["ativas","Ativas"],["todas","Todas"],["aguardando_nascimento","Aguardando nascimento"],["concluida","Concluídas"],["cancelada","Canceladas"]].map(([id,label])=><button key={id} onClick={()=>setFiltro(id)} className="rounded-full px-3 py-2 text-xs font-bold" style={{background:filtro===id?"#18764B":"#fff",color:filtro===id?"#fff":"#496653",border:"1px solid "+(filtro===id?"#18764B":"#D8E5DB")}}>{label}</button>)}</div>
