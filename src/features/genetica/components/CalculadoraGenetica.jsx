@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { calcularCruzamentoGenetico } from "../utils/calcularCruzamentoGenetico";
 import { CATALOGO_MUTACOES_RING_NECK, normalizarChaveGenetica } from "../data/catalogoRingNeck";
-import { genotipoSerieDaAve, cruzarSerieCor, dosagemFatorDaAve, cruzarDosagemFator, nomeFenotipoComFatoresRingNeck, descricaoGenotipoSerie } from "../utils/serieCorRingNeck";
+import { genotipoSerieDaAve, cruzarSerieCor, dosagemFatorDaAve, cruzarDosagemFator, nomeFenotipoComFatoresRingNeck, descricaoGenotipoSerie, APARENCIAS_PADRAO_RING_NECK, cruzarAparenciasPadraoRingNeck } from "../utils/serieCorRingNeck";
 
 const campo = {
   border: "1px solid #d8c6a5",
@@ -28,8 +28,8 @@ function novaAve(nome) {
 }
 
 export default function CalculadoraGenetica({ aves, mutacoes }) {
-  const [modoPai, setModoPai] = useState("cadastro");
-  const [modoMae, setModoMae] = useState("cadastro");
+  const [modoPai, setModoPai] = useState("manual");
+  const [modoMae, setModoMae] = useState("manual");
   const [paiId, setPaiId] = useState("");
   const [maeId, setMaeId] = useState("");
   const [paiManual, setPaiManual] = useState(novaAve("Pai"));
@@ -66,6 +66,11 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     }
     const paiParaCalculo = { ...pai, corMutacao: pai.corMutacao || pai.corLivre || "" };
     const maeParaCalculo = { ...mae, corMutacao: mae.corMutacao || mae.corLivre || "" };
+    const padrao = cruzarAparenciasPadraoRingNeck(paiParaCalculo, maeParaCalculo);
+    if (padrao) {
+      setResultado({ tipo: "padrao", cruzamento: (pai.nome || "Pai") + " × " + (mae.nome || "Mãe"), ...padrao });
+      return;
+    }
     // Série parblue e fatores Dark/Violet são calculados em módulos próprios.
     // Não devem entrar novamente como mutações autossômicas genéricas.
     const mutacoesDoMotor = mutacoesRingNeck.filter((m) => {
@@ -282,6 +287,23 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     });
   }
 
+  // Atualiza a previsão imediatamente ao selecionar os pais; evita um
+  // segundo botão e mantém o resultado sincronizado com os campos.
+  useEffect(() => {
+    const preenchida = (ave) => Boolean(
+      ave?.corMutacao || ave?.corBase || ave?.corAparencia || ave?.corLivre ||
+      ave?.serieCorGenotipo || (ave?.mutacoesVisuais || []).length
+    );
+    const paiOk = modoPai === "cadastro" ? Boolean(paiId) : preenchida(paiManual);
+    const maeOk = modoMae === "cadastro" ? Boolean(maeId) : preenchida(maeManual);
+    if (!paiOk || !maeOk) {
+      setResultado(null);
+      return;
+    }
+    calcular();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modoPai, modoMae, paiId, maeId, paiManual, maeManual, aves, mutacoesRingNeck]);
+
   function renderGenitor(tipo) {
     const isPai = tipo === "pai";
     const modo = isPai ? modoPai : modoMae;
@@ -364,12 +386,16 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                     }));
                     setResultado(null);
                   } else if (CORES_BASE.some((c) => c.value === value)) {
-                    setManual((atual) => ({ ...atual, corBase: value, corMutacao: "", corAparencia: "", corLivre: "", aparenciaOutra: false }));
+                    setManual((atual) => ({ ...atual, corBase: value, corMutacao: "", corAparencia: "", corLivre: "", aparenciaOutra: false, serieCorGenotipo: "", mutacoesVisuais: [], fatoresGeneticos: { darkFactor: "", violetFactor: "" } }));
                     setResultado(null);
                   } else {
                     setManual((atual) => ({
                       ...atual,
                       corMutacao: value,
+                      corBase: "",
+                      serieCorGenotipo: "",
+                      mutacoesVisuais: [],
+                      fatoresGeneticos: { darkFactor: "", violetFactor: "" },
                       corLivre: "",
                       aparenciaOutra: false,
                     }));
@@ -379,13 +405,15 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
               >
                 <option value="">Não sei informar</option>
                 <optgroup label="Cores-base">
-                  {CORES_BASE.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  {APARENCIAS_PADRAO_RING_NECK.filter((c) => !["Violeta", "Cobalto", "Mauve"].includes(c.value)).map((cor) => <option key={cor.value} value={cor.value}>{cor.label}</option>)}
                 </optgroup>
                 <optgroup label="Aparências conhecidas">
                   <option value="popular|Lutino">Lutino</option>
                   <option value="popular|Albino">Albino</option>
                   <option value="popular|Cremino">Cremino</option>
-                  <option value="Violeta">Violeta</option>
+                  {APARENCIAS_PADRAO_RING_NECK.filter((c) => ["Violeta", "Cobalto", "Mauve"].includes(c.value)).map((cor) => (
+                    <option key={cor.value} value={cor.value}>{cor.label}</option>
+                  ))}
                   {mutacoesRingNeck.filter((m) => m.nome !== "Ino").map((m) => (
                     <option key={m.id || m.nome} value={m.nome}>{m.nome}</option>
                   ))}
@@ -402,7 +430,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                 />
               )}
             </div>
-            {manual.corMutacao === "Violeta" && (
+            {false && manual.corMutacao === "Violeta" && (
               <div className="rounded-xl p-3 space-y-2" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
                 <label className="block text-sm font-semibold" style={{ color: "#5e5143" }}>
                   Qual é a cor-base da ave Violeta?
@@ -503,12 +531,40 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">{renderGenitor("pai")}{renderGenitor("mae")}</div>
-      <button onClick={calcular} className="w-full sm:w-auto px-6 py-3 rounded-xl font-semibold" style={{ background: "#C69A2E", color: "#2B241C" }}>Ver possíveis filhotes</button>
+      {!resultado && <p className="text-sm" style={{ color: "#6f6254" }}>Selecione a cor do pai e da mãe para ver os filhotes automaticamente.</p>}
       {resultado && <div className="rounded-2xl p-5" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
         {resultado.tipo === "erro" ? (
           <div style={{ color: "#A6402B" }}>
             <div className="font-semibold mb-1">Ainda não é possível calcular esse casal.</div>
             <p className="text-sm">{resultado.mensagem}</p>
+          </div>
+        ) : resultado.tipo === "padrao" ? (
+          <div className="space-y-3" style={{ color: "#2B241C" }}>
+            <div className="text-xs font-semibold" style={{ color: "#54764b" }}>CRUZAMENTO DE CORES SIMPLES</div>
+            <div className="text-xl font-semibold">{resultado.cruzamento}</div>
+            {resultado.resultados?.length ? (
+              <div className="rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
+                <div className="font-semibold mb-2">Filhotes possíveis</div>
+                {resultado.resultados.map((item) => (
+                  <div key={item.nome} className="flex items-center justify-between py-2 gap-3 text-sm">
+                    <strong>{item.nome}</strong><strong>{item.percentual}%</strong>
+                  </div>
+                ))}
+                <p className="text-xs mt-2" style={{ color: "#6f6254" }}>As porcentagens se aplicam igualmente a machos e fêmeas.</p>
+              </div>
+            ) : (
+              <div className="rounded-xl p-4 text-sm" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
+                As séries e fatores são calculados separadamente neste cruzamento, pois a ligação genética impede combinar porcentagens com segurança.
+                {resultado.serie?.map((item) => <div key={item.genotipo} className="flex justify-between py-1"><span>{item.nome}</span><strong>{item.percentual}%</strong></div>)}
+              </div>
+            )}
+            <details className="rounded-xl p-3" style={{ background: "#f5e9c8", border: "1px solid #dfcba7" }}>
+              <summary className="cursor-pointer font-semibold text-sm">Entenda o resultado e as premissas</summary>
+              <ul className="mt-3 space-y-1 text-sm">
+                {resultado.premissas.map((item) => <li key={item}>• {item}</li>)}
+              </ul>
+              <p className="text-xs mt-2">Estimativa para cada nascimento, não garantia do número de filhotes.</p>
+            </details>
           </div>
         ) : resultado.tipo === "condicional" ? (
           <div className="space-y-4" style={{ color: "#2B241C" }}>
