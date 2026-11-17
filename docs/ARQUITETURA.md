@@ -419,3 +419,10 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - **Não recebi o e-mail** chama `supabase.auth.resend({type: "signup"})`, com bloqueio local de repetição em 60 segundos e mensagens adequadas de erro.
 - **Digitei o e-mail errado/não tenho acesso** volta ao formulário preservado para criação de nova conta com outro endereço; não tenta alterar a identidade de uma conta sem autenticação.
 - O anúncio só é criado após uma sessão válida, com `user_id` do titular e status `pendente`; após autenticar, o usuário abre a área do criador. Manter SMTP Resend e confirmação de e-mail ativados.
+
+
+### Aviso de entregabilidade dos e-mails de confirmação — 17/11/2026
+
+- Após teste de confirmação com entrega na pasta de Spam, a tela pós-cadastro de ave perdida destaca um aviso **“Não encontrou o e-mail? Veja o SPAM!”** com orientações para conferir Spam, Lixo eletrônico e Promoções e marcar a mensagem como “Não é spam”.
+- Avisos similares são exibidos no cadastro geral, na recuperação de senha e após reenvio de confirmação. A mensagem não substitui a confirmação do endereço e não altera a segurança da autenticação.
+- A marcação “Não é spam” pode ajudar, mas não garante entrega. Para melhorar a reputação, verificar futuramente SPF, DKIM e DMARC e a configuração do domínio de envio no Resend.

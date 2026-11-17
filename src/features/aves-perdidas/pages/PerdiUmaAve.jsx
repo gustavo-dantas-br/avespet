@@ -187,7 +187,7 @@ export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
       });
       if (error) throw error;
       setUltimoReenvio(Date.now());
-      setMensagem("Solicitação de reenvio recebida! Confira sua caixa de entrada, spam e lixo eletrônico.");
+      setMensagem("Solicitação de reenvio recebida! Confira a caixa de entrada e, principalmente, a pasta Spam/Lixo eletrônico. Se encontrar, marque como “Não é spam”.");
     } catch (e) {
       const limite = e?.status === 429 || /rate limit|security purposes/i.test(e?.message || "");
       setErro(limite
@@ -232,7 +232,11 @@ export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
         <div aria-hidden="true" className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full text-3xl" style={{ background: "#E8F1E9" }}>✉️</div>
         <h1 className="text-2xl font-extrabold sm:text-3xl" style={{ color: "#174B3B" }}>Confirme seu e-mail para ativar a conta</h1>
         <p className="mx-auto mt-4 max-w-lg text-base leading-7">Enviamos um link de confirmação para <strong className="break-all">{contaEmail}</strong>.</p>
-        <p className="mx-auto mt-3 max-w-lg text-sm leading-6" style={{ color: "#526A5B" }}>Abra sua caixa de entrada e clique no link. Verifique também o spam e a lixeira.</p>
+        <p className="mx-auto mt-3 max-w-lg text-sm leading-6" style={{ color: "#526A5B" }}>Abra a mensagem e clique no link de confirmação.</p>
+        <div role="note" className="mx-auto mt-5 max-w-lg rounded-xl border-2 px-5 py-4 text-left" style={{ borderColor: "#D89C39", background: "#FFF4DF", color: "#704614" }}>
+          <p className="text-base font-extrabold">⚠️ Não encontrou o e-mail? Veja o SPAM!</p>
+          <p className="mt-2 text-sm leading-6">A confirmação do Avespet pode chegar na pasta <strong>Spam</strong>, <strong>Lixo eletrônico</strong> ou <strong>Promoções</strong>. Se encontrar a mensagem, abra e marque como <strong>“Não é spam”</strong> para ajudar a receber nossos próximos avisos.</p>
+        </div>
         <div className="mt-6 rounded-xl p-4 text-left text-sm leading-6" style={{ background: "#F1F7F2", color: "#294D39" }}>
           <strong>Seus dados da ave foram preservados neste navegador.</strong> O anúncio ainda não foi enviado à moderação. Depois de confirmar o e-mail, entre na sua conta para concluir o envio automaticamente.
         </div>

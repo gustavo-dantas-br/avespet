@@ -339,7 +339,7 @@ function LoginModal({ onFechar }) {
           redirectTo: window.location.origin,
         });
         if (error) throw error;
-        setMessage("Se esse e-mail estiver cadastrado, enviaremos um link para redefinir sua senha. Confira também o spam.");
+        setMessage("Se esse e-mail estiver cadastrado, enviaremos um link para redefinir sua senha. Confira a caixa de entrada e também SPAM, Lixo eletrônico e Promoções.");
       } else if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -354,7 +354,7 @@ function LoginModal({ onFechar }) {
           options: { data: { nome: nome.trim(), sobrenome: sobrenome.trim(), nomeCompleto, telefone: telefone.trim(), whatsapp: telefone.trim() } },
         });
         if (error) throw error;
-        setMessage("Conta criada! Enviamos os dados de confirmação para seu e-mail. Depois de confirmar e entrar, seu perfil de criador será criado automaticamente.");
+        setMessage("Conta criada! Confira o e-mail de confirmação. IMPORTANTE: a mensagem também pode estar na pasta SPAM, Lixo eletrônico ou Promoções. Se encontrar, marque como “Não é spam”. Depois de confirmar e entrar, seu perfil será criado automaticamente.");
       }
     } catch (err) {
       const excess = err?.status === 429 || err?.code === "over_email_send_rate_limit" ||
