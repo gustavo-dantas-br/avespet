@@ -264,3 +264,13 @@ A tentativa de criar uma implantação Preview foi bloqueada pela Vercel por lim
 **Regras de segurança:** credenciais privilegiadas não vão para o front-end; o acesso continua validado pela identidade autenticada em `master_admins`; ações permanecem registradas em `master_audit_log`. Não alterar o legado `/admin` sem testes separados.
 
 **Observação:** este registro documenta implementação em branch, não uma liberação em produção. Sem migrations, sem deploy manual da Vercel e sem execução de SQL modificador no Supabase.
+
+### Integração 2 — Gestão de aves (consulta administrativa)
+- [x] Recuperada a tela `BirdsManagement.jsx` com busca por nome, anilha, mutação, espécie e sexo; paginação de 25 registros por página.
+- [x] Módulo adicionado à navegação Master sem interferir no cadastro e nas telas do criador.
+- [x] Corrigido delimitador de linha inválido presente no JSX histórico antes da integração.
+- [x] Função `master-list-birds` versionada no GitHub; já existe ativa no Supabase de produção e **não foi reimplantada**.
+- [x] Consulta somente leitura, validada em `master_admins` no servidor, reduzida aos campos necessários, com auditoria no `master_audit_log`.
+- [ ] Validar o build e testar busca/filtros, isolamento de acesso e comportamento em celular.
+
+A branch `feature/master-modulos-20261116` continua sem publicação automática pela configuração presente em `vercel.json`. Produção e banco não foram alterados nesta etapa.
