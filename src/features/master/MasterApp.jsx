@@ -4,6 +4,7 @@ import CreatorManagement from "./CreatorManagement";
 import AdsModeration from "./AdsModeration";
 import BirdsManagement from "./BirdsManagement";
 import BillingManagement from "./BillingManagement";
+import MasterAudit from "./MasterAudit";
 import {
   LayoutDashboard, Users, Bird, Megaphone, CreditCard, LifeBuoy,
   Settings, LogOut, ShieldCheck, RefreshCw, Menu, X, Activity,
@@ -18,7 +19,7 @@ const navigation = [
   { id: "ads", label: "Anúncios e moderação", icon: Megaphone, description: "Aprovação e situação dos anúncios de aves" },
   { id: "billing", label: "Planos e assinaturas", icon: CreditCard, description: "Catálogo provisório, ainda sem cobranças" },
   { id: "support", label: "Suporte", icon: LifeBuoy, description: "Solicitações e atendimento" },
-  { id: "settings", label: "Configurações", icon: Settings, description: "Acessos e parâmetros administrativos" },
+  { id: "settings", label: "Auditoria e segurança", icon: Settings, description: "Histórico de ações administrativas" },
 ];
 
 const metrics = [
@@ -31,7 +32,6 @@ const metrics = [
 const comingSoon = {
   creators: { title: "Criadores e usuários", description: "Consulta de contas, situação cadastral, bloqueios e permissões administrativas." },
   support: { title: "Central de suporte", description: "Acompanhamento de solicitações e histórico de atendimento." },
-  settings: { title: "Configurações Master", description: "Gestão de acessos privilegiados e parâmetros da plataforma." },
 };
 
 const number = (value) => new Intl.NumberFormat("pt-BR").format(Number(value || 0));
@@ -171,7 +171,7 @@ export default function MasterApp({ user, onLogout }) {
         </header>
 
         <main className="mx-auto max-w-[1500px] px-4 py-7 sm:px-7 lg:px-9">
-          {activeSection === "creators" ? <CreatorManagement /> : activeSection === "ads" ? <AdsModeration /> : activeSection === "birds" ? <BirdsManagement /> : activeSection === "billing" ? <BillingManagement /> : activeSection === "overview" ? (
+          {activeSection === "creators" ? <CreatorManagement /> : activeSection === "ads" ? <AdsModeration /> : activeSection === "birds" ? <BirdsManagement /> : activeSection === "billing" ? <BillingManagement /> : activeSection === "settings" ? <MasterAudit /> : activeSection === "overview" ? (
             <>
               <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
                 <div><p className="text-[10px] font-bold uppercase tracking-[.2em]" style={{ color: "#a27b2e" }}>Central de gestão</p><h1 className="mt-2 text-[26px] font-bold tracking-tight text-slate-900 sm:text-[32px]">Visão geral</h1><p className="mt-1.5 max-w-2xl text-sm text-slate-500">Acompanhe o crescimento, a atividade e a saúde operacional do Avespet em um só lugar.</p></div>

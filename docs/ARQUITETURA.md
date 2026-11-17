@@ -338,3 +338,17 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - [ ] Confirmar build, testes e autorização de acesso Master. Não ativar a migração ou publicar a função sem ciclo específico de testes.
 - [ ] Na futura publicação, revisar mudanças em `main` feitas pela frente paralela de e-mail antes do merge; evitar sobrescrever trabalho concorrente.
 - A `vercel.json` desta branch desabilita deployments automáticos para `feature/master-permissoes-20261117`, permitindo trabalhar sem novos deploys a cada alteração.
+
+### Integração 7 — Auditoria global do Master (17/11/2026)
+
+- [x] Preparado módulo **Auditoria e segurança** no lugar do placeholder de Configurações do Master.
+- [x] Consulta paginada de 25 eventos com filtros de área, período (7 dias/30 dias/tudo) e tipo (ações ou todas as consultas).
+- [x] Função `master-audit-events` usa o JWT verificado pelo Supabase Auth, exige entrada em `master_admins` e consulta o histórico com `service_role` somente no servidor.
+- [x] A resposta **não retorna o JSON de metadata da auditoria** e não revela e-mails, motivos privados ou outros detalhes das operações; o identificador de recurso é truncado.
+- [x] A visualização em si é auditada com evento `master_audit_log_viewed`, sem alterar registros existentes.
+- [x] Índice por `created_at` confirmado no banco; não há necessidade de migrations.
+- [x] A implementação foi criada a partir da branch do Master, sem tocar em e-mail, notificações, redefinição de senha, planos ou limites de aves.
+- [ ] Executar build Vite/CI e testes com sessão Master, sessão de criador comum e ausência de autenticação.
+- [ ] Implantar `master-audit-events` e integrar na produção apenas em publicação controlada; nenhuma função foi implantada nesta etapa.
+
+**Limites:** a interface mostra somente eventos do registro `master_audit_log`, não logs gerais do sistema nem mensagens de suporte. A identificação de outros administradores é um identificador parcial, para evitar consultas adicionais de dados pessoais.
