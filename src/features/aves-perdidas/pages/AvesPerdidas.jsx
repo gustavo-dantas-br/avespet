@@ -4,6 +4,12 @@ import PerdiUmaAve from "./PerdiUmaAve";
 import { Link } from "../../../publico/roteador";
 import { PaginaPublica, CabecalhoPublico, CartaoPublico, TEMA_PUBLICO } from "../../../publico/ComponentesPublicos";
 
+function dataBrasil(valor) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(valor || "")) return "";
+  const [ano, mes, dia] = valor.split("-");
+  return `${dia}/${mes}/${ano}`;
+}
+
 export default function AvesPerdidas() {
   const [lista, setLista] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,9 +56,12 @@ export default function AvesPerdidas() {
                   <div className="flex aspect-[16/10] items-center justify-center" style={{ background: TEMA_PUBLICO.verdeClaro, color: TEMA_PUBLICO.verde }}>Ave cadastrada</div>
                 )}
                 <div className="p-5">
-                  <p className="text-sm font-semibold" style={{ color: TEMA_PUBLICO.verde }}>
-                    {[data.bairro || data.regiao, data.cidade, data.uf].filter(Boolean).join(" · ")}
-                  </p>
+                  <h2 className="text-lg font-bold" style={{ color: TEMA_PUBLICO.tinta }}>{data.nomeAve || data.especie || "Ave perdida"}</h2>
+                  <p className="mt-1 text-sm" style={{ color: TEMA_PUBLICO.texto }}>{[data.especie, data.cor, data.sexo && data.sexo !== "Não sei" ? data.sexo : "", data.idadeAproximada].filter(Boolean).join(" · ")}</p>
+                  <p className="mt-2 text-sm font-semibold" style={{ color: TEMA_PUBLICO.verde }}>{[data.bairro, data.cidade && data.uf ? `${data.cidade}/${data.uf}` : data.cidade || data.uf].filter(Boolean).join(" · ")}</p>
+                  {dataBrasil(data.dataPerda) && <p className="mt-1 text-xs" style={{color:TEMA_PUBLICO.texto}}>Desapareceu em {dataBrasil(data.dataPerda)}</p>}
+                  {data.caracteristicas && <p className="mt-3 text-sm leading-6 whitespace-pre-wrap break-words" style={{color:TEMA_PUBLICO.texto}}>{data.caracteristicas}</p>}
+                  {data.descricao && <p className="mt-2 text-sm leading-6 whitespace-pre-wrap break-words" style={{color:TEMA_PUBLICO.texto}}>{data.descricao}</p>}
                   <p className="mt-4 rounded-xl p-3 text-xs leading-5" style={{ background: TEMA_PUBLICO.fundo, color: TEMA_PUBLICO.texto }}>
                     Encontrou esta ave? Avise o Avespet. Nossa equipe fará a intermediação com o responsável.
                   </p>
