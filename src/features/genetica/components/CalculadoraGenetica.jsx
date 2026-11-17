@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { calcularCruzamentoGenetico } from "../utils/calcularCruzamentoGenetico";
 import { CATALOGO_MUTACOES_RING_NECK, normalizarChaveGenetica } from "../data/catalogoRingNeck";
+import DetalhesGeneticosInline from "./DetalhesGeneticosInline";
 import { genotipoSerieDaAve, cruzarSerieCor, dosagemFatorDaAve, cruzarDosagemFator, nomeFenotipoComFatoresRingNeck, descricaoGenotipoSerie, APARENCIAS_PADRAO_RING_NECK, cruzarAparenciasPadraoRingNeck } from "../utils/serieCorRingNeck";
 
 const campo = {
@@ -316,7 +317,6 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     const setId = isPai ? setPaiId : setMaeId;
     const titulo = isPai ? "Pai" : "Mãe";
     const extras = mutacoesRingNeck.filter((m) => m.permitePortador !== false);
-    const selecionadaSimples = APARENCIAS_PADRAO_RING_NECK.some((cor) => cor.value === manual.corMutacao || cor.value === manual.corBase);
 
     return (
       <section className="rounded-2xl p-5" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
@@ -433,65 +433,12 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                 />
               )}
             </div>
-            {manual.corMutacao === "Violeta" && (
-              <p className="text-xs rounded-lg px-3 py-2" style={{ background: "#e9efdf", color: "#456338" }}>
-                Padrão: Violet SF (Violeta) da série Azul. Se for Violet DF ou outra combinação, informe nos detalhes avançados.
-              </p>
-            )}
-            <div className="rounded-xl p-3 text-xs" style={{ background: "#fffaf0", color: "#8a7a63" }}>
-              A aparência principal já foi selecionada acima. Para informar outras mutações visíveis, abra “Se souber mais detalhes (opcional)”.
-            </div>
-
-            <details className="rounded-xl p-3" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
-              <summary className="cursor-pointer text-sm font-semibold" style={{ color: "#5e5143" }}>Se souber mais detalhes (opcional)</summary>
-              <div className="mt-3 space-y-3">
-                <div>
-                  <p className="text-sm font-medium mb-2" style={{ color: "#5e5143" }}>Outras mutações que aparecem na aparência</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {mutacoesRingNeck.filter((m) => m.nome !== manual.corMutacao && m.categoria !== "cor_base").map((m) => (
-                      <label key={m.id || m.nome} className="flex gap-2 text-sm" style={{ color: "#5e5143" }}>
-                        <input type="checkbox" checked={(manual.mutacoesVisuais || []).includes(m.nome)} onChange={(e) => {
-                          const lista = e.target.checked ? [...new Set([...(manual.mutacoesVisuais || []), m.nome])] : (manual.mutacoesVisuais || []).filter((n) => n !== m.nome);
-                          atualizarManual(setManual, "mutacoesVisuais", lista);
-                        }} />
-                        {m.nome}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1" style={{ color: "#5e5143" }}>Genótipo da série de cor (se confirmado)</label>
-                  <select className="w-full rounded-xl px-3 py-2" style={campo} value={manual.serieCorGenotipo || ""} onChange={(e) => atualizarManual(setManual, "serieCorGenotipo", e.target.value)}>
-                    <option value="">Não sei / não confirmado</option>
-                    <option value="G/G">Verde sem azul ou turquesa conhecido (confirmado)</option>
-                    <option value="G/T">Verde que carrega turquesa</option>
-                    <option value="G/B">Verde que carrega azul</option>
-                    <option value="T/T">Turquesa</option>
-                    <option value="T/B">Azul-turquesa</option>
-                    <option value="B/B">Azul</option>
-                  </select>
-                  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Escolha uma opção somente se houver confirmação por histórico ou descendência. A aparência verde, sozinha, não revela se a ave também carrega azul ou turquesa.</p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <label className="text-sm" style={{ color: "#5e5143" }}>Fator escuro
-                    <select className="w-full rounded-xl px-3 py-2 mt-1" style={campo} value={manual.fatoresGeneticos?.darkFactor || ""} onChange={(e) => setManual((v) => ({ ...v, fatoresGeneticos: { ...(v.fatoresGeneticos || {}), darkFactor: e.target.value } }))}>
-                      <option value="">Não sei</option><option value="NONE">Sem fator (confirmado)</option><option value="SF">Fator simples (uma cópia)</option><option value="DF">Fator duplo (duas cópias)</option>
-                    </select>
-                  </label>
-                  <label className="text-sm" style={{ color: "#5e5143" }}>Fator violeta
-                    <select className="w-full rounded-xl px-3 py-2 mt-1" style={campo} value={manual.fatoresGeneticos?.violetFactor || ""} onChange={(e) => setManual((v) => ({ ...v, fatoresGeneticos: { ...(v.fatoresGeneticos || {}), violetFactor: e.target.value } }))}>
-                      <option value="">Não sei</option><option value="NONE">Sem fator (confirmado)</option><option value="SF">Fator simples (uma cópia)</option><option value="DF">Fator duplo (duas cópias)</option>
-                    </select>
-                  </label>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1" style={{ color: "#5e5143" }}>A ave é portadora de alguma mutação?</label>
-                  <input className="w-full rounded-xl px-3 py-3" style={campo} placeholder="Digite os nomes separados por vírgula" value={(manual.portadores || []).join(", ")} onChange={(e) => atualizarManual(setManual, "portadores", e.target.value.split(",").map((x) => x.trim()).filter(Boolean))} />
-                  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Portadora é a ave que carrega um gene sem mostrar essa cor. Se não tiver certeza, deixe em branco.</p>
-                </div>
-                {isPai ? null : <p className="text-xs" style={{ color: "#8a7a63" }}>Em algumas mutações ligadas ao sexo, a fêmea não pode ser portadora oculta. O sistema considera essa regra.</p>}
-              </div>
-            </details>
+            <DetalhesGeneticosInline
+              ave={manual}
+              setAve={setManual}
+              mutacoes={mutacoesRingNeck}
+              ehPai={isPai}
+            />
           </div>
         )}
       </section>
