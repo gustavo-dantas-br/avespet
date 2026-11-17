@@ -241,3 +241,26 @@ A tentativa de criar uma implantação Preview foi bloqueada pela Vercel por lim
 - A página `src/features/aves-perdidas/pages/AvesPerdidas.jsx` foi adaptada para consumir esses componentes, mantendo seu serviço de listagem e suas regras de acesso.
 - O botão de cadastro dessa página reutiliza o modal de autenticação existente via propriedade `onEntrar`.
 - O plano e checklist detalhados estão em [REDESIGN-HOME-PUBLICA.md](./REDESIGN-HOME-PUBLICA.md).
+
+
+## 13. Retomada do Painel Master — 16/11/2026
+
+**Branch de desenvolvimento:** `feature/master-modulos-20261116` (base `535b769`).
+
+### Integração 1 — Anúncios e moderação
+- [x] Recuperado `AdsModeration.jsx` da branch histórica `feature/master-ads-moderation` e ligado à seção **Anúncios e moderação** de `MasterApp.jsx`.
+- [x] Navegação Master preserva a visão geral e a gestão de criadores já existentes na `main`.
+- [x] Filtros pendente/aprovado/rejeitado/todos e paginação de 20 anúncios por página; exibição de espécie, mutação, sexo, preço, criador e situação.
+- [x] Aprovação, rejeição com motivo registrado em auditoria e retorno à análise por função exclusiva no Supabase.
+- [x] Interface impede aprovar anúncio que o próprio criador desativou. Os demais privilégios e validações permanecem no servidor.
+- [x] Código da Edge Function `master-manage-ads` incluído no repositório para rastreabilidade. Essa função **já estava ativa** no projeto Supabase antes desta integração; nenhuma função ou banco foi implantado por esta alteração.
+- [x] `vercel.json` desabilita deploy automático **somente** para `feature/master-modulos-20261116`; `main` permanece com comportamento normal. A regra pode ser removida antes do merge final.
+- [ ] Executar build local, testes de integração e conferir a moderação usando conta Master autenticada antes de levar à produção.
+- [ ] Validar visualmente a tela no computador e celular em preview controlado, quando for necessário.
+- [ ] Testar falha de permissão para conta não Master e conferir entradas na auditoria.
+- [ ] Testar concorrência de moderação e retorno de erros HTTP da Edge Function.
+- [ ] Considerar futura comunicação do motivo de rejeição ao criador, sem expor dados privados.
+
+**Regras de segurança:** credenciais privilegiadas não vão para o front-end; o acesso continua validado pela identidade autenticada em `master_admins`; ações permanecem registradas em `master_audit_log`. Não alterar o legado `/admin` sem testes separados.
+
+**Observação:** este registro documenta implementação em branch, não uma liberação em produção. Sem migrations, sem deploy manual da Vercel e sem execução de SQL modificador no Supabase.
