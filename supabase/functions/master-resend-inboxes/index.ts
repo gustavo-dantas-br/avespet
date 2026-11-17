@@ -92,8 +92,28 @@ Deno.serve(async (req) => {
   if (!validBox(box)) return reply({ error: "Caixa inválida." }, 400, origin);
   const key = Deno.env.get("RESEND_INBOX_API_KEY");
   if (!key) return reply({ error: "Integração de caixas não ativada. Configure RESEND_INBOX_API_KEY nos Secrets do Supabase." }, 503, origin);
+  // Resend routes Inbox operations by UUID, not the email address.
+  // Resolve server-side so no Resend inbox IDs or credentials are needed in the browser.
   const address = inboxes[box];
-  const base = "/inboxes/" + encodeURIComponent(address);
+  let selectedId: string;
+  let inboxUnread = 0;
+  let inboxLastReceived: string | null = null;
+  try {
+    const listing = await resend("/inboxes?limit=100", key);
+    const item = formatList(listing?.data).find((entry: any) =>
+      typeof entry?.email_address === "string" &&
+      entry.email_address.toLowerCase() === address);
+    if (!item || !uuid.test(String(item.id))) {
+      return reply({ error: "Caixa " + address + " não encontrada na conta Resend desta chave." }, 503, origin);
+    }
+    selectedId = item.id;
+    inboxUnread = Number(item.unread) || 0;
+    inboxLastReceived = typeof item.last_received === "string" ? item.last_received : null;
+  } catch (error) {
+    if (error instanceof ProviderError) return reply({ error: error.message }, error.status, origin);
+    return reply({ error: "Não foi possível localizar as caixas do Resend." }, 503, origin);
+  }
+  const base = "/inboxes/" + selectedId;
   const thread = str(body.thread_id, 50);
   const email = str(body.email_id, 50);
 
@@ -111,7 +131,8 @@ Deno.serve(async (req) => {
         resource_type: "communication", metadata: { box, count: threads.length },
       });
       if (auditError) return reply({ error: "Não foi possível registrar o acesso administrativo." }, 503, origin);
-      return reply({ success: true, threads, has_more: Boolean(result?.has_more) }, 200, origin);
+      return reply({ success: true, threads, has_more: Boolean(result?.has_more),
+        unread_count: inboxUnread, last_received: inboxLastReceived }, 200, origin);
     }
     if (action === "messages") {
       if (!uuid.test(thread)) return reply({ error: "Conversa inválida." }, 400, origin);
@@ -156,7 +177,7 @@ Deno.serve(async (req) => {
       });
       if (beforeError) return reply({ error: "Não foi possível registrar a autorização para resposta." }, 503, origin);
       const response = await resend(base + "/threads/" + thread + "/emails/" + email + "/reply",
-        key, "POST", { text: content, reply_all: false }, idempotency);
+        key, "POST", { text: content }, idempotency);
       const { error: afterError } = await admin.from("master_audit_log").insert({
         actor_user_id: identity.user.id, action: "resend_inbox_reply_sent",
         resource_type: "communication", resource_id: thread,
