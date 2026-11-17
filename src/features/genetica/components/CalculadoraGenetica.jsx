@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { calcularCruzamentoGenetico } from "../utils/calcularCruzamentoGenetico";
+import { CATALOGO_MUTACOES_RING_NECK, normalizarChaveGenetica } from "../data/catalogoRingNeck";
 import { genotipoSerieDaAve, cruzarSerieCor, dosagemFatorDaAve, cruzarDosagemFator, nomeFenotipoComFatoresRingNeck, descricaoGenotipoSerie } from "../utils/serieCorRingNeck";
 
 const campo = {
@@ -40,7 +41,17 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
   const femeas = useMemo(() => aves.filter((a) => a.sexo === "Femea"), [aves]);
   const pai = modoPai === "cadastro" ? aves.find((a) => a.id === paiId) : { ...paiManual, sexo: "Macho" };
   const mae = modoMae === "cadastro" ? aves.find((a) => a.id === maeId) : { ...maeManual, sexo: "Femea" };
-  const mutacoesRingNeck = mutacoes.filter((m) => (!m.especie || m.especie === "Ring Neck") && m.categoria !== "cor_base");
+  // O mesmo catálogo está disponível no Plantel e no preenchimento manual
+  // da calculadora, mesmo antes de ser importado pelo criador.
+  // Registros próprios do Banco de Genética prevalecem quando já cadastrados.
+  const mutacoesRingNeck = useMemo(() => {
+    const map = new Map();
+    const codigo = (nome) => normalizarChaveGenetica(String(nome || "").split(" (")[0]);
+    CATALOGO_MUTACOES_RING_NECK.forEach((m) => map.set(codigo(m.nome), m));
+    mutacoes.filter((m) => (!m.especie || m.especie === "Ring Neck") && m.categoria !== "cor_base")
+      .forEach((m) => map.set(codigo(m.nome), m));
+    return [...map.values()];
+  }, [mutacoes]);
 
   function atualizarManual(setManual, campoNome, valor) {
     setManual((atual) => ({ ...atual, [campoNome]: valor }));
