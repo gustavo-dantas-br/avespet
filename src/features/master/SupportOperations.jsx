@@ -28,7 +28,7 @@ export default function SupportOperations({ onPrepareEmail }) {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const [preparingEmailId, setPreparingEmailId] = useState("");
-  const [history, setHistory] = useState({ entries:[], loading:false, error:"" });
+  const [history, setHistory] = useState({ entries:[], loading:false, error:"", syncNote:"" });
 
   const load = useCallback(async () => {
     setError("");
@@ -49,22 +49,26 @@ export default function SupportOperations({ onPrepareEmail }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const startEdit = async (item) => {
-    setSelected(item);
-    setForm({ status: item.status, priority: item.priority, note: item.note || "", assignment: "keep" });
-    setError("");
-    setNotice("");
-    setHistory({entries:[],loading:item.source==="perdida",error:""});
+  const loadHistory = async (item) => {
     if (item.source !== "perdida") return;
+    setHistory((prev)=>({...prev,loading:true,error:"",syncNote:""}));
     try {
       const {data,error:invokeError}=await supabase.functions.invoke("master-support-operations",{
         body:{action:"timeline",source:"perdida",source_id:item.id}
       });
       if (invokeError || data?.error || !data?.success) throw new Error(data?.error || "Histórico indisponível.");
-      setHistory({entries:data.entries||[],loading:false,error:""});
+      setHistory({entries:data.entries||[],loading:false,error:"",syncNote:data.replySync?.note||""});
     } catch(err) {
-      setHistory({entries:[],loading:false,error:err?.message||"Não foi possível carregar o histórico."});
+      setHistory((prev)=>({...prev,loading:false,error:err?.message||"Não foi possível carregar o histórico."}));
     }
+  };
+  const startEdit = (item) => {
+    setSelected(item);
+    setForm({ status: item.status, priority: item.priority, note: item.note || "", assignment: "keep" });
+    setError("");
+    setNotice("");
+    setHistory({entries:[],loading:item.source==="perdida",error:"",syncNote:""});
+    loadHistory(item);
   };
   const updateFilter = (setter, value) => { setter(value); setPage(1); setSelected(null); };
   const doSearch = (event) => {
@@ -208,7 +212,13 @@ export default function SupportOperations({ onPrepareEmail }) {
         <p className="mt-3 text-xs leading-5 text-slate-500">As alterações aqui não mudam o status original do anúncio, achado ou campanha e não enviam mensagens.</p>
         {selected.source === "perdida" && (
           <section className="mt-4 rounded-xl border border-slate-200 p-3" aria-label="Histórico da ave">
-            <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800"><History size={16} /> Histórico do atendimento</h3>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800"><History size={16} /> Histórico do atendimento</h3>
+              <button type="button" disabled={history.loading} onClick={()=>loadHistory(selected)}
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-600 disabled:opacity-50">
+                <RefreshCw size={13} /> Conferir respostas
+              </button>
+            </div>
             {history.loading ? <p className="mt-2 text-xs text-slate-500">Carregando eventos...</p>
               : history.error ? <p role="alert" className="mt-2 text-xs text-rose-700">{history.error}</p>
               : history.entries.length ? (
@@ -219,7 +229,8 @@ export default function SupportOperations({ onPrepareEmail }) {
                   </li>)}
                 </ol>
               ) : <p className="mt-2 text-xs text-slate-500">Ainda sem registros adicionais.</p>}
-            <p className="mt-2 text-[11px] text-slate-500">Somente envios confirmados pelo serviço são marcados como enviados. Respostas não vinculadas ainda devem ser consultadas na Central de Comunicação.</p>
+            {history.syncNote && <p className="mt-2 text-[11px] text-slate-500">{history.syncNote}</p>}
+            <p className="mt-2 text-[11px] text-slate-500">A conferência ocorre ao abrir este atendimento e ao clicar em Conferir respostas. São vinculadas apenas conversas verificadas. Nenhum e-mail é enviado automaticamente.</p>
           </section>
         )}
         <form onSubmit={save} className="mt-5 space-y-4">

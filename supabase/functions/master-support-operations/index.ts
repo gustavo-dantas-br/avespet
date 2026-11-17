@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { emailAddress, normalizeSubject, findVerifiedReplies } from "./replyMatching.mjs";
 
 const origins = new Set(["https://avespet.com.br", "https://www.avespet.com.br"]);
 const validId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -36,6 +37,98 @@ const missingLostFields = (data: Record<string, unknown>) => ([
   ["cor", "cor da ave"],
   ["caracteristicas", "características de identificação (marcas, sons ou comportamento)"],
 ] as const).filter(([key]) => !safeText(data[key], 100)).map(([key, label]) => ({ key, label }));
+const resendSupportAddress = "suporte@avespet.com.br";
+async function readResend(path: string, token: string) {
+  const res = await fetch("https://api.resend.com" + path, {
+    headers: { Authorization: "Bearer " + token },
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!res.ok) throw new Error("Resend inbox indisponível (" + res.status + ")");
+  return await res.json();
+}
+const rows = (data: unknown): any[] => Array.isArray(data) ? data : [];
+async function syncLostBirdReplies(
+  admin: ReturnType<typeof createClient>, ad: any, sentEvents: any[], preparedAudits: any[],
+) {
+  // Sincronização somente quando o Master abre a linha do tempo; não há disparo de e-mail.
+  const providerKey = Deno.env.get("RESEND_INBOX_API_KEY");
+  if (!providerKey || !ad.user_id || (!sentEvents.length && !preparedAudits.length)) {
+    return { checked:false, linked:0, note:"Sem solicitação vinculada para conferir." };
+  }
+  const account = await admin.auth.admin.getUserById(ad.user_id);
+  const ownerEmail = account.data?.user?.email_confirmed_at ? emailAddress(account.data.user.email) : "";
+  if (account.error || !ownerEmail) return { checked:false, linked:0, note:"E-mail do tutor não confirmado." };
+  const name = safeText(ad.data?.nomeAve || ad.data?.especie || "", 60).replace(/[\\r\\n]/g," ");
+  if (!name) return { checked:false, linked:0, note:"Anúncio sem identificação." };
+  const expectedSubject = "Avespet | Complete as informações da ave " + name;
+  const linkedSentIds = sentEvents.map(event => safeText(event.details?.provider_id,50)).filter(Boolean);
+  let allowLegacy = false;
+  const earliestPrep = [...preparedAudits].sort(
+    (a,b)=>Date.parse(a.created_at)-Date.parse(b.created_at)
+  )[0]?.created_at || "";
+  if (earliestPrep) {
+    // Evita unir indevidamente duas aves do mesmo tutor com o mesmo nome.
+    const { data: owned, error: ownedError } = await admin.from("anuncios_aves_perdidas")
+      .select("id,data").eq("user_id",ad.user_id).limit(101);
+    if (!ownedError && owned && owned.length <= 100) {
+      allowLegacy = owned.filter((item: any) =>
+        normalizeSubject(item.data?.nomeAve || item.data?.especie || "") === normalizeSubject(name)
+      ).length === 1;
+    }
+  }
+  if (!linkedSentIds.length && !allowLegacy) {
+    return { checked:false, linked:0, note:"Ainda não há conversa vinculada de forma inequívoca." };
+  }
+  const boxResponse = await readResend("/inboxes?limit=100",providerKey);
+  const inbox = rows(boxResponse?.data).find((b:any) =>
+    emailAddress(b?.email_address) === resendSupportAddress && validId.test(String(b?.id||"")));
+  if (!inbox) throw new Error("A caixa Suporte não está disponível no Resend.");
+  const inboxId = encodeURIComponent(String(inbox.id));
+  const threadResponse = await readResend("/inboxes/"+inboxId+"/threads?folders=inbox&limit=50",providerKey);
+  const target = normalizeSubject(expectedSubject);
+  const candidates = rows(threadResponse?.data).filter((item:any) =>
+    validId.test(String(item.id||"")) && normalizeSubject(item.subject) === target
+  );
+  const limited = candidates.slice(0,8);
+  let linked = 0;
+  for (const item of limited) {
+    const threadId = String(item.id);
+    const response = await readResend("/inboxes/"+inboxId+"/threads/"+encodeURIComponent(threadId)+"/emails?limit=50",providerKey);
+    const messages = rows(response?.data).map((message:any) => ({
+      id:safeText(message.id,50),
+      direction:message.direction === "outbound" ? "outbound" : "inbound",
+      from:safeText(message.from,254), to:rows(message.to),
+      subject:safeText(message.subject,180),
+      received_at:message.received_at || message.created_at || message.sent_at,
+    }));
+    const verified = findVerifiedReplies({
+      messages,ownerEmail,supportEmail:resendSupportAddress,expectedSubject,
+      linkedSentIds, allowLegacy, preparedAt:earliestPrep,
+    });
+    for (const candidate of verified) {
+      if (!validId.test(candidate.providerEmailId)) continue;
+      const { error } = await admin.from("master_support_events").insert({
+        source:"perdida",source_id:ad.id,event_type:"email_received",
+        summary:"Resposta recebida na caixa de Suporte",
+        created_at:candidate.receivedAt,
+        details:{
+          provider_email_id:candidate.providerEmailId,
+          provider_thread_id:threadId,
+          sender_email_matched:true,
+        },
+      });
+      if (error?.code === "23505") continue; // Já registrada pela consulta anterior.
+      if (error) throw new Error("Não foi possível registrar a resposta recebida.");
+      linked++;
+    }
+  }
+  return {
+    checked:true,linked,
+    partial:Boolean(threadResponse?.has_more || candidates.length>limited.length),
+    note:linked ? linked+" nova(s) resposta(s) incluída(s) no histórico." :
+      "Caixa Suporte conferida. Nenhuma nova resposta vinculada.",
+  };
+}
 const defaultState = (source: Source, original: string) => {
   if (["resolvido", "encerrado", "concluido", "finalizada"].includes(original)) return "concluido";
   if (source === "achado" && original === "contatado") return "em_andamento";
@@ -131,7 +224,7 @@ Deno.serve(async (req) => {
     const id = safeText(body.source_id, 40);
     if (source !== "perdida" || !validId.test(id)) return reply({ error: "Caso inválido." }, 400, origin);
     const { data: ad, error: adError } = await admin.from("anuncios_aves_perdidas")
-      .select("id,created_at,status").eq("id",id).maybeSingle();
+      .select("id,user_id,data,created_at,status").eq("id",id).maybeSingle();
     if (adError) return reply({ error: "Falha ao consultar o anúncio." }, 503, origin);
     if (!ad) return reply({ error: "Anúncio não encontrado." }, 404, origin);
     const [eventsResult,auditResult] = await Promise.all([
@@ -144,16 +237,33 @@ Deno.serve(async (req) => {
     ]);
     if (eventsResult.error || auditResult.error) return reply({ error: "Histórico indisponível." }, 503, origin);
     const hasCreatedEvent = (eventsResult.data || []).some((event) => event.event_type === "created");
+    let replySync = { checked:false, linked:0, note:"" };
+    try {
+      replySync = await syncLostBirdReplies(
+        admin,ad,(eventsResult.data||[]).filter((event:any)=>event.event_type==="email_sent"),
+        auditResult.data||[],
+      );
+    } catch (err) {
+      console.error("Master inbox reply sync unavailable");
+      replySync = {checked:false,linked:0,note:"Não foi possível conferir as respostas do Resend agora."};
+    }
+    let currentEvents = eventsResult.data || [];
+    if (replySync.linked > 0) {
+      const fresh = await admin.from("master_support_events")
+        .select("id,event_type,summary,created_at,details")
+        .eq("source","perdida").eq("source_id",id).order("created_at",{ascending:false}).limit(100);
+      if (!fresh.error) currentEvents = fresh.data || currentEvents;
+    }
     const entries = [
-      ...(!hasCreatedEvent ? [{ id: "created-" + ad.id, type:"created", summary:"Anúncio cadastrado", createdAt:ad.created_at }] : []),
-      ...(eventsResult.data || []).map((event) => ({
+      ...(!currentEvents.some((event:any)=>event.event_type==="created") ? [{ id: "created-" + ad.id, type:"created", summary:"Anúncio cadastrado", createdAt:ad.created_at }] : []),
+      ...currentEvents.map((event) => ({
         id:"event-"+event.id, type:event.event_type, summary:event.summary, createdAt:event.created_at,
       })),
       ...(auditResult.data || []).map((event) => ({
         id:"legacy-"+event.id, type:"draft_prepared", summary:"Solicitação de dados preparada para revisão",createdAt:event.created_at,
       })),
     ].sort((a,b) => Date.parse(b.createdAt || "") - Date.parse(a.createdAt || "")).slice(0,100);
-    return reply({ success:true, entries, truncated:(eventsResult.data || []).length===100 },200,origin);
+    return reply({ success:true, entries, replySync, truncated:currentEvents.length===100 },200,origin);
   }
 
   if (action === "save") {
