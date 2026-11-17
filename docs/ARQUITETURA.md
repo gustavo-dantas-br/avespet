@@ -402,3 +402,11 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - A mensagem automática de aprovação utiliza o e-mail confirmado do Auth, sem expô-lo no JSON do anúncio. Anúncios anônimos históricos não são vinculados automaticamente.
 - Nenhuma campanha paga é ativada; o fluxo de cadastro geral, senha temporária Master, genética e demais módulos não foram alterados.
 - Testes pendentes: usuário novo (com e sem confirmação de e-mail), login de usuário existente, retorno após confirmação, recuperação do rascunho, sincronização de status, edição e tentativa de inserção anônima rejeitada.
+
+
+### Limite de e-mails do Supabase Auth identificado em 17/11/2026
+
+- Nos logs de Auth houve `429 over_email_send_rate_limit` em `POST /signup`. O Resend já usado pelas Edge Functions do Master **não** atende ao Supabase Auth automaticamente.
+- O provedor integrado de demonstração do Supabase impõe 2 e-mails de autenticação por hora para todo o projeto e restringe destinatários. Para produção, habilitar SMTP próprio do Resend em **Supabase > Authentication > SMTP Settings**; configurar remetente verificado, `smtp.resend.com`, porta `465` (ou `587` se necessário), usuário `resend`, senha = chave de API Resend. Não compartilhar a chave em código, chat ou commit; configurar somente no dashboard e ajustar os limites de Auth de forma conservadora.
+- Não desabilitar a verificação de e-mail para contornar a limitação. O registro da ave fica temporariamente no navegador durante a confirmação e é vinculado ao perfil após entrar na conta.
+- Correção visual do formulário de cadastro de ave perdida: rótulos de e-mail e senha separados e mensagem amigável de limite de envio. O problema do SMTP continuará até completar a configuração no Auth do Supabase.

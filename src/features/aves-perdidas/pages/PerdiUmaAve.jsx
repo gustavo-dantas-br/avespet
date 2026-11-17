@@ -154,7 +154,13 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
       setEdicaoId(null);
       if (userId) await carregarAnuncios();
     } catch (e) {
-      setErro(e?.message || "Não foi possível salvar. Tente novamente.");
+      const excess = e?.status === 429 || e?.code === "over_email_send_rate_limit" ||
+        /email rate limit exceeded/i.test(e?.message || "");
+      if (excess) {
+        setErro("Os envios de confirmação de e-mail estão temporariamente limitados. Seus dados da ave ficaram salvos neste navegador. Não é necessário preencher tudo novamente. A equipe Avespet está ajustando o envio das confirmações. Se você já possui conta confirmada, escolha 'Já tenho conta'.");
+      } else {
+        setErro(e?.message || "Não foi possível salvar. Tente novamente.");
+      }
     } finally {
       setEnviando(false);
     }
@@ -213,11 +219,13 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
             <button type="button" onClick={() => { setModoConta("cadastro"); setAguardandoConfirmacao(false); setErro(""); }} className="rounded-lg px-3 py-2 text-xs font-bold" style={{ background: modoConta === "cadastro" ? "#174B3B" : "#FFFFFF", color: modoConta === "cadastro" ? "#FFFFFF" : "#174B3B" }}>Criar conta grátis</button>
             <button type="button" onClick={() => { setModoConta("entrar"); setAguardandoConfirmacao(false); setErro(""); }} className="rounded-lg px-3 py-2 text-xs font-bold" style={{ background: modoConta === "entrar" ? "#174B3B" : "#FFFFFF", color: modoConta === "entrar" ? "#FFFFFF" : "#174B3B" }}>Já tenho conta</button>
           </div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <label className="text-sm font-semibold" style={{ color: "#1D2B25" }}>Seu e-mail
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label className="flex min-w-0 flex-col gap-2 text-sm font-semibold" style={{ color: "#1D2B25" }}>
+              <span>Seu e-mail</span>
               <input type="email" required autoComplete="email" maxLength={254} style={input} value={contaEmail} onChange={(e) => setContaEmail(e.target.value)} placeholder="voce@exemplo.com" />
             </label>
-            <label className="text-sm font-semibold" style={{ color: "#1D2B25" }}>{modoConta === "cadastro" ? "Crie sua senha" : "Sua senha"}
+            <label className="flex min-w-0 flex-col gap-2 text-sm font-semibold" style={{ color: "#1D2B25" }}>
+              <span>{modoConta === "cadastro" ? "Crie sua senha" : "Sua senha"}</span>
               <input type="password" required minLength={8} autoComplete={modoConta === "cadastro" ? "new-password" : "current-password"} style={input} value={contaSenha} onChange={(e) => setContaSenha(e.target.value)} placeholder="Mínimo 8 caracteres" />
             </label>
           </div>

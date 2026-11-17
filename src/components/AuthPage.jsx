@@ -356,7 +356,11 @@ function LoginModal({ onFechar }) {
         setMessage("Conta criada! Enviamos os dados de confirmação para seu e-mail. Depois de confirmar e entrar, seu perfil de criador será criado automaticamente.");
       }
     } catch (err) {
-      setError(err.message || "Nao foi possivel completar essa acao.");
+      const excess = err?.status === 429 || err?.code === "over_email_send_rate_limit" ||
+        /email rate limit exceeded/i.test(err?.message || "");
+      setError(excess
+        ? "O envio de e-mails de confirmação está temporariamente limitado. Não tente criar a conta repetidamente. O Avespet está ajustando o serviço de autenticação."
+        : (err.message || "Não foi possível completar essa ação."));
     } finally {
       setLoading(false);
     }
