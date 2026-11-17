@@ -352,3 +352,19 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - [ ] Implantar `master-audit-events` e integrar na produção apenas em publicação controlada; nenhuma função foi implantada nesta etapa.
 
 **Limites:** a interface mostra somente eventos do registro `master_audit_log`, não logs gerais do sistema nem mensagens de suporte. A identificação de outros administradores é um identificador parcial, para evitar consultas adicionais de dados pessoais.
+
+
+### Integração 8 — Suporte operacional no Master (17/11/2026)
+
+- [x] O item de navegação **Suporte operacional** integra uma fila de casos reais já existentes: `achados_anilha`, `anuncios_aves_perdidas` e `solicitacoes_campanhas_aves`.
+- [x] Formulário de filtro por origem, acompanhamento e texto; visão paginada com fonte e situação original explicitamente separadas.
+- [x] Tela de acompanhamento Master prepara prioridade, estado interno (novo/em andamento/aguardando/concluído), assumir atendimento e observações privadas.
+- [x] Backend `master-support-operations` verifica JWT e `master_admins`, consulta origens com `service_role` apenas no servidor, exige fonte existente, valida as entradas e registra auditoria.
+- [x] Migração `202611170001_master_support_cases.sql` versionada **somente para publicação futura**: armazenamento separado de triagem com RLS e acesso exclusivo ao serviço. A tabela e função ainda não foram implantadas.
+- [x] Nenhum status do fluxo público de achados, anúncios de perdidas ou campanhas é alterado pela triagem; não há envio de mensagens, e-mails, SMS, WhatsApp ou integração com Resend.
+- [x] Não modifica a redefinição de senha nem a integração de e-mail desenvolvida em outra conversa.
+- [ ] Fazer build/CI, validar comportamento das telas no desktop e celular, e testar autorização Master e não Master.
+- [ ] Revisar paginação de grandes volumes (a consulta atual sinaliza quando algum tipo possui mais de 250 casos).
+- [ ] Publicar Edge Function e migração somente em ciclo controlado e depois integrar o frontend; não houve deploy nesta etapa.
+
+**Privacidade:** contatos e mensagens retornados pela função exigem autorização Master. As observações ficam em tabela administrativa privada; o sistema não publica os contatos.
