@@ -358,3 +358,13 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - [ ] Integrar a correção na produção após validação e conferir a atualização dos assets pela Vercel.
 
 **Observação:** a falha de carregamento de chunk/PWA é uma hipótese compatível com os sintomas, não foi reproduzida com acesso a uma sessão real. O erro exato no navegador deve ser verificado caso persista.
+
+### Correção de histórico e importação de contatos — 17/11/2026
+
+- [x] Removida a expressão regular incorreta `/\\D/g` nos módulos **Clientes** e **Fornecedores**; ambos utilizam agora o normalizador já consolidado em `src/lib/telefone.js` (`/\D/g`).
+- [x] Compras/vendas antigas com telefone formatado de forma diferente passam a ser identificadas no histórico dos respectivos clientes/fornecedores, quando ainda não possuem vínculo explícito por ID.
+- [x] A importação de compradores/fornecedores não deve oferecer novamente contatos já existentes com o mesmo telefone em formatos diferentes.
+- [x] Adicionados testes com números formatados, vínculos existentes, números diferentes e sugestões de importação, integrados ao comando `npm run test:painel`.
+- [ ] Executar testes da PR antes de integrar ao site oficial. Testes de interface com sessão real de criador continuam como validação complementar.
+
+**Escopo:** não altera registros, reservas, plantas, permissões de Master, e-mail nem redefinição de senha. Sem migrações ou novo serviço.
