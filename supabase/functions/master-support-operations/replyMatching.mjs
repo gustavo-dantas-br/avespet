@@ -4,16 +4,16 @@ export function emailAddress(value) {
   const source = String(value ?? "").trim();
   const bracketed = source.match(/<([^<>]+)>/);
   const candidate = (bracketed ? bracketed[1] : source).trim().toLowerCase();
-  return /^[^\\s<>@]+@[^\\s<>@]+\\.[^\\s<>@]+$/.test(candidate) ? candidate : "";
+  return /^[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+$/.test(candidate) ? candidate : "";
 }
 export function normalizeSubject(value) {
   let subject = String(value ?? "").normalize("NFC").trim();
   for (let i = 0; i < 8; i++) {
-    const withoutPrefix = subject.replace(/^(?:re|res|enc|fw|fwd)\\s*:\\s*/i, "").trim();
+    const withoutPrefix = subject.replace(/^(?:re|res|enc|fw|fwd)\s*:\s*/i, "").trim();
     if (withoutPrefix === subject) break;
     subject = withoutPrefix;
   }
-  return subject.replace(/\\s+/g, " ").toLocaleLowerCase("pt-BR");
+  return subject.replace(/\s+/g, " ").toLocaleLowerCase("pt-BR");
 }
 export function validTimestamp(value) {
   const time = Date.parse(String(value ?? ""));
