@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../supabaseClient";
+import EntitlementsManagement from "./EntitlementsManagement";
 import {
   BadgeCheck, Bird, Check, CircleDollarSign, Crown, Edit3, Infinity,
   Loader2, Plus, RefreshCw, Save, ShieldCheck, ToggleLeft, ToggleRight, X,
@@ -26,6 +27,7 @@ const intervalLabel = (value) => ({ monthly: "Mensal", yearly: "Anual", one_time
 const inputClass = "mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-[#58799e] focus:ring-2 focus:ring-blue-50";
 
 export default function BillingManagement() {
+  const [activeTab, setActiveTab] = useState("catalog");
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -100,6 +102,12 @@ export default function BillingManagement() {
 
   return (
     <section className="space-y-6">
+      <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2" role="tablist" aria-label="Gestão de planos">
+        <button type="button" role="tab" aria-selected={activeTab === "catalog"} onClick={() => setActiveTab("catalog")} className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${activeTab === "catalog" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}>Catálogo de planos</button>
+        <button type="button" role="tab" aria-selected={activeTab === "entitlements"} onClick={() => setActiveTab("entitlements")} className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${activeTab === "entitlements" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}>Permissões especiais</button>
+      </div>
+      <div role="tabpanel">
+      {activeTab === "catalog" ? <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[.2em] text-amber-700">Gestão comercial</p>
@@ -159,6 +167,8 @@ export default function BillingManagement() {
       </div>
 
       <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-xs leading-5 text-blue-900"><p className="font-semibold">Importante nesta etapa</p><p className="mt-1">Este módulo prepara o catálogo de planos. Os planos Essencial e Profissional permanecem inativos, mesmo mostrando R$ 0,00. Não há assinatura automática, checkout, geração de cobranças ou recebimento de pagamentos. Os limites e bloqueios efetivos serão revisados separadamente antes da ativação.</p></div>
+      </div> : <EntitlementsManagement />}
+      </div>
     </section>
   );
 }

@@ -325,3 +325,15 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - `master-manage-creator` permanece idêntica à implementação preexistente da `main`, inclusive no fluxo de redefinição de senha, atendendo à decisão explícita de não alterá-la.
 - A função de perfil não modifica senha, telefone Auth, `user_metadata` ou `app_metadata`, somente o perfil comercial.
 - Configuração temporária para suprimir previews foi retirada de `vercel.json` antes da publicação.
+
+
+## Painel Master e Central de Comunicação — implantação de 17/11/2026
+
+- Publicação sobre a `main` que contém a genética Ring Neck e correções de tela branca. Não alterar a calculadora ou o fluxo preexistente de redefinição de senha.
+- Módulo **Suporte operacional**: acompanhamento interno dos casos de aves encontradas, perdidas e campanhas, sem comunicação externa automática; triagem com status, prioridade, responsável e notas privadas.
+- Módulo **Auditoria e segurança**: leitura de histórico administrativo sem enviar dados de `metadata` ao navegador.
+- Módulo **Planos e assinaturas**: aba **Permissões especiais** para preparar exceções individuais; tais exceções não aplicam bloqueios automaticamente; planos com preço R$ 0,00 e somente Gratuito ativo.
+- Estruturas `master_support_cases` e `creator_entitlement_overrides` criadas no Supabase com RLS, sem SELECT para `anon` ou `authenticated`. Migração aplicada como `master_support_and_entitlement_overrides_20261117`; versões SQL guardadas no repositório.
+- Backend `master-support-operations`, `master-audit-events`, `master-manage-entitlements` e `master-resend-test` exigem JWT e autorização na tabela `master_admins`. Somente `service_role` recebe acesso às tabelas internas; na auditoria foi concedida consulta somente às colunas necessárias para operações Master.
+- **Central de e-mails**: envio de teste `suporte@avespet.com.br` para a conta Master confirmado pelo usuário. As caixas Resend `suporte@avespet.com.br` e `financeiro@avespet.com.br` foram criadas, mas a leitura de conversas e respostas dentro do Master seguem pendentes da API de Inboxes e da verificação completa de recebimento MX; sem disparos de marketing.
+- Atualizar esta documentação antes de ativar cobrança ou bloqueios. Alterações na produção não devem sobrescrever funcionalidades de genética nem ativar campanhas sem consentimento.
