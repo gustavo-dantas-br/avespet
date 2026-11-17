@@ -67,3 +67,25 @@ test("todas as combinações válidas da série de cor somam 100%", () => {
     }
   }
 });
+
+test("Azul sem informação adicional não prova ausência do fator Violeta", () => {
+  assert.equal(dosagemFatorDaAve({ corBase: "Blue (Azul)" }, "violetFactor"), null);
+  assert.equal(dosagemFatorDaAve({ corMutacao: "Azul" }, "violetFactor"), null);
+  assert.equal(dosagemFatorDaAve({ corBase: "Green (Verde)" }, "violetFactor"), null);
+  assert.equal(dosagemFatorDaAve({ corBase: "Turquoise (Turquesa)" }, "violetFactor"), null);
+});
+
+test("somente NONE explícito comprova ausência do fator Violeta", () => {
+  assert.equal(dosagemFatorDaAve({
+    corBase: "Blue (Azul)", fatoresGeneticos: { violetFactor: "NONE" },
+  }, "violetFactor"), 0);
+  assert.deepEqual(cruzarDosagemFator(1, 0, "Violet Factor").map((item) => [item.dosagem, item.percentual]), [
+    [0, 50], [1, 50],
+  ]);
+});
+
+test("Violeta visível com NONE contraditório permanece indeterminado", () => {
+  assert.equal(dosagemFatorDaAve({
+    corMutacao: "Violeta", fatoresGeneticos: { violetFactor: "NONE" },
+  }, "violetFactor"), null);
+});
