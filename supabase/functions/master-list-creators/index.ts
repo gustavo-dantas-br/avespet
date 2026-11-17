@@ -106,14 +106,16 @@ Deno.serve(async (req) => {
     const data = profile?.data || {};
     const name = String(data.nomeCompleto || [data.nome, data.sobrenome].filter(Boolean).join(" ") || data.nome || account.user_metadata?.name || "Nome não informado");
     const creatorName = String(data.nomeCriatorio || "");
+    const whatsapp = String(data.whatsapp || "").trim();
     const city = String(data.cidade || "");
     const state = String(data.uf || "");
-    return { account, profile, name, creatorName, city, state };
+    return { account, profile, name, creatorName, city, state, whatsapp };
   }).filter((item) => {
     if (!search) return true;
-    const haystack = [item.name, item.creatorName, item.city, item.state, item.account.email || ""]
+    const haystack = [item.name, item.creatorName, item.city, item.state, item.account.email || "", item.whatsapp, item.account.phone || ""]
       .join(" ").toLocaleLowerCase("pt-BR");
-    return haystack.includes(search);
+    const digits = search.replace(/\D/g, "");
+    return haystack.includes(search) || (digits.length >= 4 && [item.whatsapp, item.account.phone].some((value) => String(value || "").replace(/\D/g, "").includes(digits)));
   }).sort((a, b) => new Date(b.account.created_at).getTime() - new Date(a.account.created_at).getTime());
 
   const total = filtered.length;
@@ -129,7 +131,7 @@ Deno.serve(async (req) => {
     for (const bird of birds || []) birdCounts.set(bird.user_id, (birdCounts.get(bird.user_id) || 0) + 1);
   }
 
-  const items = pageItems.map(({ account, profile, name, creatorName, city, state }) => {
+  const items = pageItems.map(({ account, profile, name, creatorName, city, state, whatsapp }) => {
     const bannedUntil = account.banned_until || null;
     return {
       userId: account.id,
@@ -139,6 +141,7 @@ Deno.serve(async (req) => {
       state,
       email: account.email || "",
       phone: account.phone || "",
+      whatsapp,
       createdAt: account.created_at,
       lastSignInAt: account.last_sign_in_at || null,
       emailConfirmed: Boolean(account.email_confirmed_at),

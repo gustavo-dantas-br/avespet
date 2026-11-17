@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
+import CreatorAccountActivity from "./CreatorAccountActivity";
 import { Search, RefreshCw, Users, Bird, Mail, Phone, MapPin, CalendarDays, Clock3, ChevronLeft, ChevronRight, X, CheckCircle2, AlertCircle, ShieldOff, ShieldCheck, Ban, Unlock, Loader2, Pencil, KeyRound } from "lucide-react";
 
 const fmtDate = (value) => value ? new Date(value).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }) : "Nunca acessou";
@@ -25,7 +26,7 @@ export default function CreatorManagement() {
   const [actionError, setActionError] = useState("");
   const [actionSuccess, setActionSuccess] = useState("");
   const [editing, setEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ name: "", phone: "", creatorName: "", city: "", state: "" });
+  const [editForm, setEditForm] = useState({ name: "", whatsapp: "", creatorName: "", city: "", state: "" });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -79,16 +80,16 @@ export default function CreatorManagement() {
     if (!selected || actionLoading) return;
     setActionLoading(true); setActionError(""); setActionSuccess("");
     try {
-      const { data, error: invokeError } = await supabase.functions.invoke("master-manage-creator", { body: { user_id: selected.userId, action: "update_account", profile: editForm } });
+      const { data, error: invokeError } = await supabase.functions.invoke("master-update-creator-profile", { body: { user_id: selected.userId, profile: editForm } });
       if (invokeError || data?.error || !data?.success) throw new Error(data?.error || "Não foi possível salvar os dados.");
-      setSelected((current) => current ? { ...current, name: editForm.name, phone: editForm.phone || current.phone, creatorName: editForm.creatorName, city: editForm.city, state: editForm.state, hasProfile: true } : current);
-      setResult((current) => ({ ...current, items: current.items.map((item) => item.userId === selected.userId ? { ...item, name: editForm.name, phone: editForm.phone || item.phone, creatorName: editForm.creatorName, city: editForm.city, state: editForm.state, hasProfile: true } : item) }));
+      setSelected((current) => current ? { ...current, name: editForm.name, whatsapp: editForm.whatsapp, creatorName: editForm.creatorName, city: editForm.city, state: editForm.state, hasProfile: true } : current);
+      setResult((current) => ({ ...current, items: current.items.map((item) => item.userId === selected.userId ? { ...item, name: editForm.name, whatsapp: editForm.whatsapp, creatorName: editForm.creatorName, city: editForm.city, state: editForm.state, hasProfile: true } : item) }));
       setEditing(false); setActionSuccess("Cadastro atualizado com sucesso."); await load();
     } catch (err) { setActionError(err.message || "Não foi possível salvar os dados."); }
     finally { setActionLoading(false); }
   }
   function startEdit() {
-    setEditForm({ name: selected.name === "Nome não informado" ? "" : selected.name, phone: selected.phone || "", creatorName: selected.creatorName || "", city: selected.city || "", state: selected.state || "" });
+    setEditForm({ name: selected.name === "Nome não informado" ? "" : selected.name, whatsapp: selected.whatsapp || "", creatorName: selected.creatorName || "", city: selected.city || "", state: selected.state || "" });
     setEditing(true); setActionError(""); setActionSuccess("");
   }
 
@@ -113,23 +114,24 @@ export default function CreatorManagement() {
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
         <form onSubmit={submitSearch} className="flex flex-col gap-2 sm:flex-row">
-          <label className="relative flex-1"><span className="sr-only">Buscar conta</span><Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome, e-mail, criatório ou cidade" className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-100" /></label>
+          <label className="relative flex-1"><span className="sr-only">Buscar conta</span><Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome, e-mail, WhatsApp ou cidade" className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-100" /></label>
           <button type="submit" className="rounded-xl px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90" style={{ background: "#1d3553" }}>Buscar</button>
         </form>
         {error && <div role="alert" className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</div>}
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left">
-            <thead><tr className="border-b border-slate-100 text-[10px] uppercase tracking-wider text-slate-400"><th className="px-3 py-3 font-semibold">Conta</th><th className="px-3 py-3 font-semibold">Localização</th><th className="px-3 py-3 font-semibold">Aves</th><th className="px-3 py-3 font-semibold">Situação</th><th className="px-3 py-3 font-semibold">Cadastro</th><th className="px-3 py-3 font-semibold text-right">Detalhes</th></tr></thead>
+          <table className="w-full min-w-[920px] text-left">
+            <thead><tr className="border-b border-slate-100 text-[10px] uppercase tracking-wider text-slate-400"><th className="px-3 py-3 font-semibold">Conta</th><th className="px-3 py-3 font-semibold">Contato</th><th className="px-3 py-3 font-semibold">Localização</th><th className="px-3 py-3 font-semibold">Aves</th><th className="px-3 py-3 font-semibold">Situação</th><th className="px-3 py-3 font-semibold">Cadastro</th><th className="px-3 py-3 font-semibold text-right">Detalhes</th></tr></thead>
             <tbody>
-              {loading ? Array.from({ length: 5 }, (_, i) => <tr key={i} className="border-b border-slate-50"><td colSpan="6" className="px-3 py-4"><div className="h-5 animate-pulse rounded bg-slate-100" /></td></tr>) :
+              {loading ? Array.from({ length: 5 }, (_, i) => <tr key={i} className="border-b border-slate-50"><td colSpan="7" className="px-3 py-4"><div className="h-5 animate-pulse rounded bg-slate-100" /></td></tr>) :
               result.items.length ? result.items.map((item) => <tr key={item.userId} className="border-b border-slate-50 transition hover:bg-slate-50/70">
                 <td className="px-3 py-4"><div className="font-semibold text-sm text-slate-800">{item.name}</div><div className="mt-1 text-xs text-slate-400">{item.email || item.creatorName || "E-mail não informado"}</div>{!item.hasProfile && <div className="mt-1 inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Perfil não preenchido</div>}</td>
+                <td className="px-3 py-4"><div className="text-xs font-semibold text-slate-700">{item.whatsapp || item.phone || "Não informado"}</div><div className="mt-1 text-[10px] text-slate-400">{item.whatsapp ? "WhatsApp do criador" : item.phone ? "Telefone da conta" : "Contato não cadastrado"}</div></td>
                 <td className="px-3 py-4 text-xs text-slate-500">{[item.city, item.state].filter(Boolean).join(" / ") || "Não informado"}</td>
                 <td className="px-3 py-4"><span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700"><Bird size={14} className="text-slate-400" />{item.birdsCount}</span></td>
                 <td className="px-3 py-4"><Status blocked={item.blocked} confirmed={item.emailConfirmed} /></td>
                 <td className="px-3 py-4 text-xs text-slate-500">{fmtDate(item.createdAt)}</td>
                 <td className="px-3 py-4 text-right"><button onClick={() => setSelected(item)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-white">Ver conta</button></td>
-              </tr>) : <tr><td colSpan="6" className="px-3 py-12 text-center"><Users size={26} className="mx-auto text-slate-300" /><p className="mt-3 text-sm font-semibold text-slate-600">Nenhuma conta encontrada</p><p className="mt-1 text-xs text-slate-400">Tente outro termo de busca.</p></td></tr>}
+              </tr>) : <tr><td colSpan="7" className="px-3 py-12 text-center"><Users size={26} className="mx-auto text-slate-300" /><p className="mt-3 text-sm font-semibold text-slate-600">Nenhuma conta encontrada</p><p className="mt-1 text-xs text-slate-400">Tente outro termo de busca.</p></td></tr>}
             </tbody>
           </table>
         </div>
@@ -141,7 +143,8 @@ export default function CreatorManagement() {
         <div className="mt-6"><Status blocked={selected.blocked} confirmed={selected.emailConfirmed} /></div>
         <div className="mt-6 space-y-4">
           <div className="flex gap-3"><Mail size={17} className="mt-0.5 text-slate-400" /><div className="min-w-0"><p className="text-[11px] text-slate-400">E-mail da conta</p><p className="break-all text-sm font-medium text-slate-800">{selected.email || "Não informado"}</p></div></div>
-          {selected.phone && <div className="flex gap-3"><Phone size={17} className="mt-0.5 text-slate-400" /><div><p className="text-[11px] text-slate-400">Telefone da conta</p><p className="text-sm font-medium text-slate-800">{selected.phone}</p></div></div>}
+          <div className="flex gap-3"><Phone size={17} className="mt-0.5 text-slate-400" /><div><p className="text-[11px] text-slate-400">WhatsApp de contato do criador</p><p className="text-sm font-medium text-slate-800">{selected.whatsapp || "Não informado"}</p></div></div>
+          {selected.phone && <div className="flex gap-3"><Phone size={17} className="mt-0.5 text-slate-400" /><div><p className="text-[11px] text-slate-400">Telefone da conta (autenticação)</p><p className="text-sm font-medium text-slate-800">{selected.phone}</p></div></div>}
           <div className="flex gap-3"><CheckCircle2 size={17} className="mt-0.5 text-slate-400" /><div><p className="text-[11px] text-slate-400">Confirmação do e-mail</p><p className="text-sm font-medium text-slate-800">{selected.emailConfirmedAt ? fmtDateTime(selected.emailConfirmedAt) : "Pendente de confirmação"}</p></div></div>
           <div className="flex gap-3"><Users size={17} className="mt-0.5 text-slate-400" /><div><p className="text-[11px] text-slate-400">Perfil de criador</p><p className="text-sm font-medium text-slate-800">{selected.hasProfile ? "Perfil cadastrado" : "Perfil não preenchido"}</p></div></div>
           {selected.hasProfile && <div className="flex gap-3"><CalendarDays size={17} className="mt-0.5 text-slate-400" /><div><p className="text-[11px] text-slate-400">Última atualização do perfil</p><p className="text-sm font-medium text-slate-800">{fmtDateTime(selected.profileUpdatedAt)}</p></div></div>}
@@ -151,6 +154,7 @@ export default function CreatorManagement() {
           <div className="flex gap-3"><Clock3 size={17} className="mt-0.5 text-slate-400" /><div><p className="text-[11px] text-slate-400">Último acesso</p><p className="text-sm font-medium text-slate-800">{fmtDateTime(selected.lastSignInAt)}</p></div></div>
           {selected.blocked && <div className="rounded-xl bg-rose-50 p-3 text-xs text-rose-700">Bloqueio válido até: {fmtDateTime(selected.blockedUntil)}</div>}
         </div>
+        <CreatorAccountActivity key={selected.userId} userId={selected.userId} />
         {actionSuccess && <div role="status" className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{actionSuccess}</div>}
         {actionError && <div role="alert" className="mt-6 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{actionError}</div>}
         <div className="mt-7 border-t border-slate-100 pt-6">
@@ -168,7 +172,7 @@ export default function CreatorManagement() {
           <p className="mt-2 text-[11px] leading-5 text-slate-400">Define uma senha temporária. A troca é obrigatória no próximo acesso.</p>
           <p className="mt-2 text-[11px] leading-5 text-slate-400">O bloqueio impede novos logins e renovações de sessão. Uma sessão que já tenha um token ativo poderá permanecer válida até o vencimento desse token. Contas administrativas são protegidas.</p>
         </div>
-        {editing && <div className="fixed inset-0 z-[85] flex items-center justify-center bg-slate-950/50 p-4"><form onSubmit={saveAccountEdit} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Gestão de pessoas</p><h3 className="mt-2 text-lg font-bold text-slate-900">Editar cadastro</h3></div><button type="button" onClick={() => setEditing(false)} disabled={actionLoading} aria-label="Fechar edição" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={18}/></button></div><div className="mt-5 space-y-3">{[["name","Nome completo"],["phone","Telefone"],["creatorName","Nome do criatório"],["city","Cidade"],["state","Estado (UF)"]].map(([key,label]) => <label key={key} className="block"><span className="text-xs font-semibold text-slate-700">{label}</span><input value={editForm[key]} onChange={(event) => setEditForm((current) => ({...current,[key]:event.target.value}))} maxLength={key === "state" ? 2 : 120} required={key === "name"} className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-slate-400"/></label>)}</div><p className="mt-3 text-[11px] text-slate-400">A alteração do e-mail é separada e não é feita por esta tela.</p><div className="mt-6 flex gap-2"><button type="button" onClick={() => setEditing(false)} disabled={actionLoading} className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600">Cancelar</button><button type="submit" disabled={actionLoading || !editForm.name.trim()} className="flex-1 rounded-xl px-4 py-3 text-sm font-semibold text-white disabled:opacity-50" style={{background:"#1d3553"}}>{actionLoading ? "Salvando..." : "Salvar alterações"}</button></div></form></div>}
+        {editing && <div className="fixed inset-0 z-[85] flex items-center justify-center bg-slate-950/50 p-4"><form onSubmit={saveAccountEdit} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"><div className="flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Gestão de pessoas</p><h3 className="mt-2 text-lg font-bold text-slate-900">Editar cadastro</h3></div><button type="button" onClick={() => setEditing(false)} disabled={actionLoading} aria-label="Fechar edição" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={18}/></button></div><div className="mt-5 space-y-3">{[["name","Nome completo"],["whatsapp","WhatsApp do criador"],["creatorName","Nome do criatório"],["city","Cidade"],["state","Estado (UF)"]].map(([key,label]) => <label key={key} className="block"><span className="text-xs font-semibold text-slate-700">{label}</span><input value={editForm[key]} onChange={(event) => setEditForm((current) => ({...current,[key]:event.target.value}))} maxLength={key === "state" ? 2 : 120} required={key === "name"} className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-slate-400"/></label>)}</div><p className="mt-3 text-[11px] text-slate-500">O WhatsApp do criador é o contato comercial do perfil e pode aparecer nos anúncios públicos. O telefone de autenticação e o e-mail da conta não são alterados aqui.</p><div className="mt-6 flex gap-2"><button type="button" onClick={() => setEditing(false)} disabled={actionLoading} className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600">Cancelar</button><button type="submit" disabled={actionLoading || !editForm.name.trim()} className="flex-1 rounded-xl px-4 py-3 text-sm font-semibold text-white disabled:opacity-50" style={{background:"#1d3553"}}>{actionLoading ? "Salvando..." : "Salvar alterações"}</button></div></form></div>}
         {manageAction && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/50 p-4">
           <form onSubmit={confirmAccountAction} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Confirmação de segurança</p><h3 className="mt-2 text-lg font-bold text-slate-900">{manageAction === "block" ? "Bloquear esta conta?" : manageAction === "unblock" ? "Desbloquear esta conta?" : "Redefinir senha desta conta?"}</h3></div><button type="button" onClick={() => setManageAction("")} disabled={actionLoading} aria-label="Cancelar" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={18} /></button></div>

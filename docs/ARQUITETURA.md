@@ -241,3 +241,87 @@ A tentativa de criar uma implantação Preview foi bloqueada pela Vercel por lim
 - A página `src/features/aves-perdidas/pages/AvesPerdidas.jsx` foi adaptada para consumir esses componentes, mantendo seu serviço de listagem e suas regras de acesso.
 - O botão de cadastro dessa página reutiliza o modal de autenticação existente via propriedade `onEntrar`.
 - O plano e checklist detalhados estão em [REDESIGN-HOME-PUBLICA.md](./REDESIGN-HOME-PUBLICA.md).
+
+
+## 13. Retomada do Painel Master — 16/11/2026
+
+**Branch de desenvolvimento:** `feature/master-modulos-20261116` (base `535b769`).
+
+### Integração 1 — Anúncios e moderação
+- [x] Recuperado `AdsModeration.jsx` da branch histórica `feature/master-ads-moderation` e ligado à seção **Anúncios e moderação** de `MasterApp.jsx`.
+- [x] Navegação Master preserva a visão geral e a gestão de criadores já existentes na `main`.
+- [x] Filtros pendente/aprovado/rejeitado/todos e paginação de 20 anúncios por página; exibição de espécie, mutação, sexo, preço, criador e situação.
+- [x] Aprovação, rejeição com motivo registrado em auditoria e retorno à análise por função exclusiva no Supabase.
+- [x] Interface impede aprovar anúncio que o próprio criador desativou. Os demais privilégios e validações permanecem no servidor.
+- [x] Código da Edge Function `master-manage-ads` incluído no repositório para rastreabilidade. Essa função **já estava ativa** no projeto Supabase antes desta integração; nenhuma função ou banco foi implantado por esta alteração.
+- [x] `vercel.json` desabilita deploy automático **somente** para `feature/master-modulos-20261116`; `main` permanece com comportamento normal. A regra pode ser removida antes do merge final.
+- [ ] Executar build local, testes de integração e conferir a moderação usando conta Master autenticada antes de levar à produção.
+- [ ] Validar visualmente a tela no computador e celular em preview controlado, quando for necessário.
+- [ ] Testar falha de permissão para conta não Master e conferir entradas na auditoria.
+- [ ] Testar concorrência de moderação e retorno de erros HTTP da Edge Function.
+- [ ] Considerar futura comunicação do motivo de rejeição ao criador, sem expor dados privados.
+
+**Regras de segurança:** credenciais privilegiadas não vão para o front-end; o acesso continua validado pela identidade autenticada em `master_admins`; ações permanecem registradas em `master_audit_log`. Não alterar o legado `/admin` sem testes separados.
+
+**Observação:** este registro documenta implementação em branch, não uma liberação em produção. Sem migrations, sem deploy manual da Vercel e sem execução de SQL modificador no Supabase.
+
+### Integração 2 — Gestão de aves (consulta administrativa)
+- [x] Recuperada a tela `BirdsManagement.jsx` com busca por nome, anilha, mutação, espécie e sexo; paginação de 25 registros por página.
+- [x] Módulo adicionado à navegação Master sem interferir no cadastro e nas telas do criador.
+- [x] Corrigido delimitador de linha inválido presente no JSX histórico antes da integração.
+- [x] Função `master-list-birds` versionada no GitHub; já existe ativa no Supabase de produção e **não foi reimplantada**.
+- [x] Consulta somente leitura, validada em `master_admins` no servidor, reduzida aos campos necessários, com auditoria no `master_audit_log`.
+- [ ] Validar o build e testar busca/filtros, isolamento de acesso e comportamento em celular.
+
+A branch `feature/master-modulos-20261116` continua sem publicação automática pela configuração presente em `vercel.json`. Produção e banco não foram alterados nesta etapa.
+
+### Integração 3 — Contato de criadores (sem alterações em senhas)
+- [x] Criada a coluna **Contato**, priorizando o WhatsApp comercial do criador; o telefone da conta Auth aparece como alternativa identificada.
+- [x] A ficha mostra o WhatsApp mesmo quando não cadastrado e o separa do telefone de autenticação.
+- [x] O WhatsApp é editável no perfil comercial, sem modificar o login nem o e-mail de autenticação.
+- [x] Pesquisa administrativa pode localizar criadores por número.
+- [x] Conforme decisão do projeto, o fluxo existente de **redefinição de senha permanece inalterado** em relação à versão anterior a esta integração.
+- [ ] Validar build, busca, edição e campos vazios em um ciclo de testes agrupado antes da publicação.
+- [ ] O ajuste do backend de listagem e edição do WhatsApp deve ser publicado junto com o frontend em futura atualização controlada.
+
+Esta alteração é apenas código em branch; **sem deploy na Vercel, sem alteração no Supabase em execução e sem mudanças no banco**.
+
+### Integração 4 — Aves vinculadas e histórico administrativo por conta
+
+**Objetivo:** permitir que o Master consulte as aves e as ações administrativas vinculadas a um criador, sem consultar diretamente dados privilegiados do navegador.
+
+- [x] Nova aba **Aves vinculadas** dentro da ficha de cada conta, com nome, espécie, mutação, sexo, anilha, status, atualização e paginação de 15 registros.
+- [x] Nova aba **Histórico Master**, com eventos de auditoria, data/hora, autoria indicada e motivo quando registrado.
+- [x] Criada Edge Function `master-creator-details` que verifica JWT, autorização em `master_admins`, UUID e existência da conta; mantém a segregação de contas administrativas.
+- [x] A função faz leitura somente das aves do usuário selecionado e eventos de auditoria associados àquele usuário. Nunca devolve o JSON bruto das aves, evitando vazar informações de vendas, compradores, fornecedores, fotos e outros dados privados.
+- [x] Toda visualização é registrada na auditoria; as próprias visualizações são omitidas da aba de histórico para não gerar ruído.
+- [x] Os componentes somente são montados quando o Master abre a ficha, evitando consultas desnecessárias.
+- [x] Nenhuma modificação na redefinição de senha, no fluxo de autenticação existente ou em `master-manage-creator`.
+- [ ] Executar build Vite e validação manual das abas com conta Master e com conta comum sem permissão.
+- [ ] No momento de publicação conjunta, implantar a Edge Function `master-creator-details` (JWT habilitado) e as funções de listagem/edição de WhatsApp preparadas anteriormente.
+- [ ] Conferir paginação, estados vazios, conta sem perfil e audit trail depois da publicação.
+
+**Situação:** somente código preparado em `feature/master-modulos-20261116`; nenhum deploy Vercel/Supabase e nenhuma alteração em tabelas ou usuários em produção.
+
+
+### Integração 5 — Planos provisórios a R$ 0,00 (17/11/2026)
+
+- [x] Módulo **Planos e assinaturas** integrado à navegação do Master, recuperando a interface já desenvolvida na branch histórica.
+- [x] Catálogo inicial preparado com **Gratuito**, **Essencial** e **Profissional**, todos com `price_cents = 0` (R$ 0,00); nomes Essencial/Profissional são provisórios.
+- [x] Somente o plano Gratuito (`free`) é cadastrado como ativo; Essencial e Profissional permanecem **inativos**, não contratáveis e sem receita.
+- [x] O plano gratuito tem limite **configurado como referência** de 10 aves na tabela de futuros planos; **nenhum limite novo é imposto aos criadores da produção** nesta implementação.
+- [x] Campos de preço e disponibilidade indisponíveis na interface, enquanto a precificação não for aprovada.
+- [x] Regras adicionais nos arquivos de backend e SQL rejeitam preços diferentes de R$ 0,00 e ativação de modalidades futuras; funções disponíveis: consultar, cadastrar e editar catálogo (Master).
+- [x] Estrutura histórica do catálogo versionada para implantação futura. **Não há processamento de pagamentos, atribuição automática de assinaturas nem checkout.**
+- [ ] Validar build e testar a Edge Function `master-manage-billing` depois de configurar um ambiente de teste com as tabelas.
+- [ ] Conferir rigorosamente política de leitura autenticada e auditoria de operações em ambiente de teste.
+- [ ] Antes de publicar: revisar/aprovar aplicação da migração `202611130001_platform_plans_subscriptions.sql`, implantação da função e integração de UI em um lote único, sem alterar políticas existentes de aves.
+- [ ] Após definir preços, criar uma **nova migração** para retirar os bloqueios provisórios de preço/ativação, nunca simplesmente alterar valores na produção.
+
+**Importante:** nem a migração nem a função foram executadas em produção. Não há qualquer mudança financeira nem cobrança nos criadores atuais. A redefinição de senhas permanece intocada.
+
+### Publicação controlada — edição de contato separada da senha
+- A atualização do contato comercial utiliza a função específica `master-update-creator-profile`, protegida por autenticação e validação Master.
+- `master-manage-creator` permanece idêntica à implementação preexistente da `main`, inclusive no fluxo de redefinição de senha, atendendo à decisão explícita de não alterá-la.
+- A função de perfil não modifica senha, telefone Auth, `user_metadata` ou `app_metadata`, somente o perfil comercial.
+- Configuração temporária para suprimir previews foi retirada de `vercel.json` antes da publicação.
