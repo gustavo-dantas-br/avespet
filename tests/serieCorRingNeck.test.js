@@ -89,3 +89,54 @@ test("Violeta visível com NONE contraditório permanece indeterminado", () => {
     corMutacao: "Violeta", fatoresGeneticos: { violetFactor: "NONE" },
   }, "violetFactor"), null);
 });
+
+import { cruzarAparenciasPadraoRingNeck } from "../src/features/genetica/utils/serieCorRingNeck.js";
+
+const aveSimples = (cor) => ({
+  corMutacao: cor === "Violeta" || cor === "Cobalto" || cor === "Mauve" ? cor : "",
+  corBase: cor === "Violeta" || cor === "Cobalto" || cor === "Mauve" ? "" : cor,
+  fatoresGeneticos: { darkFactor: "", violetFactor: "" },
+  mutacoesVisuais: [],
+  portadores: [],
+  especie: "Ring Neck",
+});
+
+test("Violeta simples x Azul simples: 50% Violet SF e 50% Blue", () => {
+  const r = cruzarAparenciasPadraoRingNeck(aveSimples("Violeta"), aveSimples("Blue (Azul)"));
+  assert.equal(r.tipo, "completo");
+  assert.deepEqual(r.resultados.map((x) => [x.nome, x.percentual]),
+    [["Blue (Azul)", 50], ["Violet SF (Violeta)", 50]]);
+});
+
+test("Violeta DF x Azul simples: 100% Violet SF", () => {
+  const pai = { ...aveSimples("Violeta"), fatoresGeneticos: { violetFactor: "DF" } };
+  const r = cruzarAparenciasPadraoRingNeck(pai, aveSimples("Blue (Azul)"));
+  assert.deepEqual(r.resultados.map((x) => [x.nome, x.percentual]), [["Violet SF (Violeta)", 100]]);
+});
+
+test("Azul simples x Azul simples produz 100% azul", () => {
+  const r = cruzarAparenciasPadraoRingNeck(aveSimples("Blue (Azul)"), aveSimples("Blue (Azul)"));
+  assert.deepEqual(r.resultados.map((x) => [x.nome, x.percentual]), [["Blue (Azul)", 100]]);
+});
+
+test("Verde padrão x Azul padrão produz 100% verde portador de azul", () => {
+  const r = cruzarAparenciasPadraoRingNeck(aveSimples("Green (Verde)"), aveSimples("Blue (Azul)"));
+  assert.deepEqual(r.resultados.map((x) => [x.nome, x.percentual]), [["Verde portador de azul", 100]]);
+});
+
+test("Turquesa padrão x Azul padrão produz 100% azul-turquesa", () => {
+  const r = cruzarAparenciasPadraoRingNeck(aveSimples("Turquoise (Turquesa)"), aveSimples("Blue (Azul)"));
+  assert.deepEqual(r.resultados.map((x) => [x.nome, x.percentual]), [["Azul-turquesa", 100]]);
+});
+
+test("Cobalto x Azul apresenta Dark SF em metade e Azul na outra metade", () => {
+  const r = cruzarAparenciasPadraoRingNeck(aveSimples("Cobalto"), aveSimples("Blue (Azul)"));
+  assert.deepEqual(r.resultados.map((x) => [x.nome, x.percentual]), [["Blue (Azul)", 50], ["Cobalt (Cobalto)", 50]]);
+});
+
+test("não usa preset com informações de portadores, mutações extras ou série conflitante", () => {
+  const azul = aveSimples("Blue (Azul)");
+  assert.equal(cruzarAparenciasPadraoRingNeck({ ...aveSimples("Violeta"), portadores: ["Ino"] }, azul), null);
+  assert.equal(cruzarAparenciasPadraoRingNeck({ ...aveSimples("Violeta"), corBase: "Green (Verde)" }, azul), null);
+  assert.equal(cruzarAparenciasPadraoRingNeck({ ...aveSimples("Violeta"), fatoresGeneticos: { violetFactor: "NONE" } }, azul), null);
+});
