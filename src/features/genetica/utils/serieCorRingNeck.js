@@ -279,6 +279,21 @@ export function cruzarAparenciasPadraoRingNeck(pai, mae) {
   };
 }
 
+// Adaptador para a tela: o motor usa "completo"/"parcial" como modo de
+// cálculo, enquanto a interface identifica esse resultado como "padrao".
+// Não deixar ...resultado sobrescrever o discriminador da tela.
+export function prepararResultadoPadraoRingNeck(pai, mae) {
+  const calculo = cruzarAparenciasPadraoRingNeck(pai, mae);
+  if (!calculo) return null;
+  const { tipo: modoCalculo, ...dados } = calculo;
+  return {
+    ...dados,
+    tipo: "padrao",
+    modoCalculo,
+    cruzamento: (pai.nome || "Pai") + " × " + (mae.nome || "Mãe"),
+  };
+}
+
 export const NOTAS_SERIE_COR = [
   "A cor visivel nem sempre revela o genotipo: aves verdes podem carregar alelos azul ou turquesa.",
   "Turquoise Blue e representado aqui pelo heterozigoto T/B.",
