@@ -31,6 +31,7 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
   const [composeSubject, setComposeSubject] = useState("");
   const [composeText, setComposeText] = useState("");
   const [composeRequestId, setComposeRequestId] = useState(() => newId());
+  const [composeSourceId, setComposeSourceId] = useState(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [hasMore, setHasMore] = useState(false);
@@ -81,6 +82,7 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
     setComposeSubject(initialDraft.subject || "");
     setComposeText(initialDraft.text || "");
     setComposeRequestId(newId());
+    setComposeSourceId(initialDraft.source_id || null);
     setError("");
     setNotice("Solicitação preparada pelo Suporte. Confira destinatário e mensagem antes de enviar.");
     setComposing(true);
@@ -138,12 +140,14 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
       const data = await invoke({
         action: "compose", box, to: composeTo.trim(), subject: composeSubject.trim(),
         text: composeText.trim(), idempotency_key: composeRequestId,
+        ...(composeSourceId ? { source_id: composeSourceId } : {}),
       });
       setNotice(data.audit_warning ? "E-mail enviado; confirmação da auditoria pendente." : "Novo e-mail enviado com sucesso.");
       setComposeTo("");
       setComposeSubject("");
       setComposeText("");
       setComposeRequestId(newId());
+      setComposeSourceId(null);
       setComposing(false);
       await load(box);
     } catch (err) {
@@ -153,6 +157,7 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
     }
   }
   function startCompose() {
+    setComposeSourceId(null);
     setComposing(true);
     setThread(null);
     setMessages([]);
@@ -160,6 +165,7 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
     setNotice("");
   }
   function cancelCompose() {
+    setComposeSourceId(null);
     setComposing(false);
     setComposeTo("");
     setComposeSubject("");
@@ -208,6 +214,7 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
               <button type="button" disabled={sending} onClick={cancelCompose} className="text-xs font-semibold text-slate-600 hover:text-slate-900">Cancelar</button>
             </div>
             <p className="text-xs text-slate-500">Remetente: <strong>{selected.address}</strong>. Envio individual, sem cópias ou campanhas.</p>
+            {composeSourceId && <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-900">Vinculado ao histórico de uma ave perdida. O destinatário deverá corresponder ao e-mail confirmado do tutor.</p>}
             <label className="block text-xs font-semibold text-slate-700">Para
               <input type="email" required maxLength={254} autoComplete="off" value={composeTo}
                 onChange={(e) => { setComposeTo(e.target.value); setComposeRequestId(newId()); }}

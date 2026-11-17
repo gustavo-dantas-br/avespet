@@ -35,3 +35,13 @@
 - O histórico `master_audit_log` registra apenas a preparação, identificação do caso e campos incompletos, sem copiar destinatário nem texto do e-mail.
 - Cadastros sem `user_id` ou sem e-mail verificado precisam de atendimento manual; não se atribui acesso a partir de WhatsApp.
 - **Teste de regressão:** após executar `npm run build` e `npm run test:genetica`, abrir Suporte no Master, localizar uma ave com dados incompletos, preparar e-mail, confirmar que o formulário está preenchido e **não enviar** durante a validação. Ações comuns de listagem e acompanhamento devem continuar funcionando.
+
+## Histórico por ave no Master
+
+- **Suporte operacional → Acompanhar caso** mostra uma linha do tempo por anúncio perdido: cadastro, alterações, moderação, preparação de solicitações, envios confirmados e acompanhamento interno.
+- A tabela `master_support_events` tem RLS ativo e acesso exclusivo pelo backend `service_role`. Não grava nome, telefone, anilha, corpo ou destinatário do e-mail.
+- Um trigger registra futuras alterações do anúncio com a descrição resumida e o status, sem copiar o JSON privado.
+- Envios originados pelo botão **Solicitar dados por e-mail** são vinculados ao caso por `source_id` e só recebem status de enviados depois que a API do Resend confirma o envio. O backend valida que o destinatário corresponde à conta confirmada do tutor.
+- Rascunhos preparados antes da implementação aparecem pela auditoria legada; envios anteriores que não possuíam `source_id` **não são automaticamente atribuídos a um anúncio**.
+- Respostas na caixa de e-mail sem associação validada continuam na Central de Comunicação: não afirmar que o cliente respondeu ou leu a mensagem sem verificação.
+- A migração `20261117_master_support_events_lost_birds.sql` deve ser aplicada antes da publicação das funções.
