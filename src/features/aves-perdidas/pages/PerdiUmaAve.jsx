@@ -11,7 +11,7 @@ const STATUS = {
   encerrado: { label: "Busca encerrada", cor: "#6b5638", fundo: "#e3d3b4" },
 };
 
-const FORM_INICIAL = { nomeAve: "", especie: "Ring Neck", cor: "", anilha: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", bairro: "", foto: "" };
+const FORM_INICIAL = { nomeAve: "", especie: "Ring Neck", cor: "", sexo: "", idadeAproximada: "", caracteristicas: "", anilha: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", bairro: "", foto: "" };
 
 export default function PerdiUmaAve({ userId: userIdInicial }) {
   const formularioRef = useRef(null);
@@ -126,13 +126,17 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
       <div className="grid sm:grid-cols-2 gap-3">
         <label className="text-sm">Nome da ave<input style={input} value={form.nomeAve} onChange={e=>alterar("nomeAve",e.target.value)} placeholder="Ex.: Mel" /></label>
         <label className="text-sm">Espécie<select style={input} value={form.especie} onChange={e=>alterar("especie",e.target.value)}><option>Ring Neck</option><option>Calopsita</option><option>Agapornis</option><option>Papagaio</option><option>Outra</option></select></label>
-        <label className="text-sm">Cor / mutação<input style={input} value={form.cor} onChange={e=>alterar("cor",e.target.value)} /></label>
-        <label className="text-sm">Número da anilha (opcional)<input style={input} value={form.anilha} onChange={e=>alterar("anilha",e.target.value)} placeholder="Ex.: FOB 0080" /></label>
+        <label className="text-sm">Cor / mutação<input style={input} value={form.cor} maxLength={80} onChange={e=>alterar("cor",e.target.value)} placeholder="Ex.: azul, violeta, verde" /></label>
+        <label className="text-sm">Sexo (se souber)<select style={input} value={form.sexo} onChange={e=>alterar("sexo",e.target.value)}><option value="">Não informado</option><option value="Macho">Macho</option><option value="Fêmea">Fêmea</option><option value="Não sei">Não sei</option></select></label>
+        <label className="text-sm">Idade aproximada (opcional)<input style={input} value={form.idadeAproximada} maxLength={50} onChange={e=>alterar("idadeAproximada",e.target.value)} placeholder="Ex.: 2 anos" /></label>
+        <label className="text-sm">Número da anilha (opcional, não será público)<input style={input} value={form.anilha} onChange={e=>alterar("anilha",e.target.value)} placeholder="Ex.: FOB 0080" /></label>
         <label className="text-sm">Data em que desapareceu<input type="date" style={input} value={form.dataPerda} onChange={e=>alterar("dataPerda",e.target.value)} /></label>
         <label className="text-sm">Bairro ou região<input style={input} value={form.bairro} onChange={e=>alterar("bairro",e.target.value)} placeholder="Ex.: Vila Mariana" /></label>
         <label className="text-sm">Cidade<input required style={input} value={form.cidade} onChange={e=>alterar("cidade",e.target.value)} /></label>
         <label className="text-sm">Estado<input maxLength="2" style={input} value={form.uf} onChange={e=>alterar("uf",e.target.value.toUpperCase())} /></label>
       </div>
+      <label className="text-sm">Características para reconhecer a ave (opcional)<textarea style={input} rows="3" maxLength={400} value={form.caracteristicas} onChange={e=>alterar("caracteristicas",e.target.value)} placeholder="Ex.: ponta da cauda mais escura, atende pelo nome Bluu, imita sons..." /></label>
+      <p className="text-xs" style={{color:"#8a7a63"}}>Essas características poderão aparecer no anúncio público. Não informe aqui telefone, endereço exato nem a numeração completa da anilha.</p>
       <label className="text-sm">Conte como e onde desapareceu<textarea style={input} rows="3" value={form.descricao} onChange={e=>alterar("descricao",e.target.value)} /></label>
       <label className="text-sm">Foto da ave (opcional)<input className="block w-full mt-1 text-sm" type="file" accept="image/*" onChange={fotoSelecionada} disabled={enviandoFoto || enviando} /></label>
       {enviandoFoto && <p className="text-sm" style={{color:"#405331"}}>Preparando e enviando a foto...</p>}
@@ -159,12 +163,19 @@ export default function PerdiUmaAve({ userId: userIdInicial }) {
           {anuncios.map((anuncio) => {
             const dados = anuncio.data || {};
             const status = STATUS[anuncio.status] || STATUS.pendente;
+            const faltando = [
+              !dados.foto && "foto",
+              !dados.bairro && "bairro",
+              !dados.cor && "cor",
+              !dados.caracteristicas && "características",
+            ].filter(Boolean);
             return <article key={anuncio.id} className="rounded-lg p-3 flex gap-3 items-start" style={{background:"#FAF3E6",color:"#2B241C"}}>
               {dados.foto && <img src={dados.foto} alt="" className="w-20 h-20 rounded-lg object-cover" />}
               <div className="min-w-0 flex-1">
                 <div className="font-semibold">{dados.nomeAve || dados.especie}</div>
                 <div className="text-xs mt-1">{dados.cidade}{dados.uf ? "/"+dados.uf : ""}</div>
                 <span className="inline-block text-xs rounded px-2 py-1 mt-2" style={{background:status.fundo,color:status.cor}}>{status.label}</span>
+                {anuncio.status !== "encerrado" && faltando.length > 0 && <p className="text-xs mt-2" style={{color:"#8a5a12"}}>Para ajudar na busca, complete: {faltando.join(", ")}.</p>}
                 {anuncio.status !== "encerrado" && <button type="button" onClick={() => iniciarEdicao(anuncio)} className="block mt-3 rounded-lg px-3 py-2 text-sm font-semibold" style={{background:"#405331",color:"#fff"}}>Editar anúncio</button>}
               </div>
             </article>;

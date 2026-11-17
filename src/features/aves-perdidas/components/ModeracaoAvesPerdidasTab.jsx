@@ -54,7 +54,10 @@ export default function ModeracaoAvesPerdidasTab({ anuncios = [], onModerar }) {
                   {dados.cidade || "Cidade não informada"}{dados.uf ? `/${dados.uf}` : ""}
                   {dados.dataPerda ? ` • ${new Date(dados.dataPerda + "T12:00:00").toLocaleDateString("pt-BR")}` : ""}
                 </div>
+                {dados.caracteristicas && <p className="text-xs mt-2 whitespace-pre-wrap" style={{ color: "#334155" }}><strong>Identificação:</strong> {dados.caracteristicas}</p>}
+                {(dados.sexo || dados.idadeAproximada) && <p className="text-xs mt-1" style={{ color: "#7a6a52" }}>{[dados.sexo, dados.idadeAproximada].filter(Boolean).join(" · ")}</p>}
                 {dados.descricao && <p className="text-xs mt-2 whitespace-pre-wrap" style={{ color: "#7a6a52" }}>{dados.descricao}</p>}
+                {(!dados.foto || !dados.caracteristicas || !dados.bairro) && <p className="text-xs mt-3 rounded-lg p-2" style={{background:"#fff4d8",color:"#8a5a12"}}>Informações a complementar: {[!dados.foto && "foto", !dados.caracteristicas && "características", !dados.bairro && "bairro"].filter(Boolean).join(", ")}</p>}
                 <div className="text-xs mt-3" style={{ color: "#8a7a63" }}>
                   Contato: {dados.contatoNome || "—"} • WhatsApp: {dados.whatsapp || "—"}
                 </div>

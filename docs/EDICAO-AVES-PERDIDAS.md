@@ -17,3 +17,11 @@
 4. Com outra conta, comprovar que não pode acessar nem atualizar o anúncio alheio.
 5. Em um registro `encerrado`, confirmar que não aparece o botão de edição.
 6. Confirmar a compressão de JPEG e o sucesso do upload sob as políticas existentes de Storage.
+
+## Complementação de identificação (17/11/2026)
+
+- O formulário de cadastro e edição inclui **sexo**, **idade aproximada** e **características reconhecíveis** (sons, marcas e comportamento). Esses dados são opcionais.
+- Em Meus anúncios, o tutor visualiza dicas para completar foto, bairro, cor e características; o anúncio existente não é alterado automaticamente.
+- O cartão público mostra nome da ave, espécie, cor, sexo/idade informados, bairro, data do desaparecimento, características e descrição; nunca exibe contato nem anilha.
+- O Master vê avisos de cadastro incompleto e os detalhes enviados pelo tutor antes da aprovação.
+- A RPC `listar_aves_perdidas_publicas()` deve continuar projetando apenas campos públicos permitidos; anilha e contato ficam no JSON protegido pelo RLS.
