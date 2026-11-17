@@ -92,13 +92,13 @@ Deno.serve(async (req) => {
     const { data: owner, error: ownerError } = await admin.auth.admin.getUserById(ad.user_id);
     if (ownerError) return reply({ error: "Não foi possível validar o e-mail do tutor." }, 503, origin);
     const email = owner?.user?.email?.trim().toLowerCase() || "";
-    if (!owner?.user?.email_confirmed_at || !/^[^\\s@<>,;]+@[^\\s@<>,;]+\\.[^\\s@<>,;]+$/.test(email)) {
+    if (!owner?.user?.email_confirmed_at || !/^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/.test(email)) {
       return reply({ error: "A conta do tutor não possui um e-mail confirmado para atendimento." }, 409, origin);
     }
-    const ave = safeText(details.nomeAve || details.especie || "sua ave", 60).replace(/[\\r\\n]/g, " ");
-    const nome = safeText(details.contatoNome, 70).replace(/[\\r\\n]/g, " ");
+    const ave = safeText(details.nomeAve || details.especie || "sua ave", 60).replace(/[\r\n]/g, " ");
+    const nome = safeText(details.contatoNome, 70).replace(/[\r\n]/g, " ");
     const greeting = nome ? "Olá, " + nome + "!" : "Olá!";
-    const fields = missing.map(({ label }) => "- " + label).join("\\n");
+    const fields = missing.map(({ label }) => "- " + label).join("\n");
     const subject = "Avespet | Complete as informações da ave " + ave;
     const text = [
       greeting,
@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
       "",
       "Atenciosamente,",
       "Equipe de Suporte Avespet",
-    ].join("\\n");
+    ].join("\n");
     // A operação registra apenas a preparação. O envio depende de confirmação no Master.
     const { error: auditError } = await admin.from("master_audit_log").insert({
       actor_user_id: identity.user.id, action: "master_support_email_draft_prepared",
