@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
+import CreatorAccountActivity from "./CreatorAccountActivity";
 import { Search, RefreshCw, Users, Bird, Mail, Phone, MapPin, CalendarDays, Clock3, ChevronLeft, ChevronRight, X, CheckCircle2, AlertCircle, ShieldOff, ShieldCheck, Ban, Unlock, Loader2, Pencil, KeyRound } from "lucide-react";
 
 const fmtDate = (value) => value ? new Date(value).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }) : "Nunca acessou";
@@ -153,6 +154,7 @@ export default function CreatorManagement() {
           <div className="flex gap-3"><Clock3 size={17} className="mt-0.5 text-slate-400" /><div><p className="text-[11px] text-slate-400">Último acesso</p><p className="text-sm font-medium text-slate-800">{fmtDateTime(selected.lastSignInAt)}</p></div></div>
           {selected.blocked && <div className="rounded-xl bg-rose-50 p-3 text-xs text-rose-700">Bloqueio válido até: {fmtDateTime(selected.blockedUntil)}</div>}
         </div>
+        <CreatorAccountActivity key={selected.userId} userId={selected.userId} />
         {actionSuccess && <div role="status" className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{actionSuccess}</div>}
         {actionError && <div role="alert" className="mt-6 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{actionError}</div>}
         <div className="mt-7 border-t border-slate-100 pt-6">

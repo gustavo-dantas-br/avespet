@@ -285,3 +285,20 @@ A branch `feature/master-modulos-20261116` continua sem publicação automática
 - [ ] O ajuste do backend de listagem e edição do WhatsApp deve ser publicado junto com o frontend em futura atualização controlada.
 
 Esta alteração é apenas código em branch; **sem deploy na Vercel, sem alteração no Supabase em execução e sem mudanças no banco**.
+
+### Integração 4 — Aves vinculadas e histórico administrativo por conta
+
+**Objetivo:** permitir que o Master consulte as aves e as ações administrativas vinculadas a um criador, sem consultar diretamente dados privilegiados do navegador.
+
+- [x] Nova aba **Aves vinculadas** dentro da ficha de cada conta, com nome, espécie, mutação, sexo, anilha, status, atualização e paginação de 15 registros.
+- [x] Nova aba **Histórico Master**, com eventos de auditoria, data/hora, autoria indicada e motivo quando registrado.
+- [x] Criada Edge Function `master-creator-details` que verifica JWT, autorização em `master_admins`, UUID e existência da conta; mantém a segregação de contas administrativas.
+- [x] A função faz leitura somente das aves do usuário selecionado e eventos de auditoria associados àquele usuário. Nunca devolve o JSON bruto das aves, evitando vazar informações de vendas, compradores, fornecedores, fotos e outros dados privados.
+- [x] Toda visualização é registrada na auditoria; as próprias visualizações são omitidas da aba de histórico para não gerar ruído.
+- [x] Os componentes somente são montados quando o Master abre a ficha, evitando consultas desnecessárias.
+- [x] Nenhuma modificação na redefinição de senha, no fluxo de autenticação existente ou em `master-manage-creator`.
+- [ ] Executar build Vite e validação manual das abas com conta Master e com conta comum sem permissão.
+- [ ] No momento de publicação conjunta, implantar a Edge Function `master-creator-details` (JWT habilitado) e as funções de listagem/edição de WhatsApp preparadas anteriormente.
+- [ ] Conferir paginação, estados vazios, conta sem perfil e audit trail depois da publicação.
+
+**Situação:** somente código preparado em `feature/master-modulos-20261116`; nenhum deploy Vercel/Supabase e nenhuma alteração em tabelas ou usuários em produção.
