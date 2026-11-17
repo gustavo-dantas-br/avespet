@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 
 import { supabase } from "./supabaseClient";
+import { finalizarCadastroPendente, lerCadastroPendente } from "./features/aves-perdidas/services/cadastroPendenteAvePerdida";
+import { criarAnuncioPerdida } from "./features/aves-perdidas/services/avesPerdidasService";
 
 import {
   listRows, saveRow, deleteRow, uid, getPerfil, savePerfil, getPerfilPrivado, savePerfilPrivado, listAnuncios, saveAnuncio, deleteAnuncio,
@@ -115,7 +117,12 @@ function AppInner({ user, onLogout }) {
   const [anunciosPerdidasAdmin, setAnunciosPerdidasAdmin] = useState([]);
   const [perdidas, setPerdidas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState("dashboard");
+  const [tab, setTab] = useState(() => {
+    const item = lerCadastroPendente();
+    return item && item.email === String(user.email || "").toLowerCase()
+      ? "perdi-uma-ave" : "dashboard";
+  });
+  const [avisoCadastroPendente, setAvisoCadastroPendente] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -217,6 +224,26 @@ function AppInner({ user, onLogout }) {
   const metadataNome = user.user_metadata?.nome || "";
   const metadataSobrenome = user.user_metadata?.sobrenome || "";
   const metadataTelefone = user.user_metadata?.telefone || user.user_metadata?.whatsapp || "";
+
+  useEffect(() => {
+    const item = lerCadastroPendente();
+    if (!item || item.email !== String(user.email || "").toLowerCase()) return;
+    let active = true;
+    (async () => {
+      try {
+        const result = await finalizarCadastroPendente(user, criarAnuncioPerdida);
+        if (!active || result.status !== "salvo") return;
+        setAvisoCadastroPendente("Seu anúncio de ave perdida foi recebido e está aguardando aprovação. Acompanhe o status e edite os dados nesta área.");
+        setTab("perdi-uma-ave");
+        window.dispatchEvent(new Event("avespet:anuncio-perdida-criado"));
+      } catch (error) {
+        if (!active) return;
+        setAvisoCadastroPendente("Sua conta está ativa, mas o anúncio não foi enviado. Os dados continuam salvos neste navegador. Entre novamente ou fale com o suporte.");
+        setTab("perdi-uma-ave");
+      }
+    })();
+    return () => { active = false; };
+  }, [user.id, user.email]);
 
   const loadPerfil = useCallback(async () => {
     try {
@@ -1156,6 +1183,10 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
         </div>}
 
         <main className="flex-1 p-4 md:p-7 lg:p-8 overflow-y-auto w-full min-w-0" style={{ minHeight: "60vh" }}>
+        {avisoCadastroPendente && <div role="status" className="mb-4 flex flex-wrap items-start justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-900">
+          <span>{avisoCadastroPendente}</span>
+          <button type="button" className="text-xs font-bold underline" onClick={() => setAvisoCadastroPendente("")}>Fechar</button>
+        </div>}
         <NotificationsCenter userId={user.id} isAdmin={isAdminUser} onNavigate={setTab} />
         {error && (
           <div className="ui-sans mb-4 px-4 py-2.5 rounded-lg flex items-center justify-between" style={{ background: "#4a2018", color: "#f2c9c0", border: "1px solid #7a3226" }}>
