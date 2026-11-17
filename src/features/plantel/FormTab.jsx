@@ -1,15 +1,39 @@
 import React, { useState } from "react";
 import { Bird, Upload, X, Loader2, Save } from "lucide-react";
+import { CATALOGO_MUTACOES_RING_NECK, CORES_BASE_RING_NECK, normalizarChaveGenetica } from "../genetica/data/catalogoRingNeck";
 export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoOptions, femeaOptions, parceiroOptions, mutacoes, clientes, fornecedores, onCancel, Card, Field, SectionTitle, inputStyle, ESPECIES, SEXOS, STATUS_AVE, ORIGEM_TIPOS, SeletorComprador, SeletorFornecedor, PesoHistorico }) {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target?.type === "checkbox" ? e.target.checked : e.target.value }));
   // Editar manualmente os campos do comprador desfaz o vinculo com o cliente
   // selecionado (senao ficaria um clienteId apontando pra dado errado).
   const setComprador = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value, clienteId: "" }));
   const setFornecedor = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value, fornecedorId: "" }));
-  // Se a ave ja tem uma mutacao que nao bate com nenhuma cadastrada no Banco
-  // de Genetica, assume que foi digitada livre ("Outra") e mantem o campo aberto.
-  const [mutacaoLivre, setMutacaoLivre] = useState(
-    () => !!form.corMutacao && !mutacoes.some((m) => m.nome === form.corMutacao)
+  // Catálogo padrão compartilhado pelo Banco de Genética e pelo Plantel.
+  // O criador pode selecionar as mutações antes mesmo de importá-las ao seu
+  // banco pessoal. As opções cadastradas manualmente continuam disponíveis.
+  const ringNeck = form.especie === "Ring Neck";
+  const mutacoesDaEspecie = mutacoes.filter((m) =>
+    m.categoria !== "cor_base" && (!m.especie || m.especie === form.especie)
+  );
+  const mutacoesDisponiveis = [];
+  const codigosVistos = new Set();
+  const chaveMutacao = (nome) => normalizarChaveGenetica(String(nome || "").split(" (")[0]);
+  const adicionarOpcao = (mutacao) => {
+    const codigo = chaveMutacao(mutacao.nome);
+    if (!codigo || codigosVistos.has(codigo)) return;
+    // A série de cor e os fatores são selecionados nos campos específicos.
+    if (ringNeck && /^(blue|azul|green|verde|turquoise|turquesa|violet|violeta|dark factor|fator escuro|cobalto|mauve)$/.test(codigo)) return;
+    codigosVistos.add(codigo);
+    mutacoesDisponiveis.push(mutacao);
+  };
+  if (ringNeck) CATALOGO_MUTACOES_RING_NECK.forEach(adicionarOpcao);
+  mutacoesDaEspecie.forEach(adicionarOpcao);
+  const mesmaMutacao = (a, b) => chaveMutacao(a) === chaveMutacao(b);
+  const mutacaoCorReconhecida = mutacoesDisponiveis.find((m) => mesmaMutacao(m.nome, form.corMutacao));
+  // Preservar nomes legados já salvos no plantel; só abrir "Outra" para nomes
+  // que realmente não estão no catálogo nem são as aparências especiais.
+  const [mutacaoLivre, setMutacaoLivre] = useState(() =>
+    !!form.corMutacao && !["Violeta", "Ino", "Cremino"].includes(form.corMutacao) &&
+    ![...CATALOGO_MUTACOES_RING_NECK, ...mutacoes].some((m) => mesmaMutacao(m.nome, form.corMutacao))
   );
 
   return (
@@ -51,7 +75,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
                     : form.corMutacao === "Cremino"
                       ? "popular|Cremino"
                       : form.corMutacao
-                        ? (mutacaoLivre ? "__outra__" : form.corMutacao)
+                        ? (mutacaoLivre ? "__outra__" : mutacaoCorReconhecida?.nome || form.corMutacao)
                       : form.corBase || ""
                 }
                 onChange={(e) => {
@@ -77,18 +101,21 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
                 }}
               >
                 <option value="">Selecione se souber</option>
-                <optgroup label="Cores">
-                  <option value="Green (Verde)">Verde</option>
-                  <option value="Blue (Azul)">Azul</option>
-                  <option value="Turquoise (Turquesa)">Turquesa</option>
-                  <option value="Turquoise Blue (Azul Turquesa)">Azul turquesa</option>
+                <optgroup label="Cores-base">
+                  {ringNeck
+                    ? CORES_BASE_RING_NECK.map((cor) => (
+                        <option key={cor.value} value={cor.value}>{cor.label}</option>
+                      ))
+                    : ["Green (Verde)", "Blue (Azul)", "Turquoise (Turquesa)", "Turquoise Blue (Azul Turquesa)"].map((cor) => (
+                        <option key={cor} value={cor}>{cor}</option>
+                      ))}
                 </optgroup>
                 <optgroup label="Aparências conhecidas">
-                  <option value="popular|Lutino">Lutino</option>
-                  <option value="popular|Albino">Albino</option>
+                  <option value="popular|Lutino">Lutino (Ino)</option>
+                  <option value="popular|Albino">Albino (Ino na série azul)</option>
                   <option value="popular|Cremino">Cremino</option>
-                  <option value="Violeta">Violeta</option>
-                  {mutacoes.filter((m) => !["Ino", "Pallid (Palido)"].includes(m.nome)).map((m) => (
+                  {ringNeck && <option value="Violeta">Violet Factor (Fator violeta)</option>}
+                  {mutacoesDisponiveis.filter((m) => !chaveMutacao(m.nome).startsWith("ino")).map((m) => (
                     <option key={m.id || m.nome} value={m.nome}>{m.nome}</option>
                   ))}
                 </optgroup>
@@ -115,10 +142,13 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
                 <Field label="Cor de base (se souber)">
                   <select style={inputStyle} value={form.corBase || ""} onChange={set("corBase")}>
                     <option value="">Não informada</option>
-                    <option value="Green (Verde)">Verde</option>
-                    <option value="Blue (Azul)">Azul</option>
-                    <option value="Turquoise (Turquesa)">Turquesa</option>
-                    <option value="Turquoise Blue (Azul Turquesa)">Azul turquesa</option>
+                    {ringNeck
+                      ? CORES_BASE_RING_NECK.map((cor) => (
+                          <option key={cor.value} value={cor.value}>{cor.label}</option>
+                        ))
+                      : ["Green (Verde)", "Blue (Azul)", "Turquoise (Turquesa)", "Turquoise Blue (Azul Turquesa)"].map((cor) => (
+                          <option key={cor} value={cor}>{cor}</option>
+                        ))}
                   </select>
                 </Field>
                 <Field label="Genótipo da série de cor (se confirmado)">
@@ -148,12 +178,14 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
                 <div className="sm:col-span-2">
                   <Field label="Portadora de (somente se tiver certeza)">
                     <div className="rounded-xl p-3" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
-                      {mutacoes.filter((m) => m.permitePortador !== false && m.categoria !== "cor_base" && (!m.especie || m.especie === form.especie)).map((mutacao) => {
-                        const selecionado = (form.portadores || []).includes(mutacao.nome);
+                      {mutacoesDisponiveis.filter((m) => m.permitePortador !== false).map((mutacao) => {
+                        const selecionado = (form.portadores || []).some((nome) => mesmaMutacao(nome, mutacao.nome));
                         return <label key={mutacao.id || mutacao.nome} className="flex items-center gap-2 text-sm py-1" style={{ color: "#4f4336" }}>
                           <input type="checkbox" checked={selecionado} disabled={form.sexo === "Femea" && (mutacao.tipoHeranca || "").startsWith("Ligada ao sexo")} onChange={(e) => {
                             const atuais = form.portadores || [];
-                            const novos = e.target.checked ? [...new Set([...atuais, mutacao.nome])] : atuais.filter((nome) => nome !== mutacao.nome);
+                            const novos = e.target.checked
+                              ? (atuais.some((nome) => mesmaMutacao(nome, mutacao.nome)) ? atuais : [...atuais, mutacao.nome])
+                              : atuais.filter((nome) => !mesmaMutacao(nome, mutacao.nome));
                             setForm((f) => ({ ...f, portadores: novos }));
                           }} />
                           <span>{mutacao.nome}</span>
@@ -166,14 +198,16 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
                 <div className="sm:col-span-2">
                   <Field label="Outras características visuais (opcional)">
                     <div className="rounded-xl p-3 max-h-48 overflow-y-auto" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
-                      {mutacoes.filter((m) => (!m.especie || m.especie === form.especie) && m.categoria !== "cor_base" && m.nome !== form.corMutacao).map((m) => {
-                        const marcado = (form.mutacoesVisuais || []).includes(m.nome);
+                      {mutacoesDisponiveis.filter((m) => !mesmaMutacao(m.nome, form.corMutacao)).map((m) => {
+                        const marcado = (form.mutacoesVisuais || []).some((nome) => mesmaMutacao(nome, m.nome));
                         return <label key={m.id || m.nome} className="flex items-start gap-2 py-1.5 text-sm" style={{ color: "#4f4336" }}>
                           <input type="checkbox" checked={marcado} onChange={(e) => setForm((f) => ({
                             ...f,
                             mutacoesVisuais: e.target.checked
-                              ? [...new Set([...(f.mutacoesVisuais || []), m.nome])]
-                              : (f.mutacoesVisuais || []).filter((nome) => nome !== m.nome),
+                              ? ((f.mutacoesVisuais || []).some((nome) => mesmaMutacao(nome, m.nome))
+                                ? f.mutacoesVisuais || []
+                                : [...(f.mutacoesVisuais || []), m.nome])
+                              : (f.mutacoesVisuais || []).filter((nome) => !mesmaMutacao(nome, m.nome)),
                           }))} />
                           <span>{m.nome}</span>
                         </label>;

@@ -1,6 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { calcularCruzamentoGenetico } from "../utils/calcularCruzamentoGenetico";
-import { genotipoSerieDaAve, cruzarSerieCor, dosagemFatorDaAve, cruzarDosagemFator, nomeFenotipoComFatoresRingNeck, descricaoGenotipoSerie } from "../utils/serieCorRingNeck";
+import { CATALOGO_MUTACOES_RING_NECK, normalizarChaveGenetica } from "../data/catalogoRingNeck";
+import DetalhesGeneticosInline from "./DetalhesGeneticosInline";
+import { genotipoSerieDaAve, cruzarSerieCor, dosagemFatorDaAve, cruzarDosagemFator, nomeFenotipoComFatoresRingNeck, descricaoGenotipoSerie, APARENCIAS_PADRAO_RING_NECK, prepararResultadoPadraoRingNeck } from "../utils/serieCorRingNeck";
 
 const campo = {
   border: "1px solid #d8c6a5",
@@ -27,8 +29,8 @@ function novaAve(nome) {
 }
 
 export default function CalculadoraGenetica({ aves, mutacoes }) {
-  const [modoPai, setModoPai] = useState("cadastro");
-  const [modoMae, setModoMae] = useState("cadastro");
+  const [modoPai, setModoPai] = useState("manual");
+  const [modoMae, setModoMae] = useState("manual");
   const [paiId, setPaiId] = useState("");
   const [maeId, setMaeId] = useState("");
   const [paiManual, setPaiManual] = useState(novaAve("Pai"));
@@ -40,7 +42,17 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
   const femeas = useMemo(() => aves.filter((a) => a.sexo === "Femea"), [aves]);
   const pai = modoPai === "cadastro" ? aves.find((a) => a.id === paiId) : { ...paiManual, sexo: "Macho" };
   const mae = modoMae === "cadastro" ? aves.find((a) => a.id === maeId) : { ...maeManual, sexo: "Femea" };
-  const mutacoesRingNeck = mutacoes.filter((m) => (!m.especie || m.especie === "Ring Neck") && m.categoria !== "cor_base");
+  // O mesmo catálogo está disponível no Plantel e no preenchimento manual
+  // da calculadora, mesmo antes de ser importado pelo criador.
+  // Registros próprios do Banco de Genética prevalecem quando já cadastrados.
+  const mutacoesRingNeck = useMemo(() => {
+    const map = new Map();
+    const codigo = (nome) => normalizarChaveGenetica(String(nome || "").split(" (")[0]);
+    CATALOGO_MUTACOES_RING_NECK.forEach((m) => map.set(codigo(m.nome), m));
+    mutacoes.filter((m) => (!m.especie || m.especie === "Ring Neck") && m.categoria !== "cor_base")
+      .forEach((m) => map.set(codigo(m.nome), m));
+    return [...map.values()];
+  }, [mutacoes]);
 
   function atualizarManual(setManual, campoNome, valor) {
     setManual((atual) => ({ ...atual, [campoNome]: valor }));
@@ -55,6 +67,11 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     }
     const paiParaCalculo = { ...pai, corMutacao: pai.corMutacao || pai.corLivre || "" };
     const maeParaCalculo = { ...mae, corMutacao: mae.corMutacao || mae.corLivre || "" };
+    const padrao = prepararResultadoPadraoRingNeck(paiParaCalculo, maeParaCalculo);
+    if (padrao) {
+      setResultado(padrao);
+      return;
+    }
     // Série parblue e fatores Dark/Violet são calculados em módulos próprios.
     // Não devem entrar novamente como mutações autossômicas genéricas.
     const mutacoesDoMotor = mutacoesRingNeck.filter((m) => {
@@ -271,6 +288,31 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     });
   }
 
+  // Atualiza a previsão imediatamente ao selecionar os pais; evita um
+  // segundo botão e mantém o resultado sincronizado com os campos.
+  useEffect(() => {
+    const preenchida = (ave) => Boolean(
+      ave?.corMutacao || ave?.corBase || ave?.corAparencia || ave?.corLivre ||
+      ave?.serieCorGenotipo || (ave?.mutacoesVisuais || []).length
+    );
+    const paiOk = modoPai === "cadastro" ? Boolean(paiId) : preenchida(paiManual);
+    const maeOk = modoMae === "cadastro" ? Boolean(maeId) : preenchida(maeManual);
+    if (!paiOk || !maeOk) {
+      setResultado(null);
+      return;
+    }
+    try {
+      calcular();
+    } catch (erro) {
+      console.error("Erro ao calcular genética Ring Neck:", erro);
+      setResultado({
+        tipo: "erro",
+        mensagem: "Ocorreu um erro ao calcular este cruzamento. Suas escolhas foram preservadas. Tente ajustar as características ou selecionar o casal novamente.",
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modoPai, modoMae, paiId, maeId, paiManual, maeManual, aves, mutacoesRingNeck]);
+
   function renderGenitor(tipo) {
     const isPai = tipo === "pai";
     const modo = isPai ? modoPai : modoMae;
@@ -332,7 +374,9 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                       : manual.corMutacao === "Cremino"
                       ? "popular|Cremino"
                       : manual.corMutacao
-                        ? (extras.some((m) => m.nome === manual.corMutacao) ? manual.corMutacao : "__outra__")
+                        ? (APARENCIAS_PADRAO_RING_NECK.some((cor) => cor.value === manual.corMutacao) ||
+                           extras.some((m) => m.nome === manual.corMutacao)
+                          ? manual.corMutacao : "__outra__")
                         : manual.corBase || ""
                 }
                 onChange={(e) => {
@@ -353,12 +397,16 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                     }));
                     setResultado(null);
                   } else if (CORES_BASE.some((c) => c.value === value)) {
-                    setManual((atual) => ({ ...atual, corBase: value, corMutacao: "", corAparencia: "", corLivre: "", aparenciaOutra: false }));
+                    setManual((atual) => ({ ...atual, corBase: value, corMutacao: "", corAparencia: "", corLivre: "", aparenciaOutra: false, serieCorGenotipo: "", mutacoesVisuais: [], fatoresGeneticos: { darkFactor: "", violetFactor: "" } }));
                     setResultado(null);
                   } else {
                     setManual((atual) => ({
                       ...atual,
                       corMutacao: value,
+                      corBase: "",
+                      serieCorGenotipo: "",
+                      mutacoesVisuais: [],
+                      fatoresGeneticos: { darkFactor: "", violetFactor: "" },
                       corLivre: "",
                       aparenciaOutra: false,
                     }));
@@ -368,13 +416,15 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
               >
                 <option value="">Não sei informar</option>
                 <optgroup label="Cores-base">
-                  {CORES_BASE.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  {APARENCIAS_PADRAO_RING_NECK.filter((c) => !["Violeta", "Cobalto", "Mauve"].includes(c.value)).map((cor) => <option key={cor.value} value={cor.value}>{cor.label}</option>)}
                 </optgroup>
                 <optgroup label="Aparências conhecidas">
                   <option value="popular|Lutino">Lutino</option>
                   <option value="popular|Albino">Albino</option>
                   <option value="popular|Cremino">Cremino</option>
-                  <option value="Violeta">Violeta</option>
+                  {APARENCIAS_PADRAO_RING_NECK.filter((c) => ["Violeta", "Cobalto", "Mauve"].includes(c.value)).map((cor) => (
+                    <option key={cor.value} value={cor.value}>{cor.label}</option>
+                  ))}
                   {mutacoesRingNeck.filter((m) => m.nome !== "Ino").map((m) => (
                     <option key={m.id || m.nome} value={m.nome}>{m.nome}</option>
                   ))}
@@ -391,79 +441,12 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                 />
               )}
             </div>
-            {manual.corMutacao === "Violeta" && (
-              <div className="rounded-xl p-3 space-y-2" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
-                <label className="block text-sm font-semibold" style={{ color: "#5e5143" }}>
-                  Qual é a cor-base da ave Violeta?
-                </label>
-                <p className="text-xs" style={{ color: "#8a7a63" }}>
-                  O fator violeta modifica a cor, mas não revela sozinho a série genética. Informe a cor-base se souber.
-                </p>
-                <select
-                  className="w-full rounded-xl px-3 py-3"
-                  style={campo}
-                  value={manual.corBase || ""}
-                  onChange={(e) => atualizarManual(setManual, "corBase", e.target.value)}
-                >
-                  <option value="">Não sei informar a cor-base</option>
-                  {CORES_BASE.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
-              </div>
-            )}
-            <div className="rounded-xl p-3 text-xs" style={{ background: "#fffaf0", color: "#8a7a63" }}>
-              A aparência principal já foi selecionada acima. Para informar outras mutações visíveis, abra “Se souber mais detalhes (opcional)”.
-            </div>
-
-            <details className="rounded-xl p-3" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
-              <summary className="cursor-pointer text-sm font-semibold" style={{ color: "#5e5143" }}>Se souber mais detalhes (opcional)</summary>
-              <div className="mt-3 space-y-3">
-                <div>
-                  <p className="text-sm font-medium mb-2" style={{ color: "#5e5143" }}>Outras mutações que aparecem na aparência</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {mutacoesRingNeck.filter((m) => m.nome !== manual.corMutacao && m.categoria !== "cor_base").map((m) => (
-                      <label key={m.id || m.nome} className="flex gap-2 text-sm" style={{ color: "#5e5143" }}>
-                        <input type="checkbox" checked={(manual.mutacoesVisuais || []).includes(m.nome)} onChange={(e) => {
-                          const lista = e.target.checked ? [...new Set([...(manual.mutacoesVisuais || []), m.nome])] : (manual.mutacoesVisuais || []).filter((n) => n !== m.nome);
-                          atualizarManual(setManual, "mutacoesVisuais", lista);
-                        }} />
-                        {m.nome}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1" style={{ color: "#5e5143" }}>Genótipo da série de cor (se confirmado)</label>
-                  <select className="w-full rounded-xl px-3 py-2" style={campo} value={manual.serieCorGenotipo || ""} onChange={(e) => atualizarManual(setManual, "serieCorGenotipo", e.target.value)}>
-                    <option value="">Não sei / não confirmado</option>
-                    <option value="G/G">Verde sem azul ou turquesa conhecido (confirmado)</option>
-                    <option value="G/T">Verde que carrega turquesa</option>
-                    <option value="G/B">Verde que carrega azul</option>
-                    <option value="T/T">Turquesa</option>
-                    <option value="T/B">Azul-turquesa</option>
-                    <option value="B/B">Azul</option>
-                  </select>
-                  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Escolha uma opção somente se houver confirmação por histórico ou descendência. A aparência verde, sozinha, não revela se a ave também carrega azul ou turquesa.</p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <label className="text-sm" style={{ color: "#5e5143" }}>Fator escuro
-                    <select className="w-full rounded-xl px-3 py-2 mt-1" style={campo} value={manual.fatoresGeneticos?.darkFactor || ""} onChange={(e) => setManual((v) => ({ ...v, fatoresGeneticos: { ...(v.fatoresGeneticos || {}), darkFactor: e.target.value } }))}>
-                      <option value="">Não sei</option><option value="NONE">Sem fator (confirmado)</option><option value="SF">Fator simples (uma cópia)</option><option value="DF">Fator duplo (duas cópias)</option>
-                    </select>
-                  </label>
-                  <label className="text-sm" style={{ color: "#5e5143" }}>Fator violeta
-                    <select className="w-full rounded-xl px-3 py-2 mt-1" style={campo} value={manual.fatoresGeneticos?.violetFactor || ""} onChange={(e) => setManual((v) => ({ ...v, fatoresGeneticos: { ...(v.fatoresGeneticos || {}), violetFactor: e.target.value } }))}>
-                      <option value="">Não sei</option><option value="SF">Fator simples (uma cópia)</option><option value="DF">Fator duplo (duas cópias)</option>
-                    </select>
-                  </label>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1" style={{ color: "#5e5143" }}>A ave é portadora de alguma mutação?</label>
-                  <input className="w-full rounded-xl px-3 py-3" style={campo} placeholder="Digite os nomes separados por vírgula" value={(manual.portadores || []).join(", ")} onChange={(e) => atualizarManual(setManual, "portadores", e.target.value.split(",").map((x) => x.trim()).filter(Boolean))} />
-                  <p className="text-xs mt-1" style={{ color: "#8a7a63" }}>Portadora é a ave que carrega um gene sem mostrar essa cor. Se não tiver certeza, deixe em branco.</p>
-                </div>
-                {isPai ? null : <p className="text-xs" style={{ color: "#8a7a63" }}>Em algumas mutações ligadas ao sexo, a fêmea não pode ser portadora oculta. O sistema considera essa regra.</p>}
-              </div>
-            </details>
+            <DetalhesGeneticosInline
+              ave={manual}
+              setAve={setManual}
+              mutacoes={mutacoesRingNeck}
+              ehPai={isPai}
+            />
           </div>
         )}
       </section>
@@ -492,12 +475,40 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">{renderGenitor("pai")}{renderGenitor("mae")}</div>
-      <button onClick={calcular} className="w-full sm:w-auto px-6 py-3 rounded-xl font-semibold" style={{ background: "#C69A2E", color: "#2B241C" }}>Ver possíveis filhotes</button>
+      {!resultado && <p className="text-sm" style={{ color: "#6f6254" }}>Selecione a cor do pai e da mãe para ver os filhotes automaticamente.</p>}
       {resultado && <div className="rounded-2xl p-5" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
         {resultado.tipo === "erro" ? (
           <div style={{ color: "#A6402B" }}>
             <div className="font-semibold mb-1">Ainda não é possível calcular esse casal.</div>
             <p className="text-sm">{resultado.mensagem}</p>
+          </div>
+        ) : resultado.tipo === "padrao" ? (
+          <div className="space-y-3" style={{ color: "#2B241C" }}>
+            <div className="text-xs font-semibold" style={{ color: "#54764b" }}>CRUZAMENTO DE CORES SIMPLES</div>
+            <div className="text-xl font-semibold">{resultado.cruzamento}</div>
+            {resultado.resultados?.length ? (
+              <div className="rounded-xl p-4" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
+                <div className="font-semibold mb-2">Filhotes possíveis</div>
+                {resultado.resultados.map((item) => (
+                  <div key={item.nome} className="flex items-center justify-between py-2 gap-3 text-sm">
+                    <strong>{item.nome}</strong><strong>{item.percentual}%</strong>
+                  </div>
+                ))}
+                <p className="text-xs mt-2" style={{ color: "#6f6254" }}>As porcentagens se aplicam igualmente a machos e fêmeas.</p>
+              </div>
+            ) : (
+              <div className="rounded-xl p-4 text-sm" style={{ background: "#fffaf0", border: "1px solid #dfcba7" }}>
+                As séries e fatores são calculados separadamente neste cruzamento, pois a ligação genética impede combinar porcentagens com segurança.
+                {resultado.serie?.map((item) => <div key={item.genotipo} className="flex justify-between py-1"><span>{item.nome}</span><strong>{item.percentual}%</strong></div>)}
+              </div>
+            )}
+            <details className="rounded-xl p-3" style={{ background: "#f5e9c8", border: "1px solid #dfcba7" }}>
+              <summary className="cursor-pointer font-semibold text-sm">Entenda o resultado e as premissas</summary>
+              <ul className="mt-3 space-y-1 text-sm">
+                {resultado.premissas.map((item) => <li key={item}>• {item}</li>)}
+              </ul>
+              <p className="text-xs mt-2">Estimativa para cada nascimento, não garantia do número de filhotes.</p>
+            </details>
           </div>
         ) : resultado.tipo === "condicional" ? (
           <div className="space-y-4" style={{ color: "#2B241C" }}>
@@ -518,7 +529,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
               <div className="font-semibold">E o fator Violeta?</div>
               {resultado.fatorVioleta === null && resultado.fatorOutro === 0 ? (
                 <>
-                  <p className="text-sm">A ave Violeta pode ter uma cópia do fator (SF) ou duas (DF). Como a outra ave está informada sem o fator:</p>
+                  <p className="text-sm">A ave Violeta pode ter uma cópia do fator (SF) ou duas (DF). Como a ausência do fator na outra ave foi confirmada:</p>
                   <p className="text-sm">• <strong>Se for SF:</strong> 50% dos filhotes herdam o fator Violeta.</p>
                   <p className="text-sm">• <strong>Se for DF:</strong> 100% dos filhotes herdam o fator Violeta (SF).</p>
                   <p className="text-xs" style={{ color: "#8a7a63" }}>Estas são hipóteses de herança do fator, não percentuais das cores visíveis.</p>
@@ -533,7 +544,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                   <p className="text-xs" style={{ color: "#8a7a63" }}>Percentuais apenas do fator Violeta, sem prever o fenótipo completo.</p>
                 </>
               ) : (
-                <p className="text-sm">A aparência Violeta não confirma SF ou DF. Para dar percentuais, precisamos da dosagem de ambos os pais ou de dados de descendência.</p>
+                <p className="text-sm">A aparência Violeta não revela se o fator é simples (SF) ou duplo (DF). Uma ave descrita apenas como Azul também não está comprovadamente sem Violeta. Sem esses dados, não podemos afirmar que 50% ou 100% dos filhotes serão violetas. Se conhecer a dosagem dos pais, informe em “Se souber mais detalhes (opcional)”.</p>
               )}
             </div>
             {resultado.cenarios.length ? (
