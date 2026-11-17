@@ -379,3 +379,14 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - [ ] Executar testes da PR antes de integrar ao site oficial. Testes de interface com sessão real de criador continuam como validação complementar.
 
 **Escopo:** não altera registros, reservas, plantas, permissões de Master, e-mail nem redefinição de senha. Sem migrações ou novo serviço.
+
+
+### Aprovação com confirmação por e-mail (17/11/2026)
+
+- E-mail de acolhimento transacional de anúncios de aves perdidas; nunca uma oferta ou campanha em massa. Envio via Resend (`RESEND_API_KEY`) a partir da função `notify-approved-lost-bird`.
+- `src/lib/db.js` encaminha apenas a ação de **aprovar** ao servidor. Demais mudanças de status não são alteradas. A Edge Function exige JWT, confirma vínculo a `admins` ou `master_admins`, aplica transição de estado e grava uma chave única por anúncio em `aves_perdidas_emails_aprovacao`. O e-mail não é repetido em novas aprovações.
+- Envio somente para e-mail validado nos dados privados disponíveis ou para e-mail **confirmado** da conta vinculada; se não houver, a aprovação continua sem envio (`no_email`). Anúncios já aprovados anteriormente não recebem mensagens retroativas.
+- **Privacidade importante:** o campo `anuncios_aves_perdidas.data` é alcançável via acesso público a anúncios aprovados. **Não armazenar e-mails novos nesse JSON.** A futura coleta de contato de visitantes anônimos deverá usar armazenamento privado e função controlada, sem ampliar dados pessoais da página pública.
+- Conteúdo: solidariedade, publicação gratuita, orientações e link genérico para `/aves-perdidas`; sem oferecer campanha paga automaticamente e sem link de edição até a outra implementação concluir sua autorização.
+- Logs privados: e-mails não registrados na tabela de idempotência; status `processing`, `sent`, `failed` ou `uncertain`. Não reenviar automaticamente após erro incerto sem conciliação no Resend.
+- Esta etapa não altera formulário de cadastro nem edição de anúncios; requer validação de aprovação real e confirmação de entrega com cadastro autenticado.
