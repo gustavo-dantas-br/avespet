@@ -140,3 +140,34 @@ test("não usa preset com informações de portadores, mutações extras ou sér
   assert.equal(cruzarAparenciasPadraoRingNeck({ ...aveSimples("Violeta"), corBase: "Green (Verde)" }, azul), null);
   assert.equal(cruzarAparenciasPadraoRingNeck({ ...aveSimples("Violeta"), fatoresGeneticos: { violetFactor: "NONE" } }, azul), null);
 });
+
+import { prepararResultadoPadraoRingNeck } from "../src/features/genetica/utils/serieCorRingNeck.js";
+
+test("UI recebe discriminador padrao para Violeta SF x Azul sem tela branca", () => {
+  const pai = { ...aveSimples("Violeta"), nome: "Pai" };
+  const mae = { ...aveSimples("Blue (Azul)"), nome: "Mãe" };
+  const resultado = prepararResultadoPadraoRingNeck(pai, mae);
+  assert.equal(resultado.tipo, "padrao");
+  assert.equal(resultado.modoCalculo, "completo");
+  assert.equal(resultado.cruzamento, "Pai × Mãe");
+  assert.deepEqual(resultado.resultados.map((r) => [r.nome, r.percentual]), [
+    ["Blue (Azul)", 50], ["Violet SF (Violeta)", 50],
+  ]);
+  assert.equal(resultado.premissas.length > 0, true);
+});
+
+test("resultado parcial também mantém discriminador renderizável", () => {
+  const resultado = prepararResultadoPadraoRingNeck(aveSimples("Cobalto"), aveSimples("Green (Verde)"));
+  assert.equal(resultado.tipo, "padrao");
+  assert.equal(resultado.modoCalculo, "parcial");
+  assert.ok(Array.isArray(resultado.serie));
+  assert.ok(Array.isArray(resultado.premissas));
+});
+
+test("combinação não coberta não finge ser resultado padrão", () => {
+  const resultado = prepararResultadoPadraoRingNeck(
+    { ...aveSimples("Violeta"), portadores: ["Cleartail (Cauda clara)"] },
+    aveSimples("Blue (Azul)")
+  );
+  assert.equal(resultado, null);
+});
