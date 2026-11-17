@@ -230,7 +230,7 @@ export default function SupportOperations({ onPrepareEmail }) {
                 </ol>
               ) : <p className="mt-2 text-xs text-slate-500">Ainda sem registros adicionais.</p>}
             {history.syncNote && <p className="mt-2 text-[11px] text-slate-500">{history.syncNote}</p>}
-            <p className="mt-2 text-[11px] text-slate-500">A conferência ocorre ao abrir este atendimento e ao clicar em Conferir respostas. São vinculadas apenas conversas verificadas. Nenhum e-mail é enviado automaticamente.</p>
+            <p className="mt-2 text-[11px] text-slate-500">Somente envios confirmados pelo serviço são marcados como enviados. A conferência de respostas ocorre ao abrir este atendimento e ao clicar em Conferir respostas. São vinculadas apenas conversas verificadas. Nenhum e-mail é enviado automaticamente.</p>
           </section>
         )}
         <form onSubmit={save} className="mt-5 space-y-4">
