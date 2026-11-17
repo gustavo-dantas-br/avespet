@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:genetica": "node --test tests/*.test.js"
+    "test:genetica": "node --test tests/*.test.js",
+    "test:painel": "node tests/painel-criador-smoke.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
