@@ -180,6 +180,105 @@ export function nomeFenotipoComFatoresRingNeck(genotipo, doseDark = 0, doseViole
   return nome;
 }
 
+
+// Cores e aparências padrão do criador — convenções de SIMULAÇÃO, não laudos.
+// Sem mutações ou portadores adicionais, Verde assume G/G, Azul B/B, Turquesa
+// T/T, Azul-turquesa T/B, Violeta = Azul Violet SF, Cobalto = Azul Dark SF.
+export const APARENCIAS_PADRAO_RING_NECK = Object.freeze([
+  { value: "Green (Verde)", label: "Green (Verde)", genotipo: "G/G", dark: 0, violet: 0 },
+  { value: "Blue (Azul)", label: "Blue (Azul)", genotipo: "B/B", dark: 0, violet: 0 },
+  { value: "Turquoise (Turquesa)", label: "Turquoise (Turquesa)", genotipo: "T/T", dark: 0, violet: 0 },
+  { value: "Turquoise Blue (Azul Turquesa)", label: "Turquoise Blue (Azul-turquesa)", genotipo: "T/B", dark: 0, violet: 0 },
+  { value: "Violeta", label: "Violet SF (Violeta)", genotipo: "B/B", dark: 0, violet: 1 },
+  { value: "Cobalto", label: "Cobalt (Cobalto)", genotipo: "B/B", dark: 1, violet: 0 },
+  { value: "Mauve", label: "Mauve (Malva)", genotipo: "B/B", dark: 2, violet: 0 },
+]);
+
+function nomeCorPadraoRingNeck(genotipo, dark, violet) {
+  if (genotipo !== "B/B") return nomeFenotipoComFatoresRingNeck(genotipo, dark, violet);
+  const cor = dark === 2 ? "Mauve (Malva)" : dark === 1 ? "Cobalt (Cobalto)" : "Blue (Azul)";
+  if (violet === 2) return cor + " + Violet DF (Violeta duplo fator)";
+  if (violet === 1) return dark === 0 ? "Violet SF (Violeta)" : cor + " + Violet SF (Violeta)";
+  return cor;
+}
+
+function aparenciaPadraoDaAve(ave = {}) {
+  if (ave.especie && ave.especie !== "Ring Neck") return null;
+  if ((ave.mutacoesVisuais || []).length || (ave.portadores || []).length) return null;
+  const primaria = normalizarTexto(ave.corMutacao || ave.corAparencia || ave.corLivre || "");
+  const base = normalizarTexto(ave.corBase || "");
+  const opcoes = {
+    "green (verde)": "Green (Verde)", green: "Green (Verde)", verde: "Green (Verde)",
+    "blue (azul)": "Blue (Azul)", blue: "Blue (Azul)", azul: "Blue (Azul)",
+    "turquoise (turquesa)": "Turquoise (Turquesa)", turquesa: "Turquoise (Turquesa)", turquoise: "Turquoise (Turquesa)",
+    "turquoise blue (azul turquesa)": "Turquoise Blue (Azul Turquesa)",
+    "turquoise blue": "Turquoise Blue (Azul Turquesa)",
+    "azul turquesa": "Turquoise Blue (Azul Turquesa)",
+    violeta: "Violeta", violet: "Violeta",
+    "violet sf (violeta)": "Violeta", "violet factor (fator violeta)": "Violeta",
+    cobalto: "Cobalto", cobalt: "Cobalto", "cobalt (cobalto)": "Cobalto",
+    mauve: "Mauve", malva: "Mauve", "mauve (malva)": "Mauve",
+  };
+  const selecionada = opcoes[primaria] || (!primaria ? opcoes[base] : null);
+  if (!selecionada) return null;
+  const padrao = APARENCIAS_PADRAO_RING_NECK.find((item) => item.value === selecionada);
+  if (!padrao) return null;
+  const serieInformada = ave.serieCorGenotipo;
+  if (serieInformada) {
+    const serie = Array.isArray(serieInformada) ? serieInformada : String(serieInformada).split("/");
+    if (normalizarGenotipoSerie(serie).join("/") !== padrao.genotipo) return null;
+  }
+  const baseInformada = base ? opcoes[base] : null;
+  if (base && baseInformada !== selecionada && !(padrao.genotipo === "B/B" && baseInformada === "Blue (Azul)")) return null;
+  const doses = { dark: padrao.dark, violet: padrao.violet };
+  const informacoes = ave.fatoresGeneticos || {};
+  for (const [chave, propriedade] of [["darkFactor", "dark"], ["violetFactor", "violet"]]) {
+    if (informacoes[chave] !== undefined && informacoes[chave] !== "") {
+      const dose = dosagemFator(informacoes[chave]);
+      if (dose === null) return null;
+      if (selecionada === "Violeta" && chave === "violetFactor" && dose === 0) return null;
+      if ((selecionada === "Cobalto" || selecionada === "Mauve") && chave === "darkFactor" && dose !== padrao.dark) return null;
+      doses[propriedade] = dose;
+    }
+  }
+  return { genotipo: padrao.genotipo, dark: doses.dark, violet: doses.violet, nome: padrao.label };
+}
+
+// Quando o locus Dark segrega com alelos parblue variáveis não é seguro
+// multiplicar os percentuais por causa da ligação genética.
+export function cruzarAparenciasPadraoRingNeck(pai, mae) {
+  const p = aparenciaPadraoDaAve(pai);
+  const m = aparenciaPadraoDaAve(mae);
+  if (!p || !m) return null;
+  const serie = cruzarSerieCor(p.genotipo.split("/"), m.genotipo.split("/"));
+  const escuro = cruzarDosagemFator(p.dark, m.dark, "Dark Factor");
+  const violeta = cruzarDosagemFator(p.violet, m.violet, "Violet Factor");
+  const darkSegrega = escuro.some((item) => item.dosagem > 0);
+  const serieFixaAzul = serie.length === 1 && serie[0].genotipo === "B/B";
+  const premissas = [
+    "As cores simples usam padrões de simulação; o genótipo real pode ser diferente.",
+    "O cálculo não inclui portadores nem mutações adicionais.",
+    "Se conhecer a genética dos pais, use as informações avançadas para conferir.",
+  ];
+  if (darkSegrega && !serieFixaAzul) {
+    return { tipo: "parcial", serie, escuro, violeta, premissas, pais: [p.nome, m.nome] };
+  }
+  const mapa = new Map();
+  for (const cor of serie) for (const d of escuro) for (const v of violeta) {
+    const prob = cor.percentual * d.percentual * v.percentual / 10000;
+    if (!prob) continue;
+    const nome = nomeCorPadraoRingNeck(cor.genotipo, d.dosagem, v.dosagem);
+    mapa.set(nome, (mapa.get(nome) || 0) + prob);
+  }
+  return {
+    tipo: "completo",
+    pais: [p.nome, m.nome],
+    resultados: [...mapa.entries()].map(([nome, percentual]) => ({ nome, percentual }))
+      .sort((a, b) => b.percentual - a.percentual || a.nome.localeCompare(b.nome)),
+    premissas,
+  };
+}
+
 export const NOTAS_SERIE_COR = [
   "A cor visivel nem sempre revela o genotipo: aves verdes podem carregar alelos azul ou turquesa.",
   "Turquoise Blue e representado aqui pelo heterozigoto T/B.",
