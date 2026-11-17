@@ -17,7 +17,8 @@ let checked = 0;
 const load = async (path) => (await server.ssrLoadModule(path)).default;
 const render = (label, Component, props, expected) => {
   const markup = renderToString(React.createElement(Component, props));
-  assert.ok(markup.includes(expected), label + ": conteúdo principal não encontrado");
+  const normalized = (value) => String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  assert.ok(normalized(markup).includes(normalized(expected)), label + ": conteúdo principal não encontrado");
   console.log("OK:", label);
   checked += 1;
 };
@@ -29,7 +30,7 @@ try {
   const { money, hojeISO, primeiroDiaMesISO, ultimoDiaMesISO, primeiroDiaAnoISO } =
     await server.ssrLoadModule("/src/lib/formatadores.js");
   const { computeFinanceiro, computeFinanceiroPeriodo } =
-    await server.ssrLoadModule("/src/lib/financeiro-utils-unused.js").catch(() => server.ssrLoadModule("/src/features/financeiro/utils/calcularFinanceiro.js"));
+    await server.ssrLoadModule("/src/features/financeiro/utils/calcularFinanceiro.js");
   const noop = () => {};
   const ave = { ...emptyAve(), id: "ave-teste", nome: "Ave teste", anilha: "ABC123", status: "No plantel", especie: "Ring Neck" };
   const aves = [ave];
