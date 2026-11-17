@@ -390,3 +390,15 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - Conteúdo: solidariedade, publicação gratuita, orientações e link genérico para `/aves-perdidas`; sem oferecer campanha paga automaticamente e sem link de edição até a outra implementação concluir sua autorização.
 - Logs privados: e-mails não registrados na tabela de idempotência; status `processing`, `sent`, `failed` ou `uncertain`. Não reenviar automaticamente após erro incerto sem conciliação no Resend.
 - Esta etapa não altera formulário de cadastro nem edição de anúncios; requer validação de aprovação real e confirmação de entrega com cadastro autenticado.
+
+
+### Cadastro público integrado à conta do criador — 17/11/2026
+
+- A página pública de aves perdidas permanece acessível aos visitantes. A pessoa preenche todas as informações e fotos antes de criar uma conta.
+- No mesmo formulário, são exibidos e-mail e senha (mínimo de oito caracteres) e a alternativa **Já tenho conta**. Nome e WhatsApp do anúncio são reutilizados no cadastro Supabase Auth, sem exigir preenchê-los novamente.
+- O rascunho é conservado no `localStorage` do navegador por até 72 h enquanto ocorre a autenticação, incluindo eventual confirmação de e-mail. **Senha e tokens não são guardados**. Ao entrar na conta com o mesmo e-mail, o anúncio é enviado com `user_id`, status `pendente` e UUID persistido; somente então sai do rascunho local.
+- Após a autenticação, o painel do criador abre a aba **Ave perdida**, mostra o aviso de recebimento e permite acompanhar ou editar a ocorrência. A edição existente de anúncios permanece inalterada.
+- O cadastro no frontend e a política de inserção anônima na tabela devem impedir novos registros sem conta. RLS autenticada existente exige `user_id = auth.uid()` e `status = pendente`.
+- A mensagem automática de aprovação utiliza o e-mail confirmado do Auth, sem expô-lo no JSON do anúncio. Anúncios anônimos históricos não são vinculados automaticamente.
+- Nenhuma campanha paga é ativada; o fluxo de cadastro geral, senha temporária Master, genética e demais módulos não foram alterados.
+- Testes pendentes: usuário novo (com e sem confirmação de e-mail), login de usuário existente, retorno após confirmação, recuperação do rascunho, sincronização de status, edição e tentativa de inserção anônima rejeitada.
