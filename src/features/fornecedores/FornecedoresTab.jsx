@@ -1,9 +1,6 @@
 import React, { useState } from "react";
+import { normalizeTelefone } from "../../lib/telefone";
 import { Phone, Pencil, Save, Trash2, MessageCircle, Plus, Search, Users, Truck } from "lucide-react";
-
-function normalizeTelefone(t) {
-  return (t || "").replace(/\\D/g, "");
-}
 
 function historicoFornecedor(fornecedor, aves) {
   const porId = aves.filter((a) => a.origemTipo === "Comprada" && a.fornecedorId === fornecedor.id);
@@ -289,4 +286,4 @@ const POSVENDA_TONS = {
   "Acompanhamento": "gold",
   "Cliente satisfeito": "good",
 };
-
+export { historicoFornecedor, fornecedoresCandidatosDeCompras };
