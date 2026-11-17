@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { calcularCruzamentoGenetico } from "../utils/calcularCruzamentoGenetico";
 import { CATALOGO_MUTACOES_RING_NECK, normalizarChaveGenetica } from "../data/catalogoRingNeck";
 import DetalhesGeneticosInline from "./DetalhesGeneticosInline";
-import { genotipoSerieDaAve, cruzarSerieCor, dosagemFatorDaAve, cruzarDosagemFator, nomeFenotipoComFatoresRingNeck, descricaoGenotipoSerie, APARENCIAS_PADRAO_RING_NECK, cruzarAparenciasPadraoRingNeck } from "../utils/serieCorRingNeck";
+import { genotipoSerieDaAve, cruzarSerieCor, dosagemFatorDaAve, cruzarDosagemFator, nomeFenotipoComFatoresRingNeck, descricaoGenotipoSerie, APARENCIAS_PADRAO_RING_NECK, prepararResultadoPadraoRingNeck } from "../utils/serieCorRingNeck";
 
 const campo = {
   border: "1px solid #d8c6a5",
@@ -67,9 +67,9 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     }
     const paiParaCalculo = { ...pai, corMutacao: pai.corMutacao || pai.corLivre || "" };
     const maeParaCalculo = { ...mae, corMutacao: mae.corMutacao || mae.corLivre || "" };
-    const padrao = cruzarAparenciasPadraoRingNeck(paiParaCalculo, maeParaCalculo);
+    const padrao = prepararResultadoPadraoRingNeck(paiParaCalculo, maeParaCalculo);
     if (padrao) {
-      setResultado({ tipo: "padrao", cruzamento: (pai.nome || "Pai") + " × " + (mae.nome || "Mãe"), ...padrao });
+      setResultado(padrao);
       return;
     }
     // Série parblue e fatores Dark/Violet são calculados em módulos próprios.
@@ -301,7 +301,15 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
       setResultado(null);
       return;
     }
-    calcular();
+    try {
+      calcular();
+    } catch (erro) {
+      console.error("Erro ao calcular genética Ring Neck:", erro);
+      setResultado({
+        tipo: "erro",
+        mensagem: "Ocorreu um erro ao calcular este cruzamento. Suas escolhas foram preservadas. Tente ajustar as características ou selecionar o casal novamente.",
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modoPai, modoMae, paiId, maeId, paiManual, maeManual, aves, mutacoesRingNeck]);
 
