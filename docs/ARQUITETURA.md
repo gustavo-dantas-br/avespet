@@ -337,3 +337,14 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - Backend `master-support-operations`, `master-audit-events`, `master-manage-entitlements` e `master-resend-test` exigem JWT e autorização na tabela `master_admins`. Somente `service_role` recebe acesso às tabelas internas; na auditoria foi concedida consulta somente às colunas necessárias para operações Master.
 - **Central de e-mails**: envio de teste `suporte@avespet.com.br` para a conta Master confirmado pelo usuário. As caixas Resend `suporte@avespet.com.br` e `financeiro@avespet.com.br` foram criadas, mas a leitura de conversas e respostas dentro do Master seguem pendentes da API de Inboxes e da verificação completa de recebimento MX; sem disparos de marketing.
 - Atualizar esta documentação antes de ativar cobrança ou bloqueios. Alterações na produção não devem sobrescrever funcionalidades de genética nem ativar campanhas sem consentimento.
+
+
+### Integração Resend Inboxes no Master — desenvolvimento isolado (17/11/2026)
+
+- Branch \`feature/master-inboxes-resend-20261117\`, baseada no commit de produção \`3cc2334\`. **Não publicar em produção antes da configuração da chave e dos testes de API.**
+- Interface \`MasterInboxPanel.jsx\`: caixas Suporte/Financeiro, listagem das últimas 30 conversas, leitura das mensagens em texto e resposta manual com confirmação. Anexos e HTML rico ficam desativados até haver renderização sanitizada e controles específicos. Teste de envio anterior permanece disponível na área recolhível.
+- Edge Function \`master-resend-inboxes\`: JWT Supabase + consulta a \`master_admins\`, caixa de destino permitida por lista fixa, IDs UUID, limites de tamanho, resposta unicast (\`reply_all=false\`), chave exclusivamente em \`RESEND_INBOX_API_KEY\` (Secrets Supabase), logs de auditoria sem registrar endereço do cliente nem corpo das mensagens.
+- Listagem somente com chave de API Resend **Full access** para operações de leitura de Inboxes; não utilizar chave com escopo apenas Sending para leitura.
+- Reenvio: limite de segurança por Master (15/hora) e \`Idempotency-Key\` no Resend. A auditoria de intenção é feita antes do envio para evitar envio sem registro. Em caso de falha de rede, verificar no Resend antes de repetir ações.
+- Antes de publicar: confirmar endpoint real, criar secret no Supabase sem expor a chave, validar listagem/leitura com os e-mails de teste, testar resposta ao próprio Gmail, revisar segurança e implantar apenas um Preview antes da produção. Não ativar campanhas automáticas.
+- É importante distinguir o e-mail enviado de \`suporte@avespet.com.br\` para o Gmail (teste transacional) do recebimento enviado pelo Gmail para a Inbox do Resend. Testar ambos separadamente.
