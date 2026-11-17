@@ -316,6 +316,7 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
     const setId = isPai ? setPaiId : setMaeId;
     const titulo = isPai ? "Pai" : "Mãe";
     const extras = mutacoesRingNeck.filter((m) => m.permitePortador !== false);
+    const selecionadaSimples = APARENCIAS_PADRAO_RING_NECK.some((cor) => cor.value === manual.corMutacao || cor.value === manual.corBase);
 
     return (
       <section className="rounded-2xl p-5" style={{ background: "#FAF3E6", border: "1px solid #e3d3b4" }}>
@@ -365,7 +366,9 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                       : manual.corMutacao === "Cremino"
                       ? "popular|Cremino"
                       : manual.corMutacao
-                        ? (extras.some((m) => m.nome === manual.corMutacao) ? manual.corMutacao : "__outra__")
+                        ? (APARENCIAS_PADRAO_RING_NECK.some((cor) => cor.value === manual.corMutacao) ||
+                           extras.some((m) => m.nome === manual.corMutacao)
+                          ? manual.corMutacao : "__outra__")
                         : manual.corBase || ""
                 }
                 onChange={(e) => {
@@ -430,24 +433,10 @@ export default function CalculadoraGenetica({ aves, mutacoes }) {
                 />
               )}
             </div>
-            {false && manual.corMutacao === "Violeta" && (
-              <div className="rounded-xl p-3 space-y-2" style={{ background: "#fffaf0", border: "1px solid #d8c6a5" }}>
-                <label className="block text-sm font-semibold" style={{ color: "#5e5143" }}>
-                  Qual é a cor-base da ave Violeta?
-                </label>
-                <p className="text-xs" style={{ color: "#8a7a63" }}>
-                  O fator violeta modifica a cor, mas não revela sozinho a série genética. Informe a cor-base se souber.
-                </p>
-                <select
-                  className="w-full rounded-xl px-3 py-3"
-                  style={campo}
-                  value={manual.corBase || ""}
-                  onChange={(e) => atualizarManual(setManual, "corBase", e.target.value)}
-                >
-                  <option value="">Não sei informar a cor-base</option>
-                  {CORES_BASE.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
-              </div>
+            {manual.corMutacao === "Violeta" && (
+              <p className="text-xs rounded-lg px-3 py-2" style={{ background: "#e9efdf", color: "#456338" }}>
+                Padrão: Violet SF (Violeta) da série Azul. Se for Violet DF ou outra combinação, informe nos detalhes avançados.
+              </p>
             )}
             <div className="rounded-xl p-3 text-xs" style={{ background: "#fffaf0", color: "#8a7a63" }}>
               A aparência principal já foi selecionada acima. Para informar outras mutações visíveis, abra “Se souber mais detalhes (opcional)”.
