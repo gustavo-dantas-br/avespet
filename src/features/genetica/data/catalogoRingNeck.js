@@ -30,7 +30,78 @@ export const FATORES_RING_NECK = [
   },
 ];
 
+// Referência de nomenclatura pública (18 itens) da calculadora Birds Evolution.
+// Valores são nomes científicos/populares, não código nem regras de terceiros.
+// Blue/Turquoise são série de cor, Dark/Violet são fatores e Lutino é
+// manifestação de Ino: não devem entrar como loci recessivos independentes.
+// Fonte: https://www.birdsevolutionpro.com/en/genetic-calculator/psittacula-krameri-manillensis
+export const REFERENCIA_BIRDS_RING_NECK = Object.freeze([
+  { ingles: "Blue", portugues: "Azul", tipo: "cor_base" },
+  { ingles: "Bronze Fallow", portugues: "Fallow bronze", tipo: "mutacao" },
+  { ingles: "Cinnamon", portugues: "Canela", tipo: "mutacao" },
+  { ingles: "Clearhead Fallow", portugues: "Fallow cabeça clara", tipo: "mutacao" },
+  { ingles: "Cleartail", portugues: "Cauda clara", tipo: "mutacao" },
+  { ingles: "Dark Factor", portugues: "Fator escuro", tipo: "fator" },
+  { ingles: "Dilute (Suffused)", portugues: "Diluição (Suffused)", tipo: "mutacao" },
+  { ingles: "Dominant Dilute", portugues: "Diluição dominante", tipo: "mutacao" },
+  { ingles: "Dominant Pied", portugues: "Arlequim dominante", tipo: "mutacao" },
+  { ingles: "Dun Fallow", portugues: "Fallow dun", tipo: "mutacao" },
+  { ingles: "Grey", portugues: "Cinza", tipo: "mutacao" },
+  { ingles: "Khaki (Misty)", portugues: "Cáqui (Misty)", tipo: "mutacao" },
+  { ingles: "Lutino", portugues: "Lutino (Ino)", tipo: "aparencia_ino" },
+  { ingles: "Opaline", portugues: "Opalino", tipo: "mutacao" },
+  { ingles: "Pallid", portugues: "Pálido", tipo: "mutacao" },
+  { ingles: "Recessive Pied", portugues: "Arlequim recessivo", tipo: "mutacao" },
+  { ingles: "Turquoise (Parblue)", portugues: "Turquesa", tipo: "cor_base" },
+  { ingles: "Violet", portugues: "Fator violeta", tipo: "fator" },
+]);
+
 export const CATALOGO_MUTACOES_RING_NECK = [
+  // Opções adicionais da referência de Ring Neck, sem cálculo ativado
+  // até que as respectivas regras sejam integralmente validadas.
+  {
+    nome: "Dun Fallow (Fallow dun)",
+    nomeAlternativo: "Dun Fallow",
+    gene: "",
+    serie: "Todas as séries de cor",
+    tipoHeranca: "Autossomica recessiva",
+    categoria: "mutacao",
+    especie: "Ring Neck",
+    statusValidacao: "documentada_com_ressalva",
+    calculadoraAtiva: false,
+    permitePortador: true,
+    descricaoIniciante: "Mutação recessiva da família Fallow. Machos e fêmeas podem carregar o gene sem apresentá-lo visualmente.",
+    observacoes: "Diferenciar de Bronze Fallow e Clearhead Fallow; cruzamentos combinados ainda não validados.",
+  },
+  {
+    nome: "Grey (Cinza)",
+    nomeAlternativo: "Grey / Cinza",
+    gene: "",
+    serie: "Séries verde e azul",
+    tipoHeranca: "Autossomica dominante",
+    categoria: "mutacao",
+    especie: "Ring Neck",
+    statusValidacao: "documentada_com_ressalva",
+    calculadoraAtiva: false,
+    permitePortador: false,
+    descricaoIniciante: "Fator dominante que pode produzir cinza na série azul e cinza-verde na série verde.",
+    observacoes: "Fator Grey distinto dos fatores Dark e Violet. Validar dosagem e combinações antes de calcular.",
+  },
+  {
+    nome: "Khaki (Cáqui / Misty)",
+    nomeAlternativo: "Khaki (Misty)",
+    gene: "",
+    serie: "Todas as séries de cor",
+    tipoHeranca: "Autossomica dominante",
+    categoria: "mutacao",
+    especie: "Ring Neck",
+    statusValidacao: "em_validacao",
+    calculadoraAtiva: false,
+    permitePortador: false,
+    descricaoIniciante: "Fator de coloração descrito como Khaki (Misty) em referências de Ring Neck.",
+    observacoes: "Confirmar a nomenclatura e a expressão genética antes de calcular resultados; não confundir com a cor-base.",
+  },
+
   {
     nome: "Cleartail (Cauda clara)",
     nomeAlternativo: "Cleartail",
