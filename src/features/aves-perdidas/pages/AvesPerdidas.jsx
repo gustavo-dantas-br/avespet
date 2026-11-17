@@ -75,7 +75,7 @@ export default function AvesPerdidas() {
             style={{ background: TEMA_PUBLICO.verdeEscuro }}
           >
             <span className="block text-xl font-bold md:text-2xl" style={{ color: "#FFFFFF", fontFamily: "'Fraunces', Georgia, serif" }}>Sua ave desapareceu?</span>
-            <span className="mt-2 block max-w-2xl text-sm leading-6" style={{ color: "#D2E1D6" }}>Cadastre gratuitamente sua ave ou acesse seus próprios anúncios para completar foto, anilha e características. As alterações passam por nova análise.</span>
+            <span className="mt-2 block max-w-2xl text-sm leading-6" style={{ color: "#D2E1D6" }}>Cadastre gratuitamente sua ave. Para editar um anúncio existente, entre em sua conta e acesse a opção Ave perdida no painel. As alterações passam por nova análise.</span>
             <span className="mt-5 inline-flex rounded-xl px-5 py-3 text-sm font-bold" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}>Cadastrar ou editar anúncio</span>
           </button>
         )}
