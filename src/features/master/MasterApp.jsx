@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import CreatorManagement from "./CreatorManagement";
 import AdsModeration from "./AdsModeration";
+import LostBirdsModeration from "./LostBirdsModeration";
 import BirdsManagement from "./BirdsManagement";
 import BillingManagement from "./BillingManagement";
 import MasterAudit from "./MasterAudit";
@@ -19,6 +20,7 @@ const navigation = [
   { id: "creators", label: "Criadores e usuários", icon: Users, description: "Contas, perfis e permissões" },
   { id: "birds", label: "Aves", icon: Bird, description: "Cadastros e consulta de aves" },
   { id: "ads", label: "Anúncios e moderação", icon: Megaphone, description: "Aprovação e situação dos anúncios de aves" },
+  { id: "lost-birds", label: "Aves perdidas", icon: Bird, description: "Moderação de aves perdidas e confirmação por e-mail" },
   { id: "billing", label: "Planos e assinaturas", icon: CreditCard, description: "Catálogo provisório, ainda sem cobranças" },
   { id: "support", label: "Suporte operacional", icon: LifeBuoy, description: "Triagem de casos e preparação manual de e-mails de atendimento" },
   { id: "communications", label: "Central de Comunicação", icon: Mail, description: "Caixas Suporte e Financeiro, novos e-mails e respostas" },
@@ -179,7 +181,7 @@ export default function MasterApp({ user, onLogout }) {
         </header>
 
         <main className="mx-auto max-w-[1500px] px-4 py-7 sm:px-7 lg:px-9">
-          {activeSection === "creators" ? <CreatorManagement /> : activeSection === "ads" ? <AdsModeration /> : activeSection === "birds" ? <BirdsManagement /> : activeSection === "billing" ? <BillingManagement /> : activeSection === "support" ? <SupportOperations onPrepareEmail={openSupportDraft} /> : activeSection === "settings" ? <MasterAudit /> : activeSection === "communications" ? <MasterInboxPanel user={user} initialDraft={supportDraft} onDraftUsed={() => setSupportDraft(null)} /> : activeSection === "overview" ? (
+          {activeSection === "creators" ? <CreatorManagement /> : activeSection === "ads" ? <AdsModeration /> : activeSection === "lost-birds" ? <LostBirdsModeration /> : activeSection === "birds" ? <BirdsManagement /> : activeSection === "billing" ? <BillingManagement /> : activeSection === "support" ? <SupportOperations onPrepareEmail={openSupportDraft} /> : activeSection === "settings" ? <MasterAudit /> : activeSection === "communications" ? <MasterInboxPanel user={user} initialDraft={supportDraft} onDraftUsed={() => setSupportDraft(null)} /> : activeSection === "overview" ? (
             <>
               <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
                 <div><p className="text-[10px] font-bold uppercase tracking-[.2em]" style={{ color: "#a27b2e" }}>Central de gestão</p><h1 className="mt-2 text-[26px] font-bold tracking-tight text-slate-900 sm:text-[32px]">Visão geral</h1><p className="mt-1.5 max-w-2xl text-sm text-slate-500">Acompanhe o crescimento, a atividade e a saúde operacional do Avespet em um só lugar.</p></div>

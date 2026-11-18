@@ -426,3 +426,13 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - Após teste de confirmação com entrega na pasta de Spam, a tela pós-cadastro de ave perdida destaca um aviso **“Não encontrou o e-mail? Veja o SPAM!”** com orientações para conferir Spam, Lixo eletrônico e Promoções e marcar a mensagem como “Não é spam”.
 - Avisos similares são exibidos no cadastro geral, na recuperação de senha e após reenvio de confirmação. A mensagem não substitui a confirmação do endereço e não altera a segurança da autenticação.
 - A marcação “Não é spam” pode ajudar, mas não garante entrega. Para melhorar a reputação, verificar futuramente SPF, DKIM e DMARC e a configuração do domínio de envio no Resend.
+
+
+### Moderação de aves perdidas no Master — 17/11/2026
+
+- O Master agora possui menu próprio **Aves perdidas**, separado de **Anúncios e moderação** (que permanece para anúncios de venda).
+- A função `master-lost-birds` lista ocorrências paginadas, com status, vínculo à conta e situação registrada de e-mails transacionais. Exige sessão Supabase e acesso `master_admins` confirmado no servidor.
+- A aprovação usa exclusivamente a função existente `notify-approved-lost-bird`, responsável pela transição de status, idempotência e confirmação por Resend. O Master exibe o resultado de envio ou a ausência de e-mail. Não há aprovação automática de anúncios pendentes.
+- Rejeitar, encerrar ou voltar à análise utiliza a função `master-lost-birds`, com confirmação do operador, justificativa obrigatória para rejeição e auditoria antes da alteração.
+- Os anúncios históricos permanecem intactos, inclusive aqueles sem conta vinculada. O anúncio fictício “Mara teste” ficou pendente aguardando decisão explícita do Master.
+- Verificar na produção os filtros, aprovação manual e aceite do provedor, inclusive entregabilidade em spam. Nenhuma campanha paga foi ativada.
