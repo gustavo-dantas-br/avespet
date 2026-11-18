@@ -42,3 +42,22 @@ test("interface prepara e-mail sem enviar, restrita ao anúncio",()=>{
   assert.match(edge,/email_confirmed_at/);
   assert.doesNotMatch(ui,/api\.resend\.com\/emails/);
 });
+
+
+test("campanha Meta é opcional nos dois modelos, sem promessa de reencontro",()=>{
+  for (const mode of ["acompanhamento","possivel_reencontro"]) {
+    const result=lostBirdMessage(bluu,mode).text;
+    assert.match(result,/campanha paga de impulsionamento regional/);
+    assert.match(result,/Facebook e Instagram/);
+    assert.match(result,/Não há garantia de recuperação/);
+    assert.match(result,/apresenta um orçamento/);
+    assert.match(result,/Se Bluu ainda estiver desaparecida/);
+  }
+});
+test("link da campanha preserva o ID exato do anúncio sem expor telefone",()=>{
+  const id="7f295ad0-c0b6-48ba-b433-515bb753847d";
+  const message=lostBirdMessage({...bluu,id}).text;
+  assert.match(message,new RegExp("campanha-ave-perdida\\?anuncio="+id));
+  assert.doesNotMatch(message,/984972095/);
+  assert.match(lostBirdMessage(bluu).text,/https:\/\/www.avespet.com.br\/campanha-ave-perdida/);
+});

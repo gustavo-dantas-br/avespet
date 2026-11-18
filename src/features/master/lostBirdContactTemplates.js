@@ -24,13 +24,18 @@ export function lostBirdMessage(ad, kind = "acompanhamento") {
   const description = [details, place ? "em " + place : "", when ? "desaparecida em " + when : ""]
     .filter(Boolean).join(", ");
   const intro = `Olá, ${owner}! Tudo bem? 🦜💚\n\nAqui é da equipe Avespet!\n\nEstamos acompanhando a busca por ${bird}, ${description}.`;
+  const campaignUrl = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(ad?.id || ""))
+    ? "https://www.avespet.com.br/campanha-ave-perdida?anuncio=" + encodeURIComponent(ad.id)
+    : "https://www.avespet.com.br/campanha-ave-perdida";
+  const boostPitch = `\n\n🟢 *Se ${bird} ainda estiver desaparecida, podemos ampliar a divulgação!*\n\nO anúncio gratuito no Avespet continua disponível para consulta e compartilhamento. Ele é importante, mas a divulgação orgânica depende de quem vê e compartilha a publicação.\n\n📣 Com uma *campanha paga de impulsionamento regional*, podemos avaliar anúncios no Facebook e Instagram (Meta) para alcançar também pessoas que ainda não seguem nossas páginas, com foco na cidade do desaparecimento e regiões próximas. Isso amplia a visibilidade da busca e pode aumentar as chances de alguém reconhecer a ave e informar seu paradeiro.\n\nA campanha é opcional: nossa equipe analisa a região, apresenta um orçamento e só inicia a divulgação após sua aprovação e confirmação do pagamento. *Não há garantia de recuperação.*\n\n👉 Solicite uma proposta sem compromisso: ${campaignUrl}`;
+
   const outro = `\n\nSe ${bird} já estiver em casa, ficaremos muito felizes em registrar esse final feliz. Ela continuará na página de aves perdidas, identificada como “🦜💚 Reencontrada! Final feliz!”.\n\nVocê também poderá deixar uma avaliação ou depoimento sobre sua experiência, se desejar. A publicação dependerá da sua autorização.\n\n🌐 www.avespet.com.br\n\nEquipe Avespet 💚\nConectando pessoas, cuidando de aves.`;
   if (kind === "possivel_reencontro") return {
     subject: `Avespet | Possível notícia sobre ${bird}`,
-    text: intro + `\n\nRecebemos informações que podem indicar que ${bird} foi localizada. Ainda não temos a confirmação da família e gostaríamos de verificar diretamente com você.\n\n**Você pode nos confirmar se ${bird} já voltou para casa em segurança?**` + outro,
+    text: intro + `\n\nRecebemos informações que podem indicar que ${bird} foi localizada. Ainda não temos a confirmação da família e gostaríamos de verificar diretamente com você.\n\n**Você pode nos confirmar se ${bird} já voltou para casa em segurança?**` + boostPitch + outro,
   };
   return {
     subject: `Avespet | Como está a busca por ${bird}?`,
-    text: intro + `\n\nSeu anúncio continua disponível no Avespet, para ampliar a visibilidade da busca e ajudar a conectar pessoas.\n\n**Você tem alguma novidade sobre ${bird}? Ela já retornou para casa em segurança?**` + outro,
+    text: intro + `\n\nSeu anúncio continua disponível no Avespet, para ampliar a visibilidade da busca e ajudar a conectar pessoas.\n\n**Você tem alguma novidade sobre ${bird}? Ela já retornou para casa em segurança?**` + boostPitch + outro,
   };
 }
