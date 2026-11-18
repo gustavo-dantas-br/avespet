@@ -49,3 +49,13 @@ A branch `feature/impulsionamento-aves-perdidas` adiciona um catálogo centraliz
 - Não executar alterações de schema sem testes de RLS e plano de compatibilidade. Não alterar o fluxo de e-mails ou senhas.
 - Próxima etapa: consolidar um modelo único de contratação autenticada, preços definidos no servidor, histórico de pedidos e confirmação de pagamento. Manter o formulário legado enquanto a migração não estiver homologada.
 - Nenhum deploy, alteração no Supabase de produção, cobrança ou anúncio Meta foi realizado.
+
+## Continuidade — área do tutor
+
+- Em `src/features/aves-perdidas/pages/PerdiUmaAve.jsx`, anúncios **aprovados** exibem um link para solicitar divulgação ampliada. Anúncios pendentes, encerrados ou reencontrados não oferecem esse atalho.
+- O link abre o formulário existente em `/campanha-ave-perdida?anuncio=<uuid>`, sem efetuar contratação ou cobrança.
+- `SolicitarCampanha.jsx` agora consulta a identidade Supabase e confirma que o anúncio aprovado pertence à conta autenticada **antes de vinculá-lo ao pedido**. Se não for possível conferir, aceita somente orçamento sem vínculo.
+- Quando o vínculo é validado, pré-preenche nome, contato, cidade, bairro e descrição a partir do cadastro, permitindo revisão pelo tutor.
+- A validação de titularidade no navegador é apenas uma camada de conveniência: antes de ativar **planos de preço fixo, pagamentos ou outras operações sensíveis**, será necessária validação autoritativa de titularidade no servidor, com RLS, auditoria e testes específicos.
+- Atenção ao fluxo legado: a inserção pública de solicitação de orçamento continua existente. Não interpretar recebimento de pedido como pagamento confirmado.
+- Verificação até agora: arquivos e ligações de código conferidos no GitHub; **build e testes de execução ainda pendentes**. Não houve deploy.
