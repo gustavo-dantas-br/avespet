@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Plus, Trash2, Download } from "lucide-react";
 import { CATALOGO_MUTACOES_RING_NECK } from "./data/catalogoRingNeck";
+import { mostrarNomePopularRingNeck, ordenarMutacoesRingNeck } from "./data/nomenclaturaRingNeck";
 
 export default function MutacoesTab({ mutacoes, onSave, onDelete, emptyMutacao, TIPOS_HERANCA, SectionTitle, Field, inputStyle, Card }) {
   const [nova, setNova] = useState(emptyMutacao());
@@ -93,13 +94,13 @@ export default function MutacoesTab({ mutacoes, onSave, onDelete, emptyMutacao, 
         <Card className="p-6 text-center ui-sans" style={{ color: "#8a7a63" }}>Nenhuma mutação cadastrada ainda.</Card>
       ) : (
         <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))" }}>
-          {mutacoes.map((m) => (
+          {ordenarMutacoesRingNeck(mutacoes).map((m) => (
             <Card key={m.id} className="p-4 ui-sans">
               <div className="flex items-start justify-between gap-2 mb-1">
-                <div className="font-semibold" style={{ color: "#2B241C" }}>{m.nome}</div>
+                <div className="font-semibold" style={{ color: "#2B241C" }}>{mostrarNomePopularRingNeck(m.nome)}</div>
                 {m.synced === false && <span className="text-[10px] font-semibold shrink-0" style={{ color: "#a6402b" }}>NÃO SINCRONIZADO</span>}
               </div>
-              {m.nomeAlternativo && <div className="text-xs mb-1" style={{ color: "#8a7a63" }}>também chamada: {m.nomeAlternativo}</div>}
+              {m.nomeAlternativo && <div className="text-xs mb-1" style={{ color: "#8a7a63" }}>também chamada: {mostrarNomePopularRingNeck(m.nomeAlternativo)}</div>}
               {(m.gene || m.serie) && <div className="text-xs mb-1 ui-mono" style={{ color: "#7a6a52" }}>{m.gene && `Gene: ${m.gene}`}{m.gene && m.serie ? " · " : ""}{m.serie && `Série: ${m.serie}`}</div>}
               <div className="text-xs mb-1 ui-mono" style={{ color: "#a6402b" }}>{m.tipoHeranca}</div>
               {m.statusValidacao && <div className="text-xs mb-1" style={{ color: "#556b3f" }}>Validacao: {m.statusValidacao} · Calculadora: {m.calculadoraAtiva ? "ativa" : "bloqueada"}</div>}
