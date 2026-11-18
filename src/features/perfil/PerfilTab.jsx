@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Save } from "lucide-react";
+import { Save, Mail } from "lucide-react";
+import { supabase } from "../../supabaseClient";
 const UF_LISTA = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
 export default function PerfilTab({ perfil, privado, email, onSave, onSavePrivado, onUpdateEmail, Card, Field, SectionTitle, inputStyle }) {
@@ -9,6 +10,35 @@ export default function PerfilTab({ perfil, privado, email, onSave, onSavePrivad
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState("");
   const [erro, setErro] = useState("");
+  const [emailNews, setEmailNews] = useState(false);
+  const [emailNewsLoading, setEmailNewsLoading] = useState(true);
+  const [emailNewsSaving, setEmailNewsSaving] = useState(false);
+  const [emailNewsFeedback, setEmailNewsFeedback] = useState("");
+  useEffect(() => {
+    let alive = true;
+    setEmailNewsLoading(true);
+    supabase.from("email_news_preferences").select("opted_in").maybeSingle().then(({data,error}) => {
+      if (!alive) return;
+      if (error) setEmailNewsFeedback("Não foi possível consultar suas preferências de e-mail.");
+      else setEmailNews(Boolean(data?.opted_in));
+      setEmailNewsLoading(false);
+    }).catch(() => {
+      if (alive) { setEmailNewsLoading(false); setEmailNewsFeedback("Não foi possível consultar suas preferências."); }
+    });
+    return () => { alive = false; };
+  }, [email]);
+  async function salvarNovidades() {
+    if (emailNewsSaving || emailNewsLoading) return;
+    setEmailNewsSaving(true);
+    setEmailNewsFeedback("");
+    try {
+      const { data, error } = await supabase.rpc("set_email_news_opt_in", { wants_emails: emailNews });
+      if (error || typeof data !== "boolean") throw new Error("Falha ao salvar preferência.");
+      setEmailNewsFeedback(data ? "Inscrição confirmada! Você poderá cancelar quando quiser." : "Inscrição cancelada. Você não receberá dicas e novidades por e-mail.");
+    } catch(err) {
+      setEmailNewsFeedback(err?.message || "Não foi possível salvar a preferência.");
+    } finally { setEmailNewsSaving(false); }
+  }
   useEffect(() => setForm(perfil), [perfil]);
   useEffect(() => setEndereco(privado || {}), [privado]);
   useEffect(() => setNovoEmail(email || ""), [email]);
@@ -105,6 +135,19 @@ export default function PerfilTab({ perfil, privado, email, onSave, onSavePrivad
             </Field>
           ))}
         </div>
+        <div className="my-5 h-px" style={{ background: "#e3d3b4" }} />
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold" style={{ color: "#2B241C" }}><Mail size={17} /> Novidades e dicas do Avespet</div>
+        <p className="ui-sans mb-3 text-xs leading-5" style={{ color: "#756B5E" }}>Receba conteúdo educativo sobre suas espécies e avisos de novidades do Avespet. Caso fique mais de 5 dias sem acessar, podemos enviar um lembrete útil. No máximo um e-mail por período de inatividade e respeitando intervalo mínimo de 30 dias. Cadastro opcional, sem cobrança.</p>
+        <label className="ui-sans flex items-start gap-3 rounded-lg border p-3 text-sm" style={{ borderColor: "#e3d3b4", color: "#2B241C" }}>
+          <input type="checkbox" checked={emailNews} disabled={emailNewsLoading || emailNewsSaving} onChange={e=>{setEmailNews(e.target.checked);setEmailNewsFeedback("");}} className="mt-1 h-4 w-4" />
+          <span>Quero receber dicas, cuidados com minhas aves e novidades por e-mail. Posso cancelar a qualquer momento.</span>
+        </label>
+        <button type="button" onClick={salvarNovidades} disabled={emailNewsLoading || emailNewsSaving}
+          className="ui-sans mt-2 rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50"
+          style={{ background: "#405a35", color: "#fff" }}>
+          {emailNewsSaving ? "Salvando..." : emailNewsLoading ? "Carregando..." : "Salvar preferência de e-mails"}
+        </button>
+        {emailNewsFeedback && <p role="status" className="ui-sans mt-2 text-xs" style={{ color: "#405a35" }}>{emailNewsFeedback}</p>}
         {form.synced === false && <div className="ui-sans text-xs mb-3" style={{ color: "#a6402b" }}>Salvando no banco...</div>}
         {mensagem && <div role="status" className="ui-sans text-sm mb-3 px-3 py-2 rounded-lg" style={{ background: "#e4ead9", color: "#556b3f" }}>{mensagem}</div>}
         {erro && <div role="alert" className="ui-sans text-sm mb-3 px-3 py-2 rounded-lg" style={{ background: "#f5dfda", color: "#8b3d30" }}>{erro}</div>}

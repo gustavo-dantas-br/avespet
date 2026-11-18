@@ -1419,6 +1419,14 @@ export default function App() {
     };
   }, []);
 
+  // Registra atividade real ao abrir o Avespet logado, sem qualquer e-mail.
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    supabase.rpc("mark_app_visit").then(({error}) => {
+      if (error) console.warn("Não foi possível registrar atividade de sessão");
+    }).catch(() => {});
+  }, [session?.user?.id]);
+
   // Confere no banco a exigência de troca de senha; não depende do app_metadata possivelmente antigo da sessão.
   useEffect(() => {
     if (session === undefined) {
