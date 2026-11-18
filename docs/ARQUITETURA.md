@@ -436,3 +436,10 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - Rejeitar, encerrar ou voltar à análise utiliza a função `master-lost-birds`, com confirmação do operador, justificativa obrigatória para rejeição e auditoria antes da alteração.
 - Os anúncios históricos permanecem intactos, inclusive aqueles sem conta vinculada. O anúncio fictício “Mara teste” ficou pendente aguardando decisão explícita do Master.
 - Verificar na produção os filtros, aprovação manual e aceite do provedor, inclusive entregabilidade em spam. Nenhuma campanha paga foi ativada.
+
+
+### Teste seguro de e-mail na moderação Master — 17/11/2026
+
+- A aba **Master > Aves perdidas** oferece **Testar e-mail**, com confirmação do operador. O teste chama a Edge Function existente `master-resend-test` (requer acesso Master, limita 3 testes/hora e envia exclusivamente ao endereço autenticado do administrador).
+- O botão não altera anúncios, não aprova ocorrências fictícias e não utiliza contatos dos tutores. Sua finalidade é verificar apenas o envio básico do Resend; o e-mail específico de aprovação continua dependendo de uma aprovação real e consentida.
+- Mensagens explicam que aceitar o envio pelo provedor não equivale à entrega na caixa principal; verificar spam e registros de entrega. Nenhum segredo é exposto no navegador.

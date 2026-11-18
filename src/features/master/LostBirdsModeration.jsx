@@ -31,6 +31,7 @@ export default function LostBirdsModeration() {
   const [result, setResult] = useState({ items: [], total: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
+  const [emailTesting, setEmailTesting] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const load = useCallback(async () => {
@@ -47,6 +48,26 @@ export default function LostBirdsModeration() {
     } finally { setLoading(false); }
   }, [status, page]);
   useEffect(() => { load(); }, [load]);
+
+  async function testarEmail() {
+    if (emailTesting || busyId) return;
+    if (!window.confirm("Enviar um e-mail de teste somente para o endereço da sua conta Master? Nenhum anúncio será aprovado ou publicado.")) return;
+    setEmailTesting(true);
+    setError("");
+    setNotice("");
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke("master-resend-test", { body: {} });
+      if (invokeError || data?.error || !data?.sent) {
+        throw new Error(data?.error || "Não foi possível enviar a mensagem de teste.");
+      }
+      setNotice("O Resend aceitou o teste para o e-mail da sua conta Master. Confira a caixa de entrada e o spam. Nenhum anúncio foi publicado." +
+        (data?.auditWarning ? " O envio foi aceito, mas o registro de auditoria precisa ser conferido." : ""));
+    } catch (err) {
+      setError(err?.message || "Falha ao testar o e-mail. Verifique a configuração no Resend.");
+    } finally {
+      setEmailTesting(false);
+    }
+  }
 
   async function moderate(ad, next) {
     if (busyId) return;
@@ -90,8 +111,12 @@ export default function LostBirdsModeration() {
         <h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-[28px]">Aves perdidas e moderação</h1>
         <p className="mt-1 text-sm text-slate-500">Analise os anúncios, acompanhe o status da busca e verifique o envio de confirmação. Anúncios de venda são gerenciados em outra área.</p>
       </div>
-      <button type="button" disabled={loading} onClick={load} className="inline-flex items-center gap-2 rounded-xl border bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 disabled:opacity-50"><RefreshCw size={15} className={loading ? "animate-spin" : ""}/> Atualizar</button>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" disabled={emailTesting || !!busyId} onClick={testarEmail} className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs font-semibold text-emerald-800 disabled:opacity-50" title="Envia somente para o e-mail da sua conta Master; não publica anúncios"><Mail size={15}/>{emailTesting ? "Enviando teste..." : "Testar e-mail"}</button>
+        <button type="button" disabled={loading} onClick={load} className="inline-flex items-center gap-2 rounded-xl border bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 disabled:opacity-50"><RefreshCw size={15} className={loading ? "animate-spin" : ""}/> Atualizar</button>
+      </div>
     </div>
+    <p className="text-xs text-slate-500">O teste envia uma mensagem de verificação para a sua conta Master, sem alterar o status de nenhuma ave. A mensagem de aprovação só é enviada quando um anúncio verdadeiro é aprovado.</p>
     <div className="flex flex-wrap gap-2">
       {Object.entries(STATUS).map(([key, label]) => <button key={key} type="button" aria-pressed={status === key} onClick={() => { setStatus(key); setPage(1); setNotice(""); }}
         className={"rounded-xl px-4 py-2 text-xs font-semibold " + (status === key ? "bg-[#182b45] text-white" : "border bg-white text-slate-600")}>{label}</button>)}
