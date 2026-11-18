@@ -40,10 +40,13 @@ const digest = async (s: string) => {
   return Array.from(new Uint8Array(bytesHash)).map(v=>v.toString(16).padStart(2,"0")).join("");
 };
 const escapeHtml = (s: string) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-function render(topic:Topic, url:string) {
+function render(topic:Topic, url:string,guide?:{titulo:string,slug:string,resumo?:string}) {
   const t=topics[topic];
+  const guideUrl = guide ? SITE+"/guias/"+encodeURIComponent(guide.slug) : "";
+  const guideTitle = guide ? String(guide.titulo).slice(0,140) : "";
   const text=[
     "Olá!", "", t.heading, "", t.tip, "",
+    ...(guide ? ["Leitura recomendada: "+guideTitle,guideUrl,""] : []),
     "Veja os guias do Avespet: "+SITE+"/guias",
     "Acesse seu painel: "+SITE+"/", "",
     "Você recebeu esta mensagem porque escolheu receber novidades do Avespet.",
@@ -53,6 +56,7 @@ function render(topic:Topic, url:string) {
   const html='<div style="font-family:Arial,sans-serif;line-height:1.7;max-width:600px;margin:auto;color:#253d2b">'+
     '<h1 style="color:#237448;font-size:26px">Avespet</h1>'+
     '<p>Olá!</p><h2>'+escapeHtml(t.heading)+'</h2><p>'+escapeHtml(t.tip)+'</p>'+
+    (guide ? '<p><strong>Leitura recomendada:</strong> <a href="'+guideUrl+'">'+escapeHtml(guideTitle)+'</a></p>' : '')+
     '<p><a href="'+SITE+'/guias">Explorar guias e novidades</a> · <a href="'+SITE+'/">Abrir meu painel</a></p>'+
     '<p style="font-size:12px;color:#67736c;border-top:1px solid #e5e5e5;padding-top:16px">'+
     'Você recebeu este conteúdo porque autorizou e-mails educativos do Avespet. '+
@@ -85,18 +89,30 @@ Deno.serve(async (req:Request) => {
   if (consentError) return response({error:"Falha na consulta de preferências."},503);
   if (!consents?.length) return response({success:true,enabled:true,eligible:0,sent:0});
   const allIds=consents.map((c:any)=>c.user_id);
-  const [act,birds,used]=await Promise.all([
+  const [act,birds,used,guidesResult]=await Promise.all([
     admin.from("email_user_activity").select("user_id,last_seen_at").in("user_id",allIds),
     admin.from("aves").select("user_id,data").in("user_id",allIds).limit(3000),
-    admin.from("email_reengagement_delivery").select("user_id,episode_at,status,created_at")
+    admin.from("email_reengagement_delivery").select("user_id,episode_at,status,created_at,article_slug")
       .in("user_id",allIds).order("created_at",{ascending:false}).limit(1000),
+    admin.from("artigos").select("slug,titulo,especie,resumo")
+      .eq("publicado",true).order("publicado_em",{ascending:false}).limit(100),
   ]);
-  if (act.error||birds.error||used.error) return response({error:"Falha no controle de envios."},503);
+  if (act.error||birds.error||used.error||guidesResult.error) return response({error:"Falha no controle de envios."},503);
   const activity=new Map((act.data||[]).map((a:any)=>[a.user_id,a.last_seen_at]));
   const species=new Map<string,any[]>();
   for(const b of birds.data||[]) species.set(b.user_id,[...(species.get(b.user_id)||[]),b]);
   const past=new Map<string,any[]>();
   for(const row of used.data||[]) past.set(row.user_id,[...(past.get(row.user_id)||[]),row]);
+  const guides=(guidesResult.data||[]).filter((g:any)=>/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(g.slug||""));
+  const pickGuide=(topic:Topic, history:any[])=>{
+    const specific=topic==="ringneck" ? "ring" : topic==="calopsita" ? "calops" : null;
+    const matching=guides.filter((g:any)=>{
+      const especie=String(g.especie||"").toLowerCase();
+      return especie.includes("geral") || !especie || (specific&&especie.includes(specific));
+    });
+    const others=history.filter(h=>h.status==="sent"&&h.article_slug).map(h=>h.article_slug);
+    return matching.find((g:any)=>!others.includes(g.slug)) || matching[0] || null;
+  };
   const now=Date.now();
   const today=new Date().toISOString().slice(0,10)+"T00:00:00.000Z";
   const {count:todayCount,error:countError}=await admin.from("email_reengagement_delivery")
@@ -117,13 +133,14 @@ Deno.serve(async (req:Request) => {
        recent.some(r=>now-fmtDate(r.created_at)<config.cooldown_days*86400000)){skipped++;continue;}
     eligible++;
     const topic=topicFor(species.get(user.id)||[]);
+    const guide=pickGuide(topic,recent);
     // Claim durável ANTES de chamar o Resend; um erro ambíguo não gera envio duplicado.
     const claim=await admin.from("email_reengagement_delivery")
-      .insert({user_id:user.id,episode_at:episode,status:"processing",topic}).select("id").single();
+      .insert({user_id:user.id,episode_at:episode,status:"processing",topic,article_slug:guide?.slug||null}).select("id").single();
     if(claim.error){if(claim.error.code!=="23505")console.error("Reengagement claim failed",claim.error.code);continue;}
     remaining--;
     const unsubscribe=LINK_PREFIX+consent.unsubscribe_token;
-    const mail=render(topic,unsubscribe);
+    const mail=render(topic,unsubscribe,guide||undefined);
     try {
       // Revalida o consentimento, inclusive se houver um cancelamento durante o processamento.
       const latest=await admin.from("email_news_preferences")
