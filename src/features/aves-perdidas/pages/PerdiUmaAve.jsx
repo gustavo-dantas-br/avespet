@@ -380,7 +380,7 @@ export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
                     <button type="submit" disabled={salvandoReencontro} className="rounded-lg bg-green-800 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{salvandoReencontro?"Confirmando...":"Confirmar reencontro"}</button>
                     <button type="button" onClick={()=>setReencontroId(null)} className="rounded-lg border px-4 py-2 text-sm">Cancelar</button>
                   </div>
-                </form>
+                </form>}
               </div>
             </article>;
           })}
