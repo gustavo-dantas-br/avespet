@@ -19,7 +19,7 @@ test("Critérios conservadores e auditoria de envio",()=>{
  assert.match(scheduler,/cooldown_days/);
  assert.match(scheduler,/email_reengagement_delivery/);
  assert.match(scheduler,/Idempotency-Key/);
- assert.match(scheduler,/if\(!config.enabled\)/);
+ assert.match(scheduler,/if\s*\(!config\.enabled\)/);
  assert.match(scheduler,/latest.data\?\.opted_in/);
 });
 test("Descadastro de um clique não acontece via GET",()=>{
