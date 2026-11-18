@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { listarCampanhasAdmin } from "../campanhas/services/campanhasService";
+import { PACOTES_CAMPANHA, STATUS_CAMPANHA } from "../campanhas/config/pacotes";
 import { PLANOS_IMPULSIONAMENTO, dinheiro, validarPlano } from "./planos";
 
 const valor = "font-bold tabular-nums text-slate-900";
@@ -11,6 +13,16 @@ const status = [
 
 export default function ImpulsionamentoMaster() {
   const [volume, setVolume] = useState(10);
+  const [pedidos, setPedidos] = useState([]);
+  const [pedidosErro, setPedidosErro] = useState("");
+  const [pedidosLoading, setPedidosLoading] = useState(true);
+  useEffect(() => {
+    let active = true;
+    listarCampanhasAdmin().then((itens) => { if (active) setPedidos(itens); })
+      .catch(() => { if (active) setPedidosErro("Não foi possível carregar as solicitações. Confira as permissões de acesso à tabela de campanhas."); })
+      .finally(() => { if (active) setPedidosLoading(false); });
+    return () => { active = false; };
+  }, []);
   const [planoId, setPlanoId] = useState("regional");
   const plano = PLANOS_IMPULSIONAMENTO.find((p) => p.id === planoId) || PLANOS_IMPULSIONAMENTO[0];
   const total = plano.precoCentavos * volume;
@@ -57,6 +69,13 @@ export default function ImpulsionamentoMaster() {
           <div className="rounded-xl bg-slate-50 p-3"><p className="text-xs text-slate-500">Verba de mídia</p><p className={valor}>{dinheiro(midia)}</p></div>
           <div className="rounded-xl bg-slate-50 p-3"><p className="text-xs text-slate-500">Antes de demais custos</p><p className={valor}>{dinheiro(total - midia)}</p></div>
         </div>
+      </section>
+      <section className="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 className="font-semibold text-slate-900">Solicitações de campanhas existentes</h2>
+        <p className="mt-1 text-xs text-slate-500">Leitura administrativa da operação atual. Esta seção não altera pedidos, valores ou status e não confirma pagamentos.</p>
+        {pedidosLoading ? <p className="mt-4 text-sm text-slate-600">Carregando solicitações...</p> : pedidosErro ? <p role="alert" className="mt-4 text-sm text-amber-800">{pedidosErro}</p> : pedidos.length === 0 ? <p className="mt-4 text-sm text-slate-600">Nenhuma solicitação encontrada.</p> : (
+          <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[560px] text-left text-sm"><thead><tr className="border-b text-xs text-slate-500"><th className="py-2">Criada em</th><th>Contato</th><th>Região</th><th>Pacote solicitado</th><th>Status</th></tr></thead><tbody>{pedidos.map((item) => <tr key={item.id} className="border-b border-slate-100"><td className="py-3">{item.created_at ? new Date(item.created_at).toLocaleDateString("pt-BR") : "—"}</td><td className="pr-3">{item.nome_contato || "—"}</td><td className="pr-3">{item.cidade}/{item.uf}</td><td className="pr-3">{PACOTES_CAMPANHA.find((p) => p.id === item.pacote)?.nome || item.pacote || "—"}</td><td>{STATUS_CAMPANHA[item.status] || item.status || "—"}</td></tr>)}</tbody></table></div>
+        )}
       </section>
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="font-semibold text-slate-900">Etapas para a operação</h2>
