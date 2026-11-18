@@ -50,6 +50,11 @@ export default function AvesPerdidas({ onEntrar }) {
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {lista.map(({ id, data }) => (
               <CartaoPublico key={id}>
+                <div className="px-5 pt-4">
+                  {data.situacao === "reencontrado" ?
+                    <span className="inline-flex rounded-full bg-emerald-100 px-4 py-2 text-sm font-extrabold text-emerald-800">🦜💚 Reencontrada! Final feliz!</span> :
+                    <span className="inline-flex rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-900">🔎 Ainda desaparecida</span>}
+                </div>
                 {data.foto ? (
                   <img src={data.foto} alt={data.nomeAve || data.especie || "Ave perdida"} loading="lazy" className="aspect-[16/10] w-full object-cover" />
                 ) : (
@@ -60,11 +65,13 @@ export default function AvesPerdidas({ onEntrar }) {
                   <p className="mt-1 text-sm" style={{ color: TEMA_PUBLICO.texto }}>{[data.especie, data.cor, data.sexo && data.sexo !== "Não sei" ? data.sexo : "", data.idadeAproximada].filter(Boolean).join(" · ")}</p>
                   <p className="mt-2 text-sm font-semibold" style={{ color: TEMA_PUBLICO.verde }}>{[data.bairro, data.cidade && data.uf ? `${data.cidade}/${data.uf}` : data.cidade || data.uf].filter(Boolean).join(" · ")}</p>
                   {dataBrasil(data.dataPerda) && <p className="mt-1 text-xs" style={{color:TEMA_PUBLICO.texto}}>Desapareceu em {dataBrasil(data.dataPerda)}</p>}
-                  {data.caracteristicas && <p className="mt-3 text-sm leading-6 whitespace-pre-wrap break-words" style={{color:TEMA_PUBLICO.texto}}>{data.caracteristicas}</p>}
-                  {data.descricao && <p className="mt-2 text-sm leading-6 whitespace-pre-wrap break-words" style={{color:TEMA_PUBLICO.texto}}>{data.descricao}</p>}
-                  <p className="mt-4 rounded-xl p-3 text-xs leading-5" style={{ background: TEMA_PUBLICO.fundo, color: TEMA_PUBLICO.texto }}>
+                  {data.situacao === "reencontrado" && <p className="mt-3 rounded-xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-900">Boa notícia: esta ave voltou para sua família! 💚 {data.dataReencontro && "Reencontro em "+dataBrasil(data.dataReencontro)+"."}</p>}
+                  {data.situacao !== "reencontrado" && data.caracteristicas && <p className="mt-3 text-sm leading-6 whitespace-pre-wrap break-words" style={{color:TEMA_PUBLICO.texto}}>{data.caracteristicas}</p>}
+                  {data.situacao !== "reencontrado" && data.descricao && <p className="mt-2 text-sm leading-6 whitespace-pre-wrap break-words" style={{color:TEMA_PUBLICO.texto}}>{data.descricao}</p>}
+                  {data.situacao === "reencontrado" && data.depoimento && <blockquote className="mt-3 rounded-xl border border-emerald-100 bg-white p-3 text-sm italic leading-6 text-emerald-900">“{data.depoimento}”{Number(data.avaliacao)>0 && <span className="mt-2 block not-italic font-bold">{"⭐".repeat(Math.min(5,Number(data.avaliacao)))}</span>}</blockquote>}
+                  {data.situacao !== "reencontrado" && <p className="mt-4 rounded-xl p-3 text-xs leading-5" style={{ background: TEMA_PUBLICO.fundo, color: TEMA_PUBLICO.texto }}>
                     Encontrou esta ave? Avise o Avespet. Nossa equipe fará a intermediação com o responsável.
-                  </p>
+                  </p>}}
                 </div>
               </CartaoPublico>
             ))}
