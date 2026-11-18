@@ -59,3 +59,12 @@ A branch `feature/impulsionamento-aves-perdidas` adiciona um catálogo centraliz
 - A validação de titularidade no navegador é apenas uma camada de conveniência: antes de ativar **planos de preço fixo, pagamentos ou outras operações sensíveis**, será necessária validação autoritativa de titularidade no servidor, com RLS, auditoria e testes específicos.
 - Atenção ao fluxo legado: a inserção pública de solicitação de orçamento continua existente. Não interpretar recebimento de pedido como pagamento confirmado.
 - Verificação até agora: arquivos e ligações de código conferidos no GitHub; **build e testes de execução ainda pendentes**. Não houve deploy.
+
+## Continuidade — triagem de solicitações no Master
+
+- Adicionado o componente `src/features/impulsionamento/SolicitacoesMaster.jsx` ao painel de impulsionamento. Utiliza a tabela legada `solicitacoes_campanhas_aves` e reaproveita o serviço de campanhas existente.
+- O Master pode listar, pesquisar e filtrar pedidos de orçamento e, quando permitido pelo banco, registrar observações privadas e status de triagem (`solicitada`, `em_orcamento`, `aguardando_pagamento`, `cancelada`).
+- A tela bloqueia a edição de pedidos em estados `paga`, `em_execucao` e `concluida`, e não disponibiliza ação de confirmar pagamento, efetuar cobrança ou ativar Meta Ads.
+- O banco legado possui uma função administrativa mais ampla de alteração de status. **O bloqueio na interface não é controle de autorização**. Antes de lançar pagamentos é obrigatório criar fluxo de servidor validado, transições com auditoria e verificação do webhook financeiro, impedindo marcação arbitrária de pago.
+- A confirmação de ações de triagem ocorre com confirmação explícita no navegador. A execução do SQL em produção não foi alterada.
+- No repositório, a nova tela e o vínculo com o Master foram salvos na branch de desenvolvimento. O build e os testes de navegação ainda não foram executados; produção segue inalterada.
