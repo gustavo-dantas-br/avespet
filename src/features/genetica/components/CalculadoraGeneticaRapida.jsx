@@ -15,6 +15,7 @@ const botao = (ativo) => ({
 });
 const MUTACOES = [
   { titulo: "Cores básicas e fatores", ids: ["green","blue","turquoise","turquoise-blue","cobalt","mauve","violet","grey","grey-green"] },
+  { titulo: "Combinações de cores e mutações", ids: ["blue-cinnamon","violet-cinnamon","turquoise-violet","cobalt-cinnamon","turquoise-cobalt"] },
   { titulo: "Ino e Pallid (ligadas ao sexo)", ids: ["lutino","albino","pallid","pallid-blue","pallidino"] },
 ];
 const NOVA = () => ({ cor: "", extras: {} });
@@ -49,6 +50,8 @@ function QuadroPai({ titulo, sexo, aves, selecionada, onChange }) {
   const isGreen = selecionada.cor === "green" || selecionada.cor === "grey-green";
   const currentIno = selecionada.extras?.ino || "";
   const selectedPreset = ["lutino","albino","pallid","pallid-blue","pallidino"].includes(selecionada.cor);
+  const hasCinnamon = ["blue-cinnamon","violet-cinnamon","cobalt-cinnamon"].includes(selecionada.cor);
+  const cinnamonEscolhida = selecionada.extras?.cinnamon || (hasCinnamon ? "visual" : "normal");
   return (
     <div className="rounded-2xl border p-4 space-y-3" style={{borderColor:"#d4e2d3", background:"#fcfdfb"}}>
       <div className="flex justify-between items-start gap-3">
@@ -128,6 +131,15 @@ function QuadroPai({ titulo, sexo, aves, selecionada, onChange }) {
                   </label>
                 )}
                 <label className="text-xs font-medium sm:col-span-2" style={{color:"#435d4c"}}>
+                  Canela (Cinnamon) — ligada ao sexo
+                  <select className="block w-full mt-1 p-2 rounded-lg" style={campo}
+                    value={cinnamonEscolhida} onChange={e=>update("cinnamon",e.target.value)}>
+                    <option value="normal">Sem Canela conhecida</option>
+                    {sexo === "Macho" && <option value="split">Portador de Canela (não visual)</option>}
+                    <option value="visual">Canela visual</option>
+                  </select>
+                </label>
+                <label className="text-xs font-medium sm:col-span-2" style={{color:"#435d4c"}}>
                   Ino / Pallid (mesmo locus ligado ao sexo)
                   <select className="block w-full mt-1 p-2 rounded-lg" style={campo}
                     value={currentIno || (selectedPreset ? "" : "normal")}
@@ -144,7 +156,7 @@ function QuadroPai({ titulo, sexo, aves, selecionada, onChange }) {
                   </select>
                 </label>
               </div>
-              <p className="text-xs" style={{color:"#637366"}}>Ino/Pallid e outras mutações ligadas ao sexo podem mascarar a cor-base. Quando o genótipo real não for conhecido, os resultados são condicionais.</p>
+              <p className="text-xs" style={{color:"#637366"}}>Ino/Pallid e Cinnamon são ligados ao sexo: a previsão conjunta pode exigir fase genética. Cobalto Turquesa pode exigir dados adicionais do fator escuro. O Avespet não deve inventar percentuais.</p>
             </div>
           )}
         </div>
