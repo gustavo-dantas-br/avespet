@@ -47,7 +47,7 @@ test("interface prepara e-mail sem enviar, restrita ao anúncio",()=>{
 test("campanha Meta é opcional nos dois modelos, sem promessa de reencontro",()=>{
   for (const mode of ["acompanhamento","possivel_reencontro"]) {
     const result=lostBirdMessage(bluu,mode).text;
-    assert.match(result,/campanha paga de impulsionamento regional/);
+    assert.match(result,/divulgação paga no Facebook e Instagram/);
     assert.match(result,/Facebook e Instagram/);
     assert.match(result,/Não há garantia de recuperação/);
     assert.match(result,/apresenta um orçamento/);
@@ -60,4 +60,15 @@ test("link da campanha preserva o ID exato do anúncio sem expor telefone",()=>{
   assert.match(message,new RegExp("campanha-ave-perdida\\?anuncio="+id));
   assert.doesNotMatch(message,/984972095/);
   assert.match(lostBirdMessage(bluu).text,/https:\/\/www.avespet.com.br\/campanha-ave-perdida/);
+});
+
+test("exemplo explica descoberta possível sem prometer rastreamento de pesquisa",()=>{
+  for (const mode of ["acompanhamento","possivel_reencontro"]) {
+    const text = lostBirdMessage(bluu,mode).text;
+    assert.match(text,/alguém encontra uma ave parecida com Bluu/);
+    assert.match(text,/procurar informações na internet/);
+    assert.match(text,/pesquisa na internet não ativa automaticamente/);
+    assert.match(text,/Facebook e Instagram/);
+    assert.match(text,/Não há garantia de recuperação/);
+  }
 });
