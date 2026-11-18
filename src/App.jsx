@@ -39,7 +39,7 @@ const AdminCampanhas = React.lazy(() => import("./features/campanhas").then((m) 
 const ModeracaoAvesPerdidasTab = React.lazy(() => import("./features/aves-perdidas/components/ModeracaoAvesPerdidasTab"));
 const AchadosTab = React.lazy(() => import("./features/aves-perdidas/components/AchadosTab"));
 const AprovacoesTab = React.lazy(() => import("./features/anuncios/components/AprovacoesTab"));
-const CalculadoraGenetica = React.lazy(() => import("./features/genetica/components/CalculadoraGenetica"));
+const CalculadoraGenetica = React.lazy(() => import("./features/genetica/components/CalculadoraGeneticaRapida"));
 const ReservasTab = React.lazy(() => import("./features/reservas/ReservasTab"));
 const DashboardTab = React.lazy(() => import("./features/dashboard/components/DashboardTab"));
 const FinanceiroTab = React.lazy(() => import("./features/financeiro/components/FinanceiroTab"));
