@@ -88,9 +88,9 @@ export function criarSelecaoDeAve(ave, sexo) {
   const mutacoesVisuais = (ave.mutacoesVisuais || []).map(normalize);
   const extras = {
     ...ave.extras,
-    violet: ave.extras?.violet ?? dose(ave.fatoresGeneticos?.violetFactor, undefined),
-    dark: ave.extras?.dark ?? dose(ave.fatoresGeneticos?.darkFactor, undefined),
-    grey: ave.extras?.grey ?? (mutacoesVisuais.some((s) => s.includes("grey") || s.includes("cinza")) ? 1 : undefined),
+    violet: ave.extras?.violet ?? dose(ave.fatoresGeneticos?.violetFactor, null),
+    dark: ave.extras?.dark ?? dose(ave.fatoresGeneticos?.darkFactor, null),
+    grey: ave.extras?.grey ?? (mutacoesVisuais.some((s) => s.includes("grey") || s.includes("cinza")) ? 1 : null),
   };
   const splitBlue = portadores.includes("blue") || portadores.includes("azul");
   const splitTurq = portadores.includes("turquoise") || portadores.includes("turquesa");
