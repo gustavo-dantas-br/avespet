@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import ReunionReviews from "./ReunionReviews";
+import { lostBirdMessage, whatsappDigits } from "./lostBirdContactTemplates";
 import { RefreshCw, CheckCircle2, XCircle, Clock3, AlertCircle, Bird, Mail, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 
 const STATUS = { pendente: "Pendente", aprovado: "Publicado", reencontrado: "Reencontradas 💚", rejeitado: "Rejeitado", encerrado: "Encerrado", todos: "Todos" };
@@ -26,7 +27,7 @@ function emailResult(status) {
   return "Aprovação registrada. Atualize os dados para verificar a situação do e-mail.";
 }
 
-export default function LostBirdsModeration() {
+export default function LostBirdsModeration({ onPrepareEmail }) {
   const [status, setStatus] = useState("pendente");
   const [page, setPage] = useState(1);
   const [result, setResult] = useState({ items: [], total: 0, totalPages: 1 });
@@ -35,6 +36,12 @@ export default function LostBirdsModeration() {
   const [emailTesting, setEmailTesting] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [contactId, setContactId] = useState("");
+  const [contactMode, setContactMode] = useState("acompanhamento");
+  const [contactText, setContactText] = useState("");
+  const [contactSubject, setContactSubject] = useState("");
+  const [contactBusy, setContactBusy] = useState(false);
+  const [contactFeedback, setContactFeedback] = useState("");
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -49,6 +56,76 @@ export default function LostBirdsModeration() {
     } finally { setLoading(false); }
   }, [status, page]);
   useEffect(() => { load(); }, [load]);
+
+  function openContact(ad, kind = "acompanhamento") {
+    if (!ad?.id) return;
+    const { text, subject } = lostBirdMessage(ad, kind);
+    setContactId(ad.id);
+    setContactMode(kind);
+    setContactText(text);
+    setContactSubject(subject);
+    setContactFeedback("");
+    setError("");
+  }
+
+  function changeContactMode(ad, kind) {
+    const { text, subject } = lostBirdMessage(ad, kind);
+    setContactMode(kind);
+    setContactText(text);
+    setContactSubject(subject);
+    setContactFeedback("");
+  }
+
+  async function copyContact() {
+    if (!contactText.trim()) return;
+    try {
+      await navigator.clipboard.writeText(contactText);
+      setContactFeedback("Mensagem copiada para a área de transferência.");
+    } catch {
+      setContactFeedback("Não foi possível copiar automaticamente. Selecione o texto e copie manualmente.");
+    }
+  }
+
+  function openWhatsApp(ad) {
+    const to = whatsappDigits(ad?.data?.whatsapp);
+    if (!to) {
+      setContactFeedback("Número de WhatsApp ausente ou inválido. Confira o cadastro do tutor.");
+      return;
+    }
+    if (!contactText.trim()) return;
+    const url = "https://wa.me/" + to + "?text=" + encodeURIComponent(contactText);
+    window.open(url, "_blank", "noopener,noreferrer");
+    setContactFeedback("WhatsApp aberto com a mensagem. Confira o destinatário e envie manualmente.");
+  }
+
+  async function prepareEmail(ad) {
+    if (contactBusy || typeof onPrepareEmail !== "function") return;
+    if (!contactText.trim() || !contactSubject.trim()) {
+      setContactFeedback("Informe o assunto e a mensagem.");
+      return;
+    }
+    setContactBusy(true);
+    setContactFeedback("");
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke("master-lost-birds", {
+        body: { action: "contact", anuncio_id: ad.id },
+      });
+      if (invokeError || data?.error || !data?.success || !data.to) {
+        throw new Error(data?.error || "Não foi possível verificar o e-mail do responsável.");
+      }
+      onPrepareEmail({
+        source_id: ad.id,
+        to: data.to,
+        subject: contactSubject.trim(),
+        text: contactText.trim().replaceAll("**", ""),
+      });
+      setContactId("");
+    } catch(e) {
+      setContactFeedback(e?.message || "Não foi possível preparar o e-mail.");
+    } finally {
+      setContactBusy(false);
+    }
+  }
 
   async function testarEmail() {
     if (emailTesting || busyId) return;
@@ -171,6 +248,10 @@ export default function LostBirdsModeration() {
               {ad.email_status ? <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600"><Mail size={15}/>{MAIL[ad.email_status] || "Status do e-mail: " + ad.email_status}{ad.email_sent_at ? " · " + ptDate(ad.email_sent_at) : ""}</p> :
                 <p className="mt-3 text-xs text-slate-400">E-mail automático: ainda sem envio registrado.</p>}
               <div className="mt-4 flex flex-wrap gap-2">
+                <button type="button" disabled={!!busyId} onClick={() => openContact(ad)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-800 disabled:opacity-50">
+                  <Mail size={15}/> Contatar responsável
+                </button>
                 {ad.status === "aprovado" && ad.has_owner && <button disabled={!!busyId}
                   onClick={()=>registrarReencontroConfirmado(ad)}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-100 px-3 py-2 text-xs font-semibold text-emerald-900 disabled:opacity-50">
@@ -181,6 +262,39 @@ export default function LostBirdsModeration() {
                 {ad.status !== "reencontrado" && ad.status !== "encerrado" && <button disabled={!!busyId} onClick={() => moderate(ad, "encerrado")} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold text-slate-600 disabled:opacity-50"><Clock3 size={15}/>Encerrar</button>}
                 {ad.status !== "reencontrado" && ad.status !== "pendente" && <button disabled={!!busyId} onClick={() => moderate(ad, "pendente")} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold text-slate-600 disabled:opacity-50">Voltar à análise</button>}
               </div>
+              {contactId === ad.id && <section className="mt-4 space-y-3 rounded-xl border border-blue-200 bg-blue-50/50 p-4" aria-label={"Mensagem para o responsável de " + (data.nomeAve || "ave perdida")}>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Contato personalizado · {data.nomeAve || "Ave perdida"}</h3>
+                    <p className="mt-1 text-xs text-slate-500">Responsável: {data.contatoNome || "Não informado"} · WhatsApp: {data.whatsapp || "Não informado"}</p>
+                  </div>
+                  <button type="button" onClick={() => {setContactId("");setContactFeedback("");}} className="rounded-lg border bg-white px-3 py-1.5 text-xs text-slate-600">Fechar</button>
+                </div>
+                <label className="block text-xs font-semibold text-slate-700">Modelo de mensagem
+                  <select className="mt-1 block w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm"
+                    value={contactMode} onChange={e=>changeContactMode(ad,e.target.value)}>
+                    <option value="acompanhamento">Acompanhar busca e solicitar novidades</option>
+                    <option value="possivel_reencontro">Possível reencontro: solicitar confirmação</option>
+                  </select>
+                </label>
+                <label className="block text-xs font-semibold text-slate-700">Assunto para e-mail
+                  <input className="mt-1 block w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm" value={contactSubject}
+                    maxLength={180} onChange={e=>setContactSubject(e.target.value)}/>
+                </label>
+                <label className="block text-xs font-semibold text-slate-700">Mensagem (editável)
+                  <textarea className="mt-1 block min-h-[250px] w-full rounded-lg border border-slate-200 bg-white p-3 text-sm leading-6"
+                    value={contactText} onChange={e=>setContactText(e.target.value)} maxLength={4500}/>
+                </label>
+                <p className="text-xs text-slate-600">O sistema preenche os dados deste anúncio. Confirme as informações antes de enviar. Nenhum contato é disparado automaticamente.</p>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" disabled={!contactText.trim()} onClick={copyContact} className="rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-bold text-blue-800 disabled:opacity-50">Copiar mensagem</button>
+                  <button type="button" disabled={!whatsappDigits(data.whatsapp) || !contactText.trim()} onClick={()=>openWhatsApp(ad)}
+                    className="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Abrir WhatsApp</button>
+                  <button type="button" disabled={contactBusy || !contactText.trim() || !contactSubject.trim()} onClick={()=>prepareEmail(ad)}
+                    className="rounded-lg bg-blue-800 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{contactBusy ? "Preparando e-mail..." : "Preparar e-mail"}</button>
+                </div>
+                {contactFeedback && <p role="status" className="rounded-lg bg-white p-3 text-xs text-slate-700">{contactFeedback}</p>}
+              </section>}
             </div>
           </div>
         </article>;
