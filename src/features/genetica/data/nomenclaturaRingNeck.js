@@ -77,6 +77,28 @@ export function mostrarNomePopularRingNeck(valor) {
     ["Blue (Azul)", "Azul (Blue)"],
     ["Turquoise (Turquesa)", "Turquesa (Turquoise)"],
   ];
+  // O motor pode retornar a série e cada fator separadamente.
+  // Converta o conjunto para a cor popular, sem alterar os percentuais.
+  const tokens = nome.split(" · ");
+  const temBlue = tokens.some((v)=>norm(v)==="blue (azul)");
+  if (temBlue && tokens.some((v)=>/^dark (sf|df)$/i.test(v))) {
+    const dark = tokens.some((v)=>/^dark df$/i.test(v)) ? "DF" : "SF";
+    const violet = tokens.some((v)=>/^violet df$/i.test(v)) ? "DF"
+      : tokens.some((v)=>/^violet sf$/i.test(v)) ? "SF" : "";
+    const semBase = tokens.filter((v)=>![
+      "blue (azul)", "dark sf", "dark df", "violet sf", "violet df",
+    ].includes(norm(v)));
+    const principal = violet
+      ? (dark === "SF" ? "Violeta Cobalto" : "Violeta Malva") +
+        " (Violet " + violet + " + Dark " + dark + ")"
+      : dark === "SF" ? "Cobalto (Dark SF)" : "Malva (Dark DF)";
+    return [principal, ...semBase.map(v=>mostrarNomePopularRingNeck(v))].join(" · ");
+  }
+  if (temBlue && tokens.some((v)=>/^violet (sf|df)$/i.test(v))) {
+    const violet = tokens.some((v)=>/^violet df$/i.test(v)) ? "DF" : "SF";
+    const semBase=tokens.filter((v)=>!["blue (azul)","violet sf","violet df"].includes(norm(v)));
+    return ["Violeta (Violet "+violet+")", ...semBase.map(v=>mostrarNomePopularRingNeck(v))].join(" · ");
+  }
   // Reconhece o nome completo antes dos fragmentos para não perder a
   // apresentação popular de Cobalto Violeta, Malva Violeta etc.
   const partes = nome.split(" · ");
