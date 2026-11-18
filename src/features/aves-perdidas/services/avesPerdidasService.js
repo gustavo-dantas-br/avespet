@@ -62,3 +62,11 @@ export async function atualizarMeuAnuncioPerdida(userId, anuncioId, dados) {
   }
   return data[0].id;
 }
+
+export async function confirmarReencontro(anuncioId, { data, relato, nota, autoriza }) {
+  const { error } = await supabase.rpc("confirmar_reencontro_ave_perdida", {
+    p_anuncio_id: anuncioId, p_data_reencontro: data, p_relato: relato.trim(),
+    p_nota: nota === "" ? null : Number(nota), p_autoriza_publicacao: Boolean(autoriza),
+  });
+  if (error) throw error;
+}

@@ -3,7 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
 const origins = new Set(["https://avespet.com.br", "https://www.avespet.com.br"]);
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const states = new Set(["pendente", "aprovado", "rejeitado", "encerrado"]);
+const states = new Set(["pendente", "aprovado", "rejeitado", "encerrado", "reencontrado"]);
 function allowed(origin: string | null) {
   if (!origin || origins.has(origin)) return true;
   try {
@@ -122,6 +122,7 @@ Deno.serve(async (req) => {
       .select("id,status").eq("id", id).maybeSingle();
     if (currentError) return reply({ error: "Não foi possível consultar o anúncio." }, 503, origin);
     if (!current) return reply({ error: "Anúncio não localizado." }, 404, origin);
+    if (current.status === "reencontrado") return reply({ error: "Reencontro confirmado pelo tutor. Não é possível reabrir a busca pela moderação comum." }, 409, origin);
     if (current.status === target) return reply({ error: "O anúncio já está nesse status." }, 409, origin);
     if (target === "pendente" && current.status === "pendente") return reply({ error: "Já está em análise." }, 409, origin);
 
