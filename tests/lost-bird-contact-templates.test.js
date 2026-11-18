@@ -47,7 +47,7 @@ test("interface prepara e-mail sem enviar, restrita ao anúncio",()=>{
 test("campanha Meta é opcional nos dois modelos, sem promessa de reencontro",()=>{
   for (const mode of ["acompanhamento","possivel_reencontro"]) {
     const result=lostBirdMessage(bluu,mode).text;
-    assert.match(result,/campanha paga de impulsionamento regional/);
+    assert.match(result,/divulgação paga no Facebook e Instagram/);
     assert.match(result,/Facebook e Instagram/);
     assert.match(result,/Não há garantia de recuperação/);
     assert.match(result,/apresenta um orçamento/);
