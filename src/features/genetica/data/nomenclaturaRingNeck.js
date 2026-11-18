@@ -16,6 +16,16 @@ export const APARENCIAS_COMUNS_RING_NECK = Object.freeze([
   { value: "popular|Cremino", label: "Cremino (Ino, série turquesa)", ordem: 12, tipo: "ino" },
 ]);
 
+// Combinações populares: valor salvo no plantel permanece estável;
+// o id é usado somente pelo motor da calculadora.
+export const COMBINACOES_POPULARES_RING_NECK = Object.freeze([
+  { id: "blue-cinnamon", value: "Azul Canela", label: "Azul Canela (Skyblue / Blue Cinnamon)", serie: "B/B", cinnamon: true, base: "Blue (Azul)", ordem: 12 },
+  { id: "violet-cinnamon", value: "Violeta Canela", label: "Violeta Canela (Violet SF + Cinnamon)", serie: "B/B", violet: 1, cinnamon: true, base: "Blue (Azul)", ordem: 13 },
+  { id: "turquoise-violet", value: "Violeta Turquesa", label: "Violeta Turquesa (Turquoise Blue + Violet SF)", serie: "T/B", violet: 1, base: "Turquoise Blue (Azul Turquesa)", ordem: 14 },
+  { id: "cobalt-cinnamon", value: "Cobalto Canela", label: "Cobalto Canela (Dark SF + Cinnamon)", serie: "B/B", dark: 1, cinnamon: true, base: "Blue (Azul)", ordem: 15 },
+  { id: "turquoise-cobalt", value: "Cobalto Turquesa", label: "Cobalto Turquesa (Turquoise Blue + Dark SF)", serie: "T/B", dark: 1, base: "Turquoise Blue (Azul Turquesa)", ordem: 16 },
+]);
+
 const ALIAS_MUTACOES = Object.freeze([
   ["Pallid azul", "Pálido azul (Pallid Blue)", 13],
   ["Pallid (Palido)", "Pálido (Pallid)", 14],
@@ -45,9 +55,11 @@ const norm = (s) => String(s || "")
 
 const mapNomes = new Map();
 for (const item of APARENCIAS_COMUNS_RING_NECK) mapNomes.set(norm(item.value), item.label);
+for (const item of COMBINACOES_POPULARES_RING_NECK) mapNomes.set(norm(item.value), item.label);
 for (const [value, label] of ALIAS_MUTACOES) mapNomes.set(norm(value), label);
 const rankNomes = new Map();
 for (const item of APARENCIAS_COMUNS_RING_NECK) rankNomes.set(norm(item.value), item.ordem);
+for (const item of COMBINACOES_POPULARES_RING_NECK) rankNomes.set(norm(item.value), item.ordem);
 for (const [value, , ordem] of ALIAS_MUTACOES) rankNomes.set(norm(value), ordem);
 
 export function mostrarNomePopularRingNeck(valor) {
