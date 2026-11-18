@@ -24,7 +24,7 @@ export function lostBirdMessage(ad, kind = "acompanhamento") {
   const description = [details, place ? "em " + place : "", when ? "desaparecida em " + when : ""]
     .filter(Boolean).join(", ");
   const intro = `Olá, ${owner}! Tudo bem? 🦜💚\n\nAqui é da equipe Avespet!\n\nEstamos acompanhando a busca por ${bird}, ${description}.`;
-  const campaignUrl = /^\\w{8}-[\\w-]{27,}$/.test(String(ad?.id || ""))
+  const campaignUrl = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(ad?.id || ""))
     ? "https://www.avespet.com.br/campanha-ave-perdida?anuncio=" + encodeURIComponent(ad.id)
     : "https://www.avespet.com.br/campanha-ave-perdida";
   const boostPitch = `\n\n🟢 *Se ${bird} ainda estiver desaparecida, podemos ampliar a divulgação!*\n\nO anúncio gratuito no Avespet continua disponível para consulta e compartilhamento. Ele é importante, mas a divulgação orgânica depende de quem vê e compartilha a publicação.\n\n📣 Com uma *campanha paga de impulsionamento regional*, podemos avaliar anúncios no Facebook e Instagram (Meta) para alcançar também pessoas que ainda não seguem nossas páginas, com foco na cidade do desaparecimento e regiões próximas. Isso amplia a visibilidade da busca e pode aumentar as chances de alguém reconhecer a ave e informar seu paradeiro.\n\nA campanha é opcional: nossa equipe analisa a região, apresenta um orçamento e só inicia a divulgação após sua aprovação e confirmação do pagamento. *Não há garantia de recuperação.*\n\n👉 Solicite uma proposta sem compromisso: ${campaignUrl}`;
