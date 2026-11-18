@@ -75,7 +75,7 @@ export default function LostBirdsModeration() {
     const bird=ad.data?.nomeAve||"esta ave";
     const date=window.prompt("Data do reencontro de "+bird+" (AAAA-MM-DD). Registre somente após o tutor confirmar:",new Date().toISOString().slice(0,10));
     if(date===null)return;
-    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)){setError("Informe a data no formato AAAA-MM-DD.");return;}
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){setError("Informe a data no formato AAAA-MM-DD.");return;}
     const note=window.prompt("Como o tutor confirmou o reencontro? Informe o canal e quando recebeu a confirmação (mínimo 15 caracteres). Esta observação é privada:");
     if(note===null)return;
     if(note.trim().length<15||note.trim().length>500){setError("Informe uma justificativa de 15 a 500 caracteres.");return;}
