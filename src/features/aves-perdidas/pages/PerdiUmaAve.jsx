@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { atualizarMeuAnuncioPerdida, criarAnuncioPerdida, listarMinhasAvesPerdidas } from "../services/avesPerdidasService";
+import { atualizarMeuAnuncioPerdida, criarAnuncioPerdida, listarMinhasAvesPerdidas, confirmarReencontro } from "../services/avesPerdidasService";
 import { comprimirEEnviarImagemPublica } from "../utils/comprimirImagem";
 import { supabase } from "../../../supabaseClient";
 import { guardarCadastroPendente, lerCadastroPendente, marcarConfirmacaoSolicitada } from "../services/cadastroPendenteAvePerdida";
@@ -10,6 +10,7 @@ const STATUS = {
   aprovado: { label: "Publicado", cor: "#405331", fundo: "#e4ead9" },
   rejeitado: { label: "Não aprovado", cor: "#a6402b", fundo: "#f0dad4" },
   encerrado: { label: "Busca encerrada", cor: "#6b5638", fundo: "#e3d3b4" },
+  reencontrado: { label: "Reencontrada! 💚", cor: "#17633a", fundo: "#d4f4df" },
 };
 
 const FORM_INICIAL = { nomeAve: "", especie: "Ring Neck", cor: "", sexo: "", idadeAproximada: "", caracteristicas: "", anilha: "", cidade: "", uf: "SP", dataPerda: "", descricao: "", contatoNome: "", whatsapp: "", bairro: "", foto: "" };
@@ -35,6 +36,9 @@ export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
   const [reenviandoConfirmacao, setReenviandoConfirmacao] = useState(false);
   const [ultimoReenvio, setUltimoReenvio] = useState(0);
   const [emailNovo, setEmailNovo] = useState(false);
+  const [reencontroId, setReencontroId] = useState(null);
+  const [reencontro, setReencontro] = useState({ data: new Date().toISOString().slice(0,10), relato: "", nota: "", autoriza: false });
+  const [salvandoReencontro, setSalvandoReencontro] = useState(false);
   const alterar = (campo, valor) => setForm((atual) => ({ ...atual, [campo]: valor }));
 
   useEffect(() => {
@@ -82,6 +86,21 @@ export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
     setAnuncioCriadoId("");
     setMensagem("");
     setErro("");
+  }
+
+  async function registrarReencontro(event) {
+    event.preventDefault();
+    if (!reencontroId || salvandoReencontro) return;
+    if (!window.confirm("Você confirma que sua ave voltou em segurança? Seu anúncio continuará público como REENCONTRADA. O depoimento só será divulgado se autorizado e aprovado.")) return;
+    setSalvandoReencontro(true); setErro(""); setMensagem("");
+    try {
+      await confirmarReencontro(reencontroId, reencontro);
+      setReencontroId(null);
+      setReencontro({data:new Date().toISOString().slice(0,10),relato:"",nota:"",autoriza:false});
+      setMensagem("Que alegria! 💚 O reencontro foi registrado. Sua ave continua na página como REENCONTRADA. O depoimento autorizado aguardará revisão.");
+      await carregarAnuncios();
+    } catch(e) {setErro(e?.message || "Não foi possível confirmar o reencontro.");}
+    finally {setSalvandoReencontro(false);}
   }
 
   async function enviar(e) {
@@ -329,8 +348,39 @@ export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
                 <div className="font-semibold">{dados.nomeAve || dados.especie}</div>
                 <div className="text-xs mt-1">{dados.cidade}{dados.uf ? "/"+dados.uf : ""}</div>
                 <span className="inline-block text-xs rounded px-2 py-1 mt-2" style={{background:status.fundo,color:status.cor}}>{status.label}</span>
-                {anuncio.status !== "encerrado" && faltando.length > 0 && <p className="text-xs mt-2" style={{color:"#8a5a12"}}>Para ajudar na busca, complete: {faltando.join(", ")}.</p>}
-                {anuncio.status !== "encerrado" && <button type="button" onClick={() => iniciarEdicao(anuncio)} className="block mt-3 rounded-lg px-3 py-2 text-sm font-semibold" style={{background:"#405331",color:"#fff"}}>Editar anúncio</button>}
+                {!["encerrado","reencontrado"].includes(anuncio.status) && faltando.length > 0 && <p className="text-xs mt-2" style={{color:"#8a5a12"}}>Para ajudar na busca, complete: {faltando.join(", ")}.</p>}
+                {!["encerrado","reencontrado"].includes(anuncio.status) && <button type="button" onClick={() => iniciarEdicao(anuncio)} className="block mt-3 rounded-lg px-3 py-2 text-sm font-semibold" style={{background:"#405331",color:"#fff"}}>Editar anúncio</button>}
+                {anuncio.status === "aprovado" && <button type="button" onClick={() => {setReencontroId(anuncio.id);setErro("");setMensagem("");}}
+                  className="mt-3 block rounded-lg px-3 py-2 text-sm font-bold" style={{background:"#d4f4df",color:"#17633a"}}>💚 Minha ave foi reencontrada!</button>}
+                {anuncio.status === "reencontrado" && <p className="mt-2 text-sm font-semibold" style={{color:"#17633a"}}>Final feliz registrado! O anúncio continua público.</p>}
+                {reencontroId === anuncio.id && anuncio.status === "aprovado" && <form onSubmit={registrarReencontro}
+                  className="mt-4 flex flex-col gap-3 rounded-lg p-4" style={{background:"#F1F7F2",border:"1px solid #B2D8BF"}}>
+                  <h3 className="font-bold">Conte a boa notícia! 🦜💚</h3>
+                  <label className="text-sm">Data do reencontro
+                    <input required type="date" max={new Date().toISOString().slice(0,10)} style={input} value={reencontro.data}
+                      onChange={e=>setReencontro(p=>({...p,data:e.target.value}))}/>
+                  </label>
+                  <label className="text-sm">Como foi o reencontro? (opcional)
+                    <textarea rows={3} maxLength={1000} style={input} value={reencontro.relato}
+                      placeholder="Conte sua experiência sem informar telefone, endereço ou dados pessoais."
+                      onChange={e=>setReencontro(p=>({...p,relato:e.target.value}))}/>
+                  </label>
+                  <label className="text-sm">Como avalia sua experiência no Avespet? (opcional)
+                    <select style={input} value={reencontro.nota} onChange={e=>setReencontro(p=>({...p,nota:e.target.value}))}>
+                      <option value="">Prefiro não avaliar</option>
+                      {[5,4,3,2,1].map(n=><option key={n} value={String(n)}>{n} {n===1?"estrela":"estrelas"}</option>)}
+                    </select>
+                  </label>
+                  <label className="flex items-start gap-2 text-xs leading-5">
+                    <input type="checkbox" className="mt-1" checked={reencontro.autoriza}
+                      onChange={e=>setReencontro(p=>({...p,autoriza:e.target.checked}))}/>
+                    Autorizo o Avespet a publicar este relato e a nota, caso informados, após revisão. Meu telefone, e-mail e endereço não serão publicados.
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="submit" disabled={salvandoReencontro} className="rounded-lg bg-green-800 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{salvandoReencontro?"Confirmando...":"Confirmar reencontro"}</button>
+                    <button type="button" onClick={()=>setReencontroId(null)} className="rounded-lg border px-4 py-2 text-sm">Cancelar</button>
+                  </div>
+                </form>
               </div>
             </article>;
           })}
