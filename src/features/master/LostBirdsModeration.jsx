@@ -70,6 +70,28 @@ export default function LostBirdsModeration() {
     }
   }
 
+  async function registrarReencontroConfirmado(ad) {
+    if (busyId) return;
+    const bird=ad.data?.nomeAve||"esta ave";
+    const date=window.prompt("Data do reencontro de "+bird+" (AAAA-MM-DD). Registre somente após o tutor confirmar:",new Date().toISOString().slice(0,10));
+    if(date===null)return;
+    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)){setError("Informe a data no formato AAAA-MM-DD.");return;}
+    const note=window.prompt("Como o tutor confirmou o reencontro? Informe o canal e quando recebeu a confirmação (mínimo 15 caracteres). Esta observação é privada:");
+    if(note===null)return;
+    if(note.trim().length<15||note.trim().length>500){setError("Informe uma justificativa de 15 a 500 caracteres.");return;}
+    if(!window.confirm("Confirmar que "+bird+" foi REENCONTRADA? O anúncio continuará público como FINAL FELIZ. Não há reversão pela moderação comum."))return;
+    setBusyId(ad.id);setError("");setNotice("");
+    try {
+      const {data,error}=await supabase.functions.invoke("master-reunion-reviews",{
+        body:{action:"confirm",anuncio_id:ad.id,date,note:note.trim()}
+      });
+      if(error||data?.error||!data?.success)throw new Error(data?.error||"Falha ao registrar o reencontro.");
+      setNotice("Reencontro confirmado e registrado. A ave continuará pública com o selo FINAL FELIZ. Nenhum depoimento foi publicado automaticamente.");
+      if(page!==1)setPage(1);else await load();
+    } catch(e){setError(e?.message||"Falha ao registrar o reencontro.");}
+    finally{setBusyId("");}
+  }
+
   async function moderate(ad, next) {
     if (busyId) return;
     const bird = ad.data?.nomeAve || ad.data?.especie || "esta ave";
@@ -149,6 +171,11 @@ export default function LostBirdsModeration() {
               {ad.email_status ? <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600"><Mail size={15}/>{MAIL[ad.email_status] || "Status do e-mail: " + ad.email_status}{ad.email_sent_at ? " · " + ptDate(ad.email_sent_at) : ""}</p> :
                 <p className="mt-3 text-xs text-slate-400">E-mail automático: ainda sem envio registrado.</p>}
               <div className="mt-4 flex flex-wrap gap-2">
+                {ad.status === "aprovado" && ad.has_owner && <button disabled={!!busyId}
+                  onClick={()=>registrarReencontroConfirmado(ad)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-100 px-3 py-2 text-xs font-semibold text-emerald-900 disabled:opacity-50">
+                  💚 Registrar reencontro confirmado
+                </button>}
                 {ad.status !== "reencontrado" && ad.status !== "aprovado" && <button disabled={!!busyId} onClick={() => moderate(ad, "aprovado")} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"><CheckCircle2 size={15}/>Aprovar e publicar</button>}
                 {ad.status !== "reencontrado" && ad.status !== "rejeitado" && <button disabled={!!busyId} onClick={() => moderate(ad, "rejeitado")} className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 disabled:opacity-50"><XCircle size={15}/>Rejeitar</button>}
                 {ad.status !== "reencontrado" && ad.status !== "encerrado" && <button disabled={!!busyId} onClick={() => moderate(ad, "encerrado")} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold text-slate-600 disabled:opacity-50"><Clock3 size={15}/>Encerrar</button>}
