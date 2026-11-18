@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Bird, Upload, X, Loader2, Save } from "lucide-react";
 import { CATALOGO_MUTACOES_RING_NECK, CORES_BASE_RING_NECK, normalizarChaveGenetica } from "../genetica/data/catalogoRingNeck";
-import { APARENCIAS_COMUNS_RING_NECK, mostrarNomePopularRingNeck, ordenarMutacoesRingNeck } from "../genetica/data/nomenclaturaRingNeck";
+import { APARENCIAS_COMUNS_RING_NECK, COMBINACOES_POPULARES_RING_NECK, mostrarNomePopularRingNeck, ordenarMutacoesRingNeck } from "../genetica/data/nomenclaturaRingNeck";
 export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoOptions, femeaOptions, parceiroOptions, mutacoes, clientes, fornecedores, onCancel, Card, Field, SectionTitle, inputStyle, ESPECIES, SEXOS, STATUS_AVE, ORIGEM_TIPOS, SeletorComprador, SeletorFornecedor, PesoHistorico }) {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target?.type === "checkbox" ? e.target.checked : e.target.value }));
   // Editar manualmente os campos do comprador desfaz o vinculo com o cliente
@@ -34,7 +34,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
   // Preservar nomes legados já salvos no plantel; só abrir "Outra" para nomes
   // que realmente não estão no catálogo nem são as aparências especiais.
   const [mutacaoLivre, setMutacaoLivre] = useState(() =>
-    !!form.corMutacao && !["Violeta", "Cobalto", "Mauve", "Grey (Cinza)", "Grey Green (Cinza-verde)", "Ino", "Cremino"].includes(form.corMutacao) &&
+    !!form.corMutacao && !["Violeta", "Cobalto", "Mauve", "Grey (Cinza)", "Grey Green (Cinza-verde)", "Ino", "Cremino", ...COMBINACOES_POPULARES_RING_NECK.map((v)=>v.value)].includes(form.corMutacao) &&
     ![...CATALOGO_MUTACOES_RING_NECK, ...mutacoes].some((m) => mesmaMutacao(m.nome, form.corMutacao))
   );
 
@@ -97,6 +97,22 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
                     }));
                   } else if (CORES_BASE_RING_NECK.some((cor) => cor.value === value)) {
                     setForm((f) => ({ ...f, corBase: value, corMutacao: "" }));
+                  } else if (ringNeck && COMBINACOES_POPULARES_RING_NECK.some((cor)=>cor.value===value)) {
+                    const escolha=COMBINACOES_POPULARES_RING_NECK.find((item)=>item.value===value);
+                    setForm((f)=>({
+                      ...f,
+                      corBase:escolha.base,
+                      corMutacao:value,
+                      mutacoesVisuais:[
+                        ...(f.mutacoesVisuais||[]).filter((v)=>!(/cinnamon|canela/i).test(v)),
+                        ...(escolha.cinnamon ? ["Cinnamon (Canela)"] : []),
+                      ],
+                      fatoresGeneticos:{
+                        ...(f.fatoresGeneticos||{}),
+                        ...(escolha.dark ? {darkFactor:escolha.dark} : {}),
+                        ...(escolha.violet ? {violetFactor:"SF"} : {}),
+                      },
+                    }));
                   } else if (ringNeck && APARENCIAS_COMUNS_RING_NECK.some((cor) => cor.value === value && cor.tipo === "fator")) {
                     const cor = APARENCIAS_COMUNS_RING_NECK.find((item) => item.value === value);
                     setForm((f) => ({
@@ -126,12 +142,17 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
                   {APARENCIAS_COMUNS_RING_NECK.filter((cor) => cor.tipo === "fator").map((cor) =>
                     <option key={cor.value} value={cor.value}>{cor.label}</option>)}
                 </optgroup>}
-                <optgroup label={ringNeck ? "3. Ino e combinações" : "Aparências conhecidas"}>
+                {ringNeck && <optgroup label="3. Combinações de cores e mutações">
+                  {COMBINACOES_POPULARES_RING_NECK.map((cor)=>(
+                    <option key={cor.id} value={cor.value}>{cor.label}</option>
+                  ))}
+                </optgroup>}
+                <optgroup label={ringNeck ? "4. Ino e combinações" : "Aparências conhecidas"}>
                   <option value="popular|Lutino">Lutino (Ino, série verde)</option>
                   <option value="popular|Albino">Albino (Ino, série azul)</option>
                   <option value="popular|Cremino">Cremino (Ino, série turquesa)</option>
                 </optgroup>
-                <optgroup label={ringNeck ? "4. Outras mutações" : "Mutações"}>
+                <optgroup label={ringNeck ? "5. Outras mutações" : "Mutações"}>
                   {mutacoesOrdenadas.filter((m) => !chaveMutacao(m.nome).startsWith("ino")).map((m) => (
                     <option key={m.id || m.nome} value={m.nome}>
                       {ringNeck ? mostrarNomePopularRingNeck(m.nome) : m.nome}
