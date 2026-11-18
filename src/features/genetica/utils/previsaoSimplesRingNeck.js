@@ -211,9 +211,14 @@ const etiqueta = (serie, fatores, z, sexo, cinnamon) => {
     if (violet===2) nomeBase = dark===0 ? "Violet DF (Violeta duplo fator)" :
       dark===1 ? "Violet DF Cobalt (Violeta DF cobalto)" : "Violet DF Mauve (Violeta DF malva)";
   }
+  if (!pref.visual && serie==="T/B" && fatores.grey===0 && fatores.dark===0 && fatores.violet===1)
+    nomeBase="Violeta Turquesa (Turquoise Blue + Violet SF)";
+  if (!pref.visual && serie==="T/B" && fatores.grey===0 && fatores.dark===1 && fatores.violet===0)
+    nomeBase="Cobalto Turquesa (Turquoise Blue + Dark SF)";
   const extrasNoNome = pref.visual ? extras : serie==="B/B"
     ? extras.filter((item)=>item.startsWith("Grey"))
-    : extras;
+    : (nomeBase.startsWith("Violeta Turquesa") || nomeBase.startsWith("Cobalto Turquesa"))
+      ? extras.filter((item)=>item.startsWith("Grey")) : extras;
   if (cinnamon==="visual" && !pref.visual) {
     if (serie==="B/B" && fatores.dark===0 && fatores.violet===0 && fatores.grey===0)
       nomeBase="Azul Canela (Skyblue / Blue Cinnamon)";
