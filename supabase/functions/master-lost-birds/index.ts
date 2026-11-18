@@ -106,6 +106,27 @@ Deno.serve(async (req) => {
     return reply({ items, page, total: count || 0, totalPages: Math.max(1, Math.ceil((count || 0) / pageSize)) }, 200, origin);
   }
 
+  if (action === "contact") {
+    const id = take(body.anuncio_id, 45);
+    if (!uuid.test(id)) return reply({ error: "Anúncio inválido." }, 400, origin);
+    const { data: ad, error: adError } = await admin.from("anuncios_aves_perdidas")
+      .select("id,user_id,status").eq("id", id).maybeSingle();
+    if (adError) return reply({ error: "Não foi possível consultar a ocorrência." }, 503, origin);
+    if (!ad) return reply({ error: "Anúncio não encontrado." }, 404, origin);
+    if (!ad.user_id) return reply({ error: "Anúncio sem conta responsável. Entre em contato pelo WhatsApp registrado." }, 409, origin);
+    const { data: account, error: accountError } = await admin.auth.admin.getUserById(ad.user_id);
+    if (accountError || !account?.user?.email_confirmed_at || !account.user.email) {
+      return reply({ error: "O responsável ainda não possui e-mail confirmado. Use o WhatsApp ou solicite a confirmação da conta." }, 409, origin);
+    }
+    const { error: auditError } = await admin.from("master_audit_log").insert({
+      actor_user_id: identity.user.id, action: "master_lost_bird_contact_prepared",
+      resource_type: "lost_bird_ad", resource_id: id,
+      metadata: { channel: "email", status: ad.status },
+    });
+    if (auditError) return reply({ error: "Não foi possível registrar a preparação do contato." }, 503, origin);
+    return reply({ success: true, source_id: id, to: account.user.email }, 200, origin);
+  }
+
   if (action === "moderate") {
     const id = take(body.anuncio_id, 45);
     const target = take(body.status, 20);
