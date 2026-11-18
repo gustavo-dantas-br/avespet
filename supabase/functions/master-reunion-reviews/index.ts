@@ -46,6 +46,24 @@ Deno.serve(async(req:Request)=>{
     ...names.get(x.anuncio_id)
   }))},200,origin);
  }
+ if(body.action==="confirm"){
+  const id=String(body.anuncio_id||"");
+  const recoveryDate=String(body.date||"");
+  const note=String(body.note||"").trim();
+  if(!uuid.test(id)||!/^\\d{4}-\\d{2}-\\d{2}$/.test(recoveryDate)||
+     note.length<15||note.length>500)return respond({error:"Informe data válida e confirmação do tutor (15–500 caracteres)."},400,origin);
+  const {error:auditError}=await db.from("master_audit_log").insert({
+    actor_user_id:identity.user.id,action:"master_reunion_confirmation_requested",
+    resource_type:"lost_bird_ad",resource_id:id,
+    metadata:{confirmation_received:true,date:recoveryDate,source:"tutor"}
+  });
+  if(auditError)return respond({error:"Não foi possível auditar a operação."},503,origin);
+  const {error:rpcError}=await db.rpc("master_confirmar_reencontro_ave_perdida",{
+    p_anuncio_id:id,p_data_reencontro:recoveryDate,p_observacao:note,p_admin_id:identity.user.id
+  });
+  if(rpcError)return respond({error:"Não foi possível confirmar. Verifique a data, o anúncio e a origem da confirmação."},409,origin);
+  return respond({success:true,status:"reencontrado"},200,origin);
+ }
  if(body.action==="review"){
   const id=String(body.anuncio_id||"");
   const approved=body.approve;
