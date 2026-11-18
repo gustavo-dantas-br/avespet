@@ -353,7 +353,9 @@ export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
                 {anuncio.status === "aprovado" && <button type="button" onClick={() => {setReencontroId(anuncio.id);setErro("");setMensagem("");}}
                   className="mt-3 block rounded-lg px-3 py-2 text-sm font-bold" style={{background:"#d4f4df",color:"#17633a"}}>💚 Minha ave foi reencontrada!</button>}
                 {anuncio.status === "reencontrado" && <p className="mt-2 text-sm font-semibold" style={{color:"#17633a"}}>Final feliz registrado! O anúncio continua público.</p>}
-                {reencontroId === anuncio.id && anuncio.status === "aprovado" && <form onSubmit={registrarReencontro}
+                {anuncio.status === "reencontrado" && <button type="button" onClick={() => {setReencontroId(anuncio.id);setErro("");setMensagem("");}}
+                  className="mt-2 block rounded-lg border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-900">Deixar minha avaliação ou depoimento</button>}
+                {reencontroId === anuncio.id && ["aprovado","reencontrado"].includes(anuncio.status) && <form onSubmit={registrarReencontro}
                   className="mt-4 flex flex-col gap-3 rounded-lg p-4" style={{background:"#F1F7F2",border:"1px solid #B2D8BF"}}>
                   <h3 className="font-bold">Conte a boa notícia! 🦜💚</h3>
                   <label className="text-sm">Data do reencontro
