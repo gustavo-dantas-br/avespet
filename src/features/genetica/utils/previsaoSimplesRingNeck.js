@@ -5,22 +5,21 @@
 // Premissas de cores simples são convenções de simulação, não laudos.
 
 export const CORES_RAPIDAS_RING_NECK = Object.freeze([
-  { id: "green", label: "Green (Verde)" },
-  { id: "blue", label: "Blue (Azul)" },
-  { id: "turquoise", label: "Turquoise (Turquesa)" },
-  { id: "turquoise-blue", label: "Turquoise Blue (Azul-turquesa)" },
-  { id: "violet", label: "Violet SF (Violeta)" },
-  { id: "cobalt", label: "Cobalt (Cobalto)" },
-  { id: "mauve", label: "Mauve (Malva)" },
-  { id: "grey", label: "Grey (Cinza)" },
-  { id: "grey-green", label: "Grey Green (Cinza-verde)" },
-  { id: "lutino", label: "Lutino (Amarelo Ino)" },
-  { id: "albino", label: "Albino (Branco Ino)" },
-  { id: "pallid", label: "Pallid (Pálido)" },
-  { id: "pallid-blue", label: "Pallid Blue (Pálido azul)" },
-  { id: "pallidino", label: "PallidIno (Pálido-Ino, macho)" },
+  { id: "green", label: "Verde (Green)" },
+  { id: "blue", label: "Azul (Blue)" },
+  { id: "turquoise", label: "Turquesa (Turquoise)" },
+  { id: "turquoise-blue", label: "Azul-turquesa (Turquoise Blue)" },
+  { id: "cobalt", label: "Cobalto (Dark SF)" },
+  { id: "mauve", label: "Malva (Dark DF)" },
+  { id: "violet", label: "Violeta (Violet SF)" },
+  { id: "grey", label: "Cinza (Grey SF)" },
+  { id: "grey-green", label: "Cinza-verde (Grey SF)" },
+  { id: "lutino", label: "Lutino (Ino na série verde)" },
+  { id: "albino", label: "Albino (Ino na série azul)" },
+  { id: "pallid", label: "Pálido (Pallid)" },
+  { id: "pallid-blue", label: "Pálido azul (Pallid Blue)" },
+  { id: "pallidino", label: "LutinoPallid (PallidIno, macho)" },
 ]);
-
 const PRESETS = {
   green: { serie: "G/G" },
   blue: { serie: "B/B" },
