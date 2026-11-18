@@ -50,7 +50,7 @@ Deno.serve(async(req:Request)=>{
   const id=String(body.anuncio_id||"");
   const recoveryDate=String(body.date||"");
   const note=String(body.note||"").trim();
-  if(!uuid.test(id)||!/^\\d{4}-\\d{2}-\\d{2}$/.test(recoveryDate)||
+  if(!uuid.test(id)||!/^\d{4}-\d{2}-\d{2}$/.test(recoveryDate)||
      note.length<15||note.length>500)return respond({error:"Informe data válida e confirmação do tutor (15–500 caracteres)."},400,origin);
   const {error:auditError}=await db.from("master_audit_log").insert({
     actor_user_id:identity.user.id,action:"master_reunion_confirmation_requested",
