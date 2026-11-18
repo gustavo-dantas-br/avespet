@@ -4,6 +4,7 @@ import {
   criarSelecaoDeAve,
   calcularCriasRingNeck,
 } from "../utils/previsaoSimplesRingNeck";
+import { mostrarNomePopularRingNeck } from "../data/nomenclaturaRingNeck";
 
 const campo = {
   background: "#fff", color: "#2a3528", border: "1px solid #d7e1d4",
@@ -13,7 +14,7 @@ const botao = (ativo) => ({
   color: ativo ? "#fff" : "#29513e",
 });
 const MUTACOES = [
-  { titulo: "Cores e aparências", ids: ["green","blue","turquoise","turquoise-blue","violet","cobalt","mauve","grey","grey-green"] },
+  { titulo: "Cores básicas e fatores", ids: ["green","blue","turquoise","turquoise-blue","cobalt","mauve","violet","grey","grey-green"] },
   { titulo: "Ino e Pallid (ligadas ao sexo)", ids: ["lutino","albino","pallid","pallid-blue","pallidino"] },
 ];
 const NOVA = () => ({ cor: "", extras: {} });
@@ -72,7 +73,7 @@ function QuadroPai({ titulo, sexo, aves, selecionada, onChange }) {
               onChange(ave ? selecaoInicial(ave,sexo) : NOVA());
             }}>
             <option value="">Selecionar ave cadastrada</option>
-            {lista.map(a=><option key={a.id} value={String(a.id)}>{a.nome} — {a.corMutacao || a.corBase || "Cor não informada"}</option>)}
+            {lista.map(a=><option key={a.id} value={String(a.id)}>{a.nome} — {mostrarNomePopularRingNeck(a.corMutacao || a.corBase || "Cor não informada")}</option>)}
           </select>
           {idAve && selecionada.cor && <p className="text-xs" style={{color:"#647669"}}>Usando as informações genéticas cadastradas no plantel.</p>}
           {idAve && !selecionada.cor && <p className="text-xs" style={{color:"#9b582d"}}>Não foi possível identificar uma cor padrão dessa ave. Confira o cadastro genético.</p>}
@@ -162,8 +163,8 @@ function ListaCrias({titulo,lista}) {
       lista.map((r,i)=><div key={r.nome} className="flex gap-4 items-start py-2"
         style={{borderTop:i?"1px solid #edf1ed":"none"}}>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm" style={{color:"#263e30"}}>{r.nome}</p>
-          <p className="text-xs mt-1" style={{color:"#697b70"}}>{r.detalhes}</p>
+          <p className="font-semibold text-sm" style={{color:"#263e30"}}>{mostrarNomePopularRingNeck(r.nome)}</p>
+          <p className="text-xs mt-1" style={{color:"#697b70"}}>{mostrarNomePopularRingNeck(r.detalhes)}</p>
         </div>
         <div className="text-right shrink-0">
           <strong className="text-lg" style={{color:"#276747"}}>{FRA(r.percentual)}%</strong>
@@ -205,7 +206,7 @@ export default function CalculadoraGeneticaRapida({ aves = [], mutacoes = [] }) 
             {calculo.mensagem && <p className="rounded-lg p-3 text-sm" style={{background:"#fff7e8",color:"#845927"}}>{calculo.mensagem}</p>}
             {parcial && calculo.serie?.length > 0 && <div className="rounded-xl p-3" style={{background:"#fff"}}>
               <h3 className="text-sm font-semibold mb-2">Série de cor calculável</h3>
-              {calculo.serie.map(x=><div key={x.nome} className="flex justify-between text-sm py-1"><span>{x.nome}</span><strong>{FRA(x.percentual)}%</strong></div>)}
+              {calculo.serie.map(x=><div key={x.nome} className="flex justify-between text-sm py-1"><span>{mostrarNomePopularRingNeck(x.nome)}</span><strong>{FRA(x.percentual)}%</strong></div>)}
             </div>}
             {(calculo.machos.length > 0 || calculo.femeas.length > 0) && <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <ListaCrias titulo="♂ Machos jovens" lista={calculo.machos}/>
