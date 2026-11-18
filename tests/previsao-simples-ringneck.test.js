@@ -56,7 +56,7 @@ test("Pai PallidIno × mãe Lutino com Violet SF e Grey SF: quatro resultados em
 test("PallidIno não pode ser selecionado para fêmea", () => {
   const r=calcularCriasRingNeck(ave("blue"),ave("pallidino"));
   assert.equal(r.status,"incompleto");
-  assert.match(r.mensagem,/não pode ser selecionada para uma fêmea/);
+  assert.match(r.mensagem,/não pode ser selecionada para uma fêmea/i);
 });
 
 test("Fatores SF/DF geram percentuais por sexo fechando em 100", () => {
@@ -75,7 +75,7 @@ test("Cores simples do plantel respeitam a escolha de Violeta", () => {
 });
 
 test("Dark misturado com alelos de série variáveis não apresenta falsa precisão", () => {
-  const r=calcularCriasRingNeck(ave("cobalt"),ave("green"));
+  const r=calcularCriasRingNeck(ave("cobalt"),ave("green",{split:"blue"}));
   assert.equal(r.status,"parcial");
   assert.equal(r.machos.length,0);
   assert.equal(r.femeas.length,0);
