@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
+import ReunionReviews from "./ReunionReviews";
 import { RefreshCw, CheckCircle2, XCircle, Clock3, AlertCircle, Bird, Mail, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 
 const STATUS = { pendente: "Pendente", aprovado: "Publicado", reencontrado: "Reencontradas 💚", rejeitado: "Rejeitado", encerrado: "Encerrado", todos: "Todos" };
@@ -105,6 +106,7 @@ export default function LostBirdsModeration() {
   }
 
   return <section className="space-y-5">
+    <ReunionReviews />
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div>
         <p className="text-[10px] font-bold uppercase tracking-[.18em] text-amber-700">Controle de buscas</p>
