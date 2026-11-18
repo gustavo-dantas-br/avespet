@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Megaphone, CheckCircle2 } from "lucide-react";
 import { PACOTES_CAMPANHA } from "../config/pacotes";
 import { solicitarCampanha } from "../services/campanhasService";
+import { listarMinhasAvesPerdidas } from "../../aves-perdidas/services/avesPerdidasService";
+import { supabase } from "../../../supabaseClient";
 import { PaginaPublica, CabecalhoPublico, CartaoPublico, TEMA_PUBLICO } from "../../../publico/ComponentesPublicos";
 
 const input = {
@@ -28,6 +30,44 @@ export default function SolicitarCampanha() {
   const anuncioId = new URLSearchParams(window.location.search).get("anuncio") || "";
   const [form, setForm] = useState({ pacote: "cidade", nome: "", whatsapp: "", email: "", cidade: "", uf: "SP", areaAlvo: "", descricaoAve: "" });
   const [loading, setLoading] = useState(false);
+  const [anuncioVerificadoId, setAnuncioVerificadoId] = useState("");
+  const [avisoVinculo, setAvisoVinculo] = useState("");
+
+  useEffect(() => {
+    if (!anuncioId) return;
+    let ativo = true;
+    async function verificarVinculo() {
+      try {
+        const { data: sessao, error: authError } = await supabase.auth.getUser();
+        if (authError || !sessao?.user?.id) {
+          if (ativo) setAvisoVinculo("Entre na conta que publicou a ave para vincular o anúncio. Você também pode solicitar um orçamento sem vínculo.");
+          return;
+        }
+        const anuncios = await listarMinhasAvesPerdidas(sessao.user.id);
+        const anuncio = anuncios.find((item) => item.id === anuncioId && item.status === "aprovado");
+        if (!anuncio) {
+          if (ativo) setAvisoVinculo("O anúncio não está disponível para vinculação nesta conta ou não está publicado. Você pode solicitar um orçamento sem vínculo.");
+          return;
+        }
+        if (!ativo) return;
+        const ave = anuncio.data || {};
+        setAnuncioVerificadoId(anuncio.id);
+        setForm((atual) => ({ ...atual,
+          nome: ave.contatoNome || atual.nome,
+          whatsapp: ave.whatsapp || atual.whatsapp,
+          cidade: ave.cidade || atual.cidade,
+          uf: ave.uf || atual.uf,
+          areaAlvo: ave.bairro || atual.areaAlvo,
+          descricaoAve: [ave.nomeAve, ave.especie, ave.cor, ave.dataPerda && `Desaparecida em ${ave.dataPerda}`].filter(Boolean).join(" · ") || atual.descricaoAve,
+        }));
+        setAvisoVinculo(`Anúncio de ${ave.nomeAve || "sua ave"} vinculado. Confira os dados antes de enviar.`);
+      } catch {
+        if (ativo) setAvisoVinculo("Não foi possível confirmar o vínculo do anúncio. Você ainda pode solicitar um orçamento sem vínculo.");
+      }
+    }
+    verificarVinculo();
+    return () => { ativo = false; };
+  }, [anuncioId]);
   const [erro, setErro] = useState("");
   const [enviado, setEnviado] = useState(false);
   const alterar = (campo, valor) => setForm((atual) => ({ ...atual, [campo]: valor }));
@@ -37,7 +77,7 @@ export default function SolicitarCampanha() {
     setErro("");
     setLoading(true);
     try {
-      await solicitarCampanha({ ...form, anuncioId });
+      await solicitarCampanha({ ...form, anuncioId: anuncioVerificadoId });
       setEnviado(true);
     } catch (err) {
       setErro(err?.message || "Não foi possível enviar a solicitação. Tente novamente.");
@@ -55,6 +95,7 @@ export default function SolicitarCampanha() {
           descricao="Além do anúncio gratuito, você pode solicitar uma campanha regional. Nossa equipe avalia a região, apresenta o orçamento e orienta sobre o pagamento antes de iniciar a divulgação."
         />
 
+        {avisoVinculo && <p role="status" className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">{avisoVinculo}</p>}
         {enviado ? (
           <CartaoPublico className="p-7 text-center md:p-10">
             <CheckCircle2 size={42} className="mx-auto mb-4" color={TEMA_PUBLICO.verde} />
