@@ -61,3 +61,14 @@ test("link da campanha preserva o ID exato do anúncio sem expor telefone",()=>{
   assert.doesNotMatch(message,/984972095/);
   assert.match(lostBirdMessage(bluu).text,/https:\/\/www.avespet.com.br\/campanha-ave-perdida/);
 });
+
+test("exemplo explica descoberta possível sem prometer rastreamento de pesquisa",()=>{
+  for (const mode of ["acompanhamento","possivel_reencontro"]) {
+    const text = lostBirdMessage(bluu,mode).text;
+    assert.match(text,/alguém encontra uma ave parecida com Bluu/);
+    assert.match(text,/procurar informações na internet/);
+    assert.match(text,/pesquisa na internet não ativa automaticamente/);
+    assert.match(text,/Facebook e Instagram/);
+    assert.match(text,/Não há garantia de recuperação/);
+  }
+});
