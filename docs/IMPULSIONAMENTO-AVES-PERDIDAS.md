@@ -38,3 +38,14 @@ Os raios de 5, 10 e 15 km são referências, não garantias de entrega. O catál
 ## Estado técnico da primeira entrega
 
 A branch `feature/impulsionamento-aves-perdidas` adiciona um catálogo centralizado e um painel informativo no Master. Não altera a base Supabase, não habilita pagamentos, não cria campanhas na Meta e não altera produção. O catálogo permanece fixo no código nesta fase; edição de preços pelo Master dependerá da etapa de persistência segura.
+
+## Continuidade — integração com solicitações existentes (18/11/2026)
+
+- Confirmada no Supabase de produção, **somente por consultas de leitura**, a existência das tabelas `solicitacoes_campanhas_aves` e `anuncios_aves_perdidas`.
+- O formulário já existente em `/campanha-ave-perdida` utiliza três pacotes de orçamento sob consulta (`bairro`, `cidade`, `regional`). Não migrar IDs históricos nem tratar estes três IDs como equivalentes automáticos aos cinco novos planos.
+- O painel novo passou a **listar em somente leitura** as solicitações existentes, reutilizando `listarCampanhasAdmin()`. Nenhuma solicitação é alterada.
+- A policy atual de leitura das solicitações concede acesso a integrantes de `public.admins`; caso o Master esteja apenas em `master_admins`, a listagem poderá mostrar erro de permissão. Corrigir com fluxo administrativo validado e auditado, **não** abrindo SELECT público.
+- A policy existente permite envio público de pedidos de orçamento por `anon` e `authenticated` sob campos controlados; os contatos não podem ser expostos em páginas públicas.
+- Não executar alterações de schema sem testes de RLS e plano de compatibilidade. Não alterar o fluxo de e-mails ou senhas.
+- Próxima etapa: consolidar um modelo único de contratação autenticada, preços definidos no servidor, histórico de pedidos e confirmação de pagamento. Manter o formulário legado enquanto a migração não estiver homologada.
+- Nenhum deploy, alteração no Supabase de produção, cobrança ou anúncio Meta foi realizado.
