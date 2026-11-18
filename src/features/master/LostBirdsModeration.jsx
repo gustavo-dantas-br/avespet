@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import { RefreshCw, CheckCircle2, XCircle, Clock3, AlertCircle, Bird, Mail, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 
-const STATUS = { pendente: "Pendente", aprovado: "Publicado", rejeitado: "Rejeitado", encerrado: "Encerrado", todos: "Todos" };
+const STATUS = { pendente: "Pendente", aprovado: "Publicado", reencontrado: "Reencontradas 💚", rejeitado: "Rejeitado", encerrado: "Encerrado", todos: "Todos" };
 const MAIL = {
   sent: "Confirmação enviada ao provedor",
   processing: "Envio em andamento",
@@ -147,10 +147,10 @@ export default function LostBirdsModeration() {
               {ad.email_status ? <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600"><Mail size={15}/>{MAIL[ad.email_status] || "Status do e-mail: " + ad.email_status}{ad.email_sent_at ? " · " + ptDate(ad.email_sent_at) : ""}</p> :
                 <p className="mt-3 text-xs text-slate-400">E-mail automático: ainda sem envio registrado.</p>}
               <div className="mt-4 flex flex-wrap gap-2">
-                {ad.status !== "aprovado" && <button disabled={!!busyId} onClick={() => moderate(ad, "aprovado")} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"><CheckCircle2 size={15}/>Aprovar e publicar</button>}
-                {ad.status !== "rejeitado" && <button disabled={!!busyId} onClick={() => moderate(ad, "rejeitado")} className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 disabled:opacity-50"><XCircle size={15}/>Rejeitar</button>}
-                {ad.status !== "encerrado" && <button disabled={!!busyId} onClick={() => moderate(ad, "encerrado")} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold text-slate-600 disabled:opacity-50"><Clock3 size={15}/>Encerrar</button>}
-                {ad.status !== "pendente" && <button disabled={!!busyId} onClick={() => moderate(ad, "pendente")} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold text-slate-600 disabled:opacity-50">Voltar à análise</button>}
+                {ad.status !== "reencontrado" && ad.status !== "aprovado" && <button disabled={!!busyId} onClick={() => moderate(ad, "aprovado")} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"><CheckCircle2 size={15}/>Aprovar e publicar</button>}
+                {ad.status !== "reencontrado" && ad.status !== "rejeitado" && <button disabled={!!busyId} onClick={() => moderate(ad, "rejeitado")} className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 disabled:opacity-50"><XCircle size={15}/>Rejeitar</button>}
+                {ad.status !== "reencontrado" && ad.status !== "encerrado" && <button disabled={!!busyId} onClick={() => moderate(ad, "encerrado")} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold text-slate-600 disabled:opacity-50"><Clock3 size={15}/>Encerrar</button>}
+                {ad.status !== "reencontrado" && ad.status !== "pendente" && <button disabled={!!busyId} onClick={() => moderate(ad, "pendente")} className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold text-slate-600 disabled:opacity-50">Voltar à análise</button>}
               </div>
             </div>
           </div>
