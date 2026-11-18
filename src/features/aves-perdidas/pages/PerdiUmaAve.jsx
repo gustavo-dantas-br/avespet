@@ -350,6 +350,11 @@ export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
                 <span className="inline-block text-xs rounded px-2 py-1 mt-2" style={{background:status.fundo,color:status.cor}}>{status.label}</span>
                 {!["encerrado","reencontrado"].includes(anuncio.status) && faltando.length > 0 && <p className="text-xs mt-2" style={{color:"#8a5a12"}}>Para ajudar na busca, complete: {faltando.join(", ")}.</p>}
                 {!["encerrado","reencontrado"].includes(anuncio.status) && <button type="button" onClick={() => iniciarEdicao(anuncio)} className="block mt-3 rounded-lg px-3 py-2 text-sm font-semibold" style={{background:"#405331",color:"#fff"}}>Editar anúncio</button>}
+                {anuncio.status === "aprovado" && <a href={`/campanha-ave-perdida?anuncio=${encodeURIComponent(anuncio.id)}`}
+                  className="mt-2 inline-flex items-center rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold" style={{color:"#17633a"}}>
+                  📣 Solicitar divulgação ampliada
+                </a>}
+                {anuncio.status === "aprovado" && <p className="mt-1 text-xs" style={{color:"#75664f"}}>Orçamento sob consulta, sem contratação ou cobrança automática. O anúncio gratuito continua ativo.</p>}
                 {anuncio.status === "aprovado" && <button type="button" onClick={() => {setReencontroId(anuncio.id);setErro("");setMensagem("");}}
                   className="mt-3 block rounded-lg px-3 py-2 text-sm font-bold" style={{background:"#d4f4df",color:"#17633a"}}>💚 Minha ave foi reencontrada!</button>}
                 {anuncio.status === "reencontrado" && <p className="mt-2 text-sm font-semibold" style={{color:"#17633a"}}>Final feliz registrado! O anúncio continua público.</p>}
