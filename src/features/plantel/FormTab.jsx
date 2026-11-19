@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Bird, Upload, X, Loader2, Save } from "lucide-react";
 import { CATALOGO_MUTACOES_RING_NECK, CORES_BASE_RING_NECK, normalizarChaveGenetica } from "../genetica/data/catalogoRingNeck";
 import { APARENCIAS_COMUNS_RING_NECK, COMBINACOES_POPULARES_RING_NECK, mostrarNomePopularRingNeck, ordenarMutacoesRingNeck } from "../genetica/data/nomenclaturaRingNeck";
-import { chaveAparenciaRingNeck, removerAparenciasRepetidasRingNeck } from "../genetica/data/opcoesUnicasRingNeck";
+import { chaveAparenciaRingNeck, deduplicarMutacoesRingNeck, removerAparenciasRepetidasRingNeck } from "../genetica/data/opcoesUnicasRingNeck";
 export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoOptions, femeaOptions, parceiroOptions, mutacoes, clientes, fornecedores, onCancel, Card, Field, SectionTitle, inputStyle, ESPECIES, SEXOS, STATUS_AVE, ORIGEM_TIPOS, SeletorComprador, SeletorFornecedor, PesoHistorico }) {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target?.type === "checkbox" ? e.target.checked : e.target.value }));
   // Editar manualmente os campos do comprador desfaz o vinculo com o cliente
@@ -22,11 +22,12 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
     : normalizarChaveGenetica(String(nome || "").split(" (")[0]);
   const mesmaMutacao = (a, b) => chaveMutacao(a) === chaveMutacao(b);
   const mutacoesDisponiveis = ringNeck
-    ? removerAparenciasRepetidasRingNeck([...CATALOGO_MUTACOES_RING_NECK, ...mutacoesDaEspecie])
+    ? deduplicarMutacoesRingNeck([...CATALOGO_MUTACOES_RING_NECK, ...mutacoesDaEspecie])
     : mutacoesDaEspecie.filter((mutacao, index, items) =>
         items.findIndex((item) => chaveMutacao(item.nome) === chaveMutacao(mutacao.nome)) === index
       );
   const mutacoesOrdenadas = ringNeck ? ordenarMutacoesRingNeck(mutacoesDisponiveis) : mutacoesDisponiveis;
+  const opcoesAparencia = ringNeck ? removerAparenciasRepetidasRingNeck(mutacoesOrdenadas) : mutacoesOrdenadas;
   const mutacaoCorReconhecida = mutacoesDisponiveis.find((m) => mesmaMutacao(m.nome, form.corMutacao));
   // Preservar nomes legados já salvos no plantel; só abrir "Outra" para nomes
   // que realmente não estão no catálogo nem são as aparências especiais.
@@ -150,7 +151,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
                   <option value="popular|Cremino">Cremino (Ino, série turquesa)</option>
                 </optgroup>
                 <optgroup label={ringNeck ? "5. Outras mutações" : "Mutações"}>
-                  {mutacoesOrdenadas.filter((m) => !chaveMutacao(m.nome).startsWith("ino")).map((m) => (
+                  {opcoesAparencia.map((m) => (
                     <option key={m.id || m.nome} value={m.nome}>
                       {ringNeck ? mostrarNomePopularRingNeck(m.nome) : m.nome}
                     </option>
