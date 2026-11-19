@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import SolicitacoesMaster from "./SolicitacoesMaster";
 import SimuladorFinanceiro from "./SimuladorFinanceiro";
+import { situacaoAsaas } from "./asaasConfig";
 import { PLANOS_IMPULSIONAMENTO, dinheiro, validarPlano } from "./planos";
 
 const valor = "font-bold tabular-nums text-slate-900";
@@ -59,6 +60,11 @@ export default function ImpulsionamentoMaster() {
           <div className="rounded-xl bg-slate-50 p-3"><p className="text-xs text-slate-500">Verba de mídia</p><p className={valor}>{dinheiro(midia)}</p></div>
           <div className="rounded-xl bg-slate-50 p-3"><p className="text-xs text-slate-500">Antes de demais custos</p><p className={valor}>{dinheiro(total - midia)}</p></div>
         </div>
+      </section>
+      <section className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
+        <h2 className="text-lg font-semibold text-blue-950">Integração Asaas — preparada, não ativa</h2>
+        <p className="mt-2 text-sm text-blue-900">Ambiente previsto: {situacaoAsaas().ambiente}. O checkout e as cobranças reais continuam desativados até a regularização do CNPJ, configuração de credenciais privadas e testes de webhook.</p>
+        <p className="mt-2 text-xs text-blue-800">Nenhuma chave de API é armazenada no frontend. Nenhum pagamento será confirmado manualmente pelo simulador.</p>
       </section>
       <SimuladorFinanceiro />
       <SolicitacoesMaster />
