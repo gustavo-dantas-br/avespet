@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Bird, X, Pencil, GitBranch, Dna, Egg, Info, ClipboardList, ChevronLeft, Eye } from "lucide-react";
 import { idadeDaAve, sexoVisual } from "../utils/resumoAve";
 import { listarHistoricoReprodutivo, formatarDataReproducao } from "../utils/historicoReprodutivo";
+import { agruparFilhotesPorNascimento } from "../utils/agruparFilhotes";
 import { mostrarNomePopularRingNeck } from "../../genetica/data/nomenclaturaRingNeck";
 
 const texto = (valor) => valor === null || valor === undefined || valor === "" ? "Não informado" : String(valor);
@@ -57,6 +58,7 @@ export default function FichaAve({ ave: aveInicial, aves = [], posturas = [], on
   const mae = ave.maeId ? localizar(ave.maeId) : null;
   const parceiro = ave.parceiroId ? localizar(ave.parceiroId) : null;
   const filhotes = aves.filter((item) => String(item.paiId) === String(ave.id) || String(item.maeId) === String(ave.id));
+  const gruposFilhotes = agruparFilhotesPorNascimento(filhotes);
   const posturasDaAve = posturas.filter((p) => String(p.paiId) === String(ave.id) || String(p.maeId) === String(ave.id));
   const ovos = posturasDaAve.reduce((total, p) => total + (p.ovos?.length || 0), 0);
   const historicoReprodutivo = listarHistoricoReprodutivo(ave, posturas, aves);
@@ -104,7 +106,24 @@ export default function FichaAve({ ave: aveInicial, aves = [], posturas = [], on
               <Identificacao legenda="Mãe" ave={mae || (ave.maeExterno ? {nome:ave.maeExterno,sexo:"Fêmea"} : {nome:"Não informado",sexo:"Fêmea"})} onOpen={mae ? () => consultarVinculo(mae) : undefined}/>
             </div>
             <div className="mt-3"><Dado rotulo="Parceiro cadastrado" valor={parceiro?.nome || ave.casalLabel}/>{parceiro && <button type="button" onClick={() => consultarVinculo(parceiro)} className="mt-2 inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"><Eye size={14}/> Consultar parceiro</button>}</div>
-            <div className="mt-4"><p className="mb-2 text-xs font-bold text-slate-700">Filhotes vinculados ({filhotes.length})</p>{filhotes.length?<div className="grid gap-2 sm:grid-cols-2">{filhotes.map((f)=><Identificacao key={f.id} legenda="Filhote" ave={f} onOpen={() => consultarVinculo(f)}/>)}</div>:<p className="text-sm text-slate-500">Nenhum filhote vinculado no plantel.</p>}</div>
+            <div className="mt-4">
+              <p className="mb-1 text-xs font-bold text-slate-700">Filhotes vinculados ({filhotes.length})</p>
+              <p className="mb-3 text-xs text-slate-500">Separados por casal e proximidade das datas. Os grupos são sugestões visuais, não ninhadas confirmadas.</p>
+              {gruposFilhotes.length ? <div className="space-y-4">
+                {gruposFilhotes.map((grupo, i) => (
+                  <section key={grupo.chave} className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-3">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h4 className="text-sm font-bold text-emerald-900">{grupo.titulo} {grupo.estimado ? `#${i+1}` : ""}</h4>
+                        <p className="text-xs text-emerald-800">{grupo.periodo}</p>
+                      </div>
+                      <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">{grupo.aves.length} {grupo.aves.length === 1 ? "filhote" : "filhotes"}</span>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2">{grupo.aves.map((f) => <Identificacao key={f.id} legenda="Filhote" ave={f} onOpen={() => consultarVinculo(f)}/>)}</div>
+                  </section>
+                ))}
+              </div> : <p className="text-sm text-slate-500">Nenhum filhote vinculado no plantel.</p>}
+            </div>
           </Secao>
           <Secao titulo="Histórico reprodutivo" icon={Egg}>
             <dl className="mb-4 grid grid-cols-2 gap-3"><Dado rotulo="Posturas vinculadas" valor={posturasDaAve.length}/><Dado rotulo="Ovos registrados" valor={ovos}/></dl>
