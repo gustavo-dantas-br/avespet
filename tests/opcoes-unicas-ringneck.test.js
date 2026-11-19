@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { CATALOGO_MUTACOES_RING_NECK } from "../src/features/genetica/data/catalogoRingNeck.js";
-import { chaveAparenciaRingNeck, removerAparenciasRepetidasRingNeck, removerOpcoesRepetidasPorId } from "../src/features/genetica/data/opcoesUnicasRingNeck.js";
+import { chaveAparenciaRingNeck, deduplicarMutacoesRingNeck, removerAparenciasRepetidasRingNeck, removerOpcoesRepetidasPorId } from "../src/features/genetica/data/opcoesUnicasRingNeck.js";
 import { CORES_RAPIDAS_RING_NECK } from "../src/features/genetica/utils/previsaoSimplesRingNeck.js";
 
 test("nomes populares e técnicos de Azul compartilham a mesma chave", () => {
@@ -34,4 +34,10 @@ test("combinações próprias não são removidas como cores básicas", () => {
 test("calculadora não repete ids mesmo se a origem repetir opções", () => {
   assert.deepEqual(removerOpcoesRepetidasPorId([{id:"blue"},{id:"blue"},{id:"lutino"}]).map(x=>x.id), ["blue","lutino"]);
   assert.equal(new Set(CORES_RAPIDAS_RING_NECK.map(x => x.id)).size, CORES_RAPIDAS_RING_NECK.length);
+});
+
+test("Ino continua disponível em portadores sem repetir na cor principal", () => {
+  const fontes = [{ nome: "Ino (Lutino / Albino conforme a serie)" }, { nome: "Cinnamon (Canela)" }];
+  assert.ok(deduplicarMutacoesRingNeck(fontes).some(x => chaveAparenciaRingNeck(x.nome) === "ino"));
+  assert.ok(!removerAparenciasRepetidasRingNeck(fontes).some(x => chaveAparenciaRingNeck(x.nome) === "ino"));
 });
