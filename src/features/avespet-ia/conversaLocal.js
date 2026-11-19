@@ -38,6 +38,18 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
   if (contexto.filhote && /\b\d{1,4}\s*(dias?|d)\b/.test(limpo) && limpo.length < 60) {
     return retorno("Obrigado pela informação!", `Anotei na conversa que seu ${contexto.especie || "filhote"} tem cerca de ${contexto.idadeDias} dias. Você sabe se ele ainda recebe alimentação assistida, está experimentando sólidos ou já se alimenta sozinho? A idade, sozinha, não determina isso.`, contexto);
   }
+  // Respostas curtas e naturais às perguntas anteriores também integram o contexto.
+  if (contexto.filhote && /^(so|somente|apenas|ainda so|ainda somente|ele so|ela so)?\s*(papa|papinha|papinha ainda|na papinha)( mesmo)?$/.test(limpo)) {
+    contexto.etapa = "alimentacao_assistida";
+    return retorno("Entendi! 🦜",
+      `Seu ${contexto.especie || "filhote"}${contexto.idadeDias !== null ? " de aproximadamente " + contexto.idadeDias + " dias" : ""} ainda recebe apenas papinha. Você percebe se ele demonstra interesse por alimentos sólidos? Podemos registrar isso no diário. A transição alimentar precisa de acompanhamento profissional e não deve ser decidida somente pela idade.`,
+      contexto);
+  }
+  if (contexto.filhote && /^(so|somente|apenas)?\s*(solidos|comida solida|racao|sementes|come sozinho|se alimenta sozinho)$/.test(limpo)) {
+    contexto.etapa = "solidos_relato";
+    return retorno("Entendi! 🦜",
+      "Você está observando que a ave consome alimentos sólidos. Podemos acompanhar o peso e as observações no diário. Para confirmar a independência alimentar e qualquer mudança na papa, conte com um veterinário de aves.", contexto);
+  }
   if (/\b(ele|ela)\b.*\b(papa|sozinh[oa]|solidos|comida)\b/.test(limpo) && contexto.filhote) {
     return retorno("Entendi a fase que você está observando", "Podemos registrar as observações no Diário de Desenvolvimento. Mudanças na alimentação manual e no desmame devem seguir acompanhamento profissional; não é seguro definir quantidade ou frequência apenas pela idade.", contexto);
   }
