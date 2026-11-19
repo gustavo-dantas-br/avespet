@@ -25,7 +25,7 @@ export function agruparFilhotesPorNascimento(filhotes = []) {
   const grupos = [];
   for (const item of comData) {
     const grupo = grupos.find((g) =>
-      g.casal === item.casal && g.maisAntigo - item.data <= JANELA_DIAS * 86400000 && g.maisAntigo >= item.data
+      g.casal === item.casal && g.maisRecente - item.data <= JANELA_DIAS * 86400000 && g.maisRecente >= item.data
     );
     if (grupo) {
       grupo.aves.push(item.ave);
