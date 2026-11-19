@@ -32,3 +32,14 @@ test("não usa espécie padrão do formulário como fato narrado", () => {
   const a = conversarLocal(perfil, "tenho um filhote", contextoInicial());
   assert.equal(a.contexto.especie, "");
 });
+
+test("entende 'só papinha' depois de filhote, espécie e idade", () => {
+  const a = conversarLocal(perfil, "tenho um filhote ring neck", contextoInicial());
+  const b = conversarLocal(perfil, "50 dias", a.contexto);
+  const c = conversarLocal(perfil, "Só papinha", b.contexto);
+  assert.equal(c.contexto.etapa, "alimentacao_assistida");
+  assert.match(c.resposta.mensagem, /Ring Neck/);
+  assert.match(c.resposta.mensagem, /50 dias/);
+  assert.match(c.resposta.mensagem, /alimentos sólidos/);
+  assert.equal(c.resposta.tipo, "conversa");
+});
