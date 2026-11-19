@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Mail, Inbox, RefreshCw, Send, ShieldCheck, AlertCircle, Paperclip, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "../../supabaseClient";
 import EmailTestPanel from "./EmailTestPanel";
@@ -35,6 +35,7 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [hasMore, setHasMore] = useState(false);
+  const threadsRequestId = useRef(0);
 
   const invoke = useCallback(async (body) => {
     const { data, error: invokeError } = await supabase.functions.invoke("master-resend-inboxes", { body });
@@ -44,17 +45,18 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
     return data;
   }, []);
   const load = useCallback(async (choice) => {
+    const requestId = ++threadsRequestId.current;
     setLoading(true);
     setError("");
     try {
       const data = await invoke({ action: "threads", box: choice });
-      setThreads(data.threads || []);
-      setHasMore(Boolean(data.has_more));
+      if (requestId === threadsRequestId.current) setThreads(data.threads || []);
+      if (requestId === threadsRequestId.current) setHasMore(Boolean(data.has_more));
     } catch (err) {
-      setThreads([]);
-      setError(err.message);
+      if (requestId === threadsRequestId.current) setThreads([]);
+      if (requestId === threadsRequestId.current) setError(err.message);
     } finally {
-      setLoading(false);
+      if (requestId === threadsRequestId.current) setLoading(false);
     }
   }, [invoke]);
 
@@ -66,6 +68,7 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
     setNotice("");
     setThreads([]);
     load(box);
+    return () => { threadsRequestId.current += 1; };
   }, [box, load]);
 
   useEffect(() => {

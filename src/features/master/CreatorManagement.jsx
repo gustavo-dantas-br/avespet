@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import CreatorAccountActivity from "./CreatorAccountActivity";
 import { Search, RefreshCw, Users, Bird, Mail, Phone, MapPin, CalendarDays, Clock3, ChevronLeft, ChevronRight, X, CheckCircle2, AlertCircle, ShieldOff, ShieldCheck, Ban, Unlock, Loader2, Pencil, KeyRound } from "lucide-react";
@@ -27,8 +27,10 @@ export default function CreatorManagement() {
   const [actionSuccess, setActionSuccess] = useState("");
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ name: "", whatsapp: "", creatorName: "", city: "", state: "" });
+  const listRequestId = useRef(0); // Ignora retornos atrasados de filtros/páginas anteriores.
 
   const load = useCallback(async () => {
+    const requestId = ++listRequestId.current;
     setLoading(true);
     setError("");
     try {
@@ -36,15 +38,18 @@ export default function CreatorManagement() {
         body: { search: query, page },
       });
       if (invokeError || data?.error) throw new Error(data?.error || "Não foi possível consultar os criadores.");
-      setResult(data || { items: [], total: 0, totalPages: 1 });
+      if (requestId === listRequestId.current) setResult(data || { items: [], total: 0, totalPages: 1 });
     } catch (err) {
-      setError(err.message || "Não foi possível consultar os criadores.");
+      if (requestId === listRequestId.current) setError(err.message || "Não foi possível consultar os criadores.");
     } finally {
-      setLoading(false);
+      if (requestId === listRequestId.current) setLoading(false);
     }
   }, [query, page]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+    return () => { listRequestId.current += 1; };
+  }, [load]);
 
   async function confirmAccountAction(event) {
     event.preventDefault();

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import { LifeBuoy, Search, RefreshCw, Save, ChevronLeft, ChevronRight, AlertCircle, UserCheck, UserX, ClipboardList, Mail, History } from "lucide-react";
 
@@ -29,8 +29,10 @@ export default function SupportOperations({ onPrepareEmail }) {
   const [notice, setNotice] = useState("");
   const [preparingEmailId, setPreparingEmailId] = useState("");
   const [history, setHistory] = useState({ entries:[], loading:false, error:"", syncNote:"" });
+  const listRequestId = useRef(0); // Ignora retornos atrasados de filtros/páginas anteriores.
 
   const load = useCallback(async () => {
+    const requestId = ++listRequestId.current;
     setError("");
     setLoading(true);
     try {
@@ -38,16 +40,19 @@ export default function SupportOperations({ onPrepareEmail }) {
         body: { action: "list", type: kind, state, search: appliedSearch, page },
       });
       if (invokeError || data?.error || !data?.success) throw new Error(data?.error || "Não foi possível consultar os atendimentos.");
-      setResult(data);
+      if (requestId === listRequestId.current) setResult(data);
     } catch (err) {
-      setResult(empty);
-      setError(err?.message || "Falha ao consultar os atendimentos.");
+      if (requestId === listRequestId.current) setResult(empty);
+      if (requestId === listRequestId.current) setError(err?.message || "Falha ao consultar os atendimentos.");
     } finally {
-      setLoading(false);
+      if (requestId === listRequestId.current) setLoading(false);
     }
   }, [kind, state, appliedSearch, page, reload]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+    return () => { listRequestId.current += 1; };
+  }, [load]);
 
   const loadHistory = async (item) => {
     if (item.source !== "perdida") return;

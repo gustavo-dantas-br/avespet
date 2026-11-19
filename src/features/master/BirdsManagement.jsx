@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import { RefreshCw, Search, Bird, ChevronLeft, ChevronRight, AlertCircle, ShieldCheck } from "lucide-react";
 
@@ -21,8 +21,10 @@ export default function BirdsManagement() {
   const [result, setResult] = useState({ items: [], total: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const listRequestId = useRef(0); // Ignora retornos atrasados de filtros/páginas anteriores.
 
   const load = useCallback(async () => {
+    const requestId = ++listRequestId.current;
     setLoading(true);
     setError("");
     try {
@@ -30,15 +32,18 @@ export default function BirdsManagement() {
         body: { page, search, species, sex },
       });
       if (invokeError || data?.error) throw new Error(data?.error || "Não foi possível carregar os registros.");
-      setResult(data || { items: [], total: 0, totalPages: 1 });
+      if (requestId === listRequestId.current) setResult(data || { items: [], total: 0, totalPages: 1 });
     } catch (err) {
-      setError(err.message || "Falha ao carregar aves.");
+      if (requestId === listRequestId.current) setError(err.message || "Falha ao carregar aves.");
     } finally {
-      setLoading(false);
+      if (requestId === listRequestId.current) setLoading(false);
     }
   }, [page, search, species, sex]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+    return () => { listRequestId.current += 1; };
+  }, [load]);
 
   function applySearch(event) {
     event.preventDefault();
