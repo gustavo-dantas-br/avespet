@@ -68,3 +68,13 @@ A branch `feature/impulsionamento-aves-perdidas` adiciona um catálogo centraliz
 - O banco legado possui uma função administrativa mais ampla de alteração de status. **O bloqueio na interface não é controle de autorização**. Antes de lançar pagamentos é obrigatório criar fluxo de servidor validado, transições com auditoria e verificação do webhook financeiro, impedindo marcação arbitrária de pago.
 - A confirmação de ações de triagem ocorre com confirmação explícita no navegador. A execução do SQL em produção não foi alterada.
 - No repositório, a nova tela e o vínculo com o Master foram salvos na branch de desenvolvimento. O build e os testes de navegação ainda não foram executados; produção segue inalterada.
+
+## Continuidade — simulação financeira sem integração de pagamentos (19/11/2026)
+
+- Confirmado por leitura do Supabase: a tabela legada de campanhas guarda orçamento em `valor` (numeric), mas ainda não possui uma contabilidade separada para preço final, verba reservada, gasto de mídia, receita de gestão, estornos e eventos financeiros. A tabela de `reserva_pagamentos` pertence ao domínio de reservas; **não reutilizar para campanhas**.
+- Adicionados `src/features/impulsionamento/financeiro.js` e `SimuladorFinanceiro.jsx`. O Master apresenta simulação de preço, mídia reservada, verba gasta, saldo de mídia, taxas, custos operacionais, contribuição e reembolso hipotético, sem gravar valores, processar Pix/cartão ou executar estornos.
+- Valores internos são inteiros em centavos. Gasto de mídia não pode superar a verba prevista, reembolso hipotético não pode superar o saldo do preço pago e todos os resultados são explicitamente estimativas.
+- Adicionados testes de unidade em `tests/impulsionamento-financeiro.test.js`. Testes foram versionados; **a execução de build/testes ainda não foi confirmada** nesta etapa.
+- Não atribuir valores reais a pedidos antigos a partir dos novos planos nem deduzir que um status legado `paga` significa pagamento verificado.
+- Próxima fase: definir gateway de pagamento, confirmar pagamento pelo webhook com validação de assinatura/idempotência e segregar registros de pedido, tentativa de cobrança, evento de pagamento, gasto de mídia e reembolso, com auditoria do Master e RLS.
+- Publicação em produção, migração Supabase e cobranças permanecem **não realizadas**.
