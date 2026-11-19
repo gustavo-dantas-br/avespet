@@ -68,6 +68,32 @@ const zAlelos = (estado, sexo) => {
 };
 function identificarVisual(ave) {
   const visual = normalize([ave.corAparencia, ave.corMutacao, ave.corBase].filter(Boolean).join(" "));
+  const mutacao = normalize(ave.corMutacao);
+  const base = normalize(ave.corBase);
+  const serieAzul = base.includes("blue") || base.includes("azul");
+  const serieTurquesa = base.includes("turquoise") || base.includes("turquesa");
+  const temFatorVioleta = mutacao === "violeta" || mutacao.includes("violet");
+  const temFatorDark = mutacao === "cobalto" || mutacao.includes("cobalt");
+  const temPallid = mutacao === "pallid" || mutacao.includes("pallid");
+  // Registros antigos podiam armazenar a mutação em corMutacao e a série
+  // em corBase, sem uma opção popular combinada pronta.
+  if (temFatorVioleta && serieTurquesa) return "turquoise-violet";
+  if (temFatorDark && serieTurquesa) return "turquoise-cobalt";
+  if (temPallid && !mutacao.includes("pallidino")) {
+    if (serieTurquesa) return ""; // modelo atual não possui Pallid Turquesa validado
+    if (serieAzul) return "pallid-blue";
+  }
+  // O cadastro antigo salva a aparência Ino, a série no campo corBase.
+  // Ignorar "Ino" aqui transforma erroneamente Albino em Azul comum.
+  if (mutacao === "ino" || mutacao === "ino (lutino / albino conforme a serie)") {
+    // "Turquoise Blue (Azul Turquesa)" contém Blue/Azul também.
+    // Verifique Turquesa antes de Azul para não chamar Cremino de Albino.
+    if (base.includes("turquoise") || base.includes("turquesa")) return "";
+    if (base.includes("blue") || base.includes("azul")) return "albino";
+    if (base.includes("green") || base.includes("verde")) return "lutino";
+    return "";
+  }
+  if (mutacao === "cremino" || mutacao.startsWith("cremino (")) return "";
   for (const comb of COMBINACOES_POPULARES_RING_NECK) {
     if (visual.includes(normalize(comb.value))) return comb.id;
   }
@@ -254,32 +280,59 @@ export function calcularCriasRingNeck(paiSelecionado, maeSelecionada) {
   if (p.erro || m.erro) return { status:"incompleto", mensagem:p.erro || m.erro, machos:[],femeas:[] };
   const serie = germesSerie(p,m);
   const ligadoDark = (p.factors.dark || m.factors.dark) && serie.length>1;
-  const linkedCinnamonIno=(p.cinnamon!=="normal" || m.cinnamon!=="normal") &&
-    (p.ino!=="normal" || m.ino!=="normal");
+  // Ino/Pallid e Cinnamon ocupam o cromossomo Z. Um pai heterozigoto
+  // nos DOIS loci exige saber a fase (qual alelo está em cada cromossomo)
+  // e a taxa de recombinação; não se deve multiplicar segregações como
+  // se fossem genes autossômicos independentes.
+  const faseZDesconhecida = (p.z[0] !== p.z[1]) && (p.cinZ[0] !== p.cinZ[1]);
+  // Se um dos loci paternos é fixo, a transmissão conjunta é conhecida:
+  // cada Z do pai traz o par correspondente de alelos. A mãe transmite
+  // sempre seu Z ao filho macho; a filha recebe só o Z paterno.
+  const haplotiposPai = p.z.map((ino, i)=>({
+    ino, cinnamon:p.cinZ[i], chance:0.5,
+  }));
   const sexoZ = {
-    Macho: p.z.flatMap((alelo)=>[{z:[alelo,m.z[0]],chance:0.5}]),
-    Femea: p.z.flatMap((alelo)=>[{z:[alelo],chance:0.5}]),
+    Macho:haplotiposPai.map(h=>({
+      z:[h.ino,m.z[0]],
+      cinnamon:[h.cinnamon,m.cinZ[0]],
+      chance:h.chance,
+    })),
+    Femea:haplotiposPai.map(h=>({
+      z:[h.ino],
+      cinnamon:[h.cinnamon],
+      chance:h.chance,
+    })),
   };
   const fatores = {
     violet:obterDoseFilho(p.factors.violet,m.factors.violet),
     grey:obterDoseFilho(p.factors.grey,m.factors.grey),
     dark:obterDoseFilho(p.factors.dark,m.factors.dark),
   };
-  const cinPorSexo = (sexo) => p.cinZ.map((alelo) => {
-    const herdados=sexo==="Macho" ? [alelo,m.cinZ[0]] : [alelo];
-    const n=herdados.filter((x)=>x==="C").length;
-    return { status:(sexo==="Macho" ? n===2 : n===1) ? "visual" :
-      (sexo==="Macho" && n===1 ? "split" : "normal"),chance:0.5 };
-  });
+  const fatoresParciais = {
+    dark: fatores.dark.map(({dosagem,chance})=>({
+      nome:dosagem===0?"Sem fator escuro":dosagem===1?"Dark SF (um fator escuro)":"Dark DF (dois fatores escuros)",
+      percentual:Number((chance*100).toFixed(4)),
+    })),
+    violet: fatores.violet.map(({dosagem,chance})=>({
+      nome:dosagem===0?"Sem fator violeta":dosagem===1?"Violet SF (fator violeta simples)":"Violet DF (fator violeta duplo)",
+      percentual:Number((chance*100).toFixed(4)),
+    })),
+  };
+  const fenotipoCanela = (alelos, sexo) => {
+    const copias=alelos.filter(x=>x==="C").length;
+    return (sexo==="Macho" ? copias===2 : copias===1)
+      ? "visual"
+      : sexo==="Macho" && copias===1 ? "split" : "normal";
+  };
   const avisoNaoModelado = [...new Set([...p.naoModeladas,...m.naoModeladas])];
   const premissas = [
     "Cores simples e fatores não informados usam o padrão de simulação, não um genótipo confirmado.",
     "Percentuais dentro de cada sexo; a probabilidade de nascimento macho/fêmea é tratada separadamente.",
     "Ino e Pallid são alelos no mesmo locus ligado ao sexo, não duas mutações independentes.",
   ];
-  if (linkedCinnamonIno) return {
+  if (faseZDesconhecida) return {
     status:"parcial",
-    mensagem:"Cinnamon (Canela) e Ino/Pallid são ligados ao cromossomo Z. Para combinar os percentuais precisamos conhecer a fase genética e a recombinação; não vamos inventar chances.",
+    mensagem:"O macho possui duas variantes no locus Ino/Pallid e também é portador de Cinnamon. Precisamos saber em qual cromossomo Z está cada mutação (fase genética) e a recombinação para prever as combinações. Sem isso, os percentuais finais não são confiáveis.",
     machos:[],femeas:[],premissas,
   };
   if (ligadoDark) {
@@ -287,17 +340,18 @@ export function calcularCriasRingNeck(paiSelecionado, maeSelecionada) {
       status:"parcial",
       mensagem:"O fator Dark pode estar ligado aos alelos da série Azul/Turquesa. Sem saber de qual cromossomo ele veio, não é seguro combinar todas as cores em uma porcentagem final.",
       serie:serie.map(x=>({nome:serieNome(x.serie.split("/")),percentual:x.chance*100})),
+      fatoresParciais,
       machos:[],femeas:[],premissas,
     };
   }
   const resultadoSexo = (sexo) => {
     const agrupado = new Map();
-    for(const cor of serie) for(const z of sexoZ[sexo]) for(const cin of cinPorSexo(sexo))
+    for(const cor of serie) for(const z of sexoZ[sexo])
       for(const violet of fatores.violet) for(const grey of fatores.grey) for(const dark of fatores.dark) {
-        const chance = cor.chance*z.chance*cin.chance*violet.chance*grey.chance*dark.chance;
+        const chance = cor.chance*z.chance*violet.chance*grey.chance*dark.chance;
         if(!chance)continue;
         const gen = {violet:violet.dosagem,grey:grey.dosagem,dark:dark.dosagem};
-        const v = etiqueta(cor.serie,gen,z.z,sexo,cin.status);
+        const v = etiqueta(cor.serie,gen,z.z,sexo,fenotipoCanela(z.cinnamon,sexo));
         const antigo=agrupado.get(v.nome);
         if(antigo)antigo.probabilidade+=chance;
         else agrupado.set(v.nome,{...v,probabilidade:chance,serie:cor.serie});

@@ -93,6 +93,16 @@ export function mostrarNomePopularRingNeck(valor) {
   // Converta o conjunto para a cor popular, sem alterar os percentuais.
   const tokens = nome.split(" · ");
   const temBlue = tokens.some((v)=>norm(v)==="blue (azul)");
+  const temGreen = tokens.some((v)=>norm(v)==="green (verde)");
+  const grey = tokens.find((v)=>/^grey (sf|df)$/i.test(v));
+  if (grey && (temBlue || temGreen)) {
+    const greyDose = /df$/i.test(grey) ? "DF" : "SF";
+    const serie = temBlue ? "blue (azul)" : "green (verde)";
+    const restantes = tokens.filter((parte)=>
+      norm(parte)!==serie && !/^grey (sf|df)$/i.test(parte));
+    const principal = (temBlue ? "Cinza" : "Cinza-verde") + " (Grey " + greyDose + ")";
+    return [principal,...restantes.map((parte)=>mostrarNomePopularRingNeck(parte))].join(" · ");
+  }
   if (temBlue && tokens.some((v)=>/^dark (sf|df)$/i.test(v))) {
     const dark = tokens.some((v)=>/^dark df$/i.test(v)) ? "DF" : "SF";
     const violet = tokens.some((v)=>/^violet df$/i.test(v)) ? "DF"
