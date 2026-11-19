@@ -241,15 +241,53 @@ function BuscaAnilha({ modoClaro = false }) {
 // Vitrine publica de anuncios
 // ---------------------------------------------------------------------------
 
+function AvisoClassificados({ compacto = false }) {
+  return (
+    <aside className="ui-sans rounded-xl border p-4" style={{ background: "#FFF7E9", borderColor: "#E5C88D", color: "#543F21" }} aria-label="Segurança nas negociações">
+      <strong className="block text-sm mb-1">Atenção: negociação direta com o anunciante</strong>
+      <p className="text-xs leading-5">
+        O Avespet é somente uma plataforma de divulgação. Não vende aves, não recebe pagamentos,
+        não participa da negociação e não garante entrega ou procedência. Evite depósitos ou Pix antecipados:
+        confira pessoalmente a ave, a documentação, a origem legal e a identidade do anunciante antes de pagar.
+      </p>
+      {!compacto && <p className="mt-2 text-xs">Leia as <Link para="/regras-anuncios" style={{ textDecoration: "underline", fontWeight: 700 }}>regras e responsabilidades dos anúncios</Link>.</p>}
+    </aside>
+  );
+}
+
+function RegrasAnuncios() {
+  return (
+    <section className="ui-sans max-w-3xl mx-auto px-5 py-10" style={{ color: "#1D2B25" }}>
+      <h1 className="text-3xl font-bold mb-4">Regras e responsabilidades de anúncios de aves</h1>
+      <p className="mb-4">O Avespet funciona como plataforma de classificados: os anúncios são publicados por usuários independentes, que negociam diretamente com os interessados, fora da plataforma.</p>
+      <h2 className="font-bold mt-5 mb-2">Responsabilidade de compradores e anunciantes</h2>
+      <p className="mb-3">O Avespet não atua como vendedor, comprador, representante ou intermediador comercial, não processa ou retém pagamentos e não organiza transporte ou entrega. Preço, condições, pagamento, documentação, procedência legal, saúde, transporte e cumprimento do acordo são tratados diretamente pelos envolvidos, observadas as responsabilidades previstas na legislação.</p>
+      <p className="mb-3">O anunciante responde pelas informações fornecidas, por sua legitimidade para anunciar e pelas autorizações, identificação e documentação exigidas para a espécie. A aprovação ou publicação do anúncio não significa certificação do vendedor ou garantia da operação.</p>
+      <h2 className="font-bold mt-5 mb-2">Evite golpes</h2>
+      <p className="mb-3">Não envie Pix, sinal ou depósito antecipado sem confirmar a identidade do vendedor, a existência da ave e sua documentação. Prefira conhecer a ave pessoalmente antes do pagamento. Desconfie de preços muito baixos e de pressão para pagar imediatamente.</p>
+      <h2 className="font-bold mt-5 mb-2">Denúncias e proteção dos usuários</h2>
+      <p className="mb-3">Anúncios fraudulentos, ilegais ou suspeitos podem ser denunciados ao suporte Avespet para análise. O Avespet poderá moderar e remover anúncios que violem suas regras. Estas disposições não excluem responsabilidades legais da própria plataforma por seus atos ou omissões.</p>
+      <p className="text-sm mt-6">Estas regras aplicam-se aos anúncios de aves à venda. O serviço de aves perdidas e encontradas possui fluxo próprio de contato e proteção de dados.</p>
+    </section>
+  );
+}
+
 function AnuncioVitrineCard({ anuncio, perfil }) {
+  const [confirmarContato, setConfirmarContato] = useState(false);
+  const [entendeuRiscos, setEntendeuRiscos] = useState(false);
+  const msg = `Oi! Vi o anuncio ${anuncio.nomeAve ? `d${anuncio.sexo === "Femea" ? "a" : "o"} ${anuncio.nomeAve}` : "de uma ave"} no site e tenho interesse.`;
+  const urlContato = whatsappUrl(perfil?.whatsapp, msg);
   async function handleInteresse() {
-    try { await incrementarCliqueAnuncio(anuncio.id); } catch { /* nao bloqueia o usuario por isso */ }
-    const msg = `Oi! Vi o anuncio ${anuncio.nomeAve ? `d${anuncio.sexo === "Femea" ? "a" : "o"} ${anuncio.nomeAve}` : "de uma ave"} no site e tenho interesse.`;
-    const url = whatsappUrl(perfil?.whatsapp, msg);
-    if (url) window.open(url, "_blank");
+    setEntendeuRiscos(false);
+    setConfirmarContato(true);
+  }
+  function registrarContato() {
+    incrementarCliqueAnuncio(anuncio.id).catch(() => {});
+    setConfirmarContato(false);
   }
 
-  return (
+  return (<>
+
     <div className="rounded-2xl overflow-hidden ui-sans" style={{ background: "#FFFFFF", border: "1px solid #E1E9E2", boxShadow: "0 10px 28px rgba(22,58,42,.05)" }}>
       <div className="w-full aspect-square" style={{ background: "#E8F1E9" }}>
         {anuncio.foto ? <img src={anuncio.foto} className="w-full h-full object-cover" alt="" /> : null}
@@ -265,7 +303,23 @@ function AnuncioVitrineCard({ anuncio, perfil }) {
         </button>
       </div>
     </div>
-  );
+    {confirmarContato && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.65)" }} role="presentation" onClick={() => setConfirmarContato(false)}>
+        <div className="ui-sans w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl" role="dialog" aria-modal="true" aria-label="Aviso de negociação direta" onClick={(e) => e.stopPropagation()}>
+          <h2 className="text-xl font-bold mb-3" style={{ color: "#1D2B25" }}>Antes de falar com o anunciante</h2>
+          <AvisoClassificados />
+          <label className="flex gap-2 items-start my-4 text-sm" style={{ color: "#1D2B25" }}>
+            <input type="checkbox" className="mt-1" checked={entendeuRiscos} onChange={(e) => setEntendeuRiscos(e.target.checked)} />
+            <span>Entendi que a negociação é direta com o anunciante e que devo verificar a ave e sua documentação antes de pagar.</span>
+          </label>
+          {urlContato ? (
+            <a href={entendeuRiscos ? urlContato : undefined} target="_blank" rel="noopener noreferrer" aria-disabled={!entendeuRiscos} onClick={(e) => { if (!entendeuRiscos) e.preventDefault(); else registrarContato(); }} className="block rounded-lg py-3 px-4 text-center font-bold" style={{ background: entendeuRiscos ? "#174B3B" : "#CAD6CE", color: "#fff", pointerEvents: entendeuRiscos ? "auto" : "none" }}>Entendi — abrir WhatsApp do anunciante</a>
+          ) : <p className="text-sm" role="alert">O anunciante não disponibilizou um WhatsApp para contato direto.</p>}
+          <button type="button" className="block mx-auto mt-3 text-sm underline" onClick={() => setConfirmarContato(false)}>Cancelar</button>
+        </div>
+      </div>
+    )}
+  </>);
 }
 
 function VitrinePublica() {
@@ -499,7 +553,8 @@ const MENU = [
 ];
 
 const SEO_FIXO = {
-  "/aves-a-venda": { titulo: "Aves a venda", descricao: "Ring Neck e Calopsita de criadores cadastrados, com contato direto." },
+  "/aves-a-venda": { titulo: "Aves a venda", descricao: "Anúncios de criadores independentes, com contato direto e orientações de segurança." },
+  "/regras-anuncios": { titulo: "Regras dos anúncios", descricao: "Entenda os cuidados e as responsabilidades das negociações diretas no Avespet." },
   "/achei-uma-ave": { titulo: "Achei uma ave", descricao: "Encontrou uma ave? Informe a anilha e ajudamos a devolver ao criador." },
   "/aves-perdidas": { titulo: "Aves perdidas", descricao: "Veja anúncios de aves perdidas e ajude a reunir aves e suas famílias." },
   "/campanha-ave-perdida": { titulo: "Divulgação regional de ave perdida", descricao: "Solicite orçamento para ampliar a divulgação regional da busca pela sua ave." },
@@ -534,6 +589,7 @@ function NaoEncontrada() {
 function ConteudoDaRota({ caminho, onEntrar }) {
   const guia = caminho.match(/^\/guias\/([a-z0-9-]+)$/);
   if (caminho === "/") return <Inicio BuscaAnilha={BuscaAnilha} VitrinePublica={VitrinePublica} GuiasEmDestaque={GuiasEmDestaque} onEntrar={onEntrar} />;
+  if (caminho === "/regras-anuncios") return <><SeoFixo caminho={caminho} /><RegrasAnuncios /></>;
   if (caminho === "/aves-a-venda") {
     return (
       <div style={{ background: "#F5F7F3", minHeight: "70vh" }}>
@@ -541,7 +597,8 @@ function ConteudoDaRota({ caminho, onEntrar }) {
           <SeoFixo caminho={caminho} />
           <h1 className="ui-sans mb-3 text-3xl md:text-4xl" style={{ color: "#1D2B25", fontFamily: "'Fraunces', serif", fontWeight: 700 }}>Aves disponíveis agora</h1>
           <p className="ui-sans mb-8 text-sm" style={{ color: "#63736A" }}>Conheça os anúncios publicados por criadores cadastrados no Avespet.</p>
-          <VitrinePublica />
+          <AvisoClassificados />
+          <div className="mt-6"><VitrinePublica /></div>
         </section>
       </div>
     );
