@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import ReunionReviews from "./ReunionReviews";
 import { lostBirdMessage, whatsappDigits } from "./lostBirdContactTemplates";
@@ -42,7 +42,9 @@ export default function LostBirdsModeration({ onPrepareEmail }) {
   const [contactSubject, setContactSubject] = useState("");
   const [contactBusy, setContactBusy] = useState(false);
   const [contactFeedback, setContactFeedback] = useState("");
+  const listRequestId = useRef(0); // Ignora retornos atrasados de filtros/páginas anteriores.
   const load = useCallback(async () => {
+    const requestId = ++listRequestId.current;
     setLoading(true);
     setError("");
     try {
@@ -50,12 +52,15 @@ export default function LostBirdsModeration({ onPrepareEmail }) {
         body: { action: "list", status, page },
       });
       if (invokeError || data?.error) throw new Error(data?.error || "Não foi possível consultar as aves perdidas.");
-      setResult(data || { items: [], total: 0, totalPages: 1 });
+      if (requestId === listRequestId.current) setResult(data || { items: [], total: 0, totalPages: 1 });
     } catch (err) {
-      setError(err?.message || "Falha ao carregar as ocorrências.");
+      if (requestId === listRequestId.current) setError(err?.message || "Falha ao carregar as ocorrências.");
     } finally { setLoading(false); }
   }, [status, page]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+    return () => { listRequestId.current += 1; };
+  }, [load]);
 
   function openContact(ad, kind = "acompanhamento") {
     if (!ad?.id) return;
