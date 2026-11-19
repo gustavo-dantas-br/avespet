@@ -1,0 +1,68 @@
+import React, { useState } from "react";
+import { ESPECIES_INICIAIS, FASES, validarPerfil, respostaEducativa } from "./motorEducativo";
+
+// Tela independente, sem escrita no Supabase até aprovação do schema/RLS.
+// O estado é transitório: fechar ou recarregar descarta os dados.
+const inicial = { nivel: "iniciante", especie: "Ring Neck", fase: "incerta", idadeDias: "" };
+const campo = "w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-stone-900";
+
+export default function MeuPrimeiroPet() {
+  const [perfil, setPerfil] = useState(inicial);
+  const [pergunta, setPergunta] = useState("");
+  const [resposta, setResposta] = useState(null);
+  const [erro, setErro] = useState("");
+  const atualizar = (chave, valor) => {
+    setPerfil((atual) => ({ ...atual, [chave]: valor }));
+    setResposta(null);
+    setErro("");
+  };
+  const consultar = (event) => {
+    event.preventDefault();
+    const validacao = validarPerfil(perfil);
+    if (validacao) { setErro(validacao); return; }
+    setErro("");
+    setResposta(respostaEducativa(perfil, pergunta));
+  };
+  return (
+    <section className="mx-auto max-w-3xl space-y-5 rounded-2xl bg-emerald-50 p-5 text-stone-900">
+      <header>
+        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Avespet IA · Versão educativa</p>
+        <h1 className="text-2xl font-bold">Meu Primeiro Pet</h1>
+        <p className="mt-2 text-sm">Conheça a fase da sua ave e organize dúvidas de manejo. Esta versão funciona sem inteligência artificial externa.</p>
+      </header>
+      <form onSubmit={consultar} className="space-y-4">
+        <label className="block text-sm font-medium">Experiência
+          <select className={campo} value={perfil.nivel} onChange={(e) => atualizar("nivel", e.target.value)}>
+            <option value="iniciante">Minha primeira ave</option>
+            <option value="intermediario">Já tenho experiência</option>
+            <option value="experiente">Sou criador experiente</option>
+          </select>
+        </label>
+        <label className="block text-sm font-medium">Espécie
+          <select className={campo} value={perfil.especie} onChange={(e) => atualizar("especie", e.target.value)}>
+            {ESPECIES_INICIAIS.map((item) => <option key={item}>{item}</option>)}
+          </select>
+        </label>
+        <label className="block text-sm font-medium">Fase de desenvolvimento
+          <select className={campo} value={perfil.fase} onChange={(e) => atualizar("fase", e.target.value)}>
+            {FASES.map((fase) => <option key={fase.id} value={fase.id}>{fase.label}</option>)}
+          </select>
+        </label>
+        <label className="block text-sm font-medium">Idade em dias (opcional)
+          <input className={campo} type="number" min="0" max="30000" step="1" value={perfil.idadeDias} onChange={(e) => atualizar("idadeDias", e.target.value)} placeholder="Ex.: 45" />
+        </label>
+        <label className="block text-sm font-medium">O que você gostaria de saber?
+          <textarea className={campo} maxLength={2000} rows={3} value={pergunta} onChange={(e) => setPergunta(e.target.value)} placeholder="Conte uma dúvida ou alteração observada" />
+        </label>
+        {erro && <p role="alert" className="text-sm font-medium text-red-700">{erro}</p>}
+        <button type="submit" className="rounded-lg bg-emerald-700 px-5 py-3 font-semibold text-white hover:bg-emerald-800">Receber orientação educativa</button>
+      </form>
+      {resposta && <article role="status" aria-live="polite" className={`space-y-3 rounded-xl border p-4 ${resposta.tipo === "urgente" ? "border-red-400 bg-red-50" : resposta.tipo === "atencao" ? "border-amber-400 bg-amber-50" : "border-emerald-200 bg-white"}`}>
+        <h2 className="text-lg font-bold">{resposta.titulo}</h2>
+        <p className="text-sm leading-relaxed">{resposta.mensagem}</p>
+        <p className="border-t pt-3 text-xs text-stone-600">{resposta.aviso}</p>
+      </article>}
+      <p className="text-xs text-stone-600">Protótipo em desenvolvimento: não salva dados, não envia perguntas para serviços externos e não substitui um veterinário especializado em aves.</p>
+    </section>
+  );
+}
