@@ -55,11 +55,13 @@ Deno.serve(async (req) => {
     body = JSON.parse(raw);
   } catch { return reply(origin, 400, {error:"Mensagem inválida."}); }
   if (body?.acao === "status") return reply(origin, 200, {
-    disponivel: ativo && configurado, modalidade: "piloto", limites: "restrito"
+    disponivel: ativo && configurado,
+    codigo: !ativo ? "DESATIVADO" : !configurado ? "CONFIGURACAO" : "PILOTO_CONFIGURADO",
+    observacao: "Configuração verificada; não confirma a disponibilidade do provedor Gemini."
   });
-  if (!ativo) return reply(origin, 503, {error:"Chat gerativo ainda indisponível."});
-  if (!configurado) return reply(origin, 503, {error:"Modelo não configurado."});
-  if (!withinLocalLimit(info.user.id)) return reply(origin, 429, {error:"Limite temporário atingido."});
+  if (!ativo) return reply(origin, 503, {codigo:"DESATIVADO", error:"Chat gerativo ainda indisponível."});
+  if (!configurado) return reply(origin, 503, {codigo:"CONFIGURACAO", error:"Modelo não configurado."});
+  if (!withinLocalLimit(info.user.id)) return reply(origin, 429, {codigo:"LIMITE_LOCAL", error:"Limite temporário atingido."});
   const msg = typeof body?.mensagem === "string" ? body.mensagem.trim().slice(0,2000) : "";
   if (!msg) return reply(origin, 400, {error:"Digite sua mensagem."});
   const contexto = body.contexto && typeof body.contexto === "object" ? body.contexto : {};
@@ -78,12 +80,19 @@ Deno.serve(async (req) => {
       headers:{"Content-Type":"application/json","x-goog-api-key":key},
       body:JSON.stringify({systemInstruction:{parts:[{text:SYSTEM}]}, contents, generationConfig:{maxOutputTokens:500,temperature:0.55}}),
     });
-    if (!res.ok) return reply(origin, res.status === 429 ? 429 : 503, {error:"O assistente está indisponível. Tente novamente mais tarde."});
+    if (!res.ok) {
+      // Apenas status e categoria de erro são registrados. Nunca registrar chave, tokens, prompt ou dados pessoais.
+      console.error("avespet-ia-chat: erro do provedor", {status: res.status});
+      if (res.status === 429) return reply(origin, 429, {codigo:"COTA_GEMINI", error:"O limite de uso do Gemini foi atingido."});
+      if (res.status === 401 || res.status === 403) return reply(origin, 503, {codigo:"CHAVE_GEMINI", error:"Acesso do Gemini não autorizado; verificar chave e permissões."});
+      if (res.status === 404 || res.status === 400) return reply(origin, 503, {codigo:"MODELO_GEMINI", error:"Modelo Gemini indisponível para este projeto."});
+      return reply(origin, 503, {codigo:"PROVEDOR", error:"Serviço Gemini temporariamente indisponível."});
+    }
     const data = await res.json();
     const resposta = String(data?.candidates?.[0]?.content?.parts?.map((p:any)=>p.text || "").join("") || "").trim();
-    if (!resposta) return reply(origin, 503, {error:"O modelo não retornou texto."});
+    if (!resposta) return reply(origin, 503, {codigo:"SEM_RESPOSTA", error:"O modelo não retornou texto."});
     return reply(origin, 200, {mensagem:resposta.slice(0,3500)});
   } catch {
-    return reply(origin, 503, {error:"Falha temporária ao consultar a IA."});
+    return reply(origin, 503, {codigo:"REDE_GEMINI", error:"Falha temporária ao consultar a IA."});
   } finally {clearTimeout(timeout);}
 });
