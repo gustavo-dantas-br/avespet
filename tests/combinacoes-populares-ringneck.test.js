@@ -53,11 +53,57 @@ test("Violeta Canela e Cobalto Canela preservam o nome no resultado", () => {
   assert.ok(r2.femeas.some(x=>x.nome.includes("Cobalto Canela")));
 });
 
-test("Cinnamon + Ino exige fase genética antes de combinar probabilidades", () => {
+test("Pai Azul Canela visual × mãe Albina: transmissão combinada calculável", () => {
   const r=calcularCriasRingNeck(ave("blue-cinnamon"),ave("albino"));
+  assert.equal(r.status,"completo");
+  assert.equal(r.machos.length,1);
+  assert.equal(r.femeas.length,1);
+  assert.equal(soma(r.machos),100);
+  assert.equal(soma(r.femeas),100);
+  assert.match(r.machos[0].nome,/portador de Ino/);
+  assert.match(r.machos[0].nome,/portador de Canela/);
+  assert.match(r.femeas[0].nome,/Azul Canela/);
+});
+
+test("Pai Ino azul × mãe Azul Canela: filhas Ino, machos portadores de Canela e Ino", () => {
+  const r=calcularCriasRingNeck(ave("albino"),ave("blue-cinnamon"));
+  assert.equal(r.status,"completo");
+  assert.equal(r.machos.length,1);
+  assert.equal(r.femeas.length,1);
+  assert.match(r.machos[0].nome,/portador de Ino/);
+  assert.match(r.machos[0].nome,/portador de Canela/);
+  assert.match(r.femeas[0].nome,/Albino/);
+});
+
+test("Pai duplo heterozigoto Ino e Canela exige fase genética", () => {
+  const r=calcularCriasRingNeck(
+    ave("blue",{ino:"split_ino",cinnamon:"split"}),
+    ave("blue")
+  );
   assert.equal(r.status,"parcial");
-  assert.equal(r.machos.length,0);
   assert.match(r.mensagem,/fase genética/);
+  assert.equal(r.machos.length,0);
+});
+
+test("Pai PallidIno visual × mãe Canela visual tem resultados definidos por sexo", () => {
+  const r=calcularCriasRingNeck(ave("pallidino"),ave("blue-cinnamon"));
+  assert.equal(r.status,"completo");
+  assert.equal(soma(r.machos),100);
+  assert.equal(soma(r.femeas),100);
+  assert.equal(r.machos.length,2);
+  assert.equal(r.femeas.length,2);
+});
+
+test("Pai portador de Canela e mãe Ino: duas classes ligadas ao sexo, não quatro independentes", () => {
+  const r=calcularCriasRingNeck(
+    ave("blue",{cinnamon:"split"}),
+    ave("albino")
+  );
+  assert.equal(r.status,"completo");
+  assert.equal(r.machos.length,2);
+  assert.equal(r.femeas.length,2);
+  assert.deepEqual(r.machos.map(x=>x.percentual).sort(),[50,50]);
+  assert.deepEqual(r.femeas.map(x=>x.percentual).sort(),[50,50]);
 });
 
 test("Cobalto Turquesa com segregação da série impede falsa precisão", () => {
