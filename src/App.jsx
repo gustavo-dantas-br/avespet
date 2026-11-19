@@ -1282,7 +1282,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
               <IndicacoesTab indicacoes={indicacoes} clientes={clientes} onSave={handleSaveIndicacao} onDelete={handleDeleteIndicacao} Card={Card} Field={Field} SectionTitle={SectionTitle} SummaryCard={StatCard} inputStyle={inputStyle} STATUS_INDICACAO={STATUS_INDICACAO} emptyIndicacao={emptyIndicacao} hojeISO={hojeISO} />
             )}
 
-            {tab === "avespet-ia" && <AvespetIA aves={aves} userId={user.id} />}
+            {tab === "avespet-ia" && <AvespetIA aves={aves} userId={user.id} onOpenGenetica={() => setTab("mutacoes")} />}
 
             {tab === "perdi-uma-ave" && <PerdiUmaAve userId={user.id} />}
 
