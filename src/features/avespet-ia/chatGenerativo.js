@@ -18,7 +18,15 @@ export async function conversarComModelo({ pergunta, historico = [], contexto = 
       contexto: { especie: String(contexto.especie || "").slice(0, 40), filhote: Boolean(contexto.filhote), idadeDias: contexto.idadeDias ?? null },
     },
   });
-  if (error) throw error;
+  if (error) {
+    const detalhe = typeof error.context?.json === "function"
+      ? await error.context.json().catch(() => null)
+      : null;
+    const falha = new Error(detalhe?.error || "O Gemini não respondeu.");
+    falha.status = error.context?.status || error.status || 0;
+    falha.codigo = detalhe?.codigo || "INDEFINIDO";
+    throw falha;
+  }
   if (!data?.mensagem) throw new Error("Resposta indisponível.");
   return { tipo: "conversa", titulo: "Avespet IA", mensagem: String(data.mensagem).slice(0, 3500), aviso: "Resposta gerada automaticamente, sujeita a erros. Não substitui atendimento veterinário.", fontes: [] };
 }
