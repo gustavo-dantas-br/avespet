@@ -1,7 +1,7 @@
 // Serviço de chat gerativo opcional. O preview usa conversa local até a função
 // e o provedor gratuito serem configurados e auditados.
 import { supabase } from "../../supabaseClient";
-export const CHAT_GENERATIVO_ATIVO = false;
+export const CHAT_GENERATIVO_ATIVO = import.meta.env.VITE_AVESPET_IA_GEMINI_ENABLED === "true";
 
 export async function conversarComModelo({ pergunta, historico = [], contexto = {} }) {
   if (!CHAT_GENERATIVO_ATIVO) return null;
