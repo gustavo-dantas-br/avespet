@@ -30,13 +30,7 @@ Deno.serve(async (req) => {
   if (!allowed(origin)) return reply(null, 403, { error: "Somente preview autorizado." });
   if (req.method === "OPTIONS") return new Response("ok", { headers: headers(origin) });
   if (req.method !== "POST") return reply(origin, 405, {error: "Método não permitido."});
-  if (Deno.env.get("AVESPET_IA_ENABLED") !== "true") return reply(origin, 503, {error: "Chat gerativo ainda indisponível."});
-  const key = Deno.env.get("GEMINI_API_KEY");
-  const model = Deno.env.get("GEMINI_MODEL");
-  // Desligamento obrigatório para todos os ambientes até aprovação da cota gratuita.
-  // Não desative este bloqueio por alteração de código; use exclusivamente o Secret.
 
-  if (!key || model !== "gemini-2.5-flash-lite") return reply(origin, 503, {error: "Modelo gratuito do piloto não configurado."});
   const bearer = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
   if (!bearer || !Deno.env.get("SUPABASE_URL") || !Deno.env.get("SUPABASE_ANON_KEY"))
     return reply(origin, 401, {error: "Entre na sua conta."});
@@ -48,14 +42,28 @@ Deno.serve(async (req) => {
   const testerEmail = (Deno.env.get("AVESPET_IA_TESTER_EMAIL") || "").trim().toLowerCase();
   if (!testerEmail || !info.user.email || info.user.email.toLowerCase() !== testerEmail)
     return reply(origin, 403, {error:"Gemini reservado à conta de testes autorizada."});
-  if (!withinLocalLimit(info.user.id)) return reply(origin, 429, {error:"Limite temporário atingido."});
+  const ativo = Deno.env.get("AVESPET_IA_ENABLED") === "true";
+  const key = Deno.env.get("GEMINI_API_KEY");
+  const model = Deno.env.get("GEMINI_MODEL");
+  const configurado = Boolean(key) && model === "gemini-2.5-flash-lite";
+  // Este estado é gratuito e disponível somente depois de autenticação e allowlist.
+  // Não revela a chave e não faz nenhuma chamada à API do Google.
   let body: any;
-  try { body = await req.json(); } catch { return reply(origin, 400, {error:"Mensagem inválida."}); }
+  try {
+    const raw = await req.text();
+    if (raw.length > 16000) return reply(origin, 413, {error:"Mensagem muito longa."});
+    body = JSON.parse(raw);
+  } catch { return reply(origin, 400, {error:"Mensagem inválida."}); }
+  if (body?.acao === "status") return reply(origin, 200, {
+    disponivel: ativo && configurado, modalidade: "piloto", limites: "restrito"
+  });
+  if (!ativo) return reply(origin, 503, {error:"Chat gerativo ainda indisponível."});
+  if (!configurado) return reply(origin, 503, {error:"Modelo não configurado."});
+  if (!withinLocalLimit(info.user.id)) return reply(origin, 429, {error:"Limite temporário atingido."});
   const msg = typeof body?.mensagem === "string" ? body.mensagem.trim().slice(0,2000) : "";
   if (!msg) return reply(origin, 400, {error:"Digite sua mensagem."});
   const contexto = body.contexto && typeof body.contexto === "object" ? body.contexto : {};
-  // Recusa entradas muito grandes para preservar cotas e reduzir abuso.
-  if (JSON.stringify(body).length > 16000) return reply(origin, 413, {error:"Mensagem muito longa."});
+
   const historico = Array.isArray(body.historico) ? body.historico.slice(-6) : [];
   const contents = historico.flatMap((h: any) => [
     { role:"user", parts: [{text: String(h?.pergunta || "").slice(0,1000)}]},
