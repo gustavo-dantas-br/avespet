@@ -3,6 +3,11 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const originAllow = new Set(["https://avespet.com.br", "https://www.avespet.com.br"]);
 const inboxes = { suporte: "suporte@avespet.com.br", financeiro: "financeiro@avespet.com.br" } as const;
+// Cache apenas do identificador técnico da caixa, nunca de e-mails ou mensagens.
+// Cada chamada continua validando a sessão e a permissão Master.
+const inboxCache = new Map<Box, { id: string, expiresAt: number }>();
+const inboxCacheTtlMs = 10 * 60 * 1000;
+
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 type Box = keyof typeof inboxes;
 
@@ -129,26 +134,32 @@ Deno.serve(async (req) => {
   if (!validBox(box)) return reply({ error: "Caixa inválida." }, 400, origin);
   const key = Deno.env.get("RESEND_INBOX_API_KEY");
   if (!key) return reply({ error: "Integração de caixas não ativada. Configure RESEND_INBOX_API_KEY nos Secrets do Supabase." }, 503, origin);
-  // Resend routes Inbox operations by UUID, not the email address.
-  // Resolve server-side so no Resend inbox IDs or credentials are needed in the browser.
+  // O provedor exige o ID da caixa. Reutilizamos esse identificador por até
+  // 10 minutos para não consultar /inboxes antes de toda leitura ou envio.
+  // Os indicadores de não lidos são consultados em tempo real em "threads".
   const address = inboxes[box];
   let selectedId: string;
   let inboxUnread = 0;
   let inboxLastReceived: string | null = null;
-  try {
-    const listing = await resend("/inboxes?limit=100", key);
-    const item = formatList(listing?.data).find((entry: any) =>
-      typeof entry?.email_address === "string" &&
-      entry.email_address.toLowerCase() === address);
-    if (!item || !uuid.test(String(item.id))) {
-      return reply({ error: "Caixa " + address + " não encontrada na conta Resend desta chave." }, 503, origin);
+  const cached = inboxCache.get(box);
+  if (cached && cached.expiresAt > Date.now()) {
+    selectedId = cached.id;
+  } else {
+    inboxCache.delete(box);
+    try {
+      const listing = await resend("/inboxes?limit=100", key);
+      const item = formatList(listing?.data).find((entry: any) =>
+        typeof entry?.email_address === "string" &&
+        entry.email_address.toLowerCase() === address);
+      if (!item || !uuid.test(String(item.id))) {
+        return reply({ error: "Caixa " + address + " não encontrada na conta Resend desta chave." }, 503, origin);
+      }
+      selectedId = item.id;
+      inboxCache.set(box, { id: selectedId, expiresAt: Date.now() + inboxCacheTtlMs });
+    } catch (error) {
+      if (error instanceof ProviderError) return reply({ error: error.message }, error.status, origin);
+      return reply({ error: "Não foi possível localizar as caixas do Resend." }, 503, origin);
     }
-    selectedId = item.id;
-    inboxUnread = Number(item.unread) || 0;
-    inboxLastReceived = typeof item.last_received === "string" ? item.last_received : null;
-  } catch (error) {
-    if (error instanceof ProviderError) return reply({ error: error.message }, error.status, origin);
-    return reply({ error: "Não foi possível localizar as caixas do Resend." }, 503, origin);
   }
   const base = "/inboxes/" + selectedId;
   const thread = str(body.thread_id, 50);
@@ -168,6 +179,8 @@ Deno.serve(async (req) => {
         resource_type: "communication", metadata: { box, count: threads.length },
       });
       if (auditError) return reply({ error: "Não foi possível registrar o acesso administrativo." }, 503, origin);
+      inboxUnread = Number(result?.unread_count) || threads.filter((item: any) => !item.read).length;
+      inboxLastReceived = threads[0]?.received_at || null;
       return reply({ success: true, threads, has_more: Boolean(result?.has_more),
         unread_count: inboxUnread, last_received: inboxLastReceived }, 200, origin);
     }
@@ -291,6 +304,8 @@ Deno.serve(async (req) => {
     }
     return reply({ error: "Ação inválida." }, 400, origin);
   } catch (error) {
+    // Se a caixa tiver sido recriada no Resend, refazer a descoberta na próxima chamada.
+    if (error instanceof ProviderError && error.status === 404) inboxCache.delete(box);
     if (error instanceof ProviderError) return reply({ error: error.message }, error.status, origin);
     console.error("Master inbox failure", error instanceof Error ? error.message : "unknown");
     return reply({ error: "Falha temporária na Central de Comunicação." }, 503, origin);
