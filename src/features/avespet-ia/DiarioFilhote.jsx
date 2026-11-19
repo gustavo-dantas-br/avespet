@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import { validarRegistro, dataHojeLocal, historicoPeso } from "./diarioValidacao";
 import { DIARIO_PERSISTENCIA_ATIVA, listarDiario, salvarDiario, excluirRegistroDiario } from "./diarioService";
+import GraficoPeso from "./GraficoPeso";
 
 export default function DiarioFilhote({ aveNome = "Minha ave", aveId = "", userId = "" }) {
   const [registros, setRegistros] = useState([]);
@@ -74,6 +75,7 @@ export default function DiarioFilhote({ aveNome = "Minha ave", aveId = "", userI
       {erro && <p role="alert" className="text-sm text-red-700 sm:col-span-2">{erro}</p>}
       <button type="submit" disabled={salvando || carregando} className="rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white disabled:opacity-50 sm:col-span-2">{salvando ? "Salvando..." : persistente ? "Salvar no diário" : "Adicionar registro temporário"}</button>
     </form>
+    <GraficoPeso pesos={pesos} />
     {pesos.length > 0 && <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3"><h3 className="font-semibold text-emerald-950">Histórico de peso registrado</h3><p className="mb-2 text-xs text-stone-600">Registro visual, não é uma curva clínica de crescimento.</p><div className="flex flex-wrap items-end gap-2">{pesos.map((item, i) => <div key={item.data + "-" + i} className="rounded-lg bg-white px-3 py-2 text-xs"><strong>{item.peso.toLocaleString("pt-BR")} g</strong><div className="text-stone-500">{item.data.split("-").reverse().join("/")}</div></div>)}</div></div>}
     <div className="space-y-2" aria-live="polite">
       <h3 className="font-semibold">{persistente ? "Registros da ave" : "Registros desta sessão"} ({registros.length})</h3>
