@@ -28,6 +28,6 @@ jobs:
       - name: Instalar dependências
         run: npm ci
       - name: Testes do Avespet IA
-        run: node --test tests/avespet-ia.test.js tests/avespet-ia-diario.test.js
+        run: node --test tests/avespet-ia.test.js tests/avespet-ia-diario.test.js tests/avespet-ia-mapeamento.test.js
       - name: Compilar aplicação
         run: npm run build
