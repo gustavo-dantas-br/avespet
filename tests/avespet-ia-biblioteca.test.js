@@ -38,3 +38,23 @@ test("não fabrica fonte para pergunta sem resultado", () => {
   const resposta = responderComBiblioteca(perfil, "Qual é a previsão do tempo?", [guia]);
   assert.deepEqual(resposta.fontes,[]);
 });
+
+test("saudação simples recebe acolhimento e não erro de falta de guia", () => {
+  for (const texto of ["Oi", "Olá tudo bem?", "Bom dia!", "Ola tudo bem", "E aí?"]) {
+    const resposta = responderComBiblioteca(perfil, texto);
+    assert.equal(resposta.tipo, "conversa", texto);
+    assert.match(resposta.mensagem, /Avespet|ave/i);
+    assert.deepEqual(resposta.fontes, []);
+  }
+});
+test("agradecimento e perguntas sobre o assistente são respondidos", () => {
+  for (const texto of ["Obrigado!", "Quem é você?", "Como funciona?"]) {
+    assert.equal(responderComBiblioteca(perfil, texto).tipo, "conversa");
+  }
+});
+test("saudação misturada com sintoma não desvia triagem", () => {
+  assert.equal(responderComBiblioteca(perfil, "Oi, minha ave tem dificuldade para respirar").tipo, "urgente");
+});
+test("texto técnico com cumprimento não recebe resposta social genérica", () => {
+  assert.notEqual(responderComBiblioteca(perfil, "Olá, como dar papa a um filhote?").tipo, "conversa");
+});
