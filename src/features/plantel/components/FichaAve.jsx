@@ -1,16 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Bird, X, Pencil, GitBranch, Dna, Egg, Info, ClipboardList } from "lucide-react";
+import { Bird, X, Pencil, GitBranch, Dna, Egg, Info, ClipboardList, ChevronLeft, Eye } from "lucide-react";
 import { idadeDaAve, sexoVisual } from "../utils/resumoAve";
 import { mostrarNomePopularRingNeck } from "../../genetica/data/nomenclaturaRingNeck";
 
 const texto = (valor) => valor === null || valor === undefined || valor === "" ? "Não informado" : String(valor);
 const nomeAve = (ave) => ave?.nome || "Ave não identificada";
-function Identificacao({ ave, legenda }) {
+function Identificacao({ ave, legenda, onOpen }) {
   const sexo = sexoVisual(ave?.sexo);
   return <div className="rounded-xl border p-3" style={{background:sexo.fundo,borderColor:sexo.borda}}>
     <p className="text-xs font-semibold" style={{color:sexo.texto}}>{legenda} · {sexo.simbolo} {sexo.rotulo}</p>
     <p className="mt-1 break-words text-sm font-bold" style={{color:sexo.texto}}>{nomeAve(ave)}</p>
     {ave?.anilha && <p className="mt-1 text-xs text-slate-600">Anilha {ave.anilha}</p>}
+    {onOpen && <button type="button" onClick={onOpen} aria-label={`Consultar ficha de ${nomeAve(ave)}`} className="mt-2 inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold shadow-sm hover:shadow" style={{color:sexo.texto}}><Eye size={13} aria-hidden="true"/> Consultar ficha</button>}
   </div>;
 }
 function Dado({ rotulo, valor }) {
@@ -21,8 +22,25 @@ function Secao({ titulo, icon: Icone, children }) {
     <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-emerald-900"><Icone size={18} aria-hidden="true"/>{titulo}</h3>{children}
   </section>;
 }
-export default function FichaAve({ ave, aves = [], posturas = [], onClose, onEdit }) {
+export default function FichaAve({ ave: aveInicial, aves = [], posturas = [], onClose, onEdit }) {
   const [aba, setAba] = useState("dados");
+  const [historicoNavegacao, setHistoricoNavegacao] = useState([]);
+  const [aveAtualId, setAveAtualId] = useState(() => aveInicial?.id);
+  // Usa somente aves já disponíveis no plantel; referências externas não viram fichas fictícias.
+  const ave = aves.find((item) => String(item.id) === String(aveAtualId)) || (String(aveInicial?.id) === String(aveAtualId) ? aveInicial : null);
+  const consultarVinculo = (destino) => {
+    if (!destino?.id || !aves.some((item) => String(item.id) === String(destino.id)) || String(destino.id) === String(aveAtualId)) return;
+    setHistoricoNavegacao((items) => [...items, { id: aveAtualId, aba }]);
+    setAveAtualId(destino.id);
+    setAba("dados");
+  };
+  const voltarFicha = () => {
+    const anterior = historicoNavegacao[historicoNavegacao.length - 1];
+    if (!anterior) return;
+    setAveAtualId(anterior.id);
+    setAba(anterior.aba);
+    setHistoricoNavegacao((items) => items.slice(0, -1));
+  };
   const fecharRef = useRef(null);
   useEffect(() => {
     const onKey = (event) => { if (event.key === "Escape") onClose(); };
@@ -51,6 +69,7 @@ export default function FichaAve({ ave, aves = [], posturas = [], onClose, onEdi
   return <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/60 p-2 sm:p-5" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <section role="dialog" aria-modal="true" aria-label={`Ficha de ${nomeAve(ave)}`} className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl">
       <div className="flex items-start justify-between gap-3 border-b border-slate-200 bg-white p-4 sm:p-5">
+        {historicoNavegacao.length > 0 && <button type="button" onClick={voltarFicha} aria-label="Voltar à ficha anterior" className="mt-2 flex shrink-0 items-center gap-1 rounded-lg bg-emerald-50 px-2 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"><ChevronLeft size={16}/> Voltar</button>}
         <div className="flex min-w-0 items-center gap-3">
           {ave.foto ? <img src={ave.foto} alt={`Foto cadastrada de ${nomeAve(ave)}`} className="h-16 w-16 rounded-xl object-cover"/> : <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700"><Bird size={30}/></div>}
           <div className="min-w-0"><p className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">Ficha da ave · somente consulta</p><h2 className="truncate text-xl font-bold text-slate-900">{nomeAve(ave)}</h2><p className="text-xs text-slate-600">{ave.especie || "Espécie não informada"} · {ave.status || "No plantel"}</p></div>
@@ -78,11 +97,11 @@ export default function FichaAve({ ave, aves = [], posturas = [], onClose, onEdi
         {aba==="familia" && <>
           <Secao titulo="Referências de parentesco" icon={GitBranch}>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Identificacao legenda="Pai" ave={pai || (ave.paiExterno ? {nome:ave.paiExterno,sexo:"Macho"} : {nome:"Não informado",sexo:"Macho"})}/>
-              <Identificacao legenda="Mãe" ave={mae || (ave.maeExterno ? {nome:ave.maeExterno,sexo:"Fêmea"} : {nome:"Não informado",sexo:"Fêmea"})}/>
+              <Identificacao legenda="Pai" ave={pai || (ave.paiExterno ? {nome:ave.paiExterno,sexo:"Macho"} : {nome:"Não informado",sexo:"Macho"})} onOpen={pai ? () => consultarVinculo(pai) : undefined}/>
+              <Identificacao legenda="Mãe" ave={mae || (ave.maeExterno ? {nome:ave.maeExterno,sexo:"Fêmea"} : {nome:"Não informado",sexo:"Fêmea"})} onOpen={mae ? () => consultarVinculo(mae) : undefined}/>
             </div>
-            <div className="mt-3"><Dado rotulo="Parceiro cadastrado" valor={parceiro?.nome || ave.casalLabel}/></div>
-            <div className="mt-4"><p className="mb-2 text-xs font-bold text-slate-700">Filhotes vinculados ({filhotes.length})</p>{filhotes.length?<div className="grid gap-2 sm:grid-cols-2">{filhotes.map((f)=><Identificacao key={f.id} legenda="Filhote" ave={f}/>)}</div>:<p className="text-sm text-slate-500">Nenhum filhote vinculado no plantel.</p>}</div>
+            <div className="mt-3"><Dado rotulo="Parceiro cadastrado" valor={parceiro?.nome || ave.casalLabel}/>{parceiro && <button type="button" onClick={() => consultarVinculo(parceiro)} className="mt-2 inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"><Eye size={14}/> Consultar parceiro</button>}</div>
+            <div className="mt-4"><p className="mb-2 text-xs font-bold text-slate-700">Filhotes vinculados ({filhotes.length})</p>{filhotes.length?<div className="grid gap-2 sm:grid-cols-2">{filhotes.map((f)=><Identificacao key={f.id} legenda="Filhote" ave={f} onOpen={() => consultarVinculo(f)}/>)}</div>:<p className="text-sm text-slate-500">Nenhum filhote vinculado no plantel.</p>}</div>
           </Secao>
           <Secao titulo="Reprodução registrada" icon={Egg}><dl className="grid grid-cols-2 gap-3"><Dado rotulo="Posturas vinculadas" valor={posturasDaAve.length}/><Dado rotulo="Ovos registrados" valor={ovos}/></dl><p className="mt-2 text-xs text-slate-500">Os detalhes das posturas e ovos permanecem na aba Reprodução.</p></Secao>
         </>}
