@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Bird, BookOpen, CalendarDays, ChevronDown, ChevronRight, Dna, Egg, GraduationCap, HeartHandshake, Info, MessageCircle, Send, ShieldCheck, Sparkles, UserRound, Leaf } from "lucide-react";
 import { ESPECIES_INICIAIS, FASES, validarPerfil } from "./motorEducativo";
 import { conversarLocal, contextoInicial } from "./conversaLocal";
@@ -10,7 +10,7 @@ import FontesEducativas from "./FontesEducativas";
 // Não confundir esta imagem ilustrativa com a ave selecionada pelo criador.
 const FOTO_RINGNECK = "https://images.pexels.com/photos/1463295/pexels-photo-1463295.jpeg?auto=compress&cs=tinysrgb&w=1400";
 const inicial = { nivel: "iniciante", especie: "Ring Neck", fase: "incerta", idadeDias: "" };
-const campo = "mt-1 block w-full rounded-xl border border-[#DAE6DD] bg-white px-3 py-2.5 text-sm text-[#234332] outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100";
+const campo = "mt-1 block w-full rounded-xl border border-[#DAE6DD] bg-white px-3 py-2.5 text-base text-[#234332] outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100";
 const temas = [
   { id: "primeiro", nome: "Meu Primeiro Pet", descricao: "Está começando agora? Vamos orientar você.", icon: Bird },
   { id: "desenvolvimento", nome: "Acompanhar desenvolvimento", descricao: "Registre o dia a dia e acompanhe o histórico.", icon: CalendarDays },
@@ -36,6 +36,8 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
   const [aveId, setAveId] = useState("");
   const [diarioAberto, setDiarioAberto] = useState(false);
   const [fontesAbertas, setFontesAbertas] = useState(false);
+  const fimConversaRef = useRef(null);
+  useEffect(() => { if (historico.length > 0) fimConversaRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, [historico]);
   const aveSelecionada = aves.find((ave) => String(ave.id) === aveId) || null;
   const idade = perfil.idadeDias && Number.isInteger(Number(perfil.idadeDias)) ? Number(perfil.idadeDias) : null;
 
@@ -79,7 +81,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
     campoPergunta?.focus();
   };
 
-  return <section className="mx-auto max-w-[1500px] space-y-4 text-[#213D2E]">
+  return <section className="mx-auto w-full min-w-0 max-w-[1500px] space-y-4 overflow-x-clip px-0 text-[#213D2E]">
     <header className="flex flex-wrap items-center justify-between gap-2">
       <div className="flex items-center gap-2">
         <Sparkles className="text-emerald-600" size={26} />
@@ -93,57 +95,56 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
       </div>
     </header>
 
-    <div className="relative isolate overflow-hidden rounded-[22px] border border-[#D6EBDC] bg-gradient-to-r from-[#E8F8ED] via-[#E9F8ED] to-[#C1E2C9] shadow-sm">
-      <div className="absolute inset-y-0 right-0 w-[46%] sm:w-[38%]">
-        <img src={FOTO_RINGNECK} alt="Fotografia ilustrativa de um Ring Neck verde" loading="eager" className="h-full w-full object-cover object-center" />
-      </div>
-      <div className="absolute inset-0 bg-gradient-to-r from-[#E8F8ED] via-[#E8F8ED]/95 to-transparent" />
-      <div className="relative z-10 flex min-h-[194px] flex-col justify-center px-5 py-6 sm:min-h-[220px] sm:px-8">
-        <div className="max-w-[76%] sm:max-w-[73%]">
-          <h2 className="text-2xl font-extrabold leading-tight tracking-tight text-[#142C24] sm:text-3xl md:text-4xl">Olá, sou o Avespet IA <Sparkles size={25} className="inline text-emerald-600" /></h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#3D5346] sm:text-base">Estou aqui para ajudar a conhecer suas aves, acompanhar o desenvolvimento e encontrar informações educativas com referências.</p>
-          <div className="mt-4 hidden flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-[#28533A] md:flex">
+    <div className="relative isolate overflow-hidden rounded-[22px] border border-[#D6EBDC] bg-[#E8F8ED] shadow-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(200px,34%)] sm:items-stretch">
+        <div className="relative z-10 flex min-w-0 flex-col justify-center px-4 py-5 sm:px-8 sm:py-7">
+          <h2 className="text-[24px] font-extrabold leading-tight tracking-tight text-[#142C24] sm:text-3xl lg:text-4xl">Olá, sou o Avespet IA <Sparkles size={23} className="inline text-emerald-600" /></h2>
+          <p className="mt-2 text-sm leading-6 text-[#3D5346] sm:text-base">Estou aqui para ajudar a conhecer suas aves, acompanhar o desenvolvimento e encontrar informações educativas com referências.</p>
+          <div className="mt-4 hidden flex-wrap gap-x-4 gap-y-2 text-xs font-medium text-[#28533A] lg:flex">
             <span>✓ Conhecimento por espécie</span><span>✓ Diário de desenvolvimento</span><span>✓ Fontes verificáveis</span>
           </div>
+        </div>
+        <div className="relative h-[165px] overflow-hidden bg-[#D1EAD8] sm:h-auto sm:min-h-[215px]" aria-label="Fotografia ilustrativa de Ring Neck verde">
+          <img src={FOTO_RINGNECK} alt="Ring Neck verde ilustrando o assistente Avespet IA" loading="eager" decoding="async" className="h-full w-full object-cover object-[center_42%] sm:absolute sm:inset-0" />
         </div>
       </div>
     </div>
 
-    <nav aria-label="Áreas do Avespet IA" className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
+    <nav aria-label="Áreas do Avespet IA" className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0 xl:grid-cols-5">
       {temas.map(({ id, nome, descricao, icon: Icon }) => <button type="button" key={id} onClick={() => selecionarTema(id)} aria-pressed={area === id}
-        className={`flex min-h-[143px] flex-col items-center rounded-2xl border px-3 py-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600 ${area === id ? "border-emerald-500 bg-[#E5F9E7] ring-1 ring-emerald-300" : "border-[#DEE7DF] bg-white hover:bg-[#F7FBF7]"}`}>
+        className={`flex min-h-[126px] w-[154px] shrink-0 snap-start flex-col items-center rounded-2xl border px-3 py-3 text-center shadow-sm transition sm:min-h-[143px] sm:w-auto sm:shrink sm:py-4 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600 ${area === id ? "border-emerald-500 bg-[#E5F9E7] ring-1 ring-emerald-300" : "border-[#DEE7DF] bg-white hover:bg-[#F7FBF7]"}`}>
         <Icon size={28} strokeWidth={1.8} className="mb-2 text-[#16834D]" />
         <strong className="text-sm leading-[1.3] text-[#173428]">{nome}</strong>
         <span className="mt-1.5 text-[11px] leading-4 text-[#586B5F]">{descricao}</span>
       </button>)}
     </nav>
 
-    <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.85fr)_minmax(300px,1fr)]">
+    <div className="grid min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.85fr)_minmax(300px,1fr)]">
       <div className="min-w-0 space-y-4">
-        <section className="overflow-hidden rounded-2xl border border-[#DEE7DF] bg-white shadow-sm" aria-label="Conversa com Avespet IA">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E7EDE8] px-4 py-3 sm:px-5">
+        <section className="min-w-0 overflow-hidden rounded-2xl border border-[#DEE7DF] bg-white shadow-sm" aria-label="Conversa com Avespet IA">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E7EDE8] px-3 py-3 sm:px-5">
             <div className="flex items-center gap-3">
               <MessageCircle size={27} className="text-emerald-700" />
               <div><h2 className="text-lg font-extrabold">Converse com o Avespet IA</h2><p className="text-xs text-[#586B5F]">Pergunte sobre desenvolvimento, ambiente e cuidados</p></div>
             </div>
             <span className="inline-flex items-center gap-1 rounded-full bg-[#ECF8EE] px-3 py-1.5 text-xs text-[#236548]"><GraduationCap size={15}/> Educativo</span>
           </div>
-          <div className="max-h-[520px] min-h-[300px] space-y-4 overflow-y-auto bg-[#FCFDFC] px-4 py-5 sm:px-6" aria-live="polite">
+          <div className="max-h-[min(48dvh,460px)] min-h-[220px] space-y-4 overflow-y-auto overscroll-contain bg-[#FCFDFC] px-3 py-4 sm:max-h-[520px] sm:min-h-[300px] sm:px-6 sm:py-5" aria-live="polite">
             <div className="flex items-start gap-2.5">
               <img src={FOTO_RINGNECK} alt="" className="h-10 w-10 shrink-0 rounded-full border-2 border-[#E0EDE3] object-cover" loading="lazy"/>
-              <div className="max-w-[90%] rounded-2xl rounded-tl-sm border border-[#E3EAE5] bg-white p-4 shadow-sm">
+              <div className="min-w-0 max-w-[calc(100%-3rem)] rounded-2xl rounded-tl-sm border border-[#E3EAE5] bg-white p-3 shadow-sm sm:max-w-[90%] sm:p-4">
                 <p className="text-sm font-bold text-[#173428]">Avespet IA <Sparkles size={13} className="inline text-emerald-500"/></p>
                 <p className="mt-1 text-sm leading-6 text-[#3E5145]">Olá! Sou seu assistente educativo. Conte sobre sua ave, faça uma pergunta ou selecione um dos quadros acima. {CHAT_GENERATIVO_ATIVO ? "O Gemini pode conversar sobre assuntos gerais, mas recomendações de saúde exigem avaliação veterinária." : "Nesta versão, acompanho o contexto da conversa e uso uma biblioteca educativa para assuntos técnicos."}</p>
               </div>
             </div>
             {historico.map((item, i) => <React.Fragment key={i}>
-              <div className="ml-auto flex max-w-[88%] items-start justify-end gap-2">
-                <div className="rounded-2xl rounded-tr-sm bg-[#E5F5EB] px-4 py-3 text-sm text-[#244735]">{item.pergunta}</div>
+              <div className="ml-auto flex max-w-[94%] min-w-0 items-start justify-end gap-2 sm:max-w-[88%]">
+                <div className="min-w-0 break-words rounded-2xl rounded-tr-sm bg-[#E5F5EB] px-3 py-3 text-sm text-[#244735] sm:px-4">{item.pergunta}</div>
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white"><UserRound size={16}/></span>
               </div>
               <div className="flex items-start gap-2.5">
                 <img src={FOTO_RINGNECK} alt="" className="h-10 w-10 shrink-0 rounded-full border-2 border-[#E0EDE3] object-cover" loading="lazy"/>
-                <div className={`max-w-[90%] rounded-2xl rounded-tl-sm border p-4 text-sm shadow-sm ${item.resposta.tipo === "urgente" ? "border-red-200 bg-red-50" : item.resposta.tipo === "atencao" ? "border-amber-200 bg-amber-50" : "border-[#E3EAE5] bg-white"}`}>
+                <div className={`min-w-0 max-w-[calc(100%-3rem)] break-words rounded-2xl rounded-tl-sm border p-3 text-sm shadow-sm sm:max-w-[90%] sm:p-4 ${item.resposta.tipo === "urgente" ? "border-red-200 bg-red-50" : item.resposta.tipo === "atencao" ? "border-amber-200 bg-amber-50" : "border-[#E3EAE5] bg-white"}`}>
                   <strong className="block text-[#173428]">{item.resposta.titulo}</strong>
                   <p className="mt-2 leading-6 text-[#405449]">{item.resposta.mensagem}</p>
                   {item.resposta.fontes?.length > 0 && <div className="mt-3 border-t pt-2 text-xs">{item.resposta.fontes.map((f,j)=><a key={f.url+j} href={f.url} target="_blank" rel="noopener noreferrer" className="block break-words text-emerald-700 underline">{f.titulo}</a>)}</div>}
@@ -151,17 +152,19 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
                 </div>
               </div>
             </React.Fragment>)}
+            {enviando && <p role="status" className="pl-12 text-xs text-[#567260]">Avespet IA está preparando a resposta...</p>}
+            <div ref={fimConversaRef} />
           </div>
 
-          <div className="border-t border-[#E4ECE5] px-4 pb-4 pt-3 sm:px-5">
-            <div className="mb-3 flex flex-wrap gap-2">
-              {sugestoes.map((texto) => <button type="button" key={texto} onClick={() => abrirSugestao(texto)} className="rounded-full border border-[#D7E6DA] bg-[#F9FCF9] px-3 py-1.5 text-xs text-[#355E42] transition hover:bg-[#E6F4E9]"><MessageCircle className="mr-1 inline" size={13}/>{texto}</button>)}
+          <div className="border-t border-[#E4ECE5] bg-white px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:pb-4">
+            <div className="mb-3 flex snap-x gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
+              {sugestoes.map((texto) => <button type="button" key={texto} onClick={() => abrirSugestao(texto)} className="shrink-0 snap-start whitespace-nowrap rounded-full border border-[#D7E6DA] bg-[#F9FCF9] px-3 py-2 text-xs text-[#355E42] transition hover:bg-[#E6F4E9]"><MessageCircle className="mr-1 inline" size={13}/>{texto}</button>)}
             </div>
             <form onSubmit={consultar}>
               <label htmlFor="avespet-ia-pergunta" className="sr-only">Digite sua dúvida para o Avespet IA</label>
-              <div className="flex items-end gap-2">
-                <textarea id="avespet-ia-pergunta" value={pergunta} onChange={(e)=>setPergunta(e.target.value)} rows={2} maxLength={2000} placeholder="Digite sua dúvida sobre manejo, alimentação, desenvolvimento, genética..." className="min-h-[70px] w-full flex-1 resize-y rounded-xl border border-[#D7E4DA] bg-white p-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/>
-                <button type="submit" disabled={enviando} aria-label="Enviar pergunta" title="Enviar pergunta" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-white hover:bg-emerald-800 disabled:opacity-50"><Send size={19}/></button>
+              <div className="flex min-w-0 items-end gap-2">
+                <textarea id="avespet-ia-pergunta" value={pergunta} onChange={(e)=>setPergunta(e.target.value)} rows={2} maxLength={2000} enterKeyHint="enter" placeholder="Digite sua mensagem para o Avespet IA..." className="min-h-[56px] max-h-36 w-full min-w-0 flex-1 resize-y rounded-xl border border-[#D7E4DA] bg-white p-3 text-base leading-6 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/>
+                <button type="submit" disabled={enviando} aria-label="Enviar pergunta" title="Enviar pergunta" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-white hover:bg-emerald-800 disabled:opacity-50"><Send size={19}/></button>
               </div>
               {erro && <p role="alert" className="mt-2 text-xs font-semibold text-red-700">{erro}</p>}
             </form>
