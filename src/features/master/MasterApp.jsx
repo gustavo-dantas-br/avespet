@@ -1,14 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../supabaseClient";
-import CreatorManagement from "./CreatorManagement";
-import AdsModeration from "./AdsModeration";
-import LostBirdsModeration from "./LostBirdsModeration";
-import BirdsManagement from "./BirdsManagement";
-import BillingManagement from "./BillingManagement";
-import MasterAudit from "./MasterAudit";
-import SupportOperations from "./SupportOperations";
-import MasterInboxPanel from "./MasterInboxPanel";
-import EmailAutomations from "./EmailAutomations";
+const CreatorManagement = React.lazy(() => import("./CreatorManagement"));
+const AdsModeration = React.lazy(() => import("./AdsModeration"));
+const LostBirdsModeration = React.lazy(() => import("./LostBirdsModeration"));
+const BirdsManagement = React.lazy(() => import("./BirdsManagement"));
+const BillingManagement = React.lazy(() => import("./BillingManagement"));
+const MasterAudit = React.lazy(() => import("./MasterAudit"));
+const SupportOperations = React.lazy(() => import("./SupportOperations"));
+const MasterInboxPanel = React.lazy(() => import("./MasterInboxPanel"));
+const EmailAutomations = React.lazy(() => import("./EmailAutomations"));
 import {
   LayoutDashboard, Users, Bird, Megaphone, CreditCard, LifeBuoy, Mail,
   Settings, LogOut, ShieldCheck, RefreshCw, Menu, X, Activity, Workflow,
@@ -116,6 +116,9 @@ export default function MasterApp({ user, onLogout }) {
   const [summaryError, setSummaryError] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [supportDraft, setSupportDraft] = useState(null);
+  // Preserva os dados e a posição de cada seção já visitada.
+  // Os módulos ainda não visitados não carregam nem fazem consultas.
+  const [visitedSections, setVisitedSections] = useState(() => ["overview"]);
 
   const loadSummary = useCallback(async () => {
     setSummaryLoading(true);
@@ -143,9 +146,14 @@ export default function MasterApp({ user, onLogout }) {
 
   const selected = useMemo(() => navigation.find((item) => item.id === activeSection) || navigation[0], [activeSection]);
   const selectedPlaceholder = comingSoon[activeSection];
-  const chooseSection = (id) => { setActiveSection(id); setMobileMenuOpen(false); };
+  const chooseSection = (id) => {
+    setVisitedSections((previous) => previous.includes(id) ? previous : [...previous, id]);
+    setActiveSection(id);
+    setMobileMenuOpen(false);
+  };
   const openSupportDraft = (draft) => {
     setSupportDraft(draft);
+    setVisitedSections((previous) => previous.includes("communications") ? previous : [...previous, "communications"]);
     setActiveSection("communications");
     setMobileMenuOpen(false);
   };
@@ -183,7 +191,23 @@ export default function MasterApp({ user, onLogout }) {
         </header>
 
         <main className="mx-auto max-w-[1500px] px-4 py-7 sm:px-7 lg:px-9">
-          {activeSection === "creators" ? <CreatorManagement /> : activeSection === "ads" ? <AdsModeration /> : activeSection === "lost-birds" ? <LostBirdsModeration onPrepareEmail={openSupportDraft} /> : activeSection === "birds" ? <BirdsManagement /> : activeSection === "billing" ? <BillingManagement /> : activeSection === "support" ? <SupportOperations onPrepareEmail={openSupportDraft} /> : activeSection === "settings" ? <MasterAudit /> : activeSection === "communications" ? <MasterInboxPanel user={user} initialDraft={supportDraft} onDraftUsed={() => setSupportDraft(null)} /> : activeSection === "email-automations" ? <EmailAutomations /> : activeSection === "overview" ? (
+          <React.Suspense fallback={<div className="rounded-2xl border bg-white p-8 text-center text-sm text-slate-500" role="status">Carregando módulo administrativo...</div>}>
+            {visitedSections.filter((id) => id !== "overview").map((id) => (
+              <div key={id} hidden={activeSection !== id} aria-hidden={activeSection !== id}>
+                {id === "creators" ? <CreatorManagement />
+                : id === "ads" ? <AdsModeration />
+                : id === "lost-birds" ? <LostBirdsModeration onPrepareEmail={openSupportDraft} />
+                : id === "birds" ? <BirdsManagement />
+                : id === "billing" ? <BillingManagement />
+                : id === "support" ? <SupportOperations onPrepareEmail={openSupportDraft} />
+                : id === "settings" ? <MasterAudit />
+                : id === "communications" ? <MasterInboxPanel user={user} initialDraft={supportDraft} onDraftUsed={() => setSupportDraft(null)} />
+                : id === "email-automations" ? <EmailAutomations />
+                : null}
+              </div>
+            ))}
+          </React.Suspense>
+          {activeSection === "overview" ? (
             <>
               <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
                 <div><p className="text-[10px] font-bold uppercase tracking-[.2em]" style={{ color: "#a27b2e" }}>Central de gestão</p><h1 className="mt-2 text-[26px] font-bold tracking-tight text-slate-900 sm:text-[32px]">Visão geral</h1><p className="mt-1.5 max-w-2xl text-sm text-slate-500">Acompanhe o crescimento, a atividade e a saúde operacional do Avespet em um só lugar.</p></div>
