@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Bird, Dna, Mars, Venus, Sparkles, ChevronDown } from "lucide-react";
+import { Bird, Dna, Mars, Venus } from "lucide-react";
 import {
   CORES_RAPIDAS_RING_NECK,
   criarSelecaoDeAve,
@@ -36,8 +36,8 @@ function QuadroPai({ titulo, sexo, aves, selecionada, onChange }) {
   const [idAve, setIdAve] = useState("");
   const [aberto, setAberto] = useState(false);
   const tema = TEMA_SEXO[sexo];
-  const aveDoPlantel = modo === "plantel" ? lista.find((ave) => String(ave.id) === idAve) : null;
   const lista = aves.filter((ave) => sexo === "Macho" ? ave.sexo === "Macho" : ["Femea", "Fêmea"].includes(ave.sexo));
+  const aveDoPlantel = modo === "plantel" ? lista.find((ave) => String(ave.id) === idAve) : null;
   const update = (campo, valor) => onChange((p) => ({...p, extras:{...(p.extras||{}),[campo]:valor}}));
   const dose = (campo, id) => {
     const atual = selecionada.extras?.[campo];
