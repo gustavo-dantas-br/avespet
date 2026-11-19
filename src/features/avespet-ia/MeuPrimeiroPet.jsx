@@ -195,3 +195,4 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
     </div>
     <footer className="flex items-start gap-2 border-t border-[#DCE7DF] px-2 py-3 text-xs text-[#496754]"><ShieldCheck size={17} className="shrink-0 text-emerald-700"/><span><strong>Importante:</strong> o Avespet IA oferece conteúdo educativo, não realiza atendimento veterinário. Nesta versão os registros do diário são temporários e não há API paga de IA ativa.</span></footer>
   </section>;
+}
