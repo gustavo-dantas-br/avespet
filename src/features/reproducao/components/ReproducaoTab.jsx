@@ -1,5 +1,26 @@
 import React, { useState } from "react";
-import { Plus, Save, Trash2, Pencil } from "lucide-react";
+import { Plus, Save, Trash2, Pencil, Mars, Venus, Egg, CalendarDays, AlertTriangle } from "lucide-react";
+
+const CORES_CASAL = Object.freeze({
+  macho: { fundo: "#eff6ff", borda: "#aacded", texto: "#235b95" },
+  femea: { fundo: "#fff2f7", borda: "#f2bcd2", texto: "#a63970" },
+});
+function IdentidadeCasal({ nome, sexo, detalhe }) {
+  const macho = sexo === "Macho";
+  const tema = macho ? CORES_CASAL.macho : CORES_CASAL.femea;
+  return (
+    <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border p-3" style={{background:tema.fundo,borderColor:tema.borda}}>
+      <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white" style={{color:tema.texto}}>
+        {macho ? <Mars size={22}/> : <Venus size={22}/>}
+      </span>
+      <div className="min-w-0">
+        <p className="text-xs font-semibold" style={{color:tema.texto}}>{macho ? "♂ Macho" : "♀ Fêmea"}</p>
+        <p className="break-words text-sm font-bold" style={{color:tema.texto}}>{nome || "Ave não informada"}</p>
+        {detalhe && <p className="text-xs text-slate-600">{detalhe}</p>}
+      </div>
+    </div>
+  );
+}
 
 const STATUS_OVO = ["Incubando", "Fertil", "Infertil", "Perdido"]; // "Nasceu" so entra por "Registrar nascimento"
 const OVO_ATIVO = ["Incubando", "Fertil"];
@@ -145,18 +166,24 @@ function PosturaForm({ inicial, aves, onSave, onCancel, Card, Field, inputStyle,
             </select>
           </Field>
         )}
-        <Field label="Pai (macho)">
-          <select style={inputStyle} value={f.paiId} onChange={(e) => escolherAve("paiId", e.target.value)}>
-            <option value="">-- selecione --</option>
-            {machos.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
-          </select>
-        </Field>
-        <Field label="Mae (femea)">
-          <select style={inputStyle} value={f.maeId} onChange={(e) => escolherAve("maeId", e.target.value)}>
-            <option value="">-- selecione --</option>
-            {femeas.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
-          </select>
-        </Field>
+        <div className="rounded-xl border p-3" style={{background:CORES_CASAL.macho.fundo,borderColor:CORES_CASAL.macho.borda}}>
+          <Field label="♂ Pai (macho)">
+            <select style={{...inputStyle,background:"#fff"}} value={f.paiId} onChange={(e) => escolherAve("paiId", e.target.value)}>
+              <option value="">Selecione o macho</option>
+              {machos.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
+            </select>
+          </Field>
+          <p className="mt-2 text-xs" style={{color:CORES_CASAL.macho.texto}}>Identificação visual do reprodutor</p>
+        </div>
+        <div className="rounded-xl border p-3" style={{background:CORES_CASAL.femea.fundo,borderColor:CORES_CASAL.femea.borda}}>
+          <Field label="♀ Mãe (fêmea)">
+            <select style={{...inputStyle,background:"#fff"}} value={f.maeId} onChange={(e) => escolherAve("maeId", e.target.value)}>
+              <option value="">Selecione a fêmea</option>
+              {femeas.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
+            </select>
+          </Field>
+          <p className="mt-2 text-xs" style={{color:CORES_CASAL.femea.texto}}>Identificação visual da reprodutora</p>
+        </div>
         <Field label="Viveiro (opcional)">
           <input style={inputStyle} value={f.viveiro} onChange={(e) => setF((x) => ({ ...x, viveiro: e.target.value }))} placeholder="ex: Viveiro 03" />
         </Field>
@@ -376,11 +403,22 @@ export default function ReproducaoTab({ aves, posturas, onSave, onDelete, onNasc
         )}
       </div>
 
-      <div className="ui-sans text-sm mb-5" style={{ color: "#334155" }}>
-        {sumario.incubando} {sumario.incubando === 1 ? "ovo incubando" : "ovos incubando"}
-        {" - "}{sumario.previstos7} {sumario.previstos7 === 1 ? "nascimento previsto" : "nascimentos previstos"} nos proximos 7 dias
-        {sumario.atrasados > 0 ? ` - ${sumario.atrasados} ${sumario.atrasados === 1 ? "ovo passou" : "ovos passaram"} da data prevista` : ""}
+      <div className="mb-5 grid gap-3 sm:grid-cols-3" aria-label="Resumo de reprodução">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+          <p className="flex items-center gap-2 text-xs font-semibold text-emerald-800"><Egg size={16} aria-hidden="true"/> Ovos incubando</p>
+          <p className="mt-1 text-2xl font-bold text-emerald-900">{sumario.incubando}</p>
+        </div>
+        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+          <p className="flex items-center gap-2 text-xs font-semibold text-blue-800"><CalendarDays size={16} aria-hidden="true"/> Próximos 7 dias</p>
+          <p className="mt-1 text-2xl font-bold text-blue-900">{sumario.previstos7}</p>
+          <p className="text-xs text-blue-800">Eclosões previstas</p>
+        </div>
+        <div className={`rounded-2xl border p-4 ${sumario.atrasados > 0 ? "border-amber-300 bg-amber-50" : "border-slate-200 bg-slate-50"}`}>
+          <p className="flex items-center gap-2 text-xs font-semibold text-slate-700"><AlertTriangle size={16} aria-hidden="true"/> Prazo estimado ultrapassado</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">{sumario.atrasados}</p>
+        </div>
       </div>
+      <p className="mb-5 text-xs text-slate-500">As datas são estimativas de manejo, não garantias de eclosão. Azul e rosa identificam o sexo das aves, não sua cor genética.</p>
 
       {!temCasalPossivel && (
         <Card className="p-4 mb-5 ui-sans text-sm" style={{ color: "#8a6f2e" }}>
@@ -407,14 +445,21 @@ export default function ReproducaoTab({ aves, posturas, onSave, onDelete, onNasc
           }, {});
           return (
             <div key={k} className="mb-6">
-              <div className="mb-2">
-                <div className="ui-sans font-semibold" style={{ color: "#173D29", fontSize: 17 }}>
-                  {pai ? pai.nome : "(macho removido)"} x {mae ? mae.nome : "(femea removida)"}
+              <section className="mb-3 rounded-2xl border border-emerald-100 bg-white p-3 sm:p-4 shadow-sm" aria-label="Casal reprodutor">
+                <div className="mb-3 flex flex-wrap items-center gap-2 text-sm font-semibold text-emerald-800"><Egg size={18} aria-hidden="true"/> Casal reprodutor</div>
+                <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+                  <IdentidadeCasal nome={pai?.nome || "(macho removido)"} sexo="Macho" detalhe={pai?.especie}/>
+                  <span aria-hidden="true" className="text-center text-lg font-bold text-emerald-600">×</span>
+                  <IdentidadeCasal nome={mae?.nome || "(fêmea removida)"} sexo="Femea" detalhe={mae?.especie}/>
                 </div>
-                <div className="ui-mono text-xs" style={{ color: "#334155", fontWeight: 600 }}>
-                  {ps.length} {ps.length === 1 ? "postura" : "posturas"} - {tot.total || 0} ovos - {tot.nasceram || 0} nasceram - {tot.inferteis || 0} inferteis - {tot.perdidos || 0} perdidos
+                <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-emerald-900">
+                  <span className="rounded-full bg-emerald-50 px-3 py-1">{ps.length} {ps.length === 1 ? "postura" : "posturas"}</span>
+                  <span className="rounded-full bg-emerald-50 px-3 py-1">{tot.total || 0} ovos</span>
+                  <span className="rounded-full bg-emerald-50 px-3 py-1">{tot.nasceram || 0} nascimentos</span>
+                  <span className="rounded-full bg-emerald-50 px-3 py-1">{tot.inferteis || 0} inférteis</span>
+                  <span className="rounded-full bg-emerald-50 px-3 py-1">{tot.perdidos || 0} perdidos</span>
                 </div>
-              </div>
+              </section>
               {ps.map((p) => (
                 <PosturaCard key={p.id} postura={p} aves={aves} onSave={onSave} onDelete={onDelete} onNascimento={onNascimento} onEditar={setForm} Card={Card} inputStyle={inputStyle} helpers={helpers} />
               ))}
