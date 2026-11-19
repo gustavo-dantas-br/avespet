@@ -1,9 +1,9 @@
-import { Bird, Trash2, Pencil, RefreshCw } from "lucide-react";
+import { Bird, Trash2, Pencil, RefreshCw, Eye } from "lucide-react";
 import { Card } from "../../../components/ui/SharedUI";
 import { mostrarNomePopularRingNeck } from "../../genetica/data/nomenclaturaRingNeck";
 import { idadeDaAve, sexoVisual } from "../utils/resumoAve";
 
-function AveCard({ a, onEdit, onDelete, onSync }) {
+function AveCard({ a, onEdit, onDelete, onSync, onView }) {
   const status = a.status || "No plantel";
   const statusColors = {
     "No plantel": { bg: "#EAF4ED", color: "#287A50" },
@@ -52,6 +52,7 @@ function AveCard({ a, onEdit, onDelete, onSync }) {
         </div>
 
         <div className="mt-auto flex flex-wrap gap-2 pt-3">
+          <button type="button" onClick={() => onView(a)} className="inline-flex min-h-8 items-center gap-1.5 rounded-lg bg-emerald-700 px-3 text-xs font-bold text-white transition hover:bg-emerald-800"><Eye size={14}/> Consultar</button>
           <button onClick={() => onEdit(a)} className="inline-flex min-h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition hover:bg-[#DDEEE2]" style={{ background: "#EAF4ED", color: "#216B43" }}><Pencil size={13} /> Editar</button>
           {a.synced === false && <button onClick={() => onSync(a)} className="inline-flex min-h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition hover:bg-[#E4F1E8]" style={{ background: "#F0F7F1", color: "#287A50" }}><RefreshCw size={13} /> Sincronizar</button>}
           <button onClick={() => onDelete(a.id)} className="ml-auto inline-flex min-h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition hover:bg-[#FCEFED]" style={{ background: "#F7F1F0", color: "#9B5148" }}><Trash2 size={13} /> Remover</button>
