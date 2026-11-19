@@ -16,6 +16,9 @@ export function chaveAparenciaRingNeck(nome) {
   if (principal === "albino" || n.startsWith("albino (")) return "albino";
   if (principal === "cremino" || n.startsWith("cremino (")) return "cremino";
   if (principal === "ino" || /^ino\s*\(/.test(n)) return "ino";
+  if (principal === "canela" || principal === "cinnamon") return "cinnamon";
+  if (principal === "palido" || principal === "pallid") return "pallid";
+  if (principal === "opalino" || principal === "opaline") return "opaline";
   if (principal === "violeta" || principal === "violet") return "violet";
   if (principal === "cobalto" || principal === "cobalt") return "cobalt";
   if (principal === "malva" || principal === "mauve") return "mauve";
