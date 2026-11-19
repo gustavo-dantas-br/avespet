@@ -1,14 +1,14 @@
-// Avespet IA — Edge Function somente no repositório (NÃO implantada).
+// Avespet IA — Edge Function instalada, desativada por padrão.
 // O servidor nunca envia GEMINI_API_KEY ao navegador. Limites em memória são
 // defesa adicional, NÃO controle distribuído de cota/billing em múltiplas instâncias.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const ORIGINS = new Set(["https://avespet.com.br", "https://www.avespet.com.br"]);
+// A integração gerativa inicial só atende aos previews Vercel da aplicação.
+// Origin não é prova criptográfica de origem; autorização por JWT é obrigatória.
 function allowed(origin: string | null) {
-  if (!origin) return true;
-  if (ORIGINS.has(origin)) return true;
-  try { const h = new URL(origin).hostname; return /^avespet-[a-z0-9-]+-gustavo-dantas\.vercel\.app$/.test(h); }
+  if (!origin) return false;
+  try { const u = new URL(origin); return u.protocol === "https:" && /^avespet-[a-z0-9-]+-gustavo-dantas\\.vercel\\.app$/.test(u.hostname); }
   catch { return false; }
 }
 function headers(origin: string | null) {
@@ -27,12 +27,15 @@ const SYSTEM = `Você é o Avespet IA, assistente brasileiro acolhedor que conve
 
 Deno.serve(async (req) => {
   const origin = req.headers.get("origin");
-  if (!allowed(origin)) return reply(null, 403, { error: "Origem não autorizada." });
+  if (!allowed(origin)) return reply(null, 403, { error: "Somente preview autorizado." });
   if (req.method === "OPTIONS") return new Response("ok", { headers: headers(origin) });
   if (req.method !== "POST") return reply(origin, 405, {error: "Método não permitido."});
   if (Deno.env.get("AVESPET_IA_ENABLED") !== "true") return reply(origin, 503, {error: "Chat gerativo ainda indisponível."});
   const key = Deno.env.get("GEMINI_API_KEY");
   const model = Deno.env.get("GEMINI_MODEL");
+  // Desligamento obrigatório para todos os ambientes até aprovação da cota gratuita.
+  // Não desative este bloqueio por alteração de código; use exclusivamente o Secret.
+
   if (!key || !model || !/^[a-zA-Z0-9_.-]+$/.test(model)) return reply(origin, 503, {error: "Modelo não configurado."});
   const bearer = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
   if (!bearer || !Deno.env.get("SUPABASE_URL") || !Deno.env.get("SUPABASE_ANON_KEY"))
@@ -46,7 +49,9 @@ Deno.serve(async (req) => {
   const msg = typeof body?.mensagem === "string" ? body.mensagem.trim().slice(0,2000) : "";
   if (!msg) return reply(origin, 400, {error:"Digite sua mensagem."});
   const contexto = body.contexto && typeof body.contexto === "object" ? body.contexto : {};
-  const historico = Array.isArray(body.historico) ? body.historico.slice(-8) : [];
+  // Recusa entradas muito grandes para preservar cotas e reduzir abuso.
+  if (JSON.stringify(body).length > 16000) return reply(origin, 413, {error:"Mensagem muito longa."});
+  const historico = Array.isArray(body.historico) ? body.historico.slice(-6) : [];
   const contents = historico.flatMap((h: any) => [
     { role:"user", parts: [{text: String(h?.pergunta || "").slice(0,1000)}]},
     { role:"model", parts: [{text: String(h?.resposta || "").slice(0,1500)}]},
