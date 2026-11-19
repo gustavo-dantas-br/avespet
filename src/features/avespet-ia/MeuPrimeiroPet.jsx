@@ -36,8 +36,11 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
   const [aveId, setAveId] = useState("");
   const [diarioAberto, setDiarioAberto] = useState(false);
   const [fontesAbertas, setFontesAbertas] = useState(false);
-  const fimConversaRef = useRef(null);
-  useEffect(() => { if (historico.length > 0) fimConversaRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, [historico]);
+  const [modeloIndisponivel, setModeloIndisponivel] = useState(false);
+  const conversaRef = useRef(null);
+  useEffect(() => {
+    if (historico.length > 0 && conversaRef.current) conversaRef.current.scrollTop = conversaRef.current.scrollHeight;
+  }, [historico, enviando]);
   const aveSelecionada = aves.find((ave) => String(ave.id) === aveId) || null;
   const idade = perfil.idadeDias && Number.isInteger(Number(perfil.idadeDias)) ? Number(perfil.idadeDias) : null;
 
@@ -58,14 +61,22 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
     setPergunta("");
     setErro("");
     setEnviando(true);
+    // Casos de alerta permanecem no motor educativo: não esperar pela API externa.
+    const permiteModelo = CHAT_GENERATIVO_ATIVO && !modeloIndisponivel &&
+      local.resposta.tipo !== "urgente" && local.resposta.tipo !== "atencao";
     try {
-      const resposta = CHAT_GENERATIVO_ATIVO
+      const resposta = permiteModelo
         ? await conversarComModelo({ pergunta: texto, historico, contexto: local.contexto }) || local.resposta
         : local.resposta;
       setHistorico((atual) => [...atual, { pergunta: texto, resposta }].slice(-8));
-    } catch {
+    } catch (falha) {
+      // Erros 401/403/503 indicam acesso ou ativação indisponíveis nesta sessão.
+      const status = falha?.context?.status || falha?.status;
+      if ([401, 403, 503].includes(status)) setModeloIndisponivel(true);
       setHistorico((atual) => [...atual, { pergunta: texto, resposta: local.resposta }].slice(-8));
-      setErro("O Gemini não respondeu nesta tentativa; o assistente local continuou a conversa.");
+      setErro([401, 403, 503].includes(status)
+        ? "Gemini ainda não liberado para esta conta. A conversa continuará no assistente local."
+        : "O Gemini não respondeu agora. Continue usando o assistente local.");
     } finally {
       setEnviando(false);
     }
@@ -87,7 +98,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
         <Sparkles className="text-emerald-600" size={26} />
         <div>
           <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">Avespet IA</h1>
-          <p className="text-xs text-[#65766A]">{CHAT_GENERATIVO_ATIVO ? "Gemini em teste · conversa com contexto" : "Assistente educativo local · Gemini ainda não ativado"}</p>
+          <p className="text-xs text-[#65766A]">{CHAT_GENERATIVO_ATIVO && !modeloIndisponivel ? "Gemini configurado no preview · liberação sujeita ao servidor" : "Assistente educativo local · Gemini não disponível nesta sessão"}</p>
         </div>
       </div>
       <div className="flex items-center gap-2 rounded-full bg-[#E6F5EC] px-3 py-2 text-xs font-semibold text-[#236548]">
@@ -129,12 +140,12 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
             </div>
             <span className="inline-flex items-center gap-1 rounded-full bg-[#ECF8EE] px-3 py-1.5 text-xs text-[#236548]"><GraduationCap size={15}/> Educativo</span>
           </div>
-          <div className="max-h-[min(48dvh,460px)] min-h-[220px] space-y-4 overflow-y-auto overscroll-contain bg-[#FCFDFC] px-3 py-4 sm:max-h-[520px] sm:min-h-[300px] sm:px-6 sm:py-5" aria-live="polite">
+          <div className="max-h-[min(48dvh,460px)] min-h-[220px] space-y-4 overflow-y-auto overscroll-contain bg-[#FCFDFC] px-3 py-4 sm:max-h-[520px] sm:min-h-[300px] sm:px-6 sm:py-5" aria-live="polite" ref={conversaRef}>
             <div className="flex items-start gap-2.5">
               <img src={FOTO_RINGNECK} alt="" className="h-10 w-10 shrink-0 rounded-full border-2 border-[#E0EDE3] object-cover" loading="lazy"/>
               <div className="min-w-0 max-w-[calc(100%-3rem)] rounded-2xl rounded-tl-sm border border-[#E3EAE5] bg-white p-3 shadow-sm sm:max-w-[90%] sm:p-4">
                 <p className="text-sm font-bold text-[#173428]">Avespet IA <Sparkles size={13} className="inline text-emerald-500"/></p>
-                <p className="mt-1 text-sm leading-6 text-[#3E5145]">Olá! Sou seu assistente educativo. Conte sobre sua ave, faça uma pergunta ou selecione um dos quadros acima. {CHAT_GENERATIVO_ATIVO ? "O Gemini pode conversar sobre assuntos gerais, mas recomendações de saúde exigem avaliação veterinária." : "Nesta versão, acompanho o contexto da conversa e uso uma biblioteca educativa para assuntos técnicos."}</p>
+                <p className="mt-1 text-sm leading-6 text-[#3E5145]">Olá! Sou seu assistente educativo. Conte sobre sua ave, faça uma pergunta ou selecione um dos quadros acima. {CHAT_GENERATIVO_ATIVO && !modeloIndisponivel ? "O Gemini está configurado para testes, mas depende da liberação no servidor. Dúvidas de saúde exigem veterinário." : "Nesta versão, acompanho o contexto da conversa e uso uma biblioteca educativa para assuntos técnicos."}</p>
               </div>
             </div>
             {historico.map((item, i) => <React.Fragment key={i}>
@@ -153,7 +164,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
               </div>
             </React.Fragment>)}
             {enviando && <p role="status" className="pl-12 text-xs text-[#567260]">Avespet IA está preparando a resposta...</p>}
-            <div ref={fimConversaRef} />
+
           </div>
 
           <div className="border-t border-[#E4ECE5] bg-white px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:pb-4">
@@ -172,7 +183,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
         </section>
         {area === "primeiro" && <section className="rounded-2xl border border-[#DEE7DF] bg-white p-5 shadow-sm">
           <h3 className="text-base font-bold">Conhecendo minha ave</h3>
-          <p className="mt-1 text-xs text-[#647468]">Essas informações ajustam o contexto da consulta; não são enviadas a serviços externos.</p>
+          <p className="mt-1 text-xs text-[#647468]">Essas informações ajustam o contexto. Quando o Gemini for autorizado, mensagens, espécie e idade informada serão enviados ao provedor; não envie dados pessoais sensíveis.</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <label className="text-xs font-semibold">Experiência<select className={campo} value={perfil.nivel} onChange={(e)=>atualizar("nivel",e.target.value)}><option value="iniciante">Minha primeira ave</option><option value="intermediario">Já tenho experiência</option><option value="experiente">Criador experiente</option></select></label>
             <label className="text-xs font-semibold">Espécie<select className={campo} value={perfil.especie} onChange={(e)=>atualizar("especie",e.target.value)}>{ESPECIES_INICIAIS.map(x=><option key={x}>{x}</option>)}</select></label>
@@ -212,6 +223,6 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
         </section>
       </aside>
     </div>
-    <footer className="flex items-start gap-2 border-t border-[#DCE7DF] px-2 py-3 text-xs text-[#496754]"><ShieldCheck size={17} className="shrink-0 text-emerald-700"/><span><strong>Importante:</strong> o Avespet IA oferece conteúdo educativo, não realiza atendimento veterinário. Nesta versão os registros do diário são temporários e não há API paga de IA ativa.</span></footer>
+    <footer className="flex items-start gap-2 border-t border-[#DCE7DF] px-2 py-3 text-xs text-[#496754]"><ShieldCheck size={17} className="shrink-0 text-emerald-700"/><span><strong>Importante:</strong> o Avespet IA oferece conteúdo educativo, não realiza atendimento veterinário. Registros do diário podem ser temporários ou vinculados à ave. O Gemini é experimental e só funciona mediante autorização no servidor; não compartilhe dados sensíveis na conversa.</span></footer>
   </section>;
 }
