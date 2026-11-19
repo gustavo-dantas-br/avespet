@@ -33,6 +33,16 @@ const TIPOS_JA_REPRESENTADOS = new Set([
   "lutino", "albino", "cremino", "ino",
 ]);
 
+export function deduplicarMutacoesRingNeck(mutationOptions = []) {
+  const vistos = new Set();
+  return mutationOptions.filter((m) => {
+    const chave = chaveAparenciaRingNeck(m?.nome);
+    if (!chave || vistos.has(chave)) return false;
+    vistos.add(chave);
+    return true;
+  });
+}
+
 export function removerAparenciasRepetidasRingNeck(mutationOptions = []) {
   const vistos = new Set();
   return mutationOptions.filter((m) => {
