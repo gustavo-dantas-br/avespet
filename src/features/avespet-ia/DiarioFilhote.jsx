@@ -3,8 +3,10 @@ import React, { useState } from "react";
 // MVP sem persistência. Os registros são descartados após recarregar a página.
 // Não calcula recomendações clínicas com base no peso.
 export function validarRegistro({ data, peso, observacoes }) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(data || "") || Number.isNaN(new Date(data + "T12:00:00").valueOf())) return "Informe uma data válida.";
-  if (data > new Date().toLocaleDateString("en-CA")) return "Não registre data futura.";
+  const ano = Number(String(data).slice(0, 4));
+  if (ano < 2000) return "A data deve ser a partir do ano 2000.";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data || "") || Number.isNaN(new Date(data + "T12:00:00").valueOf()) || new Date(data + "T12:00:00").toISOString().slice(0, 10) !== data) return "Informe uma data válida.";
+  if (data > new Date().toISOString().slice(0, 10)) return "Não registre data futura.";
   if (peso !== "" && (!Number.isFinite(Number(peso)) || Number(peso) <= 0 || Number(peso) > 10000)) return "Informe um peso válido em gramas.";
   if (String(observacoes || "").length > 500) return "A observação deve ter até 500 caracteres.";
   if (peso === "" && !String(observacoes || "").trim()) return "Informe o peso ou uma observação.";
