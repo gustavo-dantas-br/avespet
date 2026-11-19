@@ -36,13 +36,18 @@ Deno.serve(async (req) => {
   // Desligamento obrigatório para todos os ambientes até aprovação da cota gratuita.
   // Não desative este bloqueio por alteração de código; use exclusivamente o Secret.
 
-  if (!key || !model || !/^[a-zA-Z0-9_.-]+$/.test(model)) return reply(origin, 503, {error: "Modelo não configurado."});
+  if (!key || model !== "gemini-2.5-flash-lite") return reply(origin, 503, {error: "Modelo gratuito do piloto não configurado."});
   const bearer = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
   if (!bearer || !Deno.env.get("SUPABASE_URL") || !Deno.env.get("SUPABASE_ANON_KEY"))
     return reply(origin, 401, {error: "Entre na sua conta."});
   const auth = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {auth: {persistSession: false, autoRefreshToken: false}});
   const {data: info, error: authErr} = await auth.auth.getUser(bearer);
   if (authErr || !info.user) return reply(origin, 401, {error:"Sessão inválida."});
+  // Fase piloto: liberar o Gemini somente à conta de testes explicitamente autorizada.
+  // Sem AVESPET_IA_TESTER_EMAIL configurado, negar TODAS as chamadas antes da API do Google.
+  const testerEmail = (Deno.env.get("AVESPET_IA_TESTER_EMAIL") || "").trim().toLowerCase();
+  if (!testerEmail || !info.user.email || info.user.email.toLowerCase() !== testerEmail)
+    return reply(origin, 403, {error:"Gemini reservado à conta de testes autorizada."});
   if (!withinLocalLimit(info.user.id)) return reply(origin, 429, {error:"Limite temporário atingido."});
   let body: any;
   try { body = await req.json(); } catch { return reply(origin, 400, {error:"Mensagem inválida."}); }
