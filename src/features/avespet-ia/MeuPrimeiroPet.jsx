@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { ESPECIES_INICIAIS, FASES, validarPerfil, respostaEducativa } from "./motorEducativo";
+import { ESPECIES_INICIAIS, FASES, validarPerfil } from "./motorEducativo";
+import { responderComBiblioteca } from "./respostasComFontes";
 import DiarioFilhote from "./DiarioFilhote";
 import FontesEducativas from "./FontesEducativas";
 
@@ -25,7 +26,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "" }) {
     const validacao = validarPerfil(perfil);
     if (validacao) { setErro(validacao); return; }
     setErro("");
-    setResposta(respostaEducativa(perfil, pergunta));
+    setResposta(responderComBiblioteca(perfil, pergunta));
   };
   return (
     <section className="mx-auto max-w-6xl space-y-5 rounded-2xl bg-emerald-50 p-5 text-stone-900">
@@ -63,11 +64,12 @@ export default function MeuPrimeiroPet({ aves = [], userId = "" }) {
           <textarea className={campo} maxLength={2000} rows={3} value={pergunta} onChange={(e) => setPergunta(e.target.value)} placeholder="Conte uma dúvida ou alteração observada" />
         </label>
         {erro && <p role="alert" className="text-sm font-medium text-red-700">{erro}</p>}
-        <button type="submit" className="rounded-lg bg-emerald-700 px-5 py-3 font-semibold text-white hover:bg-emerald-800">Receber orientação educativa</button>
+        <button type="submit" className="rounded-lg bg-emerald-700 px-5 py-3 font-semibold text-white hover:bg-emerald-800">Consultar biblioteca educativa</button>
       </form>
       {resposta && <article role="status" aria-live="polite" className={`space-y-3 rounded-xl border p-4 ${resposta.tipo === "urgente" ? "border-red-400 bg-red-50" : resposta.tipo === "atencao" ? "border-amber-400 bg-amber-50" : "border-emerald-200 bg-white"}`}>
         <h2 className="text-lg font-bold">{resposta.titulo}</h2>
         <p className="text-sm leading-relaxed">{resposta.mensagem}</p>
+        {resposta.fontes?.length > 0 && <div className="border-t pt-3 text-xs"><p className="font-semibold">Fontes do guia</p>{resposta.fontes.map((f, i) => <a key={f.url + i} href={f.url} target="_blank" rel="noopener noreferrer" className="mt-1 block break-words text-emerald-800 underline">{f.titulo}</a>)}</div>}
         <p className="border-t pt-3 text-xs text-stone-600">{resposta.aviso}</p>
       </article>}
       <div className="space-y-4">
