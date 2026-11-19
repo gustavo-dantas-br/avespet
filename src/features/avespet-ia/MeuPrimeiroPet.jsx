@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Bird, BookOpen, CalendarDays, ChevronDown, ChevronRight, Dna, Egg, GraduationCap, HeartHandshake, Info, MessageCircle, Send, ShieldCheck, Sparkles, UserRound, Leaf } from "lucide-react";
 import { ESPECIES_INICIAIS, FASES, validarPerfil } from "./motorEducativo";
-import { responderComBiblioteca } from "./respostasComFontes";
+import { conversarLocal, contextoInicial } from "./conversaLocal";
+import { CHAT_GENERATIVO_ATIVO, conversarComModelo } from "./chatGenerativo";
 import DiarioFilhote from "./DiarioFilhote";
 import FontesEducativas from "./FontesEducativas";
 
@@ -29,6 +30,8 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
   const [perfil, setPerfil] = useState(inicial);
   const [pergunta, setPergunta] = useState("");
   const [historico, setHistorico] = useState([]);
+  const [contexto, setContexto] = useState(() => contextoInicial());
+  const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState("");
   const [aveId, setAveId] = useState("");
   const [diarioAberto, setDiarioAberto] = useState(false);
@@ -41,16 +44,29 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
     setErro("");
   };
 
-  const consultar = (event) => {
+  const consultar = async (event) => {
     event.preventDefault();
+    if (enviando) return;
     const validacao = validarPerfil(perfil);
     if (validacao) { setErro(validacao); return; }
     if (!pergunta.trim()) { setErro("Escreva sua pergunta antes de enviar."); return; }
     const texto = pergunta.trim();
-    const resposta = responderComBiblioteca(perfil, texto);
-    setHistorico((atual) => [...atual, { pergunta: texto, resposta }].slice(-8));
+    const local = conversarLocal(perfil, texto, contexto);
+    setContexto(local.contexto);
     setPergunta("");
     setErro("");
+    setEnviando(true);
+    try {
+      const resposta = CHAT_GENERATIVO_ATIVO
+        ? await conversarComModelo({ pergunta: texto, historico, contexto: local.contexto }) || local.resposta
+        : local.resposta;
+      setHistorico((atual) => [...atual, { pergunta: texto, resposta }].slice(-8));
+    } catch {
+      setHistorico((atual) => [...atual, { pergunta: texto, resposta: local.resposta }].slice(-8));
+      setErro("O serviço de IA está indisponível; continuei com o assistente local.");
+    } finally {
+      setEnviando(false);
+    }
   };
   const selecionarTema = (id) => {
     setArea(id);
@@ -69,7 +85,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
         <Sparkles className="text-emerald-600" size={26} />
         <div>
           <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">Avespet IA</h1>
-          <p className="text-xs text-[#65766A]">Assistente educacional para tutores e criadores de aves</p>
+          <p className="text-xs text-[#65766A]">Assistente educacional em conversa, com memória temporária da sessão</p>
         </div>
       </div>
       <div className="flex items-center gap-2 rounded-full bg-[#E6F5EC] px-3 py-2 text-xs font-semibold text-[#236548]">
@@ -117,7 +133,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
               <img src={FOTO_RINGNECK} alt="" className="h-10 w-10 shrink-0 rounded-full border-2 border-[#E0EDE3] object-cover" loading="lazy"/>
               <div className="max-w-[90%] rounded-2xl rounded-tl-sm border border-[#E3EAE5] bg-white p-4 shadow-sm">
                 <p className="text-sm font-bold text-[#173428]">Avespet IA <Sparkles size={13} className="inline text-emerald-500"/></p>
-                <p className="mt-1 text-sm leading-6 text-[#3E5145]">Olá! Sou seu assistente educativo. Escolha um dos quadros acima ou escreva uma pergunta. Vou consultar apenas materiais aprovados. Como a biblioteca ainda está em curadoria, algumas perguntas podem ficar sem resposta por enquanto.</p>
+                <p className="mt-1 text-sm leading-6 text-[#3E5145]">Olá! Sou seu assistente educativo. Escolha um dos quadros acima ou escreva uma pergunta. Vou consultar apenas materiais aprovados. Se você me contar sobre sua ave, vou acompanhar o contexto e fazer perguntas úteis. Para orientações técnicas, uso somente conteúdos validados.</p>
               </div>
             </div>
             {historico.map((item, i) => <React.Fragment key={i}>
@@ -145,7 +161,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
               <label htmlFor="avespet-ia-pergunta" className="sr-only">Digite sua dúvida para o Avespet IA</label>
               <div className="flex items-end gap-2">
                 <textarea id="avespet-ia-pergunta" value={pergunta} onChange={(e)=>setPergunta(e.target.value)} rows={2} maxLength={2000} placeholder="Digite sua dúvida sobre manejo, alimentação, desenvolvimento, genética..." className="min-h-[70px] w-full flex-1 resize-y rounded-xl border border-[#D7E4DA] bg-white p-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/>
-                <button type="submit" aria-label="Enviar pergunta" title="Enviar pergunta" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-white hover:bg-emerald-800"><Send size={19}/></button>
+                <button type="submit" disabled={enviando} aria-label="Enviar pergunta" title="Enviar pergunta" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-white hover:bg-emerald-800 disabled:opacity-50"><Send size={19}/></button>
               </div>
               {erro && <p role="alert" className="mt-2 text-xs font-semibold text-red-700">{erro}</p>}
             </form>
