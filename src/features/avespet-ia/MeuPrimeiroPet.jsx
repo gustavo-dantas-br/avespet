@@ -7,7 +7,7 @@ import DiarioFilhote from "./DiarioFilhote";
 const inicial = { nivel: "iniciante", especie: "Ring Neck", fase: "incerta", idadeDias: "" };
 const campo = "w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-stone-900";
 
-export default function MeuPrimeiroPet({ aves = [] }) {
+export default function MeuPrimeiroPet({ aves = [], userId = "" }) {
   const [perfil, setPerfil] = useState(inicial);
   const [pergunta, setPergunta] = useState("");
   const [resposta, setResposta] = useState(null);
@@ -76,7 +76,7 @@ export default function MeuPrimeiroPet({ aves = [] }) {
             {aves.map((ave) => <option key={ave.id} value={String(ave.id)}>{ave.nome || ave.anilha || "Ave sem nome"} · {ave.especie || "Espécie não informada"}</option>)}
           </select>
         </label>}
-        <DiarioFilhote key={aveId || "demonstracao"} aveNome={aveSelecionada?.nome || "Minha ave"} />
+        <DiarioFilhote key={aveId || "demonstracao"} aveNome={aveSelecionada?.nome || "Minha ave"} aveId={aveSelecionada?.id || ""} userId={userId} />
       </div>
       </div>
       <p className="text-xs text-stone-600">Protótipo em desenvolvimento: não salva dados, não envia perguntas para serviços externos e não substitui um veterinário especializado em aves.</p>
