@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Bird, Dna, Mars, Venus } from "lucide-react";
+import { Bird, Dna } from "lucide-react";
 import {
   CORES_RAPIDAS_RING_NECK,
   criarSelecaoDeAve,
@@ -70,7 +70,7 @@ function QuadroPai({ titulo, sexo, aves, selecionada, onChange }) {
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white" style={{color:tema.principal, border:`1px solid ${tema.borda}`}} aria-hidden="true">
-            {sexo === "Macho" ? <Mars size={25} /> : <Venus size={25} />}
+            {sexo === "Macho" ? <span className="text-3xl font-bold">♂</span> : <span className="text-3xl font-bold">♀</span>}
           </span>
           <div>
             <h3 className="font-bold text-lg" style={{color:tema.titulo}}>{titulo} <span className="sr-only">{sexo}</span></h3>
@@ -197,7 +197,7 @@ function ListaCrias({titulo,lista,sexo}) {
   const tema = TEMA_SEXO[sexo];
   return <section className="rounded-2xl border p-4 sm:p-5 space-y-3" style={{background:tema.fundo, borderColor:tema.borda}}>
     <div className="flex justify-between items-center gap-2">
-      <h3 className="flex items-center gap-2 font-bold" style={{color:tema.titulo}}>{sexo==="Macho"?<Mars size={20}/>:<Venus size={20}/>} {titulo}</h3>
+      <h3 className="flex items-center gap-2 font-bold" style={{color:tema.titulo}}>{sexo==="Macho"?<span className="text-xl font-bold" aria-hidden="true">♂</span>:<span className="text-xl font-bold" aria-hidden="true">♀</span>} {titulo}</h3>
       <span className="rounded-full bg-white px-2 py-1 text-xs" style={{color:tema.titulo}}>{lista.length} {lista.length===1?"possibilidade":"possibilidades"}</span>
     </div>
     {lista.length === 0 ? <p className="text-sm" style={{color:tema.titulo}}>Aguardando informações válidas do casal.</p> :
