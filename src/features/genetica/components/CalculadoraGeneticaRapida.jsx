@@ -5,6 +5,7 @@ import {
   calcularCriasRingNeck,
 } from "../utils/previsaoSimplesRingNeck";
 import { mostrarNomePopularRingNeck } from "../data/nomenclaturaRingNeck";
+import { removerOpcoesRepetidasPorId } from "../data/opcoesUnicasRingNeck";
 
 const campo = {
   background: "#fff", color: "#2a3528", border: "1px solid #d7e1d4",
@@ -42,9 +43,14 @@ function QuadroPai({ titulo, sexo, aves, selecionada, onChange }) {
   const selectCor = (cor) => {
     onChange({ cor, extras:{} });
   };
+  const idsExibidos = new Set();
   const choices = MUTACOES.map((grupo) => ({
     ...grupo,
-    ids: grupo.ids.filter((id) => sexo === "Macho" || id !== "pallidino"),
+    ids: removerOpcoesRepetidasPorId(grupo.ids.filter((id) => sexo === "Macho" || id !== "pallidino").map((id) => ({ id }))).map(({ id }) => id).filter((id) => {
+      if (idsExibidos.has(id)) return false;
+      idsExibidos.add(id);
+      return true;
+    }),
   }));
   const selectedName = CORES_RAPIDAS_RING_NECK.find(x => x.id === selecionada.cor)?.label;
   const isGreen = selecionada.cor === "green" || selecionada.cor === "grey-green";
