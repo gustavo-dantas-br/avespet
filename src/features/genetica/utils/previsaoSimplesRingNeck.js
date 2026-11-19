@@ -73,8 +73,10 @@ function identificarVisual(ave) {
   // O cadastro antigo salva a aparência Ino, a série no campo corBase.
   // Ignorar "Ino" aqui transforma erroneamente Albino em Azul comum.
   if (mutacao === "ino" || mutacao === "ino (lutino / albino conforme a serie)") {
-    if (base.includes("blue") || base.includes("azul")) return "albino";
+    // "Turquoise Blue (Azul Turquesa)" contém Blue/Azul também.
+    // Verifique Turquesa antes de Azul para não chamar Cremino de Albino.
     if (base.includes("turquoise") || base.includes("turquesa")) return "";
+    if (base.includes("blue") || base.includes("azul")) return "albino";
     if (base.includes("green") || base.includes("verde")) return "lutino";
     return "";
   }
