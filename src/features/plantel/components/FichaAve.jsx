@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Bird, X, Pencil, GitBranch, Dna, Egg, Info, ClipboardList, ChevronLeft, Eye } from "lucide-react";
 import { idadeDaAve, sexoVisual } from "../utils/resumoAve";
+import { listarHistoricoReprodutivo, formatarDataReproducao } from "../utils/historicoReprodutivo";
 import { mostrarNomePopularRingNeck } from "../../genetica/data/nomenclaturaRingNeck";
 
 const texto = (valor) => valor === null || valor === undefined || valor === "" ? "Não informado" : String(valor);
@@ -57,6 +58,7 @@ export default function FichaAve({ ave: aveInicial, aves = [], posturas = [], on
   const filhotes = aves.filter((item) => String(item.paiId) === String(ave.id) || String(item.maeId) === String(ave.id));
   const posturasDaAve = posturas.filter((p) => String(p.paiId) === String(ave.id) || String(p.maeId) === String(ave.id));
   const ovos = posturasDaAve.reduce((total, p) => total + (p.ovos?.length || 0), 0);
+  const historicoReprodutivo = listarHistoricoReprodutivo(ave, posturas, aves);
   const sexo = sexoVisual(ave.sexo);
   const aparencia = ave.corMutacao === "Ino"
     ? (String(ave.corBase || "").toLowerCase().includes("turquoise") ? "Cremino (Ino)" :
@@ -103,7 +105,42 @@ export default function FichaAve({ ave: aveInicial, aves = [], posturas = [], on
             <div className="mt-3"><Dado rotulo="Parceiro cadastrado" valor={parceiro?.nome || ave.casalLabel}/>{parceiro && <button type="button" onClick={() => consultarVinculo(parceiro)} className="mt-2 inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"><Eye size={14}/> Consultar parceiro</button>}</div>
             <div className="mt-4"><p className="mb-2 text-xs font-bold text-slate-700">Filhotes vinculados ({filhotes.length})</p>{filhotes.length?<div className="grid gap-2 sm:grid-cols-2">{filhotes.map((f)=><Identificacao key={f.id} legenda="Filhote" ave={f} onOpen={() => consultarVinculo(f)}/>)}</div>:<p className="text-sm text-slate-500">Nenhum filhote vinculado no plantel.</p>}</div>
           </Secao>
-          <Secao titulo="Reprodução registrada" icon={Egg}><dl className="grid grid-cols-2 gap-3"><Dado rotulo="Posturas vinculadas" valor={posturasDaAve.length}/><Dado rotulo="Ovos registrados" valor={ovos}/></dl><p className="mt-2 text-xs text-slate-500">Os detalhes das posturas e ovos permanecem na aba Reprodução.</p></Secao>
+          <Secao titulo="Histórico reprodutivo" icon={Egg}>
+            <dl className="mb-4 grid grid-cols-2 gap-3"><Dado rotulo="Posturas vinculadas" valor={posturasDaAve.length}/><Dado rotulo="Ovos registrados" valor={ovos}/></dl>
+            {historicoReprodutivo.length === 0 ? <p className="text-sm text-slate-500">Nenhuma postura registrada para esta ave.</p> :
+              <div className="space-y-3">
+                {historicoReprodutivo.map((postura, indice) => (
+                  <details key={postura.id || `postura-${indice}`} className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-3" open={indice === 0}>
+                    <summary className="cursor-pointer text-sm font-bold text-emerald-900">
+                      {postura.casalLabel || `${postura.pai?.nome || "Macho não identificado"} × ${postura.mae?.nome || "Fêmea não identificada"}`}
+                      <span className="mt-1 block text-xs font-normal text-slate-600">Primeiro ovo: {formatarDataReproducao(postura.primeiraData)} · {postura.resumo.total} ovos · {postura.resumo.nascidos} nascimentos</span>
+                    </summary>
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-700">
+                      <span className="rounded-lg bg-white px-2 py-1">Incubando: {postura.resumo.incubando}</span>
+                      <span className="rounded-lg bg-white px-2 py-1">Férteis: {postura.resumo.ferteis}</span>
+                      <span className="rounded-lg bg-white px-2 py-1">Inférteis: {postura.resumo.inferteis}</span>
+                      <span className="rounded-lg bg-white px-2 py-1">Perdidos: {postura.resumo.perdidos}</span>
+                      <span className="rounded-lg bg-white px-2 py-1">Nascidos: {postura.resumo.nascidos}</span>
+                    </div>
+                    {postura.viveiro && <p className="mt-2 text-xs text-slate-600">Viveiro: {postura.viveiro}</p>}
+                    {postura.ovosDetalhados.length === 0 ? <p className="mt-3 text-sm text-slate-500">Nenhum ovo registrado.</p> :
+                      <div className="mt-3 space-y-2">
+                        {postura.ovosDetalhados.map((ovo, i) => (
+                          <div key={ovo.n ?? i} className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
+                            <div className="flex flex-wrap justify-between gap-2"><strong>Ovo {ovo.n ?? i + 1}</strong><span className="font-semibold text-emerald-800">{ovo.status || "Status não informado"}</span></div>
+                            <p className="mt-1">Postura: {formatarDataReproducao(ovo.dataPostura)}</p>
+                            {ovo.previsao && <p>Previsão aproximada de eclosão: {ovo.previsao}</p>}
+                            {ovo.dataEclosao && <p>Eclosão registrada: {formatarDataReproducao(ovo.dataEclosao)}</p>}
+                            {ovo.filhote && <button type="button" onClick={() => consultarVinculo(ovo.filhote)} className="mt-2 inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-2 font-semibold text-emerald-800 hover:bg-emerald-100"><Eye size={13}/> Consultar filhote {nomeAve(ovo.filhote)}</button>}
+                            {ovo.status === "Nasceu" && !ovo.filhote && <p className="mt-1 text-amber-800">Nascimento registrado, mas sem ficha de filhote vinculada disponível.</p>}
+                          </div>
+                        ))}
+                      </div>}
+                  </details>
+                ))}
+              </div>}
+            <p className="mt-3 text-xs text-slate-500">Dados consultivos do módulo Reprodução. As previsões são estimadas e nenhum registro será alterado aqui.</p>
+          </Secao>
         </>}
         {aba==="historico" && <Secao titulo="Informações de origem e movimentação" icon={ClipboardList}>
           <dl className="grid gap-3 sm:grid-cols-2"><Dado rotulo="Situação" valor={ave.status}/><Dado rotulo="Data da compra" valor={ave.dataCompra}/><Dado rotulo="Fornecedor" valor={ave.fornecedorNome}/><Dado rotulo="Data da venda" valor={ave.dataVenda}/><Dado rotulo="Valor de compra registrado" valor={ave.valorCompra}/><Dado rotulo="Valor de venda registrado" valor={ave.valorVenda}/><Dado rotulo="Data de entrega" valor={ave.dataEntrega}/><Dado rotulo="Status do pós-venda" valor={ave.statusPosVenda}/><Dado rotulo="Observações do pós-venda" valor={ave.obsPosVenda}/></dl>
