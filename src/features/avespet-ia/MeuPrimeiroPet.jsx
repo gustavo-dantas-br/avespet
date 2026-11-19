@@ -1,16 +1,19 @@
 import React, { useState } from "react";
 import { ESPECIES_INICIAIS, FASES, validarPerfil, respostaEducativa } from "./motorEducativo";
+import DiarioFilhote from "./DiarioFilhote";
 
 // Tela independente, sem escrita no Supabase até aprovação do schema/RLS.
 // O estado é transitório: fechar ou recarregar descarta os dados.
 const inicial = { nivel: "iniciante", especie: "Ring Neck", fase: "incerta", idadeDias: "" };
 const campo = "w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-stone-900";
 
-export default function MeuPrimeiroPet() {
+export default function MeuPrimeiroPet({ aves = [] }) {
   const [perfil, setPerfil] = useState(inicial);
   const [pergunta, setPergunta] = useState("");
   const [resposta, setResposta] = useState(null);
   const [erro, setErro] = useState("");
+  const [aveId, setAveId] = useState("");
+  const aveSelecionada = aves.find((ave) => String(ave.id) === aveId) || null;
   const atualizar = (chave, valor) => {
     setPerfil((atual) => ({ ...atual, [chave]: valor }));
     setResposta(null);
@@ -24,13 +27,17 @@ export default function MeuPrimeiroPet() {
     setResposta(respostaEducativa(perfil, pergunta));
   };
   return (
-    <section className="mx-auto max-w-3xl space-y-5 rounded-2xl bg-emerald-50 p-5 text-stone-900">
+    <section className="mx-auto max-w-6xl space-y-5 rounded-2xl bg-emerald-50 p-5 text-stone-900">
       <header>
         <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Avespet IA · Versão educativa</p>
-        <h1 className="text-2xl font-bold">Meu Primeiro Pet</h1>
+        <h1 className="text-2xl font-bold">Avespet IA — Meu Primeiro Pet</h1>
         <p className="mt-2 text-sm">Conheça a fase da sua ave e organize dúvidas de manejo. Esta versão funciona sem inteligência artificial externa.</p>
       </header>
-      <form onSubmit={consultar} className="space-y-4">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {["Meu Primeiro Pet", "Desenvolvimento", "Guias educativos"].map((rotulo, indice) => <div key={rotulo} className="rounded-xl border border-emerald-100 bg-white p-4"><p className="text-sm font-bold text-emerald-900">{rotulo}</p><p className="mt-1 text-xs text-stone-600">{["Apresente sua ave e tire dúvidas", "Registre evolução e observações", "Conteúdos revisados antes da publicação"][indice]}</p></div>)}
+      </div>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <form onSubmit={consultar} className="space-y-4 rounded-xl bg-white p-4">
         <label className="block text-sm font-medium">Experiência
           <select className={campo} value={perfil.nivel} onChange={(e) => atualizar("nivel", e.target.value)}>
             <option value="iniciante">Minha primeira ave</option>
@@ -62,6 +69,16 @@ export default function MeuPrimeiroPet() {
         <p className="text-sm leading-relaxed">{resposta.mensagem}</p>
         <p className="border-t pt-3 text-xs text-stone-600">{resposta.aviso}</p>
       </article>}
+      <div className="space-y-4">
+        {aves.length > 0 && <label className="block text-sm font-medium">Consultar ave do meu plantel (somente leitura)
+          <select className={campo} value={aveId} onChange={(e) => setAveId(e.target.value)}>
+            <option value="">Usar cadastro de demonstração</option>
+            {aves.map((ave) => <option key={ave.id} value={String(ave.id)}>{ave.nome || ave.anilha || "Ave sem nome"} · {ave.especie || "Espécie não informada"}</option>)}
+          </select>
+        </label>}
+        <DiarioFilhote key={aveId || "demonstracao"} aveNome={aveSelecionada?.nome || "Minha ave"} />
+      </div>
+      </div>
       <p className="text-xs text-stone-600">Protótipo em desenvolvimento: não salva dados, não envia perguntas para serviços externos e não substitui um veterinário especializado em aves.</p>
     </section>
   );
