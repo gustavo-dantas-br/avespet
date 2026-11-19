@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import FichaAve from "./FichaAve";
 import { Plus, Download, Upload, Search, SlidersHorizontal, Bird } from "lucide-react";
 
 const STATUS_ABAS = [
@@ -10,7 +11,9 @@ const STATUS_ABAS = [
   { id: "Perdida", label: "Perdidas", count: (aves) => aves.filter((a) => a.status === "Perdida").length },
 ];
 
-export default function ListaTab({ aves, todasAves = aves, search, setSearch, onEdit, onDelete, onNew, onSync, onExport, onImport, statusFilter, setStatusFilter, casaisAgrupados, Card, SectionTitle, AveCard, FILTER_LABELS }) {
+export default function ListaTab({ aves, todasAves = aves, posturas = [], search, setSearch, onEdit, onDelete, onNew, onSync, onExport, onImport, statusFilter, setStatusFilter, casaisAgrupados, Card, SectionTitle, AveCard, FILTER_LABELS }) {
+  const [consultaId, setConsultaId] = useState(null);
+  const aveConsultada = todasAves.find((a) => String(a.id) === String(consultaId));
   const pendentes = aves.filter((a) => a.synced === false).length;
   const totalLabel = aves.length === 1 ? "ave encontrada" : "aves encontradas";
 
@@ -92,17 +95,18 @@ export default function ListaTab({ aves, todasAves = aves, search, setSearch, on
             <Card key={a.id} className="p-3 sm:p-4">
               {casalLabel && <div className="mb-3 text-xs font-bold uppercase tracking-wide" style={{ color: "#477257" }}>{casalLabel}</div>}
               <div className="grid gap-3 md:grid-cols-2">
-                <AveCard a={a} onEdit={onEdit} onDelete={onDelete} onSync={onSync} />
-                {b ? <AveCard a={b} onEdit={onEdit} onDelete={onDelete} onSync={onSync} /> : <div className="flex min-h-24 items-center justify-center rounded-xl border border-dashed text-sm" style={{ borderColor: "#D6E3D9", color: "#789080" }}>Parceiro não identificado no sistema</div>}
+                <AveCard a={a} onEdit={onEdit} onDelete={onDelete} onSync={onSync} onView={(a) => setConsultaId(a.id)} />
+                {b ? <AveCard a={b} onEdit={onEdit} onDelete={onDelete} onSync={onSync} onView={(a) => setConsultaId(a.id)} /> : <div className="flex min-h-24 items-center justify-center rounded-xl border border-dashed text-sm" style={{ borderColor: "#D6E3D9", color: "#789080" }}>Parceiro não identificado no sistema</div>}
               </div>
             </Card>
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-          {aves.map((a) => <AveCard key={a.id} a={a} onEdit={onEdit} onDelete={onDelete} onSync={onSync} />)}
+          {aves.map((a) => <AveCard key={a.id} a={a} onEdit={onEdit} onDelete={onDelete} onSync={onSync} onView={(a) => setConsultaId(a.id)} />)}
         </div>
       )}
+      {aveConsultada && <FichaAve ave={aveConsultada} aves={todasAves} posturas={posturas} onClose={() => setConsultaId(null)} onEdit={(a) => { setConsultaId(null); onEdit(a); }} />}
     </div>
   );
 }
