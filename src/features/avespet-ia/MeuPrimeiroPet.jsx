@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ESPECIES_INICIAIS, FASES, validarPerfil, respostaEducativa } from "./motorEducativo";
 import DiarioFilhote from "./DiarioFilhote";
+import FontesEducativas from "./FontesEducativas";
 
 // Tela independente, sem escrita no Supabase até aprovação do schema/RLS.
 // O estado é transitório: fechar ou recarregar descarta os dados.
@@ -79,6 +80,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "" }) {
         <DiarioFilhote key={aveId || "demonstracao"} aveNome={aveSelecionada?.nome || "Minha ave"} aveId={aveSelecionada?.id || ""} userId={userId} />
       </div>
       </div>
+      <FontesEducativas />
       <p className="text-xs text-stone-600">Protótipo em desenvolvimento: não salva dados, não envia perguntas para serviços externos e não substitui um veterinário especializado em aves.</p>
     </section>
   );
