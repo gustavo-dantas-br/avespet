@@ -1,22 +1,12 @@
 import React, { useState } from "react";
 
-// MVP sem persistência. Os registros são descartados após recarregar a página.
-// Não calcula recomendações clínicas com base no peso.
-export function validarRegistro({ data, peso, observacoes }) {
-  const ano = Number(String(data).slice(0, 4));
-  if (ano < 2000) return "A data deve ser a partir do ano 2000.";
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(data || "") || Number.isNaN(new Date(data + "T12:00:00").valueOf()) || new Date(data + "T12:00:00").toISOString().slice(0, 10) !== data) return "Informe uma data válida.";
-  if (data > new Date().toISOString().slice(0, 10)) return "Não registre data futura.";
-  if (peso !== "" && (!Number.isFinite(Number(peso)) || Number(peso) <= 0 || Number(peso) > 10000)) return "Informe um peso válido em gramas.";
-  if (String(observacoes || "").length > 500) return "A observação deve ter até 500 caracteres.";
-  if (peso === "" && !String(observacoes || "").trim()) return "Informe o peso ou uma observação.";
-  return null;
-}
+import { validarRegistro, dataHojeLocal, historicoPeso } from "./diarioValidacao";
 
 export default function DiarioFilhote({ aveNome = "Minha ave" }) {
   const [registros, setRegistros] = useState([]);
-  const [form, setForm] = useState({ data: new Date().toLocaleDateString("en-CA"), peso: "", observacoes: "", alimentacao: "não informado" });
+  const [form, setForm] = useState({ data: dataHojeLocal(), peso: "", observacoes: "", alimentacao: "não informado" });
   const [erro, setErro] = useState("");
+  const pesos = historicoPeso(registros);
   const enviar = (event) => {
     event.preventDefault();
     const mensagem = validarRegistro(form);
@@ -46,6 +36,7 @@ export default function DiarioFilhote({ aveNome = "Minha ave" }) {
       {erro && <p role="alert" className="text-sm text-red-700 sm:col-span-2">{erro}</p>}
       <button type="submit" className="rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white sm:col-span-2">Adicionar registro temporário</button>
     </form>
+    {pesos.length > 0 && <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3"><h3 className="font-semibold text-emerald-950">Histórico de peso registrado</h3><p className="mb-2 text-xs text-stone-600">Registro visual, não é uma curva clínica de crescimento.</p><div className="flex flex-wrap items-end gap-2">{pesos.map((item, i) => <div key={item.data + "-" + i} className="rounded-lg bg-white px-3 py-2 text-xs"><strong>{item.peso.toLocaleString("pt-BR")} g</strong><div className="text-stone-500">{item.data.split("-").reverse().join("/")}</div></div>)}</div></div>}
     <div className="space-y-2" aria-live="polite">
       <h3 className="font-semibold">Registros desta sessão ({registros.length})</h3>
       {registros.length === 0 && <p className="text-sm text-stone-600">Nenhum registro ainda.</p>}
