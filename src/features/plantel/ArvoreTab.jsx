@@ -1,5 +1,5 @@
 import React from "react";
-import { Bird, GitBranch, Mars, Venus } from "lucide-react";
+import { Bird, GitBranch } from "lucide-react";
 
 const PALETA = {
   macho: { fundo: "#EFF6FF", borda: "#AACDED", cor: "#235B95", marca: "♂" },
@@ -22,7 +22,7 @@ function TreeCard({ ave, destaque = false }) {
       style={{ background: tema.fundo, borderColor: tema.borda }}
     >
       <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white" style={{ color: tema.cor }} aria-hidden="true">
-        {ave.sexo === "Macho" ? <Mars size={22} /> : (ave.sexo === "Femea" || ave.sexo === "Fêmea") ? <Venus size={22} /> : <Bird size={22} />}
+        {ave.sexo === "Macho" ? <span className="text-2xl font-bold">♂</span> : (ave.sexo === "Femea" || ave.sexo === "Fêmea") ? <span className="text-2xl font-bold">♀</span> : <Bird size={22} />}
       </span>
       <div className="min-w-0">
         <p className="break-words font-semibold text-sm" style={{ color: tema.cor }}>{ave.nome || "Ave sem nome"}</p>
