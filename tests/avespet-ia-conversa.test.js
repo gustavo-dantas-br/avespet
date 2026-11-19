@@ -43,3 +43,19 @@ test("entende 'só papinha' depois de filhote, espécie e idade", () => {
   assert.match(c.resposta.mensagem, /alimentos sólidos/);
   assert.equal(c.resposta.tipo, "conversa");
 });
+
+test("conversa natural mantém intenção de alimentação no filhote de 10 dias", () => {
+  const a = conversarLocal(perfil, "Como alimentar um filhote de 10 dias", contextoInicial());
+  assert.equal(a.contexto.idadeDias, 10);
+  assert.equal(a.contexto.filhote, true);
+  assert.match(a.resposta.mensagem, /como alimentar/i);
+  assert.doesNotMatch(a.resposta.mensagem, /quantidade de papa:|\\b[0-9]+\\s*ml\\b/i);
+  const b = conversarLocal(perfil, "Na papa", a.contexto);
+  assert.equal(b.contexto.etapa, "alimentacao_assistida");
+  assert.match(b.resposta.mensagem, /espécie/i);
+  const c = conversarLocal(perfil, "Um ring neck", b.contexto);
+  assert.equal(c.contexto.especie, "Ring Neck");
+  assert.match(c.resposta.mensagem, /10 dias/i);
+  assert.match(c.resposta.mensagem, /alimentação/i);
+  assert.doesNotMatch(c.resposta.mensagem, /guia aprovado|modelo de IA depende/i);
+});
