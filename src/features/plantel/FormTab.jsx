@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Bird, Upload, X, Loader2, Save } from "lucide-react";
 import { CATALOGO_MUTACOES_RING_NECK, CORES_BASE_RING_NECK, normalizarChaveGenetica } from "../genetica/data/catalogoRingNeck";
 import { APARENCIAS_COMUNS_RING_NECK, COMBINACOES_POPULARES_RING_NECK, mostrarNomePopularRingNeck, ordenarMutacoesRingNeck } from "../genetica/data/nomenclaturaRingNeck";
+import { chaveAparenciaRingNeck, removerAparenciasRepetidasRingNeck } from "../genetica/data/opcoesUnicasRingNeck";
 export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoOptions, femeaOptions, parceiroOptions, mutacoes, clientes, fornecedores, onCancel, Card, Field, SectionTitle, inputStyle, ESPECIES, SEXOS, STATUS_AVE, ORIGEM_TIPOS, SeletorComprador, SeletorFornecedor, PesoHistorico }) {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target?.type === "checkbox" ? e.target.checked : e.target.value }));
   // Editar manualmente os campos do comprador desfaz o vinculo com o cliente
@@ -15,21 +16,17 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
   const mutacoesDaEspecie = mutacoes.filter((m) =>
     m.categoria !== "cor_base" && (!m.especie || m.especie === form.especie)
   );
-  const mutacoesDisponiveis = [];
-  const codigosVistos = new Set();
-  const chaveMutacao = (nome) => normalizarChaveGenetica(String(nome || "").split(" (")[0]);
-  const adicionarOpcao = (mutacao) => {
-    const codigo = chaveMutacao(mutacao.nome);
-    if (!codigo || codigosVistos.has(codigo)) return;
-    // A série de cor e os fatores são selecionados nos campos específicos.
-    if (ringNeck && /^(blue|azul|green|verde|turquoise|turquesa|violet|violeta|dark factor|fator escuro|cobalto|mauve)$/.test(codigo)) return;
-    codigosVistos.add(codigo);
-    mutacoesDisponiveis.push(mutacao);
-  };
-  if (ringNeck) CATALOGO_MUTACOES_RING_NECK.forEach(adicionarOpcao);
-  mutacoesDaEspecie.forEach(adicionarOpcao);
-  const mutacoesOrdenadas = ringNeck ? ordenarMutacoesRingNeck(mutacoesDisponiveis) : mutacoesDisponiveis;
+  // Deduplicar somente a apresentação, sem alterar banco nem motor genético.
+  const chaveMutacao = (nome) => ringNeck
+    ? chaveAparenciaRingNeck(nome)
+    : normalizarChaveGenetica(String(nome || "").split(" (")[0]);
   const mesmaMutacao = (a, b) => chaveMutacao(a) === chaveMutacao(b);
+  const mutacoesDisponiveis = ringNeck
+    ? removerAparenciasRepetidasRingNeck([...CATALOGO_MUTACOES_RING_NECK, ...mutacoesDaEspecie])
+    : mutacoesDaEspecie.filter((mutacao, index, items) =>
+        items.findIndex((item) => chaveMutacao(item.nome) === chaveMutacao(mutacao.nome)) === index
+      );
+  const mutacoesOrdenadas = ringNeck ? ordenarMutacoesRingNeck(mutacoesDisponiveis) : mutacoesDisponiveis;
   const mutacaoCorReconhecida = mutacoesDisponiveis.find((m) => mesmaMutacao(m.nome, form.corMutacao));
   // Preservar nomes legados já salvos no plantel; só abrir "Outra" para nomes
   // que realmente não estão no catálogo nem são as aparências especiais.
