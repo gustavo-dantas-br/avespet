@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Bird, BookOpen, CalendarDays, ChevronDown, ChevronRight, Dna, Egg, GraduationCap, HeartHandshake, Info, MessageCircle, Send, ShieldCheck, Sparkles, UserRound, Leaf } from "lucide-react";
 import { ESPECIES_INICIAIS, FASES, validarPerfil } from "./motorEducativo";
 import { conversarLocal, contextoInicial } from "./conversaLocal";
-import { CHAT_GENERATIVO_ATIVO, conversarComModelo } from "./chatGenerativo";
+import { CHAT_GENERATIVO_ATIVO, conversarComModelo, verificarDisponibilidadeGemini } from "./chatGenerativo";
 import DiarioFilhote from "./DiarioFilhote";
 import FontesEducativas from "./FontesEducativas";
 
@@ -36,8 +36,19 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
   const [aveId, setAveId] = useState("");
   const [diarioAberto, setDiarioAberto] = useState(false);
   const [fontesAbertas, setFontesAbertas] = useState(false);
-  const [modeloIndisponivel, setModeloIndisponivel] = useState(false);
+  const [modeloIndisponivel, setModeloIndisponivel] = useState(true);
+  const [verificandoModelo, setVerificandoModelo] = useState(CHAT_GENERATIVO_ATIVO);
   const conversaRef = useRef(null);
+  useEffect(() => {
+    if (!CHAT_GENERATIVO_ATIVO) return;
+    let ativo = true;
+    verificarDisponibilidadeGemini().then((liberado) => {
+      if (ativo) { setModeloIndisponivel(!liberado); setVerificandoModelo(false); }
+    }).catch(() => {
+      if (ativo) { setModeloIndisponivel(true); setVerificandoModelo(false); }
+    });
+    return () => { ativo = false; };
+  }, []);
   useEffect(() => {
     if (historico.length > 0 && conversaRef.current) conversaRef.current.scrollTop = conversaRef.current.scrollHeight;
   }, [historico, enviando]);
@@ -62,7 +73,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
     setErro("");
     setEnviando(true);
     // Casos de alerta permanecem no motor educativo: não esperar pela API externa.
-    const permiteModelo = CHAT_GENERATIVO_ATIVO && !modeloIndisponivel &&
+    const permiteModelo = CHAT_GENERATIVO_ATIVO && !modeloIndisponivel && !verificandoModelo &&
       local.resposta.tipo !== "urgente" && local.resposta.tipo !== "atencao";
     try {
       const resposta = permiteModelo
@@ -98,7 +109,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
         <Sparkles className="text-emerald-600" size={26} />
         <div>
           <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">Avespet IA</h1>
-          <p className="text-xs text-[#65766A]">{CHAT_GENERATIVO_ATIVO && !modeloIndisponivel ? "Gemini configurado no preview · liberação sujeita ao servidor" : "Assistente educativo local · Gemini não disponível nesta sessão"}</p>
+          <p className="text-xs text-[#65766A]">{verificandoModelo ? "Verificando disponibilidade do Gemini..." : CHAT_GENERATIVO_ATIVO && !modeloIndisponivel ? "Gemini disponível em teste · conversa com contexto" : "Assistente educativo local · Gemini não disponível nesta sessão"}</p>
         </div>
       </div>
       <div className="flex items-center gap-2 rounded-full bg-[#E6F5EC] px-3 py-2 text-xs font-semibold text-[#236548]">
@@ -145,7 +156,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
               <img src={FOTO_RINGNECK} alt="" className="h-10 w-10 shrink-0 rounded-full border-2 border-[#E0EDE3] object-cover" loading="lazy"/>
               <div className="min-w-0 max-w-[calc(100%-3rem)] rounded-2xl rounded-tl-sm border border-[#E3EAE5] bg-white p-3 shadow-sm sm:max-w-[90%] sm:p-4">
                 <p className="text-sm font-bold text-[#173428]">Avespet IA <Sparkles size={13} className="inline text-emerald-500"/></p>
-                <p className="mt-1 text-sm leading-6 text-[#3E5145]">Olá! Sou seu assistente educativo. Conte sobre sua ave, faça uma pergunta ou selecione um dos quadros acima. {CHAT_GENERATIVO_ATIVO && !modeloIndisponivel ? "O Gemini está configurado para testes, mas depende da liberação no servidor. Dúvidas de saúde exigem veterinário." : "Nesta versão, acompanho o contexto da conversa e uso uma biblioteca educativa para assuntos técnicos."}</p>
+                <p className="mt-1 text-sm leading-6 text-[#3E5145]">Olá! Sou seu assistente educativo. Conte sobre sua ave, faça uma pergunta ou selecione um dos quadros acima. {CHAT_GENERATIVO_ATIVO && !modeloIndisponivel ? "O Gemini está disponível para a conta autorizada; dúvidas de saúde exigem veterinário." : "Nesta versão, acompanho o contexto da conversa e uso uma biblioteca educativa para assuntos técnicos."}</p>
               </div>
             </div>
             {historico.map((item, i) => <React.Fragment key={i}>
