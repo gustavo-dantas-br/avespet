@@ -22,3 +22,14 @@ export async function conversarComModelo({ pergunta, historico = [], contexto = 
   if (!data?.mensagem) throw new Error("Resposta indisponível.");
   return { tipo: "conversa", titulo: "Avespet IA", mensagem: String(data.mensagem).slice(0, 3500), aviso: "Resposta gerada automaticamente, sujeita a erros. Não substitui atendimento veterinário.", fontes: [] };
 }
+
+
+/** Verifica disponibilidade sem chamar o modelo Gemini e sem gastar tokens. */
+export async function verificarDisponibilidadeGemini() {
+  if (!CHAT_GENERATIVO_ATIVO) return false;
+  const { data, error } = await supabase.functions.invoke("avespet-ia-chat", {
+    body: { acao: "status" },
+  });
+  if (error) return false;
+  return data?.disponivel === true;
+}
