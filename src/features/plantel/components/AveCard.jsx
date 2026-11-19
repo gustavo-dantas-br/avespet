@@ -44,7 +44,7 @@ function AveCard({ a, onEdit, onDelete, onSync }) {
           <span className="rounded-md px-2 py-1 text-[11px] font-medium" style={{ background: tone.bg, color: tone.color }}>{status}</span>
         </div>
         {aparencia && <p className="mt-2 line-clamp-2 text-xs font-medium" style={{color:"#446450"}} title={aparencia}>{aparencia}</p>}
-        {a.status === "Vendida" && a.valorVenda && <p className="mt-1 text-xs font-semibold" style={{color:"#287A50"}}>Valor de venda: R$ {a.valorVenda}</p>
+        {a.status === "Vendida" && a.valorVenda && <p className="mt-1 text-xs font-semibold" style={{color:"#287A50"}}>Valor de venda: R$ {a.valorVenda}</p>}
 
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]" style={{ color: "#71877A" }}>
           <span className="font-mono">{a.anilha || "Sem anilha"}</span>
