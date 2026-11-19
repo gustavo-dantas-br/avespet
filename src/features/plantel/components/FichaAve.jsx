@@ -1,0 +1,100 @@
+import React, { useEffect, useRef, useState } from "react";
+import { Bird, X, Pencil, GitBranch, Dna, Egg, Info, ClipboardList } from "lucide-react";
+import { idadeDaAve, sexoVisual } from "../utils/resumoAve";
+import { mostrarNomePopularRingNeck } from "../../genetica/data/nomenclaturaRingNeck";
+
+const texto = (valor) => valor === null || valor === undefined || valor === "" ? "Não informado" : String(valor);
+const nomeAve = (ave) => ave?.nome || "Ave não identificada";
+function Identificacao({ ave, legenda }) {
+  const sexo = sexoVisual(ave?.sexo);
+  return <div className="rounded-xl border p-3" style={{background:sexo.fundo,borderColor:sexo.borda}}>
+    <p className="text-xs font-semibold" style={{color:sexo.texto}}>{legenda} · {sexo.simbolo} {sexo.rotulo}</p>
+    <p className="mt-1 break-words text-sm font-bold" style={{color:sexo.texto}}>{nomeAve(ave)}</p>
+    {ave?.anilha && <p className="mt-1 text-xs text-slate-600">Anilha {ave.anilha}</p>}
+  </div>;
+}
+function Dado({ rotulo, valor }) {
+  return <div className="min-w-0"><dt className="text-xs text-slate-500">{rotulo}</dt><dd className="mt-0.5 break-words text-sm font-semibold text-slate-800">{texto(valor)}</dd></div>;
+}
+function Secao({ titulo, icon: Icone, children }) {
+  return <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+    <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-emerald-900"><Icone size={18} aria-hidden="true"/>{titulo}</h3>{children}
+  </section>;
+}
+export default function FichaAve({ ave, aves = [], posturas = [], onClose, onEdit }) {
+  const [aba, setAba] = useState("dados");
+  const fecharRef = useRef(null);
+  useEffect(() => {
+    const onKey = (event) => { if (event.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    fecharRef.current?.focus();
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  if (!ave) return null;
+
+  const localizar = (id) => aves.find((item) => String(item.id) === String(id));
+  const pai = ave.paiId ? localizar(ave.paiId) : null;
+  const mae = ave.maeId ? localizar(ave.maeId) : null;
+  const parceiro = ave.parceiroId ? localizar(ave.parceiroId) : null;
+  const filhotes = aves.filter((item) => String(item.paiId) === String(ave.id) || String(item.maeId) === String(ave.id));
+  const posturasDaAve = posturas.filter((p) => String(p.paiId) === String(ave.id) || String(p.maeId) === String(ave.id));
+  const ovos = posturasDaAve.reduce((total, p) => total + (p.ovos?.length || 0), 0);
+  const sexo = sexoVisual(ave.sexo);
+  const aparencia = ave.corMutacao === "Ino"
+    ? (String(ave.corBase || "").toLowerCase().includes("turquoise") ? "Cremino (Ino)" :
+       String(ave.corBase || "").toLowerCase().includes("blue") ? "Albino (Ino)" :
+       String(ave.corBase || "").toLowerCase().includes("green") ? "Lutino (Ino)" : "Ino (série não informada)")
+    : mostrarNomePopularRingNeck(ave.corMutacao || ave.corBase || "");
+  const nomes = (arr) => arr?.length ? arr.map((valor) => mostrarNomePopularRingNeck(valor)).join(" · ") : "Não informado";
+  const abas = [{id:"dados",nome:"Identificação"},{id:"genetica",nome:"Genética"},{id:"familia",nome:"Família e reprodução"},{id:"historico",nome:"Histórico"}];
+
+  return <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/60 p-2 sm:p-5" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <section role="dialog" aria-modal="true" aria-label={`Ficha de ${nomeAve(ave)}`} className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl">
+      <div className="flex items-start justify-between gap-3 border-b border-slate-200 bg-white p-4 sm:p-5">
+        <div className="flex min-w-0 items-center gap-3">
+          {ave.foto ? <img src={ave.foto} alt={`Foto cadastrada de ${nomeAve(ave)}`} className="h-16 w-16 rounded-xl object-cover"/> : <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700"><Bird size={30}/></div>}
+          <div className="min-w-0"><p className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">Ficha da ave · somente consulta</p><h2 className="truncate text-xl font-bold text-slate-900">{nomeAve(ave)}</h2><p className="text-xs text-slate-600">{ave.especie || "Espécie não informada"} · {ave.status || "No plantel"}</p></div>
+        </div>
+        <button ref={fecharRef} type="button" onClick={onClose} aria-label="Fechar ficha" className="rounded-lg p-2 text-slate-600 hover:bg-slate-100"><X size={22}/></button>
+      </div>
+      <div className="flex flex-wrap gap-2 border-b border-slate-200 bg-white px-4 py-2" role="tablist" aria-label="Seções da ficha">
+        {abas.map(({id,nome})=><button key={id} type="button" role="tab" aria-selected={aba===id} onClick={()=>setAba(id)} className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${aba===id?"bg-emerald-700 text-white":"bg-slate-100 text-slate-700 hover:bg-slate-200"}`}>{nome}</button>)}
+      </div>
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 sm:p-5">
+        {aba==="dados" && <>
+          <Secao titulo="Dados principais" icon={Info}>
+            <div className="mb-3 flex flex-wrap items-center gap-2"><span className="rounded-lg border px-3 py-1 text-xs font-bold" style={{background:sexo.fundo,borderColor:sexo.borda,color:sexo.texto}}>{sexo.simbolo} {sexo.rotulo}</span><span className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-semibold">{idadeDaAve(ave.nascimento)||"Idade não informada"}</span><span className="rounded-lg bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">{ave.status||"No plantel"}</span></div>
+            <dl className="grid gap-3 sm:grid-cols-2"><Dado rotulo="Espécie" valor={ave.especie}/><Dado rotulo="Aparência" valor={aparencia}/><Dado rotulo="Nascimento informado" valor={ave.nascimento}/><Dado rotulo="Número da anilha" valor={ave.anilha}/><Dado rotulo="Cor da anilha" valor={ave.corAnilha}/><Dado rotulo="Sexagem" valor={ave.sexado?"Sexagem registrada":"Não registrada"}/><Dado rotulo="Origem" valor={ave.origemTipo || ave.origem}/><Dado rotulo="Criatório" valor={ave.criador}/></dl>
+          </Secao>
+        </>}
+        {aba==="genetica" && <Secao titulo="Informações genéticas cadastradas" icon={Dna}>
+          <dl className="grid gap-3 sm:grid-cols-2">
+            <Dado rotulo="Aparência / mutação" valor={aparencia}/><Dado rotulo="Série de cor" valor={ave.corBase}/>
+            <Dado rotulo="Genótipo confirmado" valor={ave.serieCorGenotipo}/><Dado rotulo="Fator escuro" valor={ave.fatoresGeneticos?.darkFactor}/><Dado rotulo="Fator violeta" valor={ave.fatoresGeneticos?.violetFactor}/>
+            <Dado rotulo="Portadores informados" valor={nomes(ave.portadores)}/><Dado rotulo="Mutações visuais adicionais" valor={nomes(ave.mutacoesVisuais)}/>
+          </dl>
+          <p className="mt-3 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">Estes são dados registrados pelo criador, não confirmação laboratorial de genótipos.</p>
+        </Secao>}
+        {aba==="familia" && <>
+          <Secao titulo="Referências de parentesco" icon={GitBranch}>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Identificacao legenda="Pai" ave={pai || (ave.paiExterno ? {nome:ave.paiExterno,sexo:"Macho"} : {nome:"Não informado",sexo:"Macho"})}/>
+              <Identificacao legenda="Mãe" ave={mae || (ave.maeExterno ? {nome:ave.maeExterno,sexo:"Fêmea"} : {nome:"Não informado",sexo:"Fêmea"})}/>
+            </div>
+            <div className="mt-3"><Dado rotulo="Parceiro cadastrado" valor={parceiro?.nome || ave.casalLabel}/></div>
+            <div className="mt-4"><p className="mb-2 text-xs font-bold text-slate-700">Filhotes vinculados ({filhotes.length})</p>{filhotes.length?<div className="grid gap-2 sm:grid-cols-2">{filhotes.map((f)=><Identificacao key={f.id} legenda="Filhote" ave={f}/>)}</div>:<p className="text-sm text-slate-500">Nenhum filhote vinculado no plantel.</p>}</div>
+          </Secao>
+          <Secao titulo="Reprodução registrada" icon={Egg}><dl className="grid grid-cols-2 gap-3"><Dado rotulo="Posturas vinculadas" valor={posturasDaAve.length}/><Dado rotulo="Ovos registrados" valor={ovos}/></dl><p className="mt-2 text-xs text-slate-500">Os detalhes das posturas e ovos permanecem na aba Reprodução.</p></Secao>
+        </>}
+        {aba==="historico" && <Secao titulo="Informações de origem e movimentação" icon={ClipboardList}>
+          <dl className="grid gap-3 sm:grid-cols-2"><Dado rotulo="Situação" valor={ave.status}/><Dado rotulo="Data da compra" valor={ave.dataCompra}/><Dado rotulo="Fornecedor" valor={ave.fornecedorNome}/><Dado rotulo="Data da venda" valor={ave.dataVenda}/><Dado rotulo="Valor de compra registrado" valor={ave.valorCompra}/><Dado rotulo="Valor de venda registrado" valor={ave.valorVenda}/><Dado rotulo="Data de entrega" valor={ave.dataEntrega}/><Dado rotulo="Status do pós-venda" valor={ave.statusPosVenda}/><Dado rotulo="Observações do pós-venda" valor={ave.obsPosVenda}/></dl>
+          <p className="mt-3 text-xs text-slate-500">Exibição somente de informações já cadastradas. Não representa uma linha do tempo completa de auditoria.</p>
+        </Secao>}
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-white p-3 sm:p-4">
+        <span className="text-xs text-slate-500">Nenhuma informação é alterada nesta ficha.</span>
+        <div className="flex gap-2"><button type="button" onClick={onClose} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Fechar</button><button type="button" onClick={()=>onEdit(ave)} className="flex items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-bold text-white"><Pencil size={15}/> Editar cadastro</button></div>
+      </div>
+    </section>
+  </div>;
+}
