@@ -16,6 +16,21 @@ import {
   CheckCircle2, AlertCircle, CalendarDays, ArrowUpRight,
 } from "lucide-react";
 
+// Antecipação apenas do código da seção que o usuário está prestes a abrir.
+// Não dispara consultas nem carrega dados de outros módulos.
+const preloadModules = {
+  creators: () => import("./CreatorManagement"),
+  birds: () => import("./BirdsManagement"),
+  ads: () => import("./AdsModeration"),
+  "lost-birds": () => import("./LostBirdsModeration"),
+  billing: () => import("./BillingManagement"),
+  support: () => import("./SupportOperations"),
+  communications: () => import("./MasterInboxPanel"),
+  "email-automations": () => import("./EmailAutomations"),
+  settings: () => import("./MasterAudit"),
+};
+const preloadSection = (id) => { preloadModules[id]?.().catch(() => {}); };
+
 const navigation = [
   { id: "overview", label: "Visão geral", icon: LayoutDashboard, description: "Indicadores e situação da plataforma" },
   { id: "creators", label: "Criadores e usuários", icon: Users, description: "Contas, perfis e permissões" },
@@ -151,12 +166,14 @@ export default function MasterApp({ user, onLogout }) {
     setActiveSection(id);
     setMobileMenuOpen(false);
   };
-  const openSupportDraft = (draft) => {
+  const openSupportDraft = useCallback((draft) => {
     setSupportDraft(draft);
     setVisitedSections((previous) => previous.includes("communications") ? previous : [...previous, "communications"]);
     setActiveSection("communications");
     setMobileMenuOpen(false);
-  };
+  }, []);
+
+  const onDraftUsed = useCallback(() => setSupportDraft(null), []);
 
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -169,7 +186,7 @@ export default function MasterApp({ user, onLogout }) {
         {navigation.map((item) => {
           const Icon = item.icon;
           const active = activeSection === item.id;
-          return <button key={item.id} type="button" onClick={() => chooseSection(item.id)} aria-current={active ? "page" : undefined} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[13px] font-medium transition" style={{ background: active ? "linear-gradient(90deg,#2c4969,#263f5c)" : "transparent", color: active ? "#fff" : "#b9c5d3", boxShadow: active ? "inset 3px 0 #d9b45b" : "none" }}><Icon size={18} /><span className="flex-1">{item.label}</span>{active && <ChevronRight size={15} />}</button>;
+          return <button key={item.id} type="button" onClick={() => chooseSection(item.id)} onMouseEnter={() => preloadSection(item.id)} onFocus={() => preloadSection(item.id)} aria-current={active ? "page" : undefined} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[13px] font-medium transition" style={{ background: active ? "linear-gradient(90deg,#2c4969,#263f5c)" : "transparent", color: active ? "#fff" : "#b9c5d3", boxShadow: active ? "inset 3px 0 #d9b45b" : "none" }}><Icon size={18} /><span className="flex-1">{item.label}</span>{active && <ChevronRight size={15} />}</button>;
         })}
       </nav>
       <div className="border-t p-4" style={{ borderColor: "#293d55" }}>
@@ -201,7 +218,7 @@ export default function MasterApp({ user, onLogout }) {
                 : id === "billing" ? <BillingManagement />
                 : id === "support" ? <SupportOperations onPrepareEmail={openSupportDraft} />
                 : id === "settings" ? <MasterAudit />
-                : id === "communications" ? <MasterInboxPanel user={user} initialDraft={supportDraft} onDraftUsed={() => setSupportDraft(null)} />
+                : id === "communications" ? <MasterInboxPanel user={user} initialDraft={supportDraft} onDraftUsed={onDraftUsed} />
                 : id === "email-automations" ? <EmailAutomations />
                 : null}
               </div>
