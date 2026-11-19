@@ -28,8 +28,8 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
 
   // Preserve a intenção da pergunta antes de tratar idade e outras informações isoladas.
   // Alimentação manual de neonatos é um assunto de alto risco: nunca inventar doses ou técnica.
-  const perguntaAlimentacao = /\\b(como|qual a forma|o que fazer|preciso|posso|devo)\\b.*\\b(alimentar|dar papa|dar papinha|alimentacao)\\b/.test(limpo)
-    || /\\b(alimentar|alimentacao)\\b.*\\b(filhote|ave|ring\\s*neck|calopsita)\\b/.test(limpo);
+  const perguntaAlimentacao = /\b(como|qual a forma|o que fazer|preciso|posso|devo)\b.*\b(alimentar|dar papa|dar papinha|alimentacao)\b/.test(limpo)
+    || /\b(alimentar|alimentacao)\b.*\b(filhote|ave|ring\s*neck|calopsita)\b/.test(limpo);
   if (perguntaAlimentacao && contexto.filhote) {
     contexto.etapa = "orientacao_alimentacao";
     return retorno("Vamos cuidar dessa dúvida 🦜",
@@ -37,7 +37,7 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
       contexto);
   }
   // O usuário pode responder "na papa" ou "só papinha" depois de uma pergunta sobre alimentação.
-  if (contexto.filhote && /^(?:so|somente|apenas|ainda|ainda so|ele esta|ela esta|esta)?\\s*(?:na\\s+)?(?:papa|papinha)(?:\\s+mesmo)?$/.test(limpo)) {
+  if (contexto.filhote && /^(?:so|somente|apenas|ainda|ainda so|ele esta|ela esta|esta)?\s*(?:na\s+)?(?:papa|papinha)(?:\s+mesmo)?$/.test(limpo)) {
     contexto.etapa = "alimentacao_assistida";
     if (!contexto.especie) return retorno("Entendi 🦜",
       "Ele está recebendo papinha. Qual é a espécie? E quem está alimentando: os pais ou uma pessoa? Para um filhote tão novo, é importante ter acompanhamento de um veterinário de aves.", contexto);
@@ -48,7 +48,7 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
       contexto);
   }
   // Uma resposta curta identificando a espécie é informação, não uma nova pergunta.
-  if (/^(?:(?:e|eh|um|uma|o|a|ele e|ela e|tenho um|tenho uma|meu e|minha e)\\s+)?(?:ring\\s*neck|ringneck|periquito de colar|calopsita)$/.test(limpo) && contexto.especie) {
+  if (/^(?:(?:e|eh|um|uma|o|a|ele e|ela e|tenho um|tenho uma|meu e|minha e)\s+)?(?:ring\s*neck|ringneck|periquito de colar|calopsita)$/.test(limpo) && contexto.especie) {
     if (contexto.etapa === "alimentacao_assistida" || contexto.etapa === "orientacao_alimentacao") {
       return retorno("Certo, é um " + contexto.especie + " 🦜",
         `Agora entendi: é um filhote de ${contexto.especie}${contexto.idadeDias !== null ? " com " + contexto.idadeDias + " dias" : ""}, e estamos falando da alimentação. Ele está com os pais ou você está oferecendo a papinha? Para esta idade, evite ajustar quantidade ou modo de alimentar sem orientação veterinária.`, contexto);
