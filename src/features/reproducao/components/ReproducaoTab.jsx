@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, Save, Trash2, Pencil, Mars, Venus, Egg, CalendarDays, AlertTriangle } from "lucide-react";
+import { Plus, Save, Trash2, Pencil, Egg, CalendarDays, AlertTriangle } from "lucide-react";
 
 const CORES_CASAL = Object.freeze({
   macho: { fundo: "#eff6ff", borda: "#aacded", texto: "#235b95" },
@@ -11,7 +11,7 @@ function IdentidadeCasal({ nome, sexo, detalhe }) {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border p-3" style={{background:tema.fundo,borderColor:tema.borda}}>
       <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white" style={{color:tema.texto}}>
-        {macho ? <Mars size={22}/> : <Venus size={22}/>}
+        {macho ? <span className="text-2xl font-bold">♂</span> : <span className="text-2xl font-bold">♀</span>}
       </span>
       <div className="min-w-0">
         <p className="text-xs font-semibold" style={{color:tema.texto}}>{macho ? "♂ Macho" : "♀ Fêmea"}</p>
