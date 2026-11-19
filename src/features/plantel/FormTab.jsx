@@ -13,6 +13,12 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
   // O criador pode selecionar as mutações antes mesmo de importá-las ao seu
   // banco pessoal. As opções cadastradas manualmente continuam disponíveis.
   const ringNeck = form.especie === "Ring Neck";
+  const temaSexo = form.sexo === "Macho"
+    ? { fundo: "#eff6ff", borda: "#a8cbee", titulo: "#235b95", icone: "♂", rotulo: "Macho" }
+    : ["Femea", "Fêmea"].includes(form.sexo)
+      ? { fundo: "#fff2f7", borda: "#f1b8d1", titulo: "#a63970", icone: "♀", rotulo: "Fêmea" }
+      : { fundo: "#f0f7f1", borda: "#cbdccf", titulo: "#245f42", icone: "◌", rotulo: "Sexo não informado" };
+
   const mutacoesDaEspecie = mutacoes.filter((m) =>
     m.categoria !== "cor_base" && (!m.especie || m.especie === form.especie)
   );
@@ -64,7 +70,14 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
               <select style={inputStyle} value={form.especie} onChange={set("especie")}>{ESPECIES.map((e) => <option key={e}>{e}</option>)}</select>
             </Field>
             <Field label="Sexo">
-              <select style={inputStyle} value={form.sexo} onChange={set("sexo")}>{SEXOS.map((s) => <option key={s}>{s}</option>)}</select>
+              <div className="rounded-xl border p-2 transition-colors" style={{ background: temaSexo.fundo, borderColor: temaSexo.borda }}>
+                <label className="flex items-center gap-2">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-xl font-bold" style={{ color: temaSexo.titulo }} aria-hidden="true">{temaSexo.icone}</span>
+                  <span className="sr-only">Selecionar sexo</span>
+                  <select style={{...inputStyle, flex: 1, minWidth: 0}} value={form.sexo} onChange={set("sexo")}>{SEXOS.map((sexo) => <option key={sexo}>{sexo}</option>)}</select>
+                </label>
+                <p className="mt-1 text-xs" style={{ color: temaSexo.titulo }}>Identificação visual: {temaSexo.rotulo}</p>
+              </div>
             </Field>
             <Field label="Cor / aparência da ave">
               <select
