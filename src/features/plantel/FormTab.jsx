@@ -279,7 +279,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <Field label="Numero da anilha"><input style={inputStyle} value={form.anilha} onChange={set("anilha")} placeholder="ex: FOB 0080" /></Field>
           <Field label="Cor da anilha"><input style={inputStyle} value={form.corAnilha} onChange={set("corAnilha")} placeholder="ex: azul 2024" /></Field>
-          <Field label="Nascimento"><input style={inputStyle} value={form.nascimento} onChange={set("nascimento")} placeholder="ex: Ago/2024" /></Field>
+          <Field label="Nascimento (dia opcional)"><input style={inputStyle} value={form.nascimento} onChange={set("nascimento")} placeholder="2024, Ago/2024 ou 12/07/2024" /><p className="mt-1 text-xs" style={{color:"#71877A"}}>Informe só o ano, mês/ano ou a data completa. Nunca é necessário inventar um dia.</p></Field>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
