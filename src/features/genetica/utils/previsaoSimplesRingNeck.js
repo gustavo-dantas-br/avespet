@@ -280,11 +280,28 @@ export function calcularCriasRingNeck(paiSelecionado, maeSelecionada) {
   if (p.erro || m.erro) return { status:"incompleto", mensagem:p.erro || m.erro, machos:[],femeas:[] };
   const serie = germesSerie(p,m);
   const ligadoDark = (p.factors.dark || m.factors.dark) && serie.length>1;
-  const linkedCinnamonIno=(p.cinnamon!=="normal" || m.cinnamon!=="normal") &&
-    (p.ino!=="normal" || m.ino!=="normal");
+  // Ino/Pallid e Cinnamon ocupam o cromossomo Z. Um pai heterozigoto
+  // nos DOIS loci exige saber a fase (qual alelo está em cada cromossomo)
+  // e a taxa de recombinação; não se deve multiplicar segregações como
+  // se fossem genes autossômicos independentes.
+  const faseZDesconhecida = (p.z[0] !== p.z[1]) && (p.cinZ[0] !== p.cinZ[1]);
+  // Se um dos loci paternos é fixo, a transmissão conjunta é conhecida:
+  // cada Z do pai traz o par correspondente de alelos. A mãe transmite
+  // sempre seu Z ao filho macho; a filha recebe só o Z paterno.
+  const haplotiposPai = p.z.map((ino, i)=>({
+    ino, cinnamon:p.cinZ[i], chance:0.5,
+  }));
   const sexoZ = {
-    Macho: p.z.flatMap((alelo)=>[{z:[alelo,m.z[0]],chance:0.5}]),
-    Femea: p.z.flatMap((alelo)=>[{z:[alelo],chance:0.5}]),
+    Macho:haplotiposPai.map(h=>({
+      z:[h.ino,m.z[0]],
+      cinnamon:[h.cinnamon,m.cinZ[0]],
+      chance:h.chance,
+    })),
+    Femea:haplotiposPai.map(h=>({
+      z:[h.ino],
+      cinnamon:[h.cinnamon],
+      chance:h.chance,
+    })),
   };
   const fatores = {
     violet:obterDoseFilho(p.factors.violet,m.factors.violet),
@@ -301,21 +318,21 @@ export function calcularCriasRingNeck(paiSelecionado, maeSelecionada) {
       percentual:Number((chance*100).toFixed(4)),
     })),
   };
-  const cinPorSexo = (sexo) => p.cinZ.map((alelo) => {
-    const herdados=sexo==="Macho" ? [alelo,m.cinZ[0]] : [alelo];
-    const n=herdados.filter((x)=>x==="C").length;
-    return { status:(sexo==="Macho" ? n===2 : n===1) ? "visual" :
-      (sexo==="Macho" && n===1 ? "split" : "normal"),chance:0.5 };
-  });
+  const fenotipoCanela = (alelos, sexo) => {
+    const copias=alelos.filter(x=>x==="C").length;
+    return (sexo==="Macho" ? copias===2 : copias===1)
+      ? "visual"
+      : sexo==="Macho" && copias===1 ? "split" : "normal";
+  };
   const avisoNaoModelado = [...new Set([...p.naoModeladas,...m.naoModeladas])];
   const premissas = [
     "Cores simples e fatores não informados usam o padrão de simulação, não um genótipo confirmado.",
     "Percentuais dentro de cada sexo; a probabilidade de nascimento macho/fêmea é tratada separadamente.",
     "Ino e Pallid são alelos no mesmo locus ligado ao sexo, não duas mutações independentes.",
   ];
-  if (linkedCinnamonIno) return {
+  if (faseZDesconhecida) return {
     status:"parcial",
-    mensagem:"Cinnamon (Canela) e Ino/Pallid são ligados ao cromossomo Z. Para combinar os percentuais precisamos conhecer a fase genética e a recombinação; não vamos inventar chances.",
+    mensagem:"O macho possui duas variantes no locus Ino/Pallid e também é portador de Cinnamon. Precisamos saber em qual cromossomo Z está cada mutação (fase genética) e a recombinação para prever as combinações. Sem isso, os percentuais finais não são confiáveis.",
     machos:[],femeas:[],premissas,
   };
   if (ligadoDark) {
@@ -329,12 +346,12 @@ export function calcularCriasRingNeck(paiSelecionado, maeSelecionada) {
   }
   const resultadoSexo = (sexo) => {
     const agrupado = new Map();
-    for(const cor of serie) for(const z of sexoZ[sexo]) for(const cin of cinPorSexo(sexo))
+    for(const cor of serie) for(const z of sexoZ[sexo])
       for(const violet of fatores.violet) for(const grey of fatores.grey) for(const dark of fatores.dark) {
-        const chance = cor.chance*z.chance*cin.chance*violet.chance*grey.chance*dark.chance;
+        const chance = cor.chance*z.chance*violet.chance*grey.chance*dark.chance;
         if(!chance)continue;
         const gen = {violet:violet.dosagem,grey:grey.dosagem,dark:dark.dosagem};
-        const v = etiqueta(cor.serie,gen,z.z,sexo,cin.status);
+        const v = etiqueta(cor.serie,gen,z.z,sexo,fenotipoCanela(z.cinnamon,sexo));
         const antigo=agrupado.get(v.nome);
         if(antigo)antigo.probabilidade+=chance;
         else agrupado.set(v.nome,{...v,probabilidade:chance,serie:cor.serie});
