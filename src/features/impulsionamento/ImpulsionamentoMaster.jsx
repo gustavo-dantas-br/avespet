@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import SolicitacoesMaster from "./SolicitacoesMaster";
+import SimuladorFinanceiro from "./SimuladorFinanceiro";
 import { PLANOS_IMPULSIONAMENTO, dinheiro, validarPlano } from "./planos";
 
 const valor = "font-bold tabular-nums text-slate-900";
@@ -59,6 +60,7 @@ export default function ImpulsionamentoMaster() {
           <div className="rounded-xl bg-slate-50 p-3"><p className="text-xs text-slate-500">Antes de demais custos</p><p className={valor}>{dinheiro(total - midia)}</p></div>
         </div>
       </section>
+      <SimuladorFinanceiro />
       <SolicitacoesMaster />
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="font-semibold text-slate-900">Etapas para a operação</h2>
