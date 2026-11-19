@@ -38,12 +38,24 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
   const [fontesAbertas, setFontesAbertas] = useState(false);
   const [modeloIndisponivel, setModeloIndisponivel] = useState(true);
   const [verificandoModelo, setVerificandoModelo] = useState(CHAT_GENERATIVO_ATIVO);
+  const [avisoModelo, setAvisoModelo] = useState("");
   const conversaRef = useRef(null);
+  const atualizarDisponibilidade = async () => {
+    if (!CHAT_GENERATIVO_ATIVO) return;
+    setVerificandoModelo(true);
+    const liberado = await verificarDisponibilidadeGemini().catch(() => false);
+    setModeloIndisponivel(!liberado);
+    setAvisoModelo(liberado ? "" : "O Gemini ainda não está habilitado nesta conta. Você pode continuar com o assistente local.");
+    setVerificandoModelo(false);
+  };
   useEffect(() => {
     if (!CHAT_GENERATIVO_ATIVO) return;
     let ativo = true;
     verificarDisponibilidadeGemini().then((liberado) => {
-      if (ativo) { setModeloIndisponivel(!liberado); setVerificandoModelo(false); }
+      if (!ativo) return;
+      setModeloIndisponivel(!liberado);
+      setAvisoModelo(liberado ? "" : "O Gemini não está disponível para esta conta no momento.");
+      setVerificandoModelo(false);
     }).catch(() => {
       if (ativo) { setModeloIndisponivel(true); setVerificandoModelo(false); }
     });
@@ -81,13 +93,23 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
         : local.resposta;
       setHistorico((atual) => [...atual, { pergunta: texto, resposta }].slice(-8));
     } catch (falha) {
-      // Erros 401/403/503 indicam acesso ou ativação indisponíveis nesta sessão.
-      const status = falha?.context?.status || falha?.status;
-      if ([401, 403, 503].includes(status)) setModeloIndisponivel(true);
+      // Não confundir falha da API Google com ausência de autorização do usuário.
+      const status = falha?.status;
+      const codigo = falha?.codigo;
+      const bloqueado = [401, 403].includes(status) || ["DESATIVADO", "CONFIGURACAO"].includes(codigo);
+      if (bloqueado) setModeloIndisponivel(true);
       setHistorico((atual) => [...atual, { pergunta: texto, resposta: local.resposta }].slice(-8));
-      setErro([401, 403, 503].includes(status)
-        ? "Gemini ainda não liberado para esta conta. A conversa continuará no assistente local."
-        : "O Gemini não respondeu agora. Continue usando o assistente local.");
+      const aviso = codigo === "COTA_GEMINI" || status === 429
+        ? "O Gemini atingiu seu limite de uso. Continue no assistente local."
+        : codigo === "CHAVE_GEMINI"
+        ? "O Google recusou a chave Gemini. É necessário verificar o acesso no Google AI Studio."
+        : codigo === "MODELO_GEMINI"
+        ? "O Google não reconheceu o modelo configurado para esta conta."
+        : bloqueado
+        ? "O Gemini não foi liberado nesta conta. A conversa continua no assistente local."
+        : "Não foi possível consultar o Gemini agora. A conversa continua no assistente local.";
+      setErro(aviso);
+      setAvisoModelo(aviso);
     } finally {
       setEnviando(false);
     }
@@ -116,6 +138,10 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
         <GraduationCap size={17} /> Suporte educacional <Info size={14} />
       </div>
     </header>
+    {CHAT_GENERATIVO_ATIVO && <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#D7E6DA] bg-[#F7FAF7] px-3 py-2 text-xs text-[#3A5B46]" role="status">
+      <span>{verificandoModelo ? "Verificando a configuração do Gemini..." : avisoModelo || (modeloIndisponivel ? "Assistente local ativo." : "Gemini configurado para a conta de testes; a resposta real depende do Google.")}</span>
+      <button type="button" disabled={verificandoModelo} onClick={atualizarDisponibilidade} className="shrink-0 rounded-lg border border-[#BCD8C5] bg-white px-3 py-2 font-semibold text-emerald-800 disabled:opacity-50">Verificar novamente</button>
+    </div>}
 
     <div className="relative isolate overflow-hidden rounded-[22px] border border-[#D6EBDC] bg-[#E8F8ED] shadow-sm">
       <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(200px,34%)] sm:items-stretch">
