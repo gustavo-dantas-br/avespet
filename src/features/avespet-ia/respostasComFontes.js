@@ -1,5 +1,5 @@
-import { conteudosAprovados } from "./bibliotecaConhecimento";
-import { classificarRisco, respostaEducativa } from "./motorEducativo";
+import { conteudosAprovados } from "./bibliotecaConhecimento.js";
+import { classificarRisco, respostaEducativa } from "./motorEducativo.js";
 
 export function normalizarTexto(texto = "") {
   return String(texto).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
