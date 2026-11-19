@@ -26,6 +26,39 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
   const risco = classificarRisco(texto);
   if (risco !== "educativo") return { resposta: { ...respostaEducativa(perfil, texto), fontes: [] }, contexto };
 
+  // Preserve a intenção da pergunta antes de tratar idade e outras informações isoladas.
+  // Alimentação manual de neonatos é um assunto de alto risco: nunca inventar doses ou técnica.
+  const perguntaAlimentacao = /\\b(como|qual a forma|o que fazer|preciso|posso|devo)\\b.*\\b(alimentar|dar papa|dar papinha|alimentacao)\\b/.test(limpo)
+    || /\\b(alimentar|alimentacao)\\b.*\\b(filhote|ave|ring\\s*neck|calopsita)\\b/.test(limpo);
+  if (perguntaAlimentacao && contexto.filhote) {
+    contexto.etapa = "orientacao_alimentacao";
+    return retorno("Vamos cuidar dessa dúvida 🦜",
+      `Entendi: você quer saber como alimentar ${contexto.especie ? "seu " + contexto.especie : "um filhote"}${contexto.idadeDias !== null ? " de " + contexto.idadeDias + " dias" : ""}. Nessa fase, a alimentação manual pode ter riscos sérios, como aspiração, e a orientação precisa ser individualizada por um veterinário de aves. Não é seguro indicar quantidades, intervalos ou técnica só pela idade. Qual é a espécie e ele está sendo alimentado pelos pais ou recebe papinha de uma pessoa?`,
+      contexto);
+  }
+  // O usuário pode responder "na papa" ou "só papinha" depois de uma pergunta sobre alimentação.
+  if (contexto.filhote && /^(?:so|somente|apenas|ainda|ainda so|ele esta|ela esta|esta)?\\s*(?:na\\s+)?(?:papa|papinha)(?:\\s+mesmo)?$/.test(limpo)) {
+    contexto.etapa = "alimentacao_assistida";
+    if (!contexto.especie) return retorno("Entendi 🦜",
+      "Ele está recebendo papinha. Qual é a espécie? E quem está alimentando: os pais ou uma pessoa? Para um filhote tão novo, é importante ter acompanhamento de um veterinário de aves.", contexto);
+    return retorno("Entendi 🦜",
+      contexto.idadeDias !== null && contexto.idadeDias >= 35
+        ? `Seu ${contexto.especie} de ${contexto.idadeDias} dias ainda recebe papinha. Já demonstra interesse em alimentos sólidos? O desmame deve respeitar o desenvolvimento e acompanhamento veterinário.`
+        : `Seu ${contexto.especie}${contexto.idadeDias !== null ? " de " + contexto.idadeDias + " dias" : ""} está recebendo papinha. Quem está oferecendo a alimentação? Pergunto porque a orientação muda conforme a condição do filhote e precisa ser avaliada por um profissional.`,
+      contexto);
+  }
+  // Uma resposta curta identificando a espécie é informação, não uma nova pergunta.
+  if (/^(?:(?:e|eh|um|uma|o|a|ele e|ela e|tenho um|tenho uma|meu e|minha e)\\s+)?(?:ring\\s*neck|ringneck|periquito de colar|calopsita)$/.test(limpo) && contexto.especie) {
+    if (contexto.etapa === "alimentacao_assistida" || contexto.etapa === "orientacao_alimentacao") {
+      return retorno("Certo, é um " + contexto.especie + " 🦜",
+        `Agora entendi: é um filhote de ${contexto.especie}${contexto.idadeDias !== null ? " com " + contexto.idadeDias + " dias" : ""}, e estamos falando da alimentação. Ele está com os pais ou você está oferecendo a papinha? Para esta idade, evite ajustar quantidade ou modo de alimentar sem orientação veterinária.`, contexto);
+    }
+    return retorno("Certo, é um " + contexto.especie + " 🦜",
+      contexto.filhote
+        ? `E quantos dias tem o filhote de ${contexto.especie}?`
+        : "É filhote ou adulto?", contexto);
+  }
+
   // Fazer a conversa avançar de acordo com as informações já dadas.
   if (/^(tenho|comprei|ganhei|adotei|peguei|estou com) (um|uma|o|a)?\s*(filhote|filhotinho|passarinho|ave|ring\s*neck|calopsita)\b/.test(limpo)) {
     if (contexto.especie && contexto.filhote) return retorno("Que legal! 🦜", `Você está com um filhote de ${contexto.especie}! Sabe quantos dias ele tem ou se já se alimenta sozinho?`, contexto);
