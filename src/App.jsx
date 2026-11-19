@@ -1213,7 +1213,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
 
             {tab === "lista" && (
               <ListaTab
-                aves={filtered} todasAves={aves} search={search} setSearch={setSearch}
+                aves={filtered} todasAves={aves} posturas={posturas} search={search} setSearch={setSearch}
                 onEdit={startEdit} onDelete={handleDelete} onNew={startNew}
                 onSync={handleSync} onExport={handleExport} onImport={handleImport}
                 statusFilter={statusFilter} setStatusFilter={setStatusFilter}
