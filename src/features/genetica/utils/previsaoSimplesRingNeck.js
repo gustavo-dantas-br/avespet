@@ -70,6 +70,19 @@ function identificarVisual(ave) {
   const visual = normalize([ave.corAparencia, ave.corMutacao, ave.corBase].filter(Boolean).join(" "));
   const mutacao = normalize(ave.corMutacao);
   const base = normalize(ave.corBase);
+  const serieAzul = base.includes("blue") || base.includes("azul");
+  const serieTurquesa = base.includes("turquoise") || base.includes("turquesa");
+  const temFatorVioleta = mutacao === "violeta" || mutacao.includes("violet");
+  const temFatorDark = mutacao === "cobalto" || mutacao.includes("cobalt");
+  const temPallid = mutacao === "pallid" || mutacao.includes("pallid");
+  // Registros antigos podiam armazenar a mutação em corMutacao e a série
+  // em corBase, sem uma opção popular combinada pronta.
+  if (temFatorVioleta && serieTurquesa) return "turquoise-violet";
+  if (temFatorDark && serieTurquesa) return "turquoise-cobalt";
+  if (temPallid && !mutacao.includes("pallidino")) {
+    if (serieTurquesa) return ""; // modelo atual não possui Pallid Turquesa validado
+    if (serieAzul) return "pallid-blue";
+  }
   // O cadastro antigo salva a aparência Ino, a série no campo corBase.
   // Ignorar "Ino" aqui transforma erroneamente Albino em Azul comum.
   if (mutacao === "ino" || mutacao === "ino (lutino / albino conforme a serie)") {
@@ -278,6 +291,16 @@ export function calcularCriasRingNeck(paiSelecionado, maeSelecionada) {
     grey:obterDoseFilho(p.factors.grey,m.factors.grey),
     dark:obterDoseFilho(p.factors.dark,m.factors.dark),
   };
+  const fatoresParciais = {
+    dark: fatores.dark.map(({dosagem,chance})=>({
+      nome:dosagem===0?"Sem fator escuro":dosagem===1?"Dark SF (um fator escuro)":"Dark DF (dois fatores escuros)",
+      percentual:Number((chance*100).toFixed(4)),
+    })),
+    violet: fatores.violet.map(({dosagem,chance})=>({
+      nome:dosagem===0?"Sem fator violeta":dosagem===1?"Violet SF (fator violeta simples)":"Violet DF (fator violeta duplo)",
+      percentual:Number((chance*100).toFixed(4)),
+    })),
+  };
   const cinPorSexo = (sexo) => p.cinZ.map((alelo) => {
     const herdados=sexo==="Macho" ? [alelo,m.cinZ[0]] : [alelo];
     const n=herdados.filter((x)=>x==="C").length;
@@ -300,6 +323,7 @@ export function calcularCriasRingNeck(paiSelecionado, maeSelecionada) {
       status:"parcial",
       mensagem:"O fator Dark pode estar ligado aos alelos da série Azul/Turquesa. Sem saber de qual cromossomo ele veio, não é seguro combinar todas as cores em uma porcentagem final.",
       serie:serie.map(x=>({nome:serieNome(x.serie.split("/")),percentual:x.chance*100})),
+      fatoresParciais,
       machos:[],femeas:[],premissas,
     };
   }
