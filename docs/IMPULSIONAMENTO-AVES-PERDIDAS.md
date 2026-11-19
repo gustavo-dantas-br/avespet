@@ -78,3 +78,27 @@ A branch `feature/impulsionamento-aves-perdidas` adiciona um catálogo centraliz
 - Não atribuir valores reais a pedidos antigos a partir dos novos planos nem deduzir que um status legado `paga` significa pagamento verificado.
 - Próxima fase: definir gateway de pagamento, confirmar pagamento pelo webhook com validação de assinatura/idempotência e segregar registros de pedido, tentativa de cobrança, evento de pagamento, gasto de mídia e reembolso, com auditoria do Master e RLS.
 - Publicação em produção, migração Supabase e cobranças permanecem **não realizadas**.
+
+## Asaas: estrutura preparada enquanto aguarda CNPJ (19/11/2026)
+
+**Decisão comercial:** Asaas é o provedor planejado; pagamentos devem permanecer desabilitados enquanto CPF/CNPJ, enquadramento fiscal e conta aprovada não forem definidos.
+
+**Entregue nesta branch (não implantado):**
+- `src/features/impulsionamento/asaasConfig.js`: `ASAAS_PAGAMENTOS_ATIVOS = false`, ambiente previsto `sandbox`.
+- `src/features/impulsionamento/asaasGateway.js`: contrato interno desabilitado para checkout e função de classificação de eventos **sem validar autenticidade e sem alterar pagamentos**.
+- `docs/sql/asaas-impulsionamento-schema-draft.sql`: rascunho transacional de pedidos, pagamentos, eventos idempotentes, gastos e reembolsos, com RLS, grants somente leitura para tutor e escrita restrita ao backend. **Não foi executado no banco**.
+- `tests/impulsionamento-asaas.test.js`: testes criados para confirmar fail-closed e nenhuma confirmação financeira por evento sem validação.
+- Aviso de configuração no painel Master. Não há chave de API, checkout funcional ou webhook ativo.
+
+**Para ativar futuramente, após CNPJ e conta Asaas:**
+1. Confirmar cadastro PJ e taxas, obter credenciais de **sandbox** no painel Asaas, configurar segredos apenas no ambiente de Edge Functions, nunca no React/GitHub.
+2. Revisar e migrar SQL em ambiente de homologação, executar testes de RLS com papéis anônimos/tutor/outro tutor/Master e inspecionar advisors. O schema é um desenho inicial; ainda requer validação de versionamento, índices, transições e integridade financeira.
+3. Implementar endpoint autenticado de criação de pedidos: validar tutor, anúncio aprovado e titularidade **no servidor**; resolver preço a partir de catálogo servidor-side; gravar snapshot imutável em centavos.
+4. Criar checkout hospedado Asaas com API privada, vinculação idempotente ao pedido, URLs de retorno confiáveis e somente métodos permitidos.
+5. Implementar webhook público somente para o provedor, autenticado por token/cabeçalhos definidos na documentação oficial e reforçado com consulta autenticada do recurso ao Asaas. Persistir `event_id` único, processar evento em transação; usar deduplicação e rejeitar mudanças indevidas de estado.
+6. Validar valor, moeda, pedido, destinatário e situação efetiva na API Asaas antes de marcar pedido como pago. Registrar estornos e chargebacks em eventos financeiros separados, mantendo trilha de auditoria.
+7. Preparar teste de integração do sandbox (Pix, cartão, expiração, repetição de webhook, refund, pagamento inconsistente, pedido já cancelado), teste de build e UX. Não habilitar vendas sem homologação.
+8. Revisar práticas fiscais de emissão de NFS-e e exibição do nome do recebedor, privacidade de dados pessoais e termos de cancelamento.
+9. Habilitação final por chave **servidor-side** após aprovação explícita; não confundir o sinal desabilitado no frontend com controle de acesso.
+
+**Nenhuma cobrança real, segredo ou alteração de Supabase/Vercel de produção foi executada.**
