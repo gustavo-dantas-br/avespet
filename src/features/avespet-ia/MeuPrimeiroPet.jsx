@@ -63,7 +63,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
       setHistorico((atual) => [...atual, { pergunta: texto, resposta }].slice(-8));
     } catch {
       setHistorico((atual) => [...atual, { pergunta: texto, resposta: local.resposta }].slice(-8));
-      setErro("O serviço de IA está indisponível; continuei com o assistente local.");
+      setErro("O Gemini não respondeu nesta tentativa; o assistente local continuou a conversa.");
     } finally {
       setEnviando(false);
     }
@@ -85,7 +85,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
         <Sparkles className="text-emerald-600" size={26} />
         <div>
           <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">Avespet IA</h1>
-          <p className="text-xs text-[#65766A]">Assistente educacional em conversa, com memória temporária da sessão</p>
+          <p className="text-xs text-[#65766A]">{CHAT_GENERATIVO_ATIVO ? "Gemini em teste · conversa com contexto" : "Assistente educativo local · Gemini ainda não ativado"}</p>
         </div>
       </div>
       <div className="flex items-center gap-2 rounded-full bg-[#E6F5EC] px-3 py-2 text-xs font-semibold text-[#236548]">
@@ -133,7 +133,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
               <img src={FOTO_RINGNECK} alt="" className="h-10 w-10 shrink-0 rounded-full border-2 border-[#E0EDE3] object-cover" loading="lazy"/>
               <div className="max-w-[90%] rounded-2xl rounded-tl-sm border border-[#E3EAE5] bg-white p-4 shadow-sm">
                 <p className="text-sm font-bold text-[#173428]">Avespet IA <Sparkles size={13} className="inline text-emerald-500"/></p>
-                <p className="mt-1 text-sm leading-6 text-[#3E5145]">Olá! Sou seu assistente educativo. Escolha um dos quadros acima ou escreva uma pergunta. Vou consultar apenas materiais aprovados. Se você me contar sobre sua ave, vou acompanhar o contexto e fazer perguntas úteis. Para orientações técnicas, uso somente conteúdos validados.</p>
+                <p className="mt-1 text-sm leading-6 text-[#3E5145]">Olá! Sou seu assistente educativo. Conte sobre sua ave, faça uma pergunta ou selecione um dos quadros acima. {CHAT_GENERATIVO_ATIVO ? "O Gemini pode conversar sobre assuntos gerais, mas recomendações de saúde exigem avaliação veterinária." : "Nesta versão, acompanho o contexto da conversa e uso uma biblioteca educativa para assuntos técnicos."}</p>
               </div>
             </div>
             {historico.map((item, i) => <React.Fragment key={i}>
