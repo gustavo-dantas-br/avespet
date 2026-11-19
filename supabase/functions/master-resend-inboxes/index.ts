@@ -142,7 +142,8 @@ Deno.serve(async (req) => {
   let inboxUnread = 0;
   let inboxLastReceived: string | null = null;
   const cached = inboxCache.get(box);
-  if (cached && cached.expiresAt > Date.now()) {
+  const cacheHit = Boolean(cached && cached.expiresAt > Date.now());
+  if (cacheHit && cached) {
     selectedId = cached.id;
   } else {
     inboxCache.delete(box);
@@ -155,6 +156,8 @@ Deno.serve(async (req) => {
         return reply({ error: "Caixa " + address + " não encontrada na conta Resend desta chave." }, 503, origin);
       }
       selectedId = item.id;
+      inboxUnread = Number(item.unread) || 0;
+      inboxLastReceived = typeof item.last_received === "string" ? item.last_received : null;
       inboxCache.set(box, { id: selectedId, expiresAt: Date.now() + inboxCacheTtlMs });
     } catch (error) {
       if (error instanceof ProviderError) return reply({ error: error.message }, error.status, origin);
@@ -167,7 +170,22 @@ Deno.serve(async (req) => {
 
   try {
     if (action === "threads") {
-      const result = await resend(base + "/threads?folders=inbox&limit=30", key);
+      // Total de não lidos permanece atualizado, sem voltar a bloquear
+      // a listagem de conversas enquanto o Resend responde sobre as caixas.
+      const [result, inboxListing] = await Promise.all([
+        resend(base + "/threads?folders=inbox&limit=30", key),
+        cacheHit ? resend("/inboxes?limit=100", key) : Promise.resolve(null),
+      ]);
+      if (inboxListing) {
+        const item = formatList(inboxListing?.data).find((entry: any) =>
+          typeof entry?.email_address === "string" &&
+          entry.email_address.toLowerCase() === address);
+        if (item && uuid.test(String(item.id))) {
+          inboxUnread = Number(item.unread) || 0;
+          inboxLastReceived = typeof item.last_received === "string" ? item.last_received : null;
+          inboxCache.set(box, { id: item.id, expiresAt: Date.now() + inboxCacheTtlMs });
+        }
+      }
       const threads = formatList(result?.data).map((item: any) => ({
         id: str(item.id, 50), subject: str(item.subject, 200) || "(sem assunto)",
         from: str(item.from, 200), received_at: str(item.received_at, 50),
@@ -179,8 +197,6 @@ Deno.serve(async (req) => {
         resource_type: "communication", metadata: { box, count: threads.length },
       });
       if (auditError) return reply({ error: "Não foi possível registrar o acesso administrativo." }, 503, origin);
-      inboxUnread = Number(result?.unread_count) || threads.filter((item: any) => !item.read).length;
-      inboxLastReceived = threads[0]?.received_at || null;
       return reply({ success: true, threads, has_more: Boolean(result?.has_more),
         unread_count: inboxUnread, last_received: inboxLastReceived }, 200, origin);
     }
