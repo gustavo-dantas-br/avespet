@@ -220,6 +220,21 @@ export default function CalculadoraGeneticaRapida({ aves = [], mutacoes = [] }) 
               <h3 className="text-sm font-semibold mb-2">Série de cor calculável</h3>
               {calculo.serie.map(x=><div key={x.nome} className="flex justify-between text-sm py-1"><span>{mostrarNomePopularRingNeck(x.nome)}</span><strong>{FRA(x.percentual)}%</strong></div>)}
             </div>}
+            {parcial && calculo.fatoresParciais && <div className="rounded-xl p-3 space-y-3" style={{background:"#fff"}}>
+              <h3 className="text-sm font-semibold" style={{color:"#214d39"}}>Fatores calculáveis separadamente</h3>
+              <p className="text-xs" style={{color:"#7f6548"}}>Estas porcentagens são de cada fator isolado. Não representam combinações finais de cores e não devem ser somadas entre si.</p>
+              {[
+                {titulo:"Fator escuro", lista:calculo.fatoresParciais.dark},
+                {titulo:"Fator violeta", lista:calculo.fatoresParciais.violet},
+              ].map((grupo)=>(
+                <div key={grupo.titulo} className="space-y-1">
+                  <p className="text-xs font-semibold" style={{color:"#425a4a"}}>{grupo.titulo}</p>
+                  {grupo.lista.map((x)=><div key={x.nome} className="flex justify-between gap-3 text-sm py-1">
+                    <span>{x.nome}</span><strong>{FRA(x.percentual)}%</strong>
+                  </div>)}
+                </div>
+              ))}
+            </div>}
             {(calculo.machos.length > 0 || calculo.femeas.length > 0) && <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <ListaCrias titulo="♂ Machos jovens" lista={calculo.machos}/>
               <ListaCrias titulo="♀ Fêmeas jovens" lista={calculo.femeas}/>
