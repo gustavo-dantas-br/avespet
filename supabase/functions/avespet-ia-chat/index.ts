@@ -8,7 +8,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // Origin não é prova criptográfica de origem; autorização por JWT é obrigatória.
 function allowed(origin: string | null) {
   if (!origin) return false;
-  try { const u = new URL(origin); return u.protocol === "https:" && /^avespet-[a-z0-9-]+-gustavo-dantas\\.vercel\\.app$/.test(u.hostname); }
+  try { const u = new URL(origin); return u.protocol === "https:" && /^avespet-[a-z0-9-]+-gustavo-dantas\.vercel\.app$/.test(u.hostname); }
   catch { return false; }
 }
 function headers(origin: string | null) {
