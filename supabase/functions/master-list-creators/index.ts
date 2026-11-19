@@ -62,25 +62,34 @@ Deno.serve(async (req) => {
   const pageSize = 20;
   const search = String(body.search || "").trim().slice(0, 100).toLocaleLowerCase("pt-BR");
 
-  const allUsers: any[] = [];
-  for (let authPage = 1; authPage <= 100; authPage += 1) {
-    const { data, error } = await admin.auth.admin.listUsers({ page: authPage, perPage: 1000 });
-    if (error) {
-      console.error("Master Auth users query failed", error.message);
-      return respond({ error: "Could not load accounts" }, 503, origin);
+  // Auth e listas de contas protegidas não dependem uma da outra.
+  // Disparar as três buscas juntas elimina uma rodada sequencial.
+  const fetchUsers = async () => {
+    const users: any[] = [];
+    for (let authPage = 1; authPage <= 100; authPage += 1) {
+      const { data, error } = await admin.auth.admin.listUsers({ page: authPage, perPage: 1000 });
+      if (error) throw new Error("Falha ao consultar contas");
+      users.push(...data.users);
+      if (data.users.length < 1000) return users;
     }
-    allUsers.push(...data.users);
-    if (data.users.length < 1000) break;
-  }
-
-  const [{ data: masterRows, error: masterError }, { data: adminRows, error: adminsError }] = await Promise.all([
+    throw new Error("Limite seguro de paginação excedido");
+  };
+  const [authResult, mastersResult, adminsResult] = await Promise.allSettled([
+    fetchUsers(),
     admin.from("master_admins").select("user_id"),
     admin.from("admins").select("user_id"),
   ]);
-  if (masterError || adminsError) {
-    console.error("Master protected accounts query failed", masterError?.message || adminsError?.message);
-    return respond({ error: "Could not validate protected accounts" }, 503, origin);
+  if (authResult.status !== "fulfilled" ||
+      mastersResult.status !== "fulfilled" || mastersResult.value.error ||
+      adminsResult.status !== "fulfilled" || adminsResult.value.error) {
+    console.error("Master account listing failed", {
+      auth: authResult.status, master: mastersResult.status, admins: adminsResult.status,
+    });
+    return respond({ error: "Could not load accounts" }, 503, origin);
   }
+  const allUsers = authResult.value;
+  const masterRows = mastersResult.value.data;
+  const adminRows = adminsResult.value.data;
   const protectedIds = new Set([
     ...(masterRows || []).map((row) => row.user_id),
     ...(adminRows || []).map((row) => row.user_id),
