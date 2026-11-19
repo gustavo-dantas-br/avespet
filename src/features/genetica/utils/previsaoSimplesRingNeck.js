@@ -68,6 +68,17 @@ const zAlelos = (estado, sexo) => {
 };
 function identificarVisual(ave) {
   const visual = normalize([ave.corAparencia, ave.corMutacao, ave.corBase].filter(Boolean).join(" "));
+  const mutacao = normalize(ave.corMutacao);
+  const base = normalize(ave.corBase);
+  // O cadastro antigo salva a aparência Ino, a série no campo corBase.
+  // Ignorar "Ino" aqui transforma erroneamente Albino em Azul comum.
+  if (mutacao === "ino" || mutacao === "ino (lutino / albino conforme a serie)") {
+    if (base.includes("blue") || base.includes("azul")) return "albino";
+    if (base.includes("turquoise") || base.includes("turquesa")) return "";
+    if (base.includes("green") || base.includes("verde")) return "lutino";
+    return "";
+  }
+  if (mutacao === "cremino" || mutacao.startsWith("cremino (")) return "";
   for (const comb of COMBINACOES_POPULARES_RING_NECK) {
     if (visual.includes(normalize(comb.value))) return comb.id;
   }
