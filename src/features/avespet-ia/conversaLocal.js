@@ -3,7 +3,7 @@ import { normalizarTexto, responderComBiblioteca } from "./respostasComFontes.js
 import { classificarRisco, respostaEducativa } from "./motorEducativo.js";
 
 export function contextoInicial(perfil = {}) {
-  return { especie: perfil.especie === "Outra" ? "" : (perfil.especie || ""), filhote: false, idadeDias: null, nome: "", etapa: "inicio" };
+  return { especie: "", filhote: false, idadeDias: null, nome: "", etapa: "inicio" };
 }
 export function extrairContexto(texto, anterior = contextoInicial()) {
   const limpo = normalizarTexto(texto);
