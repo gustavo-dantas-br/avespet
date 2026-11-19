@@ -12,6 +12,7 @@ function Identificacao({ ave, legenda, onOpen }) {
     <p className="text-xs font-semibold" style={{color:sexo.texto}}>{legenda} · {sexo.simbolo} {sexo.rotulo}</p>
     <p className="mt-1 break-words text-sm font-bold" style={{color:sexo.texto}}>{nomeAve(ave)}</p>
     {ave?.anilha && <p className="mt-1 text-xs text-slate-600">Anilha {ave.anilha}</p>}
+    <p className="mt-1 text-xs text-slate-600">Nascimento: {ave?.nascimento ? formatarDataReproducao(ave.nascimento) : "não informado"}</p>
     {onOpen && <button type="button" onClick={onOpen} aria-label={`Consultar ficha de ${nomeAve(ave)}`} className="mt-2 inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold shadow-sm hover:shadow" style={{color:sexo.texto}}><Eye size={13} aria-hidden="true"/> Consultar ficha</button>}
   </div>;
 }
