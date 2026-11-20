@@ -89,7 +89,7 @@ export default function PesoHistorico({ pesos, onChange, inputStyle }) {
           {[...lista].reverse().map((p) => (
             <div key={p.data} className="ui-sans flex items-center justify-between text-sm px-3 py-1.5" style={{ background: "#fff", borderBottom: "1px solid #f0e6d2", color: "#2B241C" }}>
               <span>{dataBR(p.data)} - {fmtGramas(p.gramas)} g</span>
-              <button type="button" onClick={() => onChange(lista.filter((x) => x.data !== p.data))} className="p-1 rounded" style={{ background: "#f0dad4" }} title="Remover pesagem" aria-label={`Remover pesagem de ${dataBR(p.data)}`}>
+              <button type="button" onClick={() => { if (window.confirm(`Deseja realmente remover a pesagem de ${dataBR(p.data)} (${fmtGramas(p.gramas)} g)?`)) onChange(lista.filter((x) => x.data !== p.data)); }} className="p-1 rounded" style={{ background: "#f0dad4" }} title="Remover pesagem" aria-label={`Remover pesagem de ${dataBR(p.data)}`}>
                 <Trash2 size={11} color="#a6402b" />
               </button>
             </div>
