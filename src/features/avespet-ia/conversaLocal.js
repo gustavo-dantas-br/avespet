@@ -28,6 +28,17 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
   const risco = classificarRisco(texto);
   if (risco !== "educativo") return { resposta: { ...respostaEducativa(perfil, texto), fontes: [] }, contexto };
 
+  // Apresentações compostas (nome + espécie + idade + papinha) devem ser compreendidas de uma vez.
+  if (contexto.especie && contexto.idadeDias !== null &&
+      /\b(tenho|estou com|cuido de)\b/.test(limpo) &&
+      /\b(ring\s*neck|ringneck|calopsita|periquito de colar)\b/.test(limpo) &&
+      /\b(papa|papinha)\b/.test(limpo)) {
+    contexto.etapa = "alimentacao_assistida";
+    return retorno("Prazer em conversar com você! 🦜",
+      "Entendi que você cuida de um " + contexto.especie + " de " + contexto.idadeDias +
+      " dias e ele está na papinha. É normal surgirem dúvidas nessa fase. A alimentação manual exige orientação prática de um veterinário de aves para evitar aspiração e outros riscos, então não vou indicar doses nem técnicas sem avaliação. Ele está recebendo papinha de você ou de outro cuidador?", contexto);
+  }
+
   // Preserve a intenção da pergunta antes de tratar idade e outras informações isoladas.
   // Alimentação manual de neonatos é um assunto de alto risco: nunca inventar doses ou técnica.
   const perguntaAlimentacao = /\b(como|qual a forma|o que fazer|preciso|posso|devo)\b.*\b(alimentar|dar papa|dar papinha|alimentacao)\b/.test(limpo)
