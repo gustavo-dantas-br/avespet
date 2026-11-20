@@ -5,7 +5,7 @@ const allowedOrigins=new Set(["https://avespet.com.br","https://www.avespet.com.
 function allowedOrigin(origin:string|null){if(!origin||allowedOrigins.has(origin))return true;try{const host=new URL(origin).hostname;return host.startsWith("avespet-")&&host.endsWith("-gustavo-dantas.vercel.app");}catch{return false;}}
 function reply(body:unknown,status:number,origin:string|null){const headers:Record<string,string>={"Content-Type":"application/json","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Vary":"Origin"};if(origin&&allowedOrigin(origin))headers["Access-Control-Allow-Origin"]=origin;return new Response(JSON.stringify(body),{status,headers});}
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const featureKeys=["basic_profile","basic_bird_management","basic_ads","advanced_genetics","reproduction_management","financial_management","campaigns","after_sales"] as const;
+const featureKeys=["basic_profile","basic_bird_management","basic_ads","advanced_genetics","reproduction_management","financial_management","campaigns","after_sales","avespet_ia"] as const;
 
 Deno.serve(async(req)=>{
  const origin=req.headers.get("Origin");if(!allowedOrigin(origin))return reply({error:"Origin not allowed"},403,null);
