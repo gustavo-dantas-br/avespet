@@ -231,7 +231,7 @@ function OvoRow({ postura, ovo, ave, onChange, onRemove, onNascimento, inputStyl
         <span className="text-xs" style={{ color: "#8a7a63" }}>posto em {helpers.formatarDataBR(ovo.dataPostura) || "-"}</span>
         <span className="text-[10px] px-2 py-0.5 rounded ui-mono" style={{ background: helpers.OVO_TONS[ovo.status] || "#e3d3b4", color: "#2B241C" }}>{(ovo.status || "").toUpperCase()}</span>
         <button
-          onClick={() => { if (confirm(nasceu ? "Remover esse ovo da lista? O filhote ja cadastrado continua no seu plantel." : "Remover esse ovo?")) onRemove(); }}
+          onClick={() => { if (window.confirm(nasceu ? "Deseja realmente excluir este ovo da lista? O filhote já cadastrado continuará no plantel." : "Deseja realmente excluir este ovo da postura?")) onRemove(); }}
           className="ml-auto p-1.5 rounded" style={{ background: "#f0dad4" }} title="Remover ovo"
         >
           <Trash2 size={12} color="#a6402b" />
@@ -329,7 +329,7 @@ function PosturaCard({ postura, aves, onSave, onDelete, onNascimento, onEditar, 
             <Pencil size={12} /> Editar
           </button>
           <button
-            onClick={() => { if (confirm("Remover essa postura e a lista de ovos? Filhotes ja cadastrados continuam no plantel.")) onDelete(postura.id); }}
+            onClick={() => onDelete(postura.id)}
             className="text-xs px-2 py-1 rounded flex items-center gap-1" style={{ background: "#f0dad4", color: "#a6402b" }}
           >
             <Trash2 size={12} /> Remover
