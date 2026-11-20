@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Megaphone, CheckCircle2 } from "lucide-react";
+import { Megaphone, CheckCircle2, CalendarDays, MapPin, Users, Heart, ArrowRight, ShieldCheck } from "lucide-react";
+import ReencontrosPublicos from "../components/ReencontrosPublicos";
+import { alcanceEstimado, formatarAlcance } from "../config/alcance";
 import { PACOTES_CAMPANHA } from "../config/pacotes";
 import { solicitarCampanha, listarPacotesPublicos } from "../services/campanhasService";
 import { PaginaPublica, CabecalhoPublico, CartaoPublico, TEMA_PUBLICO } from "../../../publico/ComponentesPublicos";
@@ -11,7 +13,7 @@ const input = {
   color: TEMA_PUBLICO.tinta,
   borderRadius: 10,
   padding: "12px 13px",
-  fontSize: 14,
+  fontSize: 16,
   outlineColor: TEMA_PUBLICO.verde,
 };
 const label = {
@@ -54,10 +56,14 @@ export default function SolicitarCampanha() {
       <PaginaPublica largura="max-w-4xl">
         <CabecalhoPublico
           etiqueta="Divulgação regional"
-          titulo="Amplie a divulgação da sua ave perdida"
-          descricao="Além do anúncio gratuito, você pode solicitar uma campanha regional. Nossa equipe avalia a região, apresenta o orçamento e orienta sobre o pagamento antes de iniciar a divulgação."
+          titulo="Sua ave desapareceu? Amplie a busca perto de você."
+          descricao="Sabemos como é angustiante perder uma ave. Comece gratuitamente e, se desejar, amplie a divulgação para que mais pessoas da região possam reconhecer seu pet e avisar nossa equipe."
         />
 
+        <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+          <div className="flex items-start gap-3"><Heart size={24} className="shrink-0 text-emerald-700"/><div><h2 className="font-bold text-emerald-950">Você não precisa esperar para começar a buscar</h2><p className="mt-1 text-sm leading-6 text-emerald-900">Cadastre sua ave sem custo, compartilhe o anúncio com pessoas próximas e informe o último local em que ela foi vista. Os pacotes pagos são opcionais.</p></div></div>
+          <a href="/aves-perdidas" className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-emerald-800 px-4 py-3 text-sm font-bold text-white">Cadastrar ou consultar minha ave <ArrowRight size={16}/></a>
+        </div>
         {enviado ? (
           <CartaoPublico className="p-7 text-center md:p-10">
             <CheckCircle2 size={42} className="mx-auto mb-4" color={TEMA_PUBLICO.verde} />
@@ -70,20 +76,25 @@ export default function SolicitarCampanha() {
               <div className="mb-7">
                 <div className="mb-4 flex items-center gap-2">
                   <Megaphone size={20} color={TEMA_PUBLICO.verde} />
-                  <h2 className="text-lg font-bold" style={{ color: TEMA_PUBLICO.tinta }}>1. Escolha o alcance</h2>
+                  <h2 className="text-xl font-bold" style={{ color: TEMA_PUBLICO.tinta }}>1. Escolha como ampliar sua busca</h2>
                 </div>
                 <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><strong>Gratuito — R$ 0,00</strong><p className="text-sm">Cadastre sua ave perdida gratuitamente, sem publicidade paga.</p><a className="mt-2 inline-block font-semibold text-emerald-800 underline" href="/aves-perdidas">Consultar anúncios e buscar minha ave</a></div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {opcoes.map((p) => (
-                    <label key={p.id} className="cursor-pointer rounded-xl p-4 transition" style={{ border: form.pacote === p.id ? `2px solid ${TEMA_PUBLICO.verde}` : `1px solid ${TEMA_PUBLICO.borda}`, background: form.pacote === p.id ? TEMA_PUBLICO.verdeClaro : "#FFFFFF" }}>
-                      <input type="radio" name="pacote" value={p.id} checked={form.pacote === p.id} onChange={() => alterar("pacote", p.id)} />
-                      <div className="mt-2 font-bold" style={{ color: TEMA_PUBLICO.tinta }}>{p.nome}</div>
-                      <div className="mt-1 text-xs font-semibold" style={{ color: TEMA_PUBLICO.verde }}>{p.alcance}</div>
-                      <p className="mt-2 text-xs leading-5" style={{ color: TEMA_PUBLICO.texto }}>{p.descricao}</p>
-                      <div className="mt-3 text-xs font-bold" style={{ color: TEMA_PUBLICO.tinta }}>{p.preco == null ? "Orçamento sob consulta" : new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(p.preco/100) + " · referência"}</div>{p.dias && <p className="text-xs">{p.dias} dias de divulgação</p>}
-                    </label>
-                  ))}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {opcoes.map((p) => {
+                    const alcance = p.preco == null ? null : alcanceEstimado(p.id, p.preco);
+                    const selecionado = form.pacote === p.id;
+                    return <label key={p.id} className={`relative flex cursor-pointer flex-col rounded-2xl border-2 p-5 transition focus-within:ring-2 focus-within:ring-emerald-500 ${selecionado ? "border-emerald-700 bg-emerald-50 shadow-md" : "border-slate-200 bg-white"}`}>
+                      <div className="flex items-start justify-between gap-2"><h3 className="text-lg font-extrabold text-emerald-950">{p.nome}</h3><input className="mt-1 h-5 w-5 shrink-0 accent-emerald-700" type="radio" name="pacote" value={p.id} checked={selecionado} onChange={() => alterar("pacote", p.id)} /></div>
+                      {p.id === "cidade" && p.preco != null && <span className="mt-1 self-start text-xs font-bold text-emerald-800">Equilíbrio entre alcance e duração</span>}
+                      <p className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">{p.preco == null ? "Sob consulta" : new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(p.preco/100)}</p>
+                      <p className="text-xs text-slate-600">Pagamento único após aprovação do orçamento</p>
+                      {alcance && <div className="my-4 rounded-xl border border-emerald-200 bg-white p-3"><p className="flex items-center gap-2 text-xs font-semibold text-emerald-800"><Users size={16}/> Pessoas alcançadas (estimativa)</p><p className="mt-1 text-xl font-extrabold text-emerald-950">{formatarAlcance(alcance)}</p><p className="mt-1 text-xs text-slate-600">Faixa de planejamento, não garantia.</p></div>}
+                      <div className="mt-3 space-y-2 text-sm text-slate-800">{p.dias && <p className="flex items-center gap-2"><CalendarDays size={17} className="shrink-0 text-emerald-700"/>{p.dias} dias de divulgação</p>}<p className="flex items-center gap-2"><MapPin size={17} className="shrink-0 text-emerald-700"/>{p.alcance}</p><p className="leading-5">{p.descricao}</p></div>
+                      <span className={`mt-4 block rounded-xl px-3 py-3 text-center text-sm font-bold ${selecionado ? "bg-emerald-800 text-white" : "bg-emerald-100 text-emerald-900"}`}>{selecionado ? "Pacote selecionado" : "Escolher pacote"}</span>
+                    </label>;
+                  })}
                 </div>
+                <p className="mt-3 text-xs leading-5 text-slate-600">Alcance calculado a partir da verba líquida estimada para mídia, considerando custo por impressões e frequência. O resultado real varia conforme a região, público e leilão de anúncios. Não é a probabilidade de reencontrar a ave.</p>
               </div>
 
               <div className="mb-7 border-t pt-6" style={{ borderColor: TEMA_PUBLICO.borda }}>
@@ -111,6 +122,8 @@ export default function SolicitarCampanha() {
             </form>
           </CartaoPublico>
         )}
+        <ReencontrosPublicos />
+        <section className="mt-6 rounded-2xl border border-emerald-200 bg-white p-5"><h2 className="flex items-center gap-2 font-bold text-emerald-950"><ShieldCheck size={21}/> Como funciona a divulgação?</h2><p className="mt-2 text-sm leading-6 text-slate-700">Após receber sua solicitação, nossa equipe avalia a área da busca, confirma os detalhes e o orçamento antes de iniciar a divulgação. Nos pacotes com mídia, os anúncios podem aparecer no Facebook e Instagram para pessoas da região que talvez não tenham visto sua postagem original. Não há garantia de recuperação, e o anúncio gratuito continua disponível.</p></section>
       </PaginaPublica>
     </div>
   );
