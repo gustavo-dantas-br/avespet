@@ -67,6 +67,33 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { return response({ error: "Invalid request" }, 400, origin); }
   const action = String(body.action || "");
 
+  if(action==="list_campaign_orders"){
+    const {data,error}=await admin.from("solicitacoes_campanhas_aves").select("id,anuncio_id,pacote,nome_contato,whatsapp,email,cidade,uf,area_alvo,descricao_ave,status,valor,catalog_price_cents,catalog_snapshot,created_at,atualizado_em").order("created_at",{ascending:false}).limit(100);
+    if(error)return response({error:"Falha ao consultar pedidos."},503,origin);
+    const ids=(data||[]).map(o=>o.id);
+    const ops=ids.length?await admin.from("campaign_order_operations").select("*").in("order_id",ids):{data:[],error:null};
+    if(ops.error)return response({error:"Módulo operacional ainda não instalado."},503,origin);
+    return response({success:true,orders:(data||[]).map(o=>({...o,operation:(ops.data||[]).find(x=>x.order_id===o.id)||null}))},200,origin);
+  }
+  if(action==="campaign_order_history"){
+    const id=String(body.id||"");if(!uuid.test(id))return response({error:"Pedido inválido."},400,origin);
+    const {data,error}=await admin.from("campaign_order_events").select("id,event_type,details,created_at").eq("order_id",id).order("created_at",{ascending:false}).limit(100);
+    return error?response({error:"Falha ao consultar histórico."},503,origin):response({success:true,events:data||[]},200,origin);
+  }
+  if(action==="campaign_order_action"){
+    const id=String(body.id||""), step=String(body.step||"");
+    if(!uuid.test(id)||!["quote","pay","start","metrics","finish","cancel"].includes(step))return response({error:"Operação inválida."},400,origin);
+    const payload:Record<string,unknown>={};
+    if(step==="quote"){const n=body.contracted_cents;if(typeof n!=="number"||!Number.isSafeInteger(n)||n<0||n>10000000)return response({error:"Valor inválido."},400,origin);payload.contracted_cents=n;}
+    if(step==="metrics"||step==="finish"){
+      for(const key of ["actual_media_cents","actual_reach","impressions"]){const n=body[key];if(n!==null&&(typeof n!=="number"||!Number.isSafeInteger(n)||n<0||n>2147483647))return response({error:"Métricas inválidas."},400,origin);payload[key]=n;}
+      if(body.recovered!==null&&typeof body.recovered!=="boolean")return response({error:"Situação inválida."},400,origin);
+      payload.recovered=body.recovered;payload.notes=String(body.notes||"").slice(0,2000);
+    }
+    const {error}=await admin.rpc("master_campaign_order_action",{p_actor:authData.user.id,p_order:id,p_action:step,p_payload:payload});
+    if(error)return response({error:error.code==="P0001"?error.message:"Não foi possível registrar a operação. Revise as informações."},400,origin);
+    return response({success:true},200,origin);
+  }
   if (action === "list_campaign_packages") {
     const { data, error } = await admin.from("campaign_packages").select("*").order("sort_order");
     if (error) return response({error:"Catálogo de campanhas ainda não instalado."},503,origin);

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import EntitlementsManagement from "./EntitlementsManagement";
+const CampaignOrders = React.lazy(() => import("./CampaignOrders"));
 const CampaignCatalog = React.lazy(() => import("./CampaignCatalog"));
 import {
   BadgeCheck, Bird, Check, CircleDollarSign, Crown, Edit3, Infinity,
@@ -107,6 +108,7 @@ export default function BillingManagement() {
         <button type="button" role="tab" aria-selected={activeTab === "catalog"} onClick={() => setActiveTab("catalog")} className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${activeTab === "catalog" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}>Catálogo de planos</button>
         <button type="button" role="tab" aria-selected={activeTab === "entitlements"} onClick={() => setActiveTab("entitlements")} className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${activeTab === "entitlements" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}>Permissões especiais</button>
         <button type="button" role="tab" aria-selected={activeTab === "campaigns"} onClick={()=>setActiveTab("campaigns")} className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${activeTab === "campaigns" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}>Pacotes de divulgação</button>
+        <button type="button" role="tab" aria-selected={activeTab === "orders"} onClick={()=>setActiveTab("orders")} className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${activeTab === "orders" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}>Pedidos de campanhas</button>
       </div>
       <div role="tabpanel">
       {activeTab === "catalog" ? <div className="space-y-6">
@@ -169,7 +171,7 @@ export default function BillingManagement() {
       </div>
 
       <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-xs leading-5 text-blue-900"><p className="font-semibold">Importante nesta etapa</p><p className="mt-1">Este módulo prepara o catálogo de planos. Os planos Essencial e Profissional permanecem inativos, mesmo mostrando R$ 0,00. Não há assinatura automática, checkout, geração de cobranças ou recebimento de pagamentos. Os limites e bloqueios efetivos serão revisados separadamente antes da ativação.</p></div>
-      </div> : activeTab === "campaigns" ? <React.Suspense fallback={<p>Carregando catálogo...</p>}><CampaignCatalog /></React.Suspense> : <EntitlementsManagement />}
+      </div> : activeTab === "campaigns" ? <React.Suspense fallback={<p>Carregando catálogo...</p>}><CampaignCatalog /></React.Suspense> : activeTab === "orders" ? <React.Suspense fallback={<p>Carregando pedidos...</p>}><CampaignOrders /></React.Suspense> : <EntitlementsManagement />}
       </div>
     </section>
   );
