@@ -59,7 +59,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
               <input type="file" accept="image/*" className="hidden" onChange={onPhoto} />
             </label>
             {form.foto && (
-              <button type="button" onClick={() => setForm((f) => ({ ...f, foto: "" }))} className="absolute top-1 right-1 p-1 rounded-full" style={{ background: "#A6402B" }} title="Remover foto">
+              <button type="button" onClick={() => { if (window.confirm("Deseja realmente remover a foto desta ave? A alteração será aplicada ao salvar o cadastro.")) setForm((f) => ({ ...f, foto: "" })); }} className="absolute top-1 right-1 p-1 rounded-full" style={{ background: "#A6402B" }} title="Remover foto">
                 <X size={12} color="#fff" />
               </button>
             )}
