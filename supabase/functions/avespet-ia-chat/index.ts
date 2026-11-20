@@ -44,8 +44,14 @@ Deno.serve(async (req) => {
     return reply(origin, 403, {error:"Gemini reservado à conta de testes autorizada."});
   const ativo = Deno.env.get("AVESPET_IA_ENABLED") === "true";
   const key = Deno.env.get("GEMINI_API_KEY");
-  const model = Deno.env.get("GEMINI_MODEL");
-  const configurado = Boolean(key) && model === "gemini-2.5-flash-lite";
+  const modeloSecret = Deno.env.get("GEMINI_MODEL");
+  // Projetos novos não têm acesso de geração à família Gemini 2.5 (404).
+  // Migrar o piloto automaticamente para um modelo com Free Tier,
+  // sem pedir que a pessoa edite Secrets nem habilitar modelos pagos.
+  const model = modeloSecret === "gemini-2.5-flash-lite"
+    ? "gemini-3.5-flash-lite"
+    : modeloSecret;
+  const configurado = Boolean(key) && model === "gemini-3.5-flash-lite";
   // Este estado é gratuito e disponível somente depois de autenticação e allowlist.
   // Não revela a chave e não faz nenhuma chamada à API do Google.
   let body: any;
