@@ -84,11 +84,14 @@ Rollback: reverter a integração visual pelo Git, desativar coleta com cron.uns
 - Credencial Vercel e teste autenticado ponta a ponta; confirmar consulta pública do GitHub pela Edge Function.
 - Coleta persistente Vercel/GitHub independente da abertura do painel.
 - Notificações por e-mail com deduplicação, recuperação e cooldown; alertas fora da sessão.
-- Gráficos de tendência e projeção baseada em histórico suficiente.
-- Métricas oficiais de tráfego, processamento, consumo de IA e custos por plano, sem inventar valores ausentes.
+- Métricas oficiais de tráfego, processamento, consumo de IA e custos reais por plano, sem inventar valores ausentes.
 - Testes automatizados de autorização da Edge Function e falhas externas.
 - Publicação frontend oficial após homologação.
 
 ## Histórico de decisões
 
 2026-11-20: optar pelo schema privado e pg_cron existente, sem serviços adicionais. Endpoint administrativo autentica user e valida master_admins antes de usar service_role. Não gravar tokens no cliente. API externa indisponível deve mostrar indisponível, nunca zero fictício. GitHub público dispensa token obrigatório. PR #51 permanece em revisão.
+
+## Tendência e planejamento de capacidade
+
+A interface inclui gráficos SVG de banco e arquivos com pontos reais do histórico diário (sem novas dependências), eixo temporal proporcional e escala iniciando em zero. A função capacityTrend usa regressão linear de MB por dia, exige pelo menos sete amostras diárias e seis dias de intervalo, e estima a chegada a 70% da referência. Se a tendência não for positiva, não estima data; horizonte acima de 365 dias é rotulado como superior a 12 meses. Não é garantia de capacidade futura. O orçamento exibe referências de Supabase Pro (US$25/mês) e Vercel Pro (US$20/mês), não fatura nem contratação. Revisar preços oficiais antes de mudar de plano.
