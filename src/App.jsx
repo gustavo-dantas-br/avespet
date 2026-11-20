@@ -13,7 +13,7 @@ import { computeFinanceiro, computeFinanceiroPeriodo } from "./features/financei
 import { drawPlaque } from "./features/plantel/utils/desenharPlaca";
 import {
   Bird, Plus, Search, GitBranch, Tag, Upload, Trash2, X, Loader2, Save, ChevronLeft, ChevronRight, Menu, CalendarDays,
-  Download, Feather, DollarSign, LogOut, LayoutDashboard, Dna, Users, Phone, Pencil, ClipboardCheck, Truck, MessageCircle, Handshake, Megaphone, UserCircle, ShieldCheck, Check, Bell, Eye, MousePointerClick, Egg, BookOpen,
+  Download, Feather, DollarSign, LogOut, LayoutDashboard, Dna, Users, Phone, Pencil, ClipboardCheck, Sparkles, Truck, MessageCircle, Handshake, Megaphone, UserCircle, ShieldCheck, Check, Bell, Eye, MousePointerClick, Egg, BookOpen,
 } from "lucide-react";
 
 import { supabase } from "./supabaseClient";
@@ -49,6 +49,7 @@ const FornecedoresTab = React.lazy(() => import("./features/fornecedores/Fornece
 const PosVendaTab = React.lazy(() => import("./features/pos-venda/PosVendaTab"));
 const IndicacoesTab = React.lazy(() => import("./features/indicacoes/IndicacoesTab"));
 const PerfilTab = React.lazy(() => import("./features/perfil/PerfilTab"));
+const AvespetIA = React.lazy(() => import("./features/avespet-ia/MeuPrimeiroPet"));
 const AnunciosTab = React.lazy(() => import("./features/anuncios/AnunciosTab"));
 const FormTab = React.lazy(() => import("./features/plantel/FormTab"));
 const SeletorComprador = React.lazy(() => import("./features/plantel/components/SeletoresCadastro").then((m) => ({ default: m.SeletorComprador })));
@@ -1112,6 +1113,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
       { id: "indicacoes", label: "Indicações", icon: Handshake },
     ] },
     { title: "AVESPET", items: [
+      { id: "avespet-ia", label: "Avespet IA", icon: Sparkles },
       { id: "anuncios", label: "Anúncios", icon: Megaphone },
       { id: "perdi-uma-ave", label: "Ave perdida", icon: Bird },
     ] },
@@ -1356,6 +1358,8 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
             {tab === "indicacoes" && (
               <IndicacoesTab indicacoes={indicacoes} clientes={clientes} onSave={handleSaveIndicacao} onDelete={handleDeleteIndicacao} Card={Card} Field={Field} SectionTitle={SectionTitle} SummaryCard={StatCard} inputStyle={inputStyle} STATUS_INDICACAO={STATUS_INDICACAO} emptyIndicacao={emptyIndicacao} hojeISO={hojeISO} />
             )}
+
+            {tab === "avespet-ia" && <AvespetIA aves={aves} userId={user.id} onOpenGenetica={() => setTab("mutacoes")} />}
 
             {tab === "perdi-uma-ave" && <PerdiUmaAve userId={user.id} />}
 
