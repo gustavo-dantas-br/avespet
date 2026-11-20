@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Megaphone, CheckCircle2 } from "lucide-react";
 import { PACOTES_CAMPANHA } from "../config/pacotes";
-import { solicitarCampanha } from "../services/campanhasService";
+import { solicitarCampanha, listarPacotesPublicos } from "../services/campanhasService";
 import { PaginaPublica, CabecalhoPublico, CartaoPublico, TEMA_PUBLICO } from "../../../publico/ComponentesPublicos";
 
 const input = {
@@ -27,6 +27,9 @@ const label = {
 export default function SolicitarCampanha() {
   const anuncioId = new URLSearchParams(window.location.search).get("anuncio") || "";
   const [form, setForm] = useState({ pacote: "cidade", nome: "", whatsapp: "", email: "", cidade: "", uf: "SP", areaAlvo: "", descricaoAve: "" });
+  const [pacotes, setPacotes] = useState(null);
+  useEffect(()=>{let active=true;listarPacotesPublicos().then(rows=>{if(!active)return;setPacotes(rows);if(rows.length)setForm(f=>({...f,pacote:rows.some(p=>p.code===f.pacote)?f.pacote:rows[0].code}));}).catch(()=>{if(active)setPacotes([]);});return()=>{active=false;};},[]);
+  const opcoes = pacotes?.length ? pacotes.map(p=>({id:p.code,nome:p.name,descricao:p.description,alcance:p.reach_label,dias:p.duration_days,preco:p.price_cents})) : PACOTES_CAMPANHA;
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
   const [enviado, setEnviado] = useState(false);
@@ -69,14 +72,15 @@ export default function SolicitarCampanha() {
                   <Megaphone size={20} color={TEMA_PUBLICO.verde} />
                   <h2 className="text-lg font-bold" style={{ color: TEMA_PUBLICO.tinta }}>1. Escolha o alcance</h2>
                 </div>
-                <div className="grid gap-3 md:grid-cols-3">
-                  {PACOTES_CAMPANHA.map((p) => (
+                <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><strong>Gratuito — R$ 0,00</strong><p className="text-sm">Cadastre sua ave perdida gratuitamente, sem publicidade paga.</p><a className="mt-2 inline-block font-semibold text-emerald-800 underline" href="/aves-perdidas">Consultar anúncios e buscar minha ave</a></div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {opcoes.map((p) => (
                     <label key={p.id} className="cursor-pointer rounded-xl p-4 transition" style={{ border: form.pacote === p.id ? `2px solid ${TEMA_PUBLICO.verde}` : `1px solid ${TEMA_PUBLICO.borda}`, background: form.pacote === p.id ? TEMA_PUBLICO.verdeClaro : "#FFFFFF" }}>
                       <input type="radio" name="pacote" value={p.id} checked={form.pacote === p.id} onChange={() => alterar("pacote", p.id)} />
                       <div className="mt-2 font-bold" style={{ color: TEMA_PUBLICO.tinta }}>{p.nome}</div>
                       <div className="mt-1 text-xs font-semibold" style={{ color: TEMA_PUBLICO.verde }}>{p.alcance}</div>
                       <p className="mt-2 text-xs leading-5" style={{ color: TEMA_PUBLICO.texto }}>{p.descricao}</p>
-                      <div className="mt-3 text-xs font-bold" style={{ color: TEMA_PUBLICO.tinta }}>Orçamento sob consulta</div>
+                      <div className="mt-3 text-xs font-bold" style={{ color: TEMA_PUBLICO.tinta }}>{p.preco == null ? "Orçamento sob consulta" : new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(p.preco/100) + " · referência"}</div>{p.dias && <p className="text-xs">{p.dias} dias de divulgação</p>}
                     </label>
                   ))}
                 </div>

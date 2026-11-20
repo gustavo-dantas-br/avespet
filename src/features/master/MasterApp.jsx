@@ -37,7 +37,7 @@ const navigation = [
   { id: "birds", label: "Aves", icon: Bird, description: "Cadastros e consulta de aves" },
   { id: "ads", label: "Anúncios e moderação", icon: Megaphone, description: "Aprovação e situação dos anúncios de aves" },
   { id: "lost-birds", label: "Aves perdidas", icon: Bird, description: "Moderação de aves perdidas e confirmação por e-mail" },
-  { id: "billing", label: "Planos e assinaturas", icon: CreditCard, description: "Catálogo provisório, ainda sem cobranças" },
+  { id: "billing", label: "Central comercial", icon: CreditCard, description: "Assinaturas e pacotes de divulgação" },
   { id: "support", label: "Suporte operacional", icon: LifeBuoy, description: "Triagem de casos e preparação manual de e-mails de atendimento" },
   { id: "communications", label: "Central de Comunicação", icon: Mail, description: "Caixas Suporte e Financeiro, novos e-mails e respostas" },
   { id: "email-automations", label: "Automações de e-mail", icon: Workflow, description: "Reativação, inscrições, envios e conteúdos" },

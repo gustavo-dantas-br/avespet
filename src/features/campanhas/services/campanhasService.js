@@ -38,3 +38,5 @@ export async function atualizarCampanhaAdmin(id, alteracoes) {
   const { error } = await supabase.from(TABELA).update(atualizacao).eq("id", id);
   if (error) throw error;
 }
+
+export async function listarPacotesPublicos(){const {data,error}=await supabase.from("campaign_packages").select("code,name,description,reach_label,duration_days,radius_km,price_cents,sort_order").order("sort_order");if(error)throw error;return data||[];}

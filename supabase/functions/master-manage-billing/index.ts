@@ -67,6 +67,26 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { return response({ error: "Invalid request" }, 400, origin); }
   const action = String(body.action || "");
 
+  if (action === "list_campaign_packages") {
+    const { data, error } = await admin.from("campaign_packages").select("*").order("sort_order");
+    if (error) return response({error:"Catálogo de campanhas ainda não instalado."},503,origin);
+    return response({success:true,packages:data || []},200,origin);
+  }
+  if (action === "save_campaign_package") {
+    const code = String(body.code || "");
+    const name = String(body.name || "").trim();
+    const description = String(body.description || "").trim();
+    const reach = String(body.reach_label || "").trim();
+    const price = Number(body.price_cents), media = Number(body.media_cents), days = Number(body.duration_days), radius = Number(body.radius_km);
+    if (!["destaque","bairro","cidade","regional"].includes(code) || name.length<2 || name.length>80 || description.length>500 || reach.length<2 || reach.length>100 || ![price,media,days,radius].every(Number.isSafeInteger) || price<1 || price>10000000 || media<0 || media>price || days<1 || days>90 || radius<0 || radius>100) return response({error:"Revise os valores, duração e alcance."},400,origin);
+    const values={name,description,reach_label:reach,price_cents:price,media_cents:media,duration_days:days,radius_km:radius,is_published:body.is_published===true,updated_at:new Date().toISOString()};
+    const {data,error}=await admin.from("campaign_packages").update(values).eq("code",code).select("code").single();
+    if(error || !data) return response({error:"Não foi possível salvar o pacote."},503,origin);
+    const {error:auditError}=await admin.from("master_audit_log").insert({actor_user_id:authData.user.id,action:"campaign_package_updated",resource_type:"campaign_package",metadata:{code,...values}});
+    if(auditError) return response({error:"Pacote salvo, mas auditoria não confirmada."},503,origin);
+    return response({success:true},200,origin);
+  }
+
   if (action === "list_plans") {
     const { data, error } = await admin.from("platform_plans")
       .select("id,code,name,description,price_cents,currency,billing_interval,max_birds,features,is_free,is_active,sort_order,created_at,updated_at")
