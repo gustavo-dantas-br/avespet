@@ -39,4 +39,4 @@ export async function atualizarCampanhaAdmin(id, alteracoes) {
   if (error) throw error;
 }
 
-export async function listarPacotesPublicos(){const {data,error}=await supabase.from("campaign_packages").select("code,name,description,reach_label,duration_days,radius_km,price_cents,sort_order").order("sort_order");if(error)throw error;return data||[];}
+export async function listarPacotesPublicos(){const {data,error}=await supabase.from("campaign_packages").select("code,name,description,reach_label,duration_days,radius_km,price_cents,sort_order,reach_min,reach_max").order("sort_order");if(error)throw error;return data||[];}

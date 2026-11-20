@@ -79,7 +79,9 @@ Deno.serve(async (req) => {
     const reach = String(body.reach_label || "").trim();
     const price = Number(body.price_cents), media = Number(body.media_cents), days = Number(body.duration_days), radius = Number(body.radius_km);
     if (!["destaque","bairro","cidade","regional"].includes(code) || name.length<2 || name.length>80 || description.length>500 || reach.length<2 || reach.length>100 || ![price,media,days,radius].every(Number.isSafeInteger) || price<1 || price>10000000 || media<0 || media>price || days<1 || days>90 || radius<0 || radius>100) return response({error:"Revise os valores, duração e alcance."},400,origin);
-    const values={name,description,reach_label:reach,price_cents:price,media_cents:media,duration_days:days,radius_km:radius,is_published:body.is_published===true,updated_at:new Date().toISOString()};
+    const extras: Record<string,number> = {};
+    for(const key of ["media_tax_bps","operating_cents","company_tax_bps"]){ if(body[key]===undefined)continue; const n=Number(body[key]); if(!Number.isSafeInteger(n)||n<0||n>(key==="operating_cents"?10000000:10000))return response({error:"Custos ou tributos inválidos."},400,origin); extras[key]=n; }
+    const values={name,description,reach_label:reach,price_cents:price,media_cents:media,duration_days:days,radius_km:radius,is_published:body.is_published===true,updated_at:new Date().toISOString(),...extras};
     const {data,error}=await admin.from("campaign_packages").update(values).eq("code",code).select("code").single();
     if(error || !data) return response({error:"Não foi possível salvar o pacote."},503,origin);
     const {error:auditError}=await admin.from("master_audit_log").insert({actor_user_id:authData.user.id,action:"campaign_package_updated",resource_type:"campaign_package",metadata:{code,...values}});
