@@ -13,7 +13,7 @@ import { computeFinanceiro, computeFinanceiroPeriodo } from "./features/financei
 import { drawPlaque } from "./features/plantel/utils/desenharPlaca";
 import {
   Bird, Plus, Search, GitBranch, Tag, Upload, Trash2, X, Loader2, Save, ChevronLeft, ChevronRight, Menu, CalendarDays,
-  Download, Feather, DollarSign, LogOut, LayoutDashboard, Dna, Users, Phone, Pencil, ClipboardCheck, Truck, MessageCircle, Handshake, Megaphone, UserCircle, ShieldCheck, Check, Bell, Eye, MousePointerClick, Egg, BookOpen,
+  Download, Feather, DollarSign, LogOut, LayoutDashboard, Dna, Users, Phone, Pencil, ClipboardCheck, Truck, MessageCircle, Handshake, Megaphone, UserCircle, ShieldCheck, Check, Bell, Eye, MousePointerClick, Egg, BookOpen, Sparkles,
 } from "lucide-react";
 
 import { supabase } from "./supabaseClient";
@@ -30,6 +30,7 @@ import {
 
 import AuthPage from "./components/AuthPage";
 import { checkIsMaster } from "./lib/masterAccess";
+const AvespetIA = React.lazy(() => import("./features/avespet-ia/MeuPrimeiroPet"));
 const MasterApp = React.lazy(() => import("./features/master/MasterApp"));
 import RequiredPasswordChange from "./components/RequiredPasswordChange";
 import NotificationsCenter from "./components/NotificationsCenter";
@@ -1102,6 +1103,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
       { id: "arvore", label: "Árvore genealógica", icon: GitBranch },
       { id: "reproducao", label: "Reprodução", icon: Egg },
       { id: "mutacoes", label: "Genética", icon: Dna },
+      { id: "avespet-ia", label: "Avespet IA", icon: Sparkles },
       { id: "placa", label: "Placa", icon: Tag },
     ] },
     { title: "GESTÃO", items: [
@@ -1282,6 +1284,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
             <React.Suspense fallback={<div className="flex items-center gap-2 ui-sans py-6" style={{ color: "#F1E6D2" }}><Loader2 className="animate-spin" size={18} /> Carregando funcionalidade...</div>}>
             {tab === "dashboard" && <DashboardTab aves={aves} despesas={despesas} clientes={clientes} indicacoes={indicacoes} posturas={posturas} setTab={setTab} goToLista={goToLista} STATUS_PLANTEL={STATUS_PLANTEL} SectionTitle={SectionTitle} StatCard={StatCard} money={money} Card={Card} />}
 
+            {tab === "avespet-ia" && <AvespetIA aves={aves} userId={user.id} onOpenGenetica={() => setTab("mutacoes")} />}
             {tab === "reproducao" && (
               <ReproducaoTab aves={aves} posturas={posturas} onSave={handleSavePostura} onDelete={handleDeletePostura} onNascimento={handleRegistrarNascimento} Card={Card} Field={Field} inputStyle={inputStyle} SectionTitle={SectionTitle} />
             )}
