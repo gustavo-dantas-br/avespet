@@ -14,9 +14,11 @@ function NovoAnuncioForm({ ave, onSave, onCancel, Card, Field, inputStyle, empty
     foto: ave.foto,
   });
   const [error, setError] = useState("");
+  const [aceite, setAceite] = useState(false);
 
   function submit() {
-    const result = onSave(form);
+    if (!aceite) { setError("Confirme que leu as responsabilidades do anunciante antes de publicar."); return; }
+    const result = onSave({ ...form, aceiteTermosClassificados: { versao: "classificados-2026-11-19", aceitoEm: new Date().toISOString() } });
     if (!result?.ok) setError(result?.error || "Nao consegui salvar.");
   }
 
@@ -36,6 +38,17 @@ function NovoAnuncioForm({ ave, onSave, onCancel, Card, Field, inputStyle, empty
           <input style={inputStyle} value={form.descricao} onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))} placeholder="ex: dócil, já desmamado" />
         </Field>
       </div>
+      <div className="ui-sans mb-3 rounded-xl border p-3 text-xs leading-5" style={{ background: "#FFF7E9", borderColor: "#E5C88D", color: "#543F21" }}>
+        <strong className="block mb-1">Responsabilidade do anunciante</strong>
+        Você negocia diretamente com o comprador. O Avespet apenas divulga o anúncio e não vende,
+        não recebe pagamentos, não organiza entregas e não garante negociações. Informe apenas aves
+        com origem e documentação legal, e mantenha as informações verdadeiras.
+        <a href="/regras-anuncios" target="_blank" rel="noopener noreferrer" className="block mt-2 underline font-bold">Ler regras completas de anúncios</a>
+      </div>
+      <label className="ui-sans mb-3 flex items-start gap-2 text-sm" style={{ color: "#2B241C" }}>
+        <input type="checkbox" className="mt-1" checked={aceite} onChange={(e) => { setAceite(e.target.checked); setError(""); }} />
+        <span>Li e concordo com as regras dos anúncios e assumo responsabilidade pelas informações, procedência legal da ave e negociação direta com o comprador.</span>
+      </label>
       {error && <div className="ui-sans text-sm mb-3 px-3 py-2 rounded-lg" style={{ background: "#f0dad4", color: "#a6402b" }}>{error}</div>}
       <div className="flex gap-2">
         <button onClick={submit} className="ui-sans text-sm px-4 py-2 rounded-lg font-semibold" style={{ background: "#C69A2E", color: "#2B1D14" }}>Publicar anuncio</button>
