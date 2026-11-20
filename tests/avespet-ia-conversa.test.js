@@ -168,3 +168,14 @@ test("dias de incubação não viram idade do casal", () => {
  assert.equal(b.contexto.idadeDias, null);
  assert.equal(b.contexto.filhote, false);
 });
+
+test("idade sem unidade solicita confirmação em vez de resposta genérica", () => {
+ const a = conversarLocal(perfil, "Meu filhote de ring neck tem 30", contextoInicial());
+ assert.equal(a.contexto.idadeDias, null);
+ assert.equal(a.contexto.idadePendente,30);
+ assert.equal(a.localSomente,true);
+ assert.match(a.resposta.mensagem,/30 dias ou semanas/);
+ const b = conversarLocal(perfil, "dias", a.contexto);
+ assert.equal(b.contexto.idadeDias,30);
+ assert.match(b.resposta.mensagem,/30 dias/);
+});

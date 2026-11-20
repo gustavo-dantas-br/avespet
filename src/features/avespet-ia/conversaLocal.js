@@ -89,6 +89,22 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
     }
   }
 
+  // Números sem unidade: confirmar, não inventar dias/meses nem orientar pela idade presumida.
+  const idadeSemUnidade = limpo.match(/\b(?:tem|esta com|ta com|com)\s+(\d{1,4})\s*[.!]?\s*$/) ||
+    (contextoAnterior.etapa === "aguardando_idade" ? limpo.match(/^\s*(\d{1,4})\s*[.!]?\s*$/) : null);
+  if (contexto.filhote && contexto.assunto !== "casal" && idadeSemUnidade && !/\b(como|qual|quais|quanto|quando|peso|gramas|g)\b/.test(limpo)) {
+    contexto.etapa = "aguardando_unidade_idade";
+    contexto.idadePendente = Number(idadeSemUnidade[1]);
+    return { ...retorno("Avespet IA", "Entendi! Seu filhote" + (contexto.especie ? " de " + contexto.especie : "") + " tem " + contexto.idadePendente + " dias ou semanas?", contexto), localSomente: true };
+  }
+  if (contextoAnterior.etapa === "aguardando_unidade_idade" && Number.isInteger(contextoAnterior.idadePendente) && /^(?:dias?|semanas?|mes(?:es)?)\s*[.!]?$/.test(limpo.trim())) {
+    const fator = /^semana/.test(limpo) ? 7 : /^mes/.test(limpo) ? 30 : 1;
+    contexto.idadeDias = contextoAnterior.idadePendente * fator;
+    contexto.idadePendente = null;
+    contexto.etapa = "aguardando_alimentacao";
+    return { ...retorno("Avespet IA", "Entendi, aproximadamente " + contexto.idadeDias + " dias. Ele está com os pais ou recebe papinha?", contexto), localSomente: true };
+  }
+
   // Apresentações compostas (nome + espécie + idade + papinha) devem ser compreendidas de uma vez.
   if (contexto.especie && contexto.idadeDias !== null &&
       /\b(tenho|estou com|cuido de)\b/.test(limpo) &&
