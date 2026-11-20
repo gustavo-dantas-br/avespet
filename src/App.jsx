@@ -512,6 +512,7 @@ function AppInner({ user, onLogout }) {
     } catch {
       setError("Removida da lista, mas pode ainda existir no banco (falha de conexao). Sem problema, ela nao vai reaparecer aqui.");
     }
+      return true;
   }
 
   async function handlePhoto(e) {
@@ -549,6 +550,7 @@ function AppInner({ user, onLogout }) {
     } catch {
       // ja removida localmente
     }
+      return true;
   }
 
   async function handleSaveMutacao(mutacao) {
@@ -581,6 +583,7 @@ function AppInner({ user, onLogout }) {
     } catch {
       // ja removida localmente
     }
+      return true;
   }
 
   function handleSaveCliente(cliente) {
@@ -645,6 +648,7 @@ function AppInner({ user, onLogout }) {
     } catch {
       // ja removido localmente
     }
+      return true;
   }
 
   function handleImportarClientes(candidatos) {
@@ -695,6 +699,7 @@ function AppInner({ user, onLogout }) {
     } catch {
       // ja removido localmente
     }
+      return true;
   }
 
   function handleImportarFornecedores(candidatos) {
@@ -738,6 +743,7 @@ function AppInner({ user, onLogout }) {
     } catch {
       // ja removida localmente
     }
+      return true;
   }
 
   function handleSavePostura(postura) {
@@ -765,6 +771,7 @@ function AppInner({ user, onLogout }) {
     } catch {
       // ja removida localmente
     }
+      return true;
   }
 
   // Cria a ave filhote (so quando o usuario clica) e liga o ovo a ela.
@@ -833,6 +840,7 @@ function AppInner({ user, onLogout }) {
     } catch {
       // ja removido localmente
     }
+      return true;
   }
 
   async function handleSavePerfil(novoPerfil) {
