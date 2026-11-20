@@ -133,6 +133,26 @@ function AppInner({ user, onLogout }) {
   const [statusFilter, setStatusFilter] = useState("plantel"); // categoria inicial do Meu plantel
   const [error, setError] = useState("");
   const canvasRef = useRef(null);
+  const mobileMenuButtonRef = useRef(null);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const close = (event) => {
+      if (event.key === "Escape") setMobileMenuOpen(false);
+    };
+    const desktop = window.matchMedia("(min-width: 768px)");
+    const onDesktop = (event) => { if (event.matches) setMobileMenuOpen(false); };
+    document.addEventListener("keydown", close);
+    desktop.addEventListener?.("change", onDesktop);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", close);
+      desktop.removeEventListener?.("change", onDesktop);
+      mobileMenuButtonRef.current?.focus({ preventScroll: true });
+    };
+  }, [mobileMenuOpen]);
 
   const loadAves = useCallback(async () => {
     // Os dados continuam visíveis enquanto são sincronizados. O estado
@@ -1105,9 +1125,9 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
   ];
 
   const renderNav = (compact = false, mobile = false) => navGroups.map((group) => (
-    <div key={group.title} className="mb-3">
+    <div key={group.title} className={mobile ? "mb-2" : "mb-3"}>
       {!compact && <div className="ui-sans px-3 pt-3 pb-2 text-[10px] font-bold tracking-[0.14em]" style={{ color: "#526A5B" }}>{group.title}</div>}
-      <div className="flex flex-col gap-1">
+      <div className={mobile ? "grid grid-cols-2 gap-2" : "flex flex-col gap-1"}>
         {group.items.map(({ id, label: lbl, icon: Icon }) => (
           <button
             key={id}
@@ -1119,17 +1139,18 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
             }}
             title={compact ? lbl : undefined}
             aria-label={lbl}
-            className={`ui-sans w-full flex items-center ${compact ? "justify-center px-2" : "gap-3 px-3"} py-2.5 rounded-xl text-sm text-left transition-colors`}
+            aria-current={tab === id ? "page" : undefined}
+            className={`ui-sans min-w-0 w-full flex items-center ${compact ? "justify-center px-2" : mobile ? "gap-2 px-2.5 border border-[#E2EBE4]" : "gap-3 px-3"} py-2.5 rounded-xl text-sm text-left transition-colors`}
             style={{
               background: tab === id ? "#E5F2E9" : "transparent",
               color: tab === id ? "#176B45" : "#52665B",
               fontWeight: tab === id ? 700 : 500,
-              minHeight: 42,
+              minHeight: mobile ? 52 : 42,
             }}
           >
-            <Icon size={18} />
-            {!compact && <span className="truncate">{lbl}</span>}
-            {!compact && tab === id && <span className="ml-auto h-1.5 w-1.5 rounded-full" style={{ background: "#23935F" }} />}
+            <Icon size={18} className="shrink-0" />
+            {!compact && <span className={mobile ? "min-w-0 break-words leading-tight" : "truncate"}>{lbl}</span>}
+            {!compact && !mobile && tab === id && <span className="ml-auto h-1.5 w-1.5 rounded-full" style={{ background: "#23935F" }} />}
           </button>
         ))}
       </div>
@@ -1143,7 +1164,29 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
         .ui-mono { font-family: 'IBM Plex Mono', monospace; }
         ::selection { background: #CDE8D6; color: #174C34; }
         .avespet-workspace { min-width: 0; }
-        @media (max-width: 767px) { .avespet-workspace { width: 100%; } }
+        @media (max-width: 767px) {
+          .avespet-workspace { width: 100%; min-height: 100dvh; }
+          .avespet-mobile-header {
+            padding-top: calc(12px + env(safe-area-inset-top, 0px));
+            padding-left: max(12px, env(safe-area-inset-left, 0px));
+            padding-right: max(12px, env(safe-area-inset-right, 0px));
+          }
+          .avespet-mobile-drawer {
+            height: 100dvh;
+            max-height: 100dvh;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-left: env(safe-area-inset-left, 0px);
+            padding-right: env(safe-area-inset-right, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+          }
+          .avespet-mobile-content {
+            padding-left: max(12px, env(safe-area-inset-left, 0px));
+            padding-right: max(12px, env(safe-area-inset-right, 0px));
+            padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+          }
+          .avespet-mobile-content input:not([type=checkbox]):not([type=radio]),
+          .avespet-mobile-content select, .avespet-mobile-content textarea { font-size: 16px; }
+        }
       `}</style>
 
       <aside
@@ -1174,16 +1217,16 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
       </aside>
 
       <div className={`avespet-workspace min-h-screen flex-1 flex flex-col transition-[margin] duration-200 ${sidebarCollapsed ? "md:ml-[76px]" : "md:ml-[264px]"}`}>
-        <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b bg-white/95 px-4 py-3 backdrop-blur md:px-7" style={{ borderColor: "#D7E4DA", minHeight: 68, boxShadow: "0 2px 10px rgba(28, 67, 43, 0.04)" }}>
+        <header className="avespet-mobile-header sticky top-0 z-20 flex items-center justify-between gap-2 border-b bg-white/95 px-4 py-3 backdrop-blur md:gap-3 md:px-7" style={{ borderColor: "#D7E4DA", minHeight: 68, boxShadow: "0 2px 10px rgba(28, 67, 43, 0.04)" }}>
           <div className="flex items-center gap-3 min-w-0">
-            <button onClick={() => setMobileMenuOpen(true)} aria-label="Abrir menu" className="md:hidden rounded-xl p-2" style={{ background: "#EAF4ED", color: "#267A50" }}><Menu size={21} /></button>
-            <div className="md:hidden flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "#E5F2E9", color: "#1D754B" }}><Feather size={19} /></div>
+            <button ref={mobileMenuButtonRef} type="button" onClick={() => setMobileMenuOpen(true)} aria-label="Abrir menu" aria-expanded={mobileMenuOpen} aria-controls="avespet-mobile-menu" className="md:hidden inline-flex min-h-[48px] shrink-0 items-center gap-1.5 rounded-xl px-3 font-semibold text-xs" style={{ background: "#EAF4ED", color: "#267A50" }}><Menu size={22} /><span>Menu</span></button>
+            <div className="hidden sm:flex md:hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ background: "#E5F2E9", color: "#1D754B" }}><Feather size={19} /></div>
             <div className="min-w-0">
               <div className="truncate text-sm font-bold md:text-base" style={{ color: "#234332" }}>{navGroups.flatMap((g) => g.items).find((item) => item.id === tab)?.label || "Painel do criador"}</div>
               <div className="hidden text-[11px] sm:block" style={{ color: "#526A5B" }}>Gestão do seu criatório</div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <div className="hidden sm:block text-right"><div className="text-xs font-semibold" style={{ color: "#345442" }}>{perfil.nome || "Criador"}</div><div className="text-[10px]" style={{ color: "#526A5B" }}>Área do criador</div></div>
             {perfil.logoUrl && <img src={perfil.logoUrl} alt="Logo do criatório" className="h-9 w-9 rounded-lg border border-[#D7E4DA] bg-white object-contain p-0.5" />}
             <div className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold" style={{ background: "#E5F2E9", color: "#267A50" }}>{(perfil.nome || user.email || "C").slice(0,1).toUpperCase()}</div>
@@ -1192,20 +1235,31 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
 
         {mobileMenuOpen && <div className="fixed inset-0 z-50 md:hidden">
           <button aria-label="Fechar menu" onClick={() => setMobileMenuOpen(false)} className="absolute inset-0 bg-black/40" />
-          <div className="absolute inset-y-0 left-0 flex w-[min(86vw,340px)] flex-col bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b px-4 py-4" style={{ borderColor: "#E5EDE7" }}>
+          <div id="avespet-mobile-menu" role="dialog" aria-modal="true" aria-label="Menu do criador" className="avespet-mobile-drawer absolute inset-y-0 left-0 flex w-full max-w-[480px] flex-col overflow-hidden bg-white shadow-2xl">
+            <div className="flex shrink-0 items-center justify-between border-b px-4 py-3" style={{ borderColor: "#E5EDE7" }}>
               <div className="flex items-center gap-2"><div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: "#E5F2E9", color: "#1D754B" }}><Feather size={19} /></div><div className="font-extrabold" style={{ color: "#1D3B2B" }}>Aves<span style={{ color: "#26945F" }}>pet</span></div>{perfil.logoUrl && <img src={perfil.logoUrl} alt="Logo do criatório" className="h-9 w-9 rounded-lg border border-[#E2EBE4] bg-white object-contain p-0.5" />}</div>
-              <button onClick={() => setMobileMenuOpen(false)} aria-label="Fechar menu" className="rounded-lg p-2" style={{ color: "#3F5D49" }}><X size={20} /></button>
+              <button type="button" autoFocus onClick={() => setMobileMenuOpen(false)} aria-label="Fechar menu" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#EAF4ED]" style={{ color: "#3F5D49" }}><X size={24} /></button>
             </div>
-            <nav className="flex-1 overflow-y-auto px-3 py-3">{renderNav(false, true)}</nav>
-            <div className="border-t p-4" style={{ borderColor: "#EDF2EE" }}>
+            <nav aria-label="Todos os menus do criador" className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2" style={{ WebkitOverflowScrolling: "touch" }}>{renderNav(false, true)}</nav>
+            <div className="shrink-0 border-t px-4 py-3" style={{ borderColor: "#EDF2EE" }}>
               <div className="mb-3 truncate text-xs" style={{ color: "#526A5B" }}>{user.email}</div>
               <button onClick={onLogout} className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold" style={{ background: "#FCEFED", color: "#9B5148" }}><LogOut size={17} /> Sair da conta</button>
             </div>
           </div>
         </div>}
 
-        <main className="flex-1 p-4 md:p-7 lg:p-8 overflow-y-auto w-full min-w-0" style={{ minHeight: "60vh" }}>
+        <main className="avespet-mobile-content flex-1 p-4 md:p-7 lg:p-8 overflow-y-auto w-full min-w-0" style={{ minHeight: "60vh" }}>
+        {tab === "dashboard" && <section aria-label="Atalhos do painel" className="mb-4 rounded-2xl border border-[#D7E4DA] bg-white p-3 md:hidden">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-bold" style={{color:"#234332"}}>Acesso rápido</h2>
+            <button type="button" onClick={() => setMobileMenuOpen(true)} className="min-h-[44px] px-2 text-xs font-semibold text-[#176B45]">Todos os menus</button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {navGroups.flatMap(group => group.items).filter(item => ["lista","form","reproducao","mutacoes"].includes(item.id)).map(({id,label,icon:Icon}) => (
+              <button type="button" key={id} onClick={() => id === "form" ? startNew() : id === "lista" ? goToLista(null) : setTab(id)} className="flex min-h-[48px] min-w-0 items-center gap-2 rounded-xl bg-[#EAF4ED] px-2.5 text-left text-xs font-semibold text-[#234332]"><Icon size={19} className="shrink-0"/><span className="min-w-0 break-words">{label}</span></button>
+            ))}
+          </div>
+        </section>}
         {avisoCadastroPendente && <div role="status" className="mb-4 flex flex-wrap items-start justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-900">
           <span>{avisoCadastroPendente}</span>
           <button type="button" className="text-xs font-bold underline" onClick={() => setAvisoCadastroPendente("")}>Fechar</button>
