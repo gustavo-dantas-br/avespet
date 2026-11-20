@@ -51,7 +51,9 @@ Deno.serve(async (req) => {
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, serviceKey, {auth:{persistSession:false,autoRefreshToken:false}});
   const {data:config,error:configError} = await admin.from("avespet_ia_config").select("liberacao_temporaria").eq("id",true).single();
   if(configError || !config) return reply(origin,503,{codigo:"CONFIGURACAO",error:"Controle de consumo indisponível."});
-  if (!teste && !config.liberacao_temporaria) return reply(origin,403,{codigo:"SEM_ACESSO",error:"Acesso ainda não liberado."});
+  const {data:temAcesso,error:acessoErro}=await admin.rpc("avespet_ia_tem_acesso",{p_usuario:info.user.id,p_teste:teste});
+  if(acessoErro || typeof temAcesso!=="boolean")return reply(origin,503,{codigo:"CONFIGURACAO",error:"Não foi possível verificar o acesso."});
+  if(!temAcesso)return reply(origin,403,{codigo:"SEM_ACESSO",error:"Avespet IA não incluído no seu plano."});
   const ativo = Deno.env.get("AVESPET_IA_ENABLED") === "true";
   const key = Deno.env.get("GEMINI_API_KEY");
   const modeloSecret = Deno.env.get("GEMINI_MODEL");

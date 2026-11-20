@@ -38,6 +38,7 @@ const featureKeys = [
   "financial_management",
   "campaigns",
   "after_sales",
+  "avespet_ia",
 ] as const;
 
 Deno.serve(async (req) => {
@@ -66,6 +67,24 @@ Deno.serve(async (req) => {
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return response({ error: "Invalid request" }, 400, origin); }
   const action = String(body.action || "");
+  if(action==="ia_config" || action==="ia_config_save"){
+    if(action==="ia_config_save"){
+      if(typeof body.liberacao_temporaria!=="boolean")return response({error:"Promoção inválida."},400,origin);
+      const bounds:Record<string,number>={limite_usuario_dia:5,limite_usuario_mes:30,limite_global_dia:20,limite_global_minuto:2};
+      const values:Record<string,unknown>={liberacao_temporaria:body.liberacao_temporaria};
+      for(const [k,max] of Object.entries(bounds)){
+        const n=body[k]; if(typeof n!=="number"||!Number.isSafeInteger(n)||n<1||n>max)return response({error:"Limite inválido ou acima do teto de segurança."},400,origin);
+        values[k]=n;
+      }
+      // A RPC realiza a gravação e auditoria na mesma transação.
+      const {error}=await admin.rpc("avespet_ia_master_configurar",{p_actor:authData.user.id,p_config:values});
+      if(error)return response({error:"Não foi possível salvar a configuração."},503,origin);
+    }
+    const {data,error}=await admin.from("avespet_ia_config").select("liberacao_temporaria,limite_usuario_dia,limite_usuario_mes,limite_global_dia,limite_global_minuto").eq("id",true).single();
+    if(error)return response({error:"Não foi possível consultar a configuração."},503,origin);
+    return response({success:true,config:data},200,origin);
+  }
+
 
   if(action==="list_campaign_orders"){
     const {data,error}=await admin.from("solicitacoes_campanhas_aves").select("id,anuncio_id,pacote,nome_contato,whatsapp,email,cidade,uf,area_alvo,descricao_ave,status,valor,catalog_price_cents,catalog_snapshot,created_at,atualizado_em").order("created_at",{ascending:false}).limit(100);
