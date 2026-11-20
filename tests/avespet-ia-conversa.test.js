@@ -76,3 +76,22 @@ test("não repete perguntas quando usuário diz tenho ring neck de 30 dias", () 
   assert.match(d.resposta.mensagem, /30 dias/);
   assert.doesNotMatch(d.resposta.mensagem, /guia aprovado/i);
 });
+
+test("perguntas sugeridas recebem respostas educativas úteis mesmo sem Gemini", () => {
+  for (const [pergunta, assunto] of [
+    ["Como acompanhar o desenvolvimento?", /diário de desenvolvimento/i],
+    ["Como organizar o ambiente da minha ave?", /ventilado/i],
+    ["Quando procurar um veterinário de aves?", /avaliações preventivas/i],
+  ]) {
+    const r = conversarLocal(perfil, pergunta, contextoInicial());
+    assert.match(r.resposta.mensagem, assunto);
+    assert.doesNotMatch(r.resposta.mensagem, /guia aprovado|modelo de IA depende|estou acompanhando nossa conversa/i);
+  }
+});
+test("recusa alimentar de Ring Neck exige aviso veterinário, não mensagem genérica", () => {
+  for (const pergunta of ["meu ring neck nao quer comer", "meu ring neck não quer comer", "minha ave não come"]) {
+    const r = conversarLocal(perfil, pergunta, contextoInicial());
+    assert.equal(r.resposta.tipo, "atencao");
+    assert.match(r.resposta.mensagem, /veterinári|avaliação profissional/i);
+  }
+});
