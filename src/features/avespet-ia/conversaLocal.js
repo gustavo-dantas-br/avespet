@@ -85,7 +85,7 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
   if (/^(e|eh|ele e|ela e|meu filhote e|minha ave e|tenho um|tenho uma|ring\s*neck|calopsita)\s*(um|uma|o|a)?\s*(ring\s*neck|ringneck|calopsita|periquito de colar)?\s*$/.test(limpo) && /ring\s*neck|ringneck|calopsita/.test(limpo)) {
     return retorno("Entendi! 🦜", `É um ${contexto.especie}. ${contexto.filhote ? "Como ele é filhote, você sabe a idade aproximada em dias?" : "Ele é filhote ou adulto?"}`, contexto);
   }
-  if (contexto.filhote && /^\d{1,4}\s*(dias?|d)$/.test(limpo)) {
+  if (contexto.filhote && /^(?:(?:ele|ela|o filhote|minha ave|meu ring neck)\s+)?(?:(?:tem|esta com|ta com|com)\s+)?\d{1,4}\s*(dias?|d)$/.test(limpo)) {
     contexto.etapa = "aguardando_alimentacao";
     return retorno("Entendi! 🦜", "Seu " + (contexto.especie || "filhote") + " tem " + contexto.idadeDias + " dias. Ele está com os pais ou recebe papinha?", contexto);
   }
