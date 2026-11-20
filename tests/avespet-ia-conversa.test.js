@@ -95,3 +95,15 @@ test("recusa alimentar de Ring Neck exige aviso veterinário, não mensagem gen�
     assert.match(r.resposta.mensagem, /veterinári|avaliação profissional/i);
   }
 });
+
+test("apresentação longa reconhece Ring Neck, 30 dias e papinha sem resposta genérica", () => {
+  const resposta = conversarLocal(perfil, "prazer sou o gustavo, tenho um ring neck de 30 dias ele esta na papinha porem eu nao entendo muito", contextoInicial());
+  assert.equal(resposta.contexto.especie, "Ring Neck");
+  assert.equal(resposta.contexto.idadeDias, 30);
+  assert.equal(resposta.contexto.filhote, true);
+  assert.equal(resposta.contexto.etapa, "alimentacao_assistida");
+  assert.match(resposta.resposta.mensagem, /Ring Neck/);
+  assert.match(resposta.resposta.mensagem, /30 dias/);
+  assert.match(resposta.resposta.mensagem, /papinha/i);
+  assert.doesNotMatch(resposta.resposta.mensagem, /Ainda não tenho informação técnica revisada/);
+});
