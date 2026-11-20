@@ -79,6 +79,13 @@ Deno.serve(async (req) => {
 
 
   const body = await req.json().catch(() => ({}));
+  if(body?.action==="alert_settings"){
+    const save=body?.save===true;
+    if(save && (typeof body.recipient!=="string" || typeof body.enabled!=="boolean" || body.recipient.length>254))return json({error:"Configuração inválida"},400,origin);
+    const {data,error}=await adminClient.rpc("master_infra_alert_settings",{p_actor:authData.user.id,p_recipient:save?body.recipient.trim():null,p_enabled:save?body.enabled:null});
+    if(error)return json({error:"Não foi possível carregar ou salvar a configuração"},400,origin);
+    return json({settings:data},200,origin);
+  }
   const {data,error} = await adminClient.rpc("master_infra_snapshot",{p_refresh:body?.refresh===true});
   if(error) return json({error:"Métricas temporariamente indisponíveis"},503,origin);
   const vercelToken = Deno.env.get("AVESPET_VERCEL_READ_TOKEN");
