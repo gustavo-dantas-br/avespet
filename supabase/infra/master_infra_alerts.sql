@@ -30,7 +30,7 @@ begin
    old_level:=coalesce(old_level,0);
    new_level:=case when m.pct>=90 then 3 when m.pct>=70 then 2 when m.pct>=50 then 1 else 0 end;
    -- Two percentage points of hysteresis on the way down.
-   if new_level<old_level and m.pct>=case old_level when 3 then 88 when 2 then 68 else 48 end then new_level:=old_level; end if;
+   if new_level<old_level and m.pct >= (case old_level when 3 then 88 when 2 then 68 else 48 end) then new_level:=old_level; end if;
    if new_level<>old_level then
      update avespet_infra.alert_outbox set status='superseded' where metric=m.metric and status='pending';
      if new_level>old_level or new_level=0 then
