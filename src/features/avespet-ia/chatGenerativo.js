@@ -7,15 +7,15 @@ export async function conversarComModelo({ pergunta, historico = [], contexto = 
   if (!CHAT_GENERATIVO_ATIVO) return null;
   const texto = String(pergunta || "").trim().slice(0, 2000);
   if (!texto) throw new Error("Digite uma pergunta.");
-  const ultimas = historico.slice(-8).map((item) => ({
+  const ultimas = historico.slice(-5).map((item) => ({
     pergunta: String(item.pergunta || "").slice(0, 1000),
-    resposta: String(item.resposta?.mensagem || "").slice(0, 1500),
+    resposta: String(item.resposta?.mensagem || "").slice(0, 1000),
   }));
   const { data, error } = await supabase.functions.invoke("avespet-ia-chat", {
     body: {
       mensagem: texto,
       historico: ultimas,
-      contexto: { especie: String(contexto.especie || "").slice(0, 40), filhote: Boolean(contexto.filhote), idadeDias: contexto.idadeDias ?? null },
+      contexto: { especie: String(contexto.especie || "").slice(0, 40), filhote: contexto.filhote === true ? true : null, idadeDias: contexto.idadeDias ?? null, etapa: String(contexto.etapa || "").slice(0, 45) },
     },
   });
   if (error) {

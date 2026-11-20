@@ -20,6 +20,10 @@ export function extrairContexto(texto, anterior = contextoInicial()) {
   return proximo;
 }
 
+export function saudacaoSimples(texto) {
+  const limpo = normalizarTexto(texto).trim().replace(/[.!?,;:]+/g, " ").replace(/\s+/g, " ").trim();
+  return /^(oi|ola|opa|e ai|bom dia|boa tarde|boa noite|tudo bem|oi tudo bem|ola tudo bem|oi tudo bom|ola tudo bom|obrigado|obrigada|valeu|muito obrigado|muito obrigada)$/.test(limpo);
+}
 const retorno = (titulo, mensagem, contexto) => ({ resposta: { tipo: "conversa", titulo, mensagem, aviso: "", fontes: [] }, contexto });
 export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInicial(perfil)) {
   const texto = String(mensagem || "").trim().slice(0, 2000);
@@ -27,6 +31,17 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
   const limpo = normalizarTexto(texto);
   const risco = classificarRisco(texto);
   if (risco !== "educativo") return { resposta: { ...respostaEducativa(perfil, texto), fontes: [] }, contexto };
+  if (saudacaoSimples(texto)) {
+    const agradecimento = /^(obrigad[oa]|muito obrigad[oa]|valeu)\b/.test(limpo);
+    return { ...retorno("Avespet IA", agradecimento ? "Por nada! 🦜" : "Olá! Tudo bem? 🦜 Como posso ajudar você hoje?", contexto), localSomente: true };
+  }
+  if (/\b(treme|tremendo|tremor|tremores|tremedeira)\b/.test(limpo)) {
+    contexto.etapa = "observacao_tremores";
+    const pergunta = contexto.filhote || contexto.idadeDias !== null
+      ? "O tremor é constante ou acontece de vez em quando?"
+      : "Ele é filhote ou adulto? O tremor é constante ou acontece de vez em quando?";
+    return { contexto, localSomente: true, resposta: { tipo: "atencao", titulo: "Vamos entender esse tremor", mensagem: "Tremores podem ter várias causas, como frio, medo ou problemas de saúde.\n\n" + pergunta + "\n\nSe houver fraqueza intensa, recusa de alimento ou dificuldade para respirar, procure atendimento veterinário imediatamente. Tremores persistentes também precisam de avaliação.", aviso: "", fontes: [] } };
+  }
 
   // Apresentações compostas (nome + espécie + idade + papinha) devem ser compreendidas de uma vez.
   if (contexto.especie && contexto.idadeDias !== null &&

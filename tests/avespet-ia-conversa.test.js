@@ -107,3 +107,29 @@ test("apresentação longa reconhece Ring Neck, 30 dias e papinha sem resposta g
   assert.match(resposta.resposta.mensagem, /papinha/i);
   assert.doesNotMatch(resposta.resposta.mensagem, /Ainda não tenho informação técnica revisada/);
 });
+
+test("cumprimentos não presumem filhotes nem usam cota", () => {
+ for (const msg of ["ola", "Olá!", "Olá, tudo bem?", "Boa tarde", "Obrigado"]) {
+  const r = conversarLocal(perfil, msg, contextoInicial());
+  assert.equal(r.localSomente, true);
+  assert.equal(r.contexto.especie, "");
+  assert.equal(r.contexto.idadeDias, null);
+  assert.doesNotMatch(r.resposta.mensagem, /filhote|papa|peso/i);
+ }
+});
+test("tremor investiga fase e preserva alertas", () => {
+ const r = conversarLocal(perfil, "meu ring neck se treme", contextoInicial());
+ assert.equal(r.resposta.tipo, "atencao");
+ assert.equal(r.localSomente, true);
+ assert.match(r.resposta.mensagem, /filhote ou adulto/);
+ assert.match(r.resposta.mensagem, /imediatamente/);
+});
+test("tremor com idade conhecida não repete fase", () => {
+ const a = conversarLocal(perfil, "Tenho ring neck de 30 dias", contextoInicial());
+ const b = conversarLocal(perfil, "Ele está tremendo", a.contexto);
+ assert.equal(b.contexto.idadeDias, 30);
+ assert.doesNotMatch(b.resposta.mensagem, /filhote ou adulto/i);
+});
+test("tremor com dificuldade respiratória é urgente", () => {
+ assert.equal(conversarLocal(perfil, "Meu ring neck treme e tem dificuldade para respirar", contextoInicial()).resposta.tipo,"urgente");
+});
