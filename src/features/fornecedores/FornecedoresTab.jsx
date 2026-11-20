@@ -189,7 +189,7 @@ export default function FornecedoresTab({ fornecedores, aves, onSave, onDelete, 
           historico={historico}
           onBack={() => setDetalheId(null)}
           onEdit={(f) => { setDetalheId(null); setEditando(f); setShowForm(true); setFormError(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-          onDelete={(id) => { onDelete(id); setDetalheId(null); }}
+          onDelete={async (id) => { if (await onDelete(id)) setDetalheId(null); }}
           Card={Card} SummaryCard={SummaryCard} money={money} whatsappUrl={whatsappUrl}
         />
       </div>

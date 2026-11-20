@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Bird, Upload, X, Loader2, Save } from "lucide-react";
 import { CATALOGO_MUTACOES_RING_NECK, CORES_BASE_RING_NECK, normalizarChaveGenetica } from "../genetica/data/catalogoRingNeck";
 import { APARENCIAS_COMUNS_RING_NECK, COMBINACOES_POPULARES_RING_NECK, mostrarNomePopularRingNeck, ordenarMutacoesRingNeck } from "../genetica/data/nomenclaturaRingNeck";
+import { chaveAparenciaRingNeck, deduplicarMutacoesRingNeck, removerAparenciasRepetidasRingNeck } from "../genetica/data/opcoesUnicasRingNeck";
 export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoOptions, femeaOptions, parceiroOptions, mutacoes, clientes, fornecedores, onCancel, Card, Field, SectionTitle, inputStyle, ESPECIES, SEXOS, STATUS_AVE, ORIGEM_TIPOS, SeletorComprador, SeletorFornecedor, PesoHistorico }) {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target?.type === "checkbox" ? e.target.checked : e.target.value }));
   // Editar manualmente os campos do comprador desfaz o vinculo com o cliente
@@ -12,24 +13,27 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
   // O criador pode selecionar as mutações antes mesmo de importá-las ao seu
   // banco pessoal. As opções cadastradas manualmente continuam disponíveis.
   const ringNeck = form.especie === "Ring Neck";
+  const temaSexo = form.sexo === "Macho"
+    ? { fundo: "#eff6ff", borda: "#a8cbee", titulo: "#235b95", icone: "♂", rotulo: "Macho" }
+    : ["Femea", "Fêmea"].includes(form.sexo)
+      ? { fundo: "#fff2f7", borda: "#f1b8d1", titulo: "#a63970", icone: "♀", rotulo: "Fêmea" }
+      : { fundo: "#f0f7f1", borda: "#cbdccf", titulo: "#245f42", icone: "◌", rotulo: "Sexo não informado" };
+
   const mutacoesDaEspecie = mutacoes.filter((m) =>
     m.categoria !== "cor_base" && (!m.especie || m.especie === form.especie)
   );
-  const mutacoesDisponiveis = [];
-  const codigosVistos = new Set();
-  const chaveMutacao = (nome) => normalizarChaveGenetica(String(nome || "").split(" (")[0]);
-  const adicionarOpcao = (mutacao) => {
-    const codigo = chaveMutacao(mutacao.nome);
-    if (!codigo || codigosVistos.has(codigo)) return;
-    // A série de cor e os fatores são selecionados nos campos específicos.
-    if (ringNeck && /^(blue|azul|green|verde|turquoise|turquesa|violet|violeta|dark factor|fator escuro|cobalto|mauve)$/.test(codigo)) return;
-    codigosVistos.add(codigo);
-    mutacoesDisponiveis.push(mutacao);
-  };
-  if (ringNeck) CATALOGO_MUTACOES_RING_NECK.forEach(adicionarOpcao);
-  mutacoesDaEspecie.forEach(adicionarOpcao);
-  const mutacoesOrdenadas = ringNeck ? ordenarMutacoesRingNeck(mutacoesDisponiveis) : mutacoesDisponiveis;
+  // Deduplicar somente a apresentação, sem alterar banco nem motor genético.
+  const chaveMutacao = (nome) => ringNeck
+    ? chaveAparenciaRingNeck(nome)
+    : normalizarChaveGenetica(String(nome || "").split(" (")[0]);
   const mesmaMutacao = (a, b) => chaveMutacao(a) === chaveMutacao(b);
+  const mutacoesDisponiveis = ringNeck
+    ? deduplicarMutacoesRingNeck([...CATALOGO_MUTACOES_RING_NECK, ...mutacoesDaEspecie])
+    : mutacoesDaEspecie.filter((mutacao, index, items) =>
+        items.findIndex((item) => chaveMutacao(item.nome) === chaveMutacao(mutacao.nome)) === index
+      );
+  const mutacoesOrdenadas = ringNeck ? ordenarMutacoesRingNeck(mutacoesDisponiveis) : mutacoesDisponiveis;
+  const opcoesAparencia = ringNeck ? removerAparenciasRepetidasRingNeck(mutacoesOrdenadas) : mutacoesOrdenadas;
   const mutacaoCorReconhecida = mutacoesDisponiveis.find((m) => mesmaMutacao(m.nome, form.corMutacao));
   // Preservar nomes legados já salvos no plantel; só abrir "Outra" para nomes
   // que realmente não estão no catálogo nem são as aparências especiais.
@@ -55,7 +59,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
               <input type="file" accept="image/*" className="hidden" onChange={onPhoto} />
             </label>
             {form.foto && (
-              <button type="button" onClick={() => setForm((f) => ({ ...f, foto: "" }))} className="absolute top-1 right-1 p-1 rounded-full" style={{ background: "#A6402B" }} title="Remover foto">
+              <button type="button" onClick={() => { if (window.confirm("Deseja realmente remover a foto desta ave? A alteração será aplicada ao salvar o cadastro.")) setForm((f) => ({ ...f, foto: "" })); }} className="absolute top-1 right-1 p-1 rounded-full" style={{ background: "#A6402B" }} title="Remover foto">
                 <X size={12} color="#fff" />
               </button>
             )}
@@ -66,7 +70,14 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
               <select style={inputStyle} value={form.especie} onChange={set("especie")}>{ESPECIES.map((e) => <option key={e}>{e}</option>)}</select>
             </Field>
             <Field label="Sexo">
-              <select style={inputStyle} value={form.sexo} onChange={set("sexo")}>{SEXOS.map((s) => <option key={s}>{s}</option>)}</select>
+              <div className="rounded-xl border p-2 transition-colors" style={{ background: temaSexo.fundo, borderColor: temaSexo.borda }}>
+                <label className="flex items-center gap-2">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-xl font-bold" style={{ color: temaSexo.titulo }} aria-hidden="true">{temaSexo.icone}</span>
+                  <span className="sr-only">Selecionar sexo</span>
+                  <select style={{...inputStyle, flex: 1, minWidth: 0}} value={form.sexo} onChange={set("sexo")}>{SEXOS.map((sexo) => <option key={sexo}>{sexo}</option>)}</select>
+                </label>
+                <p className="mt-1 text-xs" style={{ color: temaSexo.titulo }}>Identificação visual: {temaSexo.rotulo}</p>
+              </div>
             </Field>
             <Field label="Cor / aparência da ave">
               <select
@@ -153,7 +164,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
                   <option value="popular|Cremino">Cremino (Ino, série turquesa)</option>
                 </optgroup>
                 <optgroup label={ringNeck ? "5. Outras mutações" : "Mutações"}>
-                  {mutacoesOrdenadas.filter((m) => !chaveMutacao(m.nome).startsWith("ino")).map((m) => (
+                  {opcoesAparencia.map((m) => (
                     <option key={m.id || m.nome} value={m.nome}>
                       {ringNeck ? mostrarNomePopularRingNeck(m.nome) : m.nome}
                     </option>
@@ -268,7 +279,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <Field label="Numero da anilha"><input style={inputStyle} value={form.anilha} onChange={set("anilha")} placeholder="ex: FOB 0080" /></Field>
           <Field label="Cor da anilha"><input style={inputStyle} value={form.corAnilha} onChange={set("corAnilha")} placeholder="ex: azul 2024" /></Field>
-          <Field label="Nascimento"><input style={inputStyle} value={form.nascimento} onChange={set("nascimento")} placeholder="ex: Ago/2024" /></Field>
+          <Field label="Nascimento (dia opcional)"><input style={inputStyle} value={form.nascimento} onChange={set("nascimento")} placeholder="2024, Ago/2024 ou 12/07/2024" /><p className="mt-1 text-xs" style={{color:"#71877A"}}>Informe só o ano, mês/ano ou a data completa. Nunca é necessário inventar um dia.</p></Field>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">

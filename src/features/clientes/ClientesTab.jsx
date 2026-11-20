@@ -260,7 +260,7 @@ export default function ClientesTab({ clientes, aves, onSave, onDelete, onImport
           historico={historico}
           onBack={() => setDetalheId(null)}
           onEdit={(c) => { setDetalheId(null); setEditando(c); setShowForm(true); setFormError(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-          onDelete={(id) => { onDelete(id); setDetalheId(null); }}
+          onDelete={async (id) => { if (await onDelete(id)) setDetalheId(null); }}
           Card={Card} SummaryCard={SummaryCard} money={money} whatsappUrl={whatsappUrl}
         />
       </div>

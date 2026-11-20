@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from "react";
+import { Bird, Dna } from "lucide-react";
 import {
   CORES_RAPIDAS_RING_NECK,
   criarSelecaoDeAve,
   calcularCriasRingNeck,
 } from "../utils/previsaoSimplesRingNeck";
 import { mostrarNomePopularRingNeck } from "../data/nomenclaturaRingNeck";
+import { removerOpcoesRepetidasPorId } from "../data/opcoesUnicasRingNeck";
 
 const campo = {
   background: "#fff", color: "#2a3528", border: "1px solid #d7e1d4",
@@ -18,6 +20,10 @@ const MUTACOES = [
   { titulo: "Combinações de cores e mutações", ids: ["blue-cinnamon","violet-cinnamon","turquoise-violet","cobalt-cinnamon","turquoise-cobalt"] },
   { titulo: "Ino e Pallid (ligadas ao sexo)", ids: ["lutino","albino","pallid","pallid-blue","pallidino"] },
 ];
+const TEMA_SEXO = Object.freeze({
+  Macho: { fundo: "#f0f7ff", borda: "#a8cbee", titulo: "#235b95", principal: "#3178bc", simbolo: "♂" },
+  Femea: { fundo: "#fff2f7", borda: "#f1b8d1", titulo: "#a63970", principal: "#cc548b", simbolo: "♀" },
+});
 const NOVA = () => ({ cor: "", extras: {} });
 const FRA = (n) => Number.isInteger(n) ? String(n) : String(Number(n.toFixed(2))).replace(".", ",");
 
@@ -29,7 +35,9 @@ function QuadroPai({ titulo, sexo, aves, selecionada, onChange }) {
   const [modo, setModo] = useState("manual");
   const [idAve, setIdAve] = useState("");
   const [aberto, setAberto] = useState(false);
+  const tema = TEMA_SEXO[sexo];
   const lista = aves.filter((ave) => sexo === "Macho" ? ave.sexo === "Macho" : ["Femea", "Fêmea"].includes(ave.sexo));
+  const aveDoPlantel = modo === "plantel" ? lista.find((ave) => String(ave.id) === idAve) : null;
   const update = (campo, valor) => onChange((p) => ({...p, extras:{...(p.extras||{}),[campo]:valor}}));
   const dose = (campo, id) => {
     const atual = selecionada.extras?.[campo];
@@ -42,9 +50,14 @@ function QuadroPai({ titulo, sexo, aves, selecionada, onChange }) {
   const selectCor = (cor) => {
     onChange({ cor, extras:{} });
   };
+  const idsExibidos = new Set();
   const choices = MUTACOES.map((grupo) => ({
     ...grupo,
-    ids: grupo.ids.filter((id) => sexo === "Macho" || id !== "pallidino"),
+    ids: removerOpcoesRepetidasPorId(grupo.ids.filter((id) => sexo === "Macho" || id !== "pallidino").map((id) => ({ id }))).map(({ id }) => id).filter((id) => {
+      if (idsExibidos.has(id)) return false;
+      idsExibidos.add(id);
+      return true;
+    }),
   }));
   const selectedName = CORES_RAPIDAS_RING_NECK.find(x => x.id === selecionada.cor)?.label;
   const isGreen = selecionada.cor === "green" || selecionada.cor === "grey-green";
@@ -53,18 +66,33 @@ function QuadroPai({ titulo, sexo, aves, selecionada, onChange }) {
   const hasCinnamon = ["blue-cinnamon","violet-cinnamon","cobalt-cinnamon"].includes(selecionada.cor);
   const cinnamonEscolhida = selecionada.extras?.cinnamon || (hasCinnamon ? "visual" : "normal");
   return (
-    <div className="rounded-2xl border p-4 space-y-3" style={{borderColor:"#d4e2d3", background:"#fcfdfb"}}>
-      <div className="flex justify-between items-start gap-3">
-        <div>
-          <h3 className="font-bold text-lg" style={{color:"#214d39"}}>{titulo}</h3>
-          <p className="text-xs" style={{color:"#67796b"}}>{sexo === "Macho" ? "Reprodutor macho" : "Reprodutora fêmea"}</p>
+    <div className="rounded-2xl border p-4 sm:p-5 space-y-4 shadow-sm transition-shadow hover:shadow-md" style={{borderColor:tema.borda, background:tema.fundo}}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white" style={{color:tema.principal, border:`1px solid ${tema.borda}`}} aria-hidden="true">
+            {sexo === "Macho" ? <span className="text-3xl font-bold">♂</span> : <span className="text-3xl font-bold">♀</span>}
+          </span>
+          <div>
+            <h3 className="font-bold text-lg" style={{color:tema.titulo}}>{titulo} <span className="sr-only">{sexo}</span></h3>
+            <p className="text-xs" style={{color:tema.titulo}}>{sexo === "Macho" ? "Reprodutor macho" : "Reprodutora fêmea"}</p>
+          </div>
         </div>
-        {selectedName && <span className="text-xs rounded-full px-3 py-1" style={{background:"#e3f2e7",color:"#245f42"}}>{selectedName}</span>}
+        <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold" style={{color:tema.titulo, border:`1px solid ${tema.borda}`}}>{tema.simbolo} {sexo === "Macho" ? "Macho" : "Fêmea"}</span>
+      </div>
+      <div className="flex items-center gap-3 rounded-xl border bg-white p-3" style={{borderColor:tema.borda}}>
+        {aveDoPlantel?.foto
+          ? <img src={aveDoPlantel.foto} alt={`Foto cadastrada de ${aveDoPlantel.nome || titulo}`} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+          : <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg" style={{background:tema.fundo, color:tema.principal}} aria-hidden="true"><Bird size={28}/></span>}
+        <div className="min-w-0">
+          <p className="text-xs" style={{color:tema.titulo}}>{aveDoPlantel ? "Ave selecionada do plantel" : "Aparência informada"}</p>
+          <p className="text-sm font-semibold break-words" style={{color:"#263d35"}}>{selectedName || (aveDoPlantel?.nome ? aveDoPlantel.nome : "Escolha a cor ou mutação")}</p>
+          <p className="text-xs text-slate-500">{aveDoPlantel?.foto ? "Foto real cadastrada pelo criador" : "Ícone neutro, sem representação de cor ou sexo"}</p>
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <button className="px-3 py-2 text-sm font-semibold rounded-lg" style={botao(modo==="manual")}
+        <button type="button" aria-pressed={modo==="manual"} className="rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors" style={{background:modo==="manual"?tema.principal:"#fff",color:modo==="manual"?"#fff":tema.titulo,border:`1px solid ${tema.borda}`}}
           onClick={() => {setModo("manual");setIdAve("");onChange(NOVA());}}>Escolher cor</button>
-        <button className="px-3 py-2 text-sm font-semibold rounded-lg" style={botao(modo==="plantel")}
+        <button type="button" aria-pressed={modo==="plantel"} className="rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors" style={{background:modo==="plantel"?tema.principal:"#fff",color:modo==="plantel"?"#fff":tema.titulo,border:`1px solid ${tema.borda}`}}
           onClick={() => {setModo("plantel");setIdAve("");onChange(NOVA());}}>Meu plantel</button>
       </div>
       {modo === "plantel" ? (
@@ -95,7 +123,7 @@ function QuadroPai({ titulo, sexo, aves, selecionada, onChange }) {
       )}
       {selecionada.cor && (
         <div>
-          <button className="flex gap-2 items-center text-sm font-semibold" style={{color:"#2c684d"}} onClick={()=>setAberto(!aberto)}
+          <button type="button" className="flex gap-2 items-center text-sm font-semibold" style={{color:tema.titulo}} onClick={()=>setAberto(!aberto)}
             aria-expanded={aberto}>
             <span>{aberto ? "−" : "+"}</span> Portadores, SF/DF e outras características
             {Object.values(selecionada.extras||{}).some(v=>v!==""&&v!=null) ? <span>•</span> : null}
@@ -165,22 +193,28 @@ function QuadroPai({ titulo, sexo, aves, selecionada, onChange }) {
   );
 }
 
-function ListaCrias({titulo,lista}) {
-  return <section className="rounded-xl p-4 space-y-3" style={{background:"#fff", border:"1px solid #e0e7df"}}>
-    <div className="flex justify-between items-baseline gap-2">
-      <h3 className="font-bold" style={{color:"#214d39"}}>{titulo}</h3>
-      <span className="text-xs" style={{color:"#6d8274"}}>{lista.length} {lista.length===1?"possibilidade":"possibilidades"}</span>
+function ListaCrias({titulo,lista,sexo}) {
+  const tema = TEMA_SEXO[sexo];
+  return <section className="rounded-2xl border p-4 sm:p-5 space-y-3" style={{background:tema.fundo, borderColor:tema.borda}}>
+    <div className="flex justify-between items-center gap-2">
+      <h3 className="flex items-center gap-2 font-bold" style={{color:tema.titulo}}>{sexo==="Macho"?<span className="text-xl font-bold" aria-hidden="true">♂</span>:<span className="text-xl font-bold" aria-hidden="true">♀</span>} {titulo}</h3>
+      <span className="rounded-full bg-white px-2 py-1 text-xs" style={{color:tema.titulo}}>{lista.length} {lista.length===1?"possibilidade":"possibilidades"}</span>
     </div>
-    {lista.length === 0 ? <p className="text-sm" style={{color:"#6d8274"}}>Aguardando informações válidas do casal.</p> :
-      lista.map((r,i)=><div key={r.nome} className="flex gap-4 items-start py-2"
-        style={{borderTop:i?"1px solid #edf1ed":"none"}}>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm" style={{color:"#263e30"}}>{mostrarNomePopularRingNeck(r.nome)}</p>
-          <p className="text-xs mt-1" style={{color:"#697b70"}}>{mostrarNomePopularRingNeck(r.detalhes)}</p>
+    {lista.length === 0 ? <p className="text-sm" style={{color:tema.titulo}}>Aguardando informações válidas do casal.</p> :
+      lista.map((r,i)=><div key={r.nome} className="rounded-xl bg-white p-3" style={{border:`1px solid ${tema.borda}`}}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-semibold text-sm" style={{color:"#263e30"}}>{mostrarNomePopularRingNeck(r.nome)}</p>
+            <p className="text-xs mt-1" style={{color:"#697b70"}}>{mostrarNomePopularRingNeck(r.detalhes)}</p>
+          </div>
+          <div className="text-right shrink-0">
+            <strong className="text-lg" style={{color:tema.titulo}}>{FRA(r.percentual)}%</strong>
+            <p className="text-xs" style={{color:"#738478"}}>{r.proporcao}</p>
+          </div>
         </div>
-        <div className="text-right shrink-0">
-          <strong className="text-lg" style={{color:"#276747"}}>{FRA(r.percentual)}%</strong>
-          <p className="text-xs" style={{color:"#738478"}}>{r.proporcao}</p>
+        <div className="mt-3 h-2 overflow-hidden rounded-full" style={{background:tema.fundo}}
+             role="meter" aria-label={`Probabilidade: ${mostrarNomePopularRingNeck(r.nome)}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.max(0,Math.min(100,Number(r.percentual)||0))}>
+          <div className="h-full rounded-full transition-all duration-300" style={{width:`${Math.max(0,Math.min(100,Number(r.percentual)||0))}%`,background:tema.principal}} />
         </div>
       </div>)}
   </section>;
@@ -195,8 +229,8 @@ export default function CalculadoraGeneticaRapida({ aves = [], mutacoes = [] }) 
   return (
     <div className="space-y-4 max-w-5xl mx-auto">
       <header>
-        <h2 className="text-2xl font-bold" style={{color:"#214d39"}}>Calculadora Genética — Ring Neck</h2>
-        <p className="text-sm mt-1" style={{color:"#607363"}}>Escolha a cor do pai e da mãe. As crias esperadas aparecem automaticamente.</p>
+        <h2 className="flex items-center gap-2 text-2xl font-bold" style={{color:"#214d39"}}><Dna size={26} aria-hidden="true"/> Calculadora Genética — Ring Neck</h2>
+        <p className="text-sm mt-1" style={{color:"#607363"}}>Selecione pai e mãe para ver as possibilidades por sexo. Azul identifica machos; rosa identifica fêmeas. Essas cores são apenas guias visuais.</p>
       </header>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <QuadroPai titulo="Pai" sexo="Macho" aves={aves} selecionada={pai} onChange={setPai}/>
@@ -236,11 +270,11 @@ export default function CalculadoraGeneticaRapida({ aves = [], mutacoes = [] }) 
               ))}
             </div>}
             {(calculo.machos.length > 0 || calculo.femeas.length > 0) && <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <ListaCrias titulo="♂ Machos jovens" lista={calculo.machos}/>
-              <ListaCrias titulo="♀ Fêmeas jovens" lista={calculo.femeas}/>
+              <ListaCrias titulo="Machos jovens" sexo="Macho" lista={calculo.machos}/>
+              <ListaCrias titulo="Fêmeas jovens" sexo="Femea" lista={calculo.femeas}/>
             </div>}
             <details className="rounded-xl p-3" style={{background:"#fff"}}>
-              <summary className="font-semibold text-sm cursor-pointer" style={{color:"#375c45"}}>Entenda o resultado e as premissas</summary>
+              <summary className="font-semibold text-sm cursor-pointer" style={{color:"#375c45"}}>✦ Entenda o resultado e as premissas</summary>
               <div className="mt-3 space-y-2 text-sm" style={{color:"#5d7262"}}>
                 {(calculo.premissas||[]).map((item,i)=><p key={i}>• {item}</p>)}
                 <p>As proporções descrevem probabilidades, não uma garantia da quantidade de filhotes. Uma fêmea é ZW e um macho é ZZ; por isso heranças ligadas ao sexo podem produzir resultados diferentes.</p>

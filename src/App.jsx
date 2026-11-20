@@ -504,13 +504,15 @@ function AppInner({ user, onLogout }) {
   }
 
   async function handleDelete(id) {
-    if (!confirm("Remover essa ave do cadastro?")) return;
+    const ave = aves.find((item) => item.id === id);
+    if (!window.confirm(`Deseja realmente excluir a ave "${ave?.nome || ave?.anilha || "sem nome"}" do cadastro? Essa ação remove o registro do plantel.`)) return false;
     setAves((prev) => prev.filter((a) => a.id !== id));
     try {
       await deleteRow("aves", id);
     } catch {
       setError("Removida da lista, mas pode ainda existir no banco (falha de conexao). Sem problema, ela nao vai reaparecer aqui.");
     }
+      return true;
   }
 
   async function handlePhoto(e) {
@@ -540,12 +542,15 @@ function AppInner({ user, onLogout }) {
   }
 
   async function handleDeleteDespesa(id) {
+    const item = despesas.find((d) => d.id === id);
+    if (!window.confirm(`Deseja realmente excluir a despesa "${item?.descricao || item?.tipo || "sem descrição"}"?`)) return false;
     setDespesas((prev) => prev.filter((d) => d.id !== id));
     try {
       await deleteRow("despesas", id);
     } catch {
       // ja removida localmente
     }
+      return true;
   }
 
   async function handleSaveMutacao(mutacao) {
@@ -570,12 +575,15 @@ function AppInner({ user, onLogout }) {
   }
 
   async function handleDeleteMutacao(id) {
+    const item = mutacoes.find((m) => m.id === id);
+    if (!window.confirm(`Deseja realmente excluir a mutação "${item?.nome || "sem nome"}" do cadastro?`)) return false;
     setMutacoes((prev) => prev.filter((m) => m.id !== id));
     try {
       await deleteRow("mutacoes", id);
     } catch {
       // ja removida localmente
     }
+      return true;
   }
 
   function handleSaveCliente(cliente) {
@@ -632,12 +640,15 @@ function AppInner({ user, onLogout }) {
   }
 
   async function handleDeleteCliente(id) {
+    const item = clientes.find((c) => c.id === id);
+    if (!window.confirm(`Deseja realmente excluir o cliente "${item?.nome || "sem nome"}"? Confira se não há registros relacionados antes de continuar.`)) return false;
     setClientes((prev) => prev.filter((c) => c.id !== id));
     try {
       await deleteRow("clientes", id);
     } catch {
       // ja removido localmente
     }
+      return true;
   }
 
   function handleImportarClientes(candidatos) {
@@ -680,12 +691,15 @@ function AppInner({ user, onLogout }) {
   }
 
   async function handleDeleteFornecedor(id) {
+    const item = fornecedores.find((f) => f.id === id);
+    if (!window.confirm(`Deseja realmente excluir o fornecedor "${item?.nome || "sem nome"}"? Confira se não há registros relacionados antes de continuar.`)) return false;
     setFornecedores((prev) => prev.filter((f) => f.id !== id));
     try {
       await deleteRow("fornecedores", id);
     } catch {
       // ja removido localmente
     }
+      return true;
   }
 
   function handleImportarFornecedores(candidatos) {
@@ -721,12 +735,15 @@ function AppInner({ user, onLogout }) {
   }
 
   async function handleDeleteIndicacao(id) {
+    const item = indicacoes.find((i) => i.id === id);
+    if (!window.confirm(`Deseja realmente excluir a indicação "${item?.nomeIndicado || item?.nome || "selecionada"}"?`)) return false;
     setIndicacoes((prev) => prev.filter((i) => i.id !== id));
     try {
       await deleteRow("indicacoes", id);
     } catch {
       // ja removida localmente
     }
+      return true;
   }
 
   function handleSavePostura(postura) {
@@ -746,12 +763,15 @@ function AppInner({ user, onLogout }) {
   }
 
   async function handleDeletePostura(id) {
+    const item = posturas.find((p) => p.id === id);
+    if (!window.confirm(`Deseja realmente excluir esta postura${item?.casalLabel ? ` do casal "${item.casalLabel}"` : ""} e seus ovos? Os filhotes já cadastrados permanecerão no plantel.`)) return false;
     setPosturas((prev) => prev.filter((p) => p.id !== id));
     try {
       await deleteRow("posturas", id);
     } catch {
       // ja removida localmente
     }
+      return true;
   }
 
   // Cria a ave filhote (so quando o usuario clica) e liga o ovo a ela.
@@ -812,12 +832,15 @@ function AppInner({ user, onLogout }) {
   }
 
   async function handleDeleteAnuncio(id) {
+    const item = anuncios.find((a) => a.id === id);
+    if (!window.confirm(`Deseja realmente excluir o anúncio "${item?.titulo || item?.descricao || "selecionado"}"? Ele deixará de aparecer na plataforma.`)) return false;
     setAnuncios((prev) => prev.filter((a) => a.id !== id));
     try {
       await deleteAnuncio(id);
     } catch {
       // ja removido localmente
     }
+      return true;
   }
 
   async function handleSavePerfil(novoPerfil) {
@@ -1213,7 +1236,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
 
             {tab === "lista" && (
               <ListaTab
-                aves={filtered} todasAves={aves} search={search} setSearch={setSearch}
+                aves={filtered} todasAves={aves} posturas={posturas} search={search} setSearch={setSearch}
                 onEdit={startEdit} onDelete={handleDelete} onNew={startNew}
                 onSync={handleSync} onExport={handleExport} onImport={handleImport}
                 statusFilter={statusFilter} setStatusFilter={setStatusFilter}
