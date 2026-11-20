@@ -25,6 +25,10 @@ const sinaisUrgentes = [
 const sinaisAtencao = [
   /papo (não |nao )?(esvazia|esvaziou)/i, /papo parado/i,
   /vomit/i, /diarreia/i, /parou de comer/i, /perdendo peso/i,
+  /(?:nao|não) (?:quer|consegue|esta conseguindo|está conseguindo|esta|está) (?:comer|se alimentar)/i,
+  /(?:nao|não) (?:come|esta comendo|está comendo|se alimenta|aceita (?:papa|papinha|comida|alimento))/i,
+  /(?:recusa|rejeita|recusando|rejeitando) (?:a )?(?:papa|papinha|comida|alimento|alimentacao|alimentação)/i,
+
 ];
 export function classificarRisco(texto = "") {
   const pergunta = String(texto).slice(0, 2000);
