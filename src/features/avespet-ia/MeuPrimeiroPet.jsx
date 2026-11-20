@@ -39,6 +39,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
   const [modeloIndisponivel, setModeloIndisponivel] = useState(true);
   const [verificandoModelo, setVerificandoModelo] = useState(CHAT_GENERATIVO_ATIVO);
   const [avisoModelo, setAvisoModelo] = useState("");
+  const [respostasExpandidas, setRespostasExpandidas] = useState([]);
   const conversaRef = useRef(null);
   const atualizarDisponibilidade = async () => {
     if (!CHAT_GENERATIVO_ATIVO) return;
@@ -62,7 +63,10 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
     return () => { ativo = false; };
   }, []);
   useEffect(() => {
-    if (historico.length > 0 && conversaRef.current) conversaRef.current.scrollTop = conversaRef.current.scrollHeight;
+    const painel = conversaRef.current;
+    if (!painel || historico.length === 0) return;
+    const quadro = requestAnimationFrame(() => { painel.scrollTop = painel.scrollHeight; });
+    return () => cancelAnimationFrame(quadro);
   }, [historico, enviando]);
   const aveSelecionada = aves.find((ave) => String(ave.id) === aveId) || null;
   const idade = perfil.idadeDias && Number.isInteger(Number(perfil.idadeDias)) ? Number(perfil.idadeDias) : null;
@@ -119,6 +123,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
     if (id === "desenvolvimento") setDiarioAberto(true);
     if (id === "biblioteca") setFontesAbertas(true);
   };
+  const alternarResposta = (i) => setRespostasExpandidas((atual) => atual.includes(i) ? atual.filter(x => x !== i) : [...atual, i]);
   const abrirSugestao = (texto) => {
     setPergunta(texto);
     const campoPergunta = document.getElementById("avespet-ia-pergunta");
@@ -177,26 +182,27 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
             </div>
             <span className="inline-flex items-center gap-1 rounded-full bg-[#ECF8EE] px-3 py-1.5 text-xs text-[#236548]"><GraduationCap size={15}/> Educativo</span>
           </div>
-          <div className="max-h-[min(48dvh,460px)] min-h-[220px] space-y-4 overflow-y-auto overscroll-contain bg-[#FCFDFC] px-3 py-4 sm:max-h-[520px] sm:min-h-[300px] sm:px-6 sm:py-5" aria-live="polite" ref={conversaRef}>
+          <div className="h-[min(54dvh,480px)] min-h-[240px] space-y-4 overflow-y-auto overscroll-contain bg-[#FCFDFC] px-3 py-4 sm:h-[min(62dvh,560px)] sm:min-h-[320px] sm:px-6 sm:py-5" aria-live="polite" ref={conversaRef}>
             <div className="flex items-start gap-2.5">
               <img src={FOTO_RINGNECK} alt="" className="h-10 w-10 shrink-0 rounded-full border-2 border-[#E0EDE3] object-cover" loading="lazy"/>
-              <div className="min-w-0 max-w-[calc(100%-3rem)] rounded-2xl rounded-tl-sm border border-[#E3EAE5] bg-white p-3 shadow-sm sm:max-w-[90%] sm:p-4">
+              <div className="min-w-0 flex-1 rounded-2xl rounded-tl-sm border border-[#E3EAE5] bg-white p-3 shadow-sm sm:max-w-[90%] sm:flex-none sm:p-4">
                 <p className="text-sm font-bold text-[#173428]">Avespet IA <Sparkles size={13} className="inline text-emerald-500"/></p>
-                <p className="mt-1 text-sm leading-6 text-[#3E5145]">Olá! Sou seu assistente educativo. Conte sobre sua ave, faça uma pergunta ou selecione um dos quadros acima. {CHAT_GENERATIVO_ATIVO && !modeloIndisponivel ? "O Gemini está disponível para a conta autorizada; dúvidas de saúde exigem veterinário." : "Nesta versão, acompanho o contexto da conversa e uso uma biblioteca educativa para assuntos técnicos."}</p>
+                <p className="mt-1 text-[15px] leading-6 text-[#3E5145]">Olá! Sou seu assistente educativo. Conte sobre sua ave, faça uma pergunta ou selecione um dos quadros acima. {CHAT_GENERATIVO_ATIVO && !modeloIndisponivel ? "O Gemini está disponível para a conta autorizada; dúvidas de saúde exigem veterinário." : "Nesta versão, acompanho o contexto da conversa e uso uma biblioteca educativa para assuntos técnicos."}</p>
               </div>
             </div>
             {historico.map((item, i) => <React.Fragment key={i}>
               <div className="ml-auto flex max-w-[94%] min-w-0 items-start justify-end gap-2 sm:max-w-[88%]">
-                <div className="min-w-0 break-words rounded-2xl rounded-tr-sm bg-[#E5F5EB] px-3 py-3 text-sm text-[#244735] sm:px-4">{item.pergunta}</div>
+                <div className="min-w-0 break-words rounded-2xl rounded-tr-sm bg-[#E5F5EB] px-3 py-3 text-[15px] leading-6 text-[#244735] sm:px-4">{item.pergunta}</div>
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white"><UserRound size={16}/></span>
               </div>
               <div className="flex items-start gap-2.5">
                 <img src={FOTO_RINGNECK} alt="" className="h-10 w-10 shrink-0 rounded-full border-2 border-[#E0EDE3] object-cover" loading="lazy"/>
-                <div className={`min-w-0 max-w-[calc(100%-3rem)] break-words rounded-2xl rounded-tl-sm border p-3 text-sm shadow-sm sm:max-w-[90%] sm:p-4 ${item.resposta.tipo === "urgente" ? "border-red-200 bg-red-50" : item.resposta.tipo === "atencao" ? "border-amber-200 bg-amber-50" : "border-[#E3EAE5] bg-white"}`}>
+                <div className={`min-w-0 flex-1 break-words rounded-2xl rounded-tl-sm border p-3 text-[15px] shadow-sm sm:max-w-[90%] sm:flex-none sm:p-4 ${item.resposta.tipo === "urgente" ? "border-red-200 bg-red-50" : item.resposta.tipo === "atencao" ? "border-amber-200 bg-amber-50" : "border-[#E3EAE5] bg-white"}`}>
                   <strong className="block text-[#173428]">{item.resposta.titulo}</strong>
-                  <p className="mt-2 leading-6 text-[#405449]">{item.resposta.mensagem}</p>
+                  <p className="mt-2 whitespace-pre-line leading-[1.7] text-[#405449]">{item.resposta.mensagem?.length > 440 && !respostasExpandidas.includes(i) ? item.resposta.mensagem.slice(0, 440).replace(/\s+\S*$/, "") + "…" : item.resposta.mensagem}</p>
+                  {item.resposta.mensagem?.length > 440 && <button type="button" onClick={() => alternarResposta(i)} aria-expanded={respostasExpandidas.includes(i)} className="mt-2 rounded-lg px-1 py-1 text-sm font-semibold text-emerald-700 underline underline-offset-2 hover:text-emerald-900">{respostasExpandidas.includes(i) ? "Mostrar menos" : "Ler resposta completa"}</button>}
                   {item.resposta.fontes?.length > 0 && <div className="mt-3 border-t pt-2 text-xs">{item.resposta.fontes.map((f,j)=><a key={f.url+j} href={f.url} target="_blank" rel="noopener noreferrer" className="block break-words text-emerald-700 underline">{f.titulo}</a>)}</div>}
-                  <p className="mt-2 text-[11px] text-[#66786B]">{item.resposta.aviso}</p>
+                  {["urgente", "atencao"].includes(item.resposta.tipo) && item.resposta.aviso && <p className="mt-2 text-xs text-[#66786B]">{item.resposta.aviso}</p>}
                 </div>
               </div>
             </React.Fragment>)}
@@ -211,9 +217,13 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
             <form onSubmit={consultar}>
               <label htmlFor="avespet-ia-pergunta" className="sr-only">Digite sua dúvida para o Avespet IA</label>
               <div className="flex min-w-0 items-end gap-2">
-                <textarea id="avespet-ia-pergunta" value={pergunta} onChange={(e)=>setPergunta(e.target.value)} rows={2} maxLength={2000} enterKeyHint="enter" placeholder="Digite sua mensagem para o Avespet IA..." className="min-h-[56px] max-h-36 w-full min-w-0 flex-1 resize-y rounded-xl border border-[#D7E4DA] bg-white p-3 text-base leading-6 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/>
+                <textarea id="avespet-ia-pergunta" value={pergunta} onChange={(e)=>setPergunta(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && !enviando) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }}
+                  rows={2} maxLength={2000} enterKeyHint="send" placeholder="Digite sua mensagem..."
+                  className="min-h-[56px] max-h-36 w-full min-w-0 flex-1 resize-y rounded-xl border border-[#D7E4DA] bg-white p-3 text-base leading-6 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"/>
                 <button type="submit" disabled={enviando} aria-label="Enviar pergunta" title="Enviar pergunta" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-white hover:bg-emerald-800 disabled:opacity-50"><Send size={19}/></button>
               </div>
+              <p className="mt-1.5 text-[11px] text-[#607366]">Enter envia · Shift + Enter pula linha · Orientações educativas não substituem veterinário.</p>
               {erro && <p role="alert" className="mt-2 text-xs font-semibold text-red-700">{erro}</p>}
             </form>
           </div>
