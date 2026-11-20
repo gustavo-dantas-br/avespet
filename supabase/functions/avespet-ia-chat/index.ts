@@ -4,7 +4,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-// A integração gerativa inicial só atende aos previews Vercel da aplicação.
+// A integração aceita o domínio oficial e previews Vercel autorizados.
 // Origin não é prova criptográfica de origem; autorização por JWT é obrigatória.
 function allowed(origin: string | null) {
   if (!origin) return false;
@@ -32,7 +32,7 @@ Não invente fontes, genética, fatos ou recursos da plataforma. Não alegue con
 
 Deno.serve(async (req) => {
   const origin = req.headers.get("origin");
-  if (!allowed(origin)) return reply(null, 403, { error: "Somente preview autorizado." });
+  if (!allowed(origin)) return reply(null, 403, { error: "Origem não autorizada." });
   if (req.method === "OPTIONS") return new Response("ok", { headers: headers(origin) });
   if (req.method !== "POST") return reply(origin, 405, {error: "Método não permitido."});
 
@@ -75,6 +75,7 @@ Deno.serve(async (req) => {
     codigo: !ativo ? "DESATIVADO" : !configurado ? "CONFIGURACAO" : "PILOTO_CONFIGURADO",
     observacao: "Configuração verificada; não confirma a disponibilidade do provedor Gemini."
   });
+  if (body?.consentimento !== true && !teste) return reply(origin,403,{codigo:"CONSENTIMENTO",error:"Aceite o aviso de privacidade antes de usar a IA."});
   if (!ativo) return reply(origin, 503, {codigo:"DESATIVADO", error:"Chat gerativo ainda indisponível."});
   if (!configurado) return reply(origin, 503, {codigo:"CONFIGURACAO", error:"Modelo não configurado."});
   if (!withinLocalLimit(info.user.id)) return reply(origin, 429, {codigo:"LIMITE_LOCAL", error:"Limite temporário atingido."});

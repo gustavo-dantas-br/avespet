@@ -37,6 +37,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
   const [perfil, setPerfil] = useState(inicial);
   const [pergunta, setPergunta] = useState("");
   const [historico, setHistorico] = useState([]);
+  const [consentimentoIA, setConsentimentoIA] = useState(false);
   const [contexto, setContexto] = useState(() => contextoInicial());
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState("");
@@ -99,8 +100,13 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
     const permiteModelo = CHAT_GENERATIVO_ATIVO && !modeloIndisponivel && !verificandoModelo &&
       !local.localSomente && local.resposta.tipo !== "urgente" && local.resposta.tipo !== "atencao";
     try {
-      const resposta = permiteModelo
-        ? await conversarComModelo({ pergunta: texto, historico, contexto: local.contexto }) || local.resposta
+      let autorizado = consentimentoIA;
+      if (permiteModelo && !autorizado) {
+        autorizado = window.confirm("Avespet IA utiliza o Google Gemini. No plano gratuito do provedor, mensagens e contexto recente podem ser usados pelo Google para melhorar seus produtos. Não envie informações pessoais, contatos, senhas ou dados sensíveis. Ao confirmar, declaro ter 18 anos ou mais e concordo com o envio da conversa ao provedor. Se cancelar, continuarei no assistente local.");
+        if (autorizado) setConsentimentoIA(true);
+      }
+      const resposta = permiteModelo && autorizado
+        ? await conversarComModelo({ pergunta: texto, historico, contexto: local.contexto, consentimento: autorizado }) || local.resposta
         : local.resposta;
       setHistorico((atual) => [...atual, { pergunta: texto, resposta }].slice(-60));
     } catch (falha) {
@@ -157,7 +163,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
       </div>
     </header>
     {CHAT_GENERATIVO_ATIVO && <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#D7E6DA] bg-[#F7FAF7] px-3 py-2 text-xs text-[#3A5B46]" role="status">
-      <span>{verificandoModelo ? "Verificando a configuração do Gemini..." : avisoModelo || (modeloIndisponivel ? "Assistente local ativo." : "IA disponível durante o lançamento, sujeita aos limites de uso.")}</span>
+      <span>{verificandoModelo ? "Verificando a configuração do Gemini..." : avisoModelo || (modeloIndisponivel ? "Assistente local ativo." : "IA disponível durante o lançamento, sujeita aos limites de uso. Mensagens enviadas ao Google no modo gratuito podem ser usadas para melhorar seus produtos.")}</span>
       <button type="button" disabled={verificandoModelo} onClick={atualizarDisponibilidade} className="shrink-0 rounded-lg border border-[#BCD8C5] bg-white px-3 py-2 font-semibold text-emerald-800 disabled:opacity-50">Verificar novamente</button>
     </div>}
 

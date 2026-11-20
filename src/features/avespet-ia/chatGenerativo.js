@@ -3,8 +3,8 @@
 import { supabase } from "../../supabaseClient";
 export const CHAT_GENERATIVO_ATIVO = import.meta.env.VITE_AVESPET_IA_GEMINI_ENABLED === "true";
 
-export async function conversarComModelo({ pergunta, historico = [], contexto = {} }) {
-  if (!CHAT_GENERATIVO_ATIVO) return null;
+export async function conversarComModelo({ pergunta, historico = [], contexto = {}, consentimento = false }) {
+  if (!CHAT_GENERATIVO_ATIVO || consentimento !== true) return null;
   const texto = String(pergunta || "").trim().slice(0, 2000);
   if (!texto) throw new Error("Digite uma pergunta.");
   const ultimas = historico.slice(-5).map((item) => ({
@@ -14,6 +14,7 @@ export async function conversarComModelo({ pergunta, historico = [], contexto = 
   const { data, error } = await supabase.functions.invoke("avespet-ia-chat", {
     body: {
       mensagem: texto,
+      consentimento: true,
       historico: ultimas,
       contexto: { especie: String(contexto.especie || "").slice(0, 40), filhote: contexto.filhote === true ? true : null, idadeDias: contexto.idadeDias ?? null, etapa: String(contexto.etapa || "").slice(0, 45), assunto: contexto.assunto || "", faseInformada: contexto.faseInformada || "", casal: contexto.casal || null },
     },
