@@ -275,7 +275,7 @@ function RegrasAnuncios() {
 function AnuncioVitrineCard({ anuncio, perfil }) {
   const [confirmarContato, setConfirmarContato] = useState(false);
   const [entendeuRiscos, setEntendeuRiscos] = useState(false);
-  const msg = `Oi! Vi o anuncio ${anuncio.nomeAve ? `d${anuncio.sexo === "Femea" ? "a" : "o"} ${anuncio.nomeAve}` : "de uma ave"} no site e tenho interesse.`;
+  const msg = `Olá! Vim pelo Avespet (www.avespet.com.br) e encontrei seu anúncio ${anuncio.nomeAve ? `da ave "${anuncio.nomeAve}"` : "de uma ave"}. Tenho interesse e gostaria de mais informações, por favor.`;
   const urlContato = whatsappUrl(perfil?.whatsapp, msg);
   async function handleInteresse() {
     setEntendeuRiscos(false);
