@@ -1,0 +1,195 @@
+// Avespet IA: memória transitória de conversação. Não persiste dados e não faz diagnóstico.
+import { normalizarTexto, responderComBiblioteca } from "./respostasComFontes.js";
+import { classificarRisco, respostaEducativa } from "./motorEducativo.js";
+
+export function contextoInicial(perfil = {}) {
+  return { especie: "", filhote: false, idadeDias: null, nome: "", etapa: "inicio", assunto: "", faseInformada: "", casal: null };
+}
+export function extrairContexto(texto, anterior = contextoInicial()) {
+  const limpo = normalizarTexto(texto);
+  let proximo = { ...anterior };
+  const mencionaCasal = /\b(casal|casais|par reprodutor)\b/.test(limpo);
+  const mencionaFilhote = /\b(filhotes?|filhotinhos?|bebes?|recem nascid[oa]s?)\b/.test(limpo);
+  const perguntaSobreCrias = anterior.assunto === "casal" && /\b(filhotes|crias|ninhada|mutacoes|cruzamento|genetica|nascer|nascem)\b/.test(limpo) && !/\b(tenho|comprei|adotei|peguei|ganhei)\s+(um|uma)\s+(filhote|bebe)\b/.test(limpo);
+  const apresentaCasal = mencionaCasal && /\b(tenho|comprei|ganhei|adotei|outro|novo)\b/.test(limpo) && !mencionaFilhote;
+  const apresentaOutraAve = /\b(tenho|comprei|ganhei|adotei|peguei|estou com)\s+(?:um|uma)\s+(?:outro|outra|novo|nova)\b/.test(limpo);
+  const falaDoCasal = mencionaCasal && !mencionaFilhote;
+  if (apresentaCasal || (falaDoCasal && anterior.assunto !== "casal")) {
+    proximo = { ...contextoInicial(), especie: anterior.especie, assunto: "casal", etapa: "casal" };
+  } else if (apresentaOutraAve || (mencionaFilhote && anterior.assunto === "casal" && !mencionaCasal && !perguntaSobreCrias)) {
+    proximo = { ...contextoInicial(), especie: anterior.especie, assunto: "ave" };
+  }
+  if (falaDoCasal || (proximo.assunto === "casal" && !mencionaFilhote)) {
+    const cores = "violeta|azul|verde|lutino|albino|cremino|cobalto|turquesa|cinza|canela|pallid";
+    const macho = limpo.match(new RegExp("\\b(?:macho|pai)\\s+(?:e\\s+)?("+cores+")\\b"));
+    const femea = limpo.match(new RegExp("\\b(?:femea|mae)\\s+(?:e\\s+)?("+cores+")\\b"));
+    const ano = limpo.match(/\b(20[0-2]\d)\b/);
+    proximo.casal = { ...(proximo.casal || {}), ...(macho ? { macho: macho[1] } : {}), ...(femea ? { femea: femea[1] } : {}), ...(ano ? { anoNascimento: Number(ano[1]) } : {}) };
+    proximo.filhote = false;
+    proximo.idadeDias = null;
+    if (ano && Number(ano[1]) <= new Date().getFullYear()-2 || /\badult[oa]s?\b/.test(limpo)) proximo.faseInformada = "adulto";
+  } else if (/\badult[oa]s?\b/.test(limpo) && !mencionaFilhote) {
+    proximo.filhote = false;
+    proximo.idadeDias = null;
+    proximo.faseInformada = "adulto";
+    proximo.etapa = "adulto";
+  }
+  if (/\b(ring\s*neck|ringneck|periquito de colar)\b/.test(limpo)) proximo.especie = "Ring Neck";
+  else if (/\b(calopsita|calopsitas)\b/.test(limpo)) proximo.especie = "Calopsita";
+  if (mencionaFilhote && !mencionaCasal && !perguntaSobreCrias) { proximo.filhote = true; proximo.faseInformada = "filhote"; }
+  const idade = limpo.match(/\b(\d{1,4})\s*(dias?|d)\b/);
+  if (idade && proximo.assunto !== "casal" && Number(idade[1]) <= 3000) proximo.idadeDias = Number(idade[1]);
+  // Idade de poucos dias de uma ave identificada implica filhote.
+  if (!falaDoCasal && proximo.especie && proximo.idadeDias !== null && proximo.idadeDias <= 120) { proximo.filhote = true; proximo.faseInformada = "filhote"; }
+  const nome = limpo.match(/\b(?:nome (?:dele|dela) e|chama(?:-se)?|se chama)\s+([a-z]{2,22})\b/);
+  if (nome) proximo.nome = nome[1];
+  return proximo;
+}
+
+export function saudacaoSimples(texto) {
+  const limpo = normalizarTexto(texto).trim().replace(/[.!?,;:]+/g, " ").replace(/\s+/g, " ").trim();
+  return /^(oi|ola|opa|e ai|bom dia|boa tarde|boa noite|tudo bem|oi tudo bem|ola tudo bem|oi tudo bom|ola tudo bom|obrigado|obrigada|valeu|muito obrigado|muito obrigada)$/.test(limpo);
+}
+const retorno = (titulo, mensagem, contexto) => ({ resposta: { tipo: "conversa", titulo, mensagem, aviso: "", fontes: [] }, contexto });
+export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInicial(perfil)) {
+  const texto = String(mensagem || "").trim().slice(0, 2000);
+  const contexto = extrairContexto(texto, contextoAnterior);
+  const limpo = normalizarTexto(texto);
+  const risco = classificarRisco(texto);
+  if (risco !== "educativo") return { resposta: { ...respostaEducativa(perfil, texto), fontes: [] }, contexto };
+  if (saudacaoSimples(texto)) {
+    const agradecimento = /^(obrigad[oa]|muito obrigad[oa]|valeu)\b/.test(limpo);
+    return { ...retorno("Avespet IA", agradecimento ? "Por nada! 🦜" : "Olá! Tudo bem? 🦜 Como posso ajudar você hoje?", contexto), localSomente: true };
+  }
+  if (/\b(treme|tremendo|tremor|tremores|tremedeira)\b/.test(limpo)) {
+    contexto.etapa = "observacao_tremores";
+    const pergunta = contexto.filhote || contexto.idadeDias !== null
+      ? "O tremor é constante ou acontece de vez em quando?"
+      : "Ele é filhote ou adulto? O tremor é constante ou acontece de vez em quando?";
+    return { contexto, localSomente: true, resposta: { tipo: "atencao", titulo: "Vamos entender esse tremor", mensagem: "Tremores podem ter várias causas, como frio, medo ou problemas de saúde.\n\n" + pergunta + "\n\nSe houver fraqueza intensa, recusa de alimento ou dificuldade para respirar, procure atendimento veterinário imediatamente. Tremores persistentes também precisam de avaliação.", aviso: "", fontes: [] } };
+  }
+
+  if (contexto.assunto === "casal" && /\b(tenho|comprei|ganhei|adotei)\b.*\bcasal\b/.test(limpo) && !/\b(filhote|filhotes)\b/.test(limpo) && !/\?/.test(texto) && !/\b(como|quais|qual|quanto|quando|pode|sera)\b/.test(limpo)) {
+    const c = contexto.casal || {};
+    const info = [c.macho && "macho " + c.macho, c.femea && "fêmea " + c.femea].filter(Boolean).join(" e ");
+    const desc = "um casal" + (contexto.especie && /\b(ring\s*neck|ringneck|calopsita)\b/.test(limpo) ? " de " + contexto.especie : "") + (info ? ", " + info : "") + (c.anoNascimento ? ", de " + c.anoNascimento : "");
+    return { ...retorno("Avespet IA", "Entendi! Você tem " + desc + ". 🦜\n\nQuer conversar sobre reprodução, manejo do casal ou genética dos possíveis filhotes?", contexto), localSomente: true };
+  }
+
+  if (contexto.assunto === "casal") {
+    const c = contexto.casal || {};
+    if (/\b(genetica|mutacoes?|cruzamento|cores|filhotes|crias)\b/.test(limpo)) {
+      contexto.etapa = "genetica_casal";
+      const pergunta = !contexto.especie ? "Qual é a espécie do casal?" : !c.macho || !c.femea ? "Quais são as mutações do macho e da fêmea?" : "Você conhece os fatores e as mutações portadas pelos pais ou apenas as cores visíveis?";
+      return { ...retorno("Genética do casal", pergunta + " Podemos usar a calculadora genética do Avespet para conferir as possibilidades sem inventar percentuais.", contexto), localSomente: true, resposta: { tipo: "conversa", titulo: "Genética do casal", mensagem: pergunta + " Podemos usar a calculadora genética do Avespet para conferir as possibilidades sem inventar percentuais.", tema: "genetica", aviso: "", fontes: [] } };
+    }
+    if (/\b(reproducao|reproduzir|reproduziram|postura|ovos?|ninho|incubacao|chocando)\b/.test(limpo)) {
+      contexto.etapa = "reproducao_casal";
+      return retorno("Reprodução do casal", "Vamos falar sobre a reprodução. O casal já está junto há algum tempo e você observou acasalamento, uso do ninho ou postura?", contexto);
+    }
+  }
+
+  // Apresentações compostas (nome + espécie + idade + papinha) devem ser compreendidas de uma vez.
+  if (contexto.especie && contexto.idadeDias !== null &&
+      /\b(tenho|estou com|cuido de)\b/.test(limpo) &&
+      /\b(ring\s*neck|ringneck|calopsita|periquito de colar)\b/.test(limpo) &&
+      /\b(papa|papinha)\b/.test(limpo)) {
+    contexto.etapa = "alimentacao_assistida";
+    return retorno("Prazer em conversar com você! 🦜",
+      "Entendi que você cuida de um " + contexto.especie + " de " + contexto.idadeDias +
+      " dias e ele está na papinha. É normal surgirem dúvidas nessa fase. A alimentação manual exige orientação prática de um veterinário de aves para evitar aspiração e outros riscos, então não vou indicar doses nem técnicas sem avaliação. Ele está recebendo papinha de você ou de outro cuidador?", contexto);
+  }
+
+  // Preserve a intenção da pergunta antes de tratar idade e outras informações isoladas.
+  // Alimentação manual de neonatos é um assunto de alto risco: nunca inventar doses ou técnica.
+  const perguntaAlimentacao = /\b(como|qual a forma|o que fazer|preciso|posso|devo)\b.*\b(alimentar|dar papa|dar papinha|alimentacao)\b/.test(limpo)
+    || /\b(alimentar|alimentacao)\b.*\b(filhote|ave|ring\s*neck|calopsita)\b/.test(limpo);
+  if (perguntaAlimentacao && contexto.filhote) {
+    contexto.etapa = "orientacao_alimentacao";
+    return retorno("Vamos cuidar dessa dúvida 🦜",
+      `Entendi: você quer saber como alimentar ${contexto.especie ? "seu " + contexto.especie : "um filhote"}${contexto.idadeDias !== null ? " de " + contexto.idadeDias + " dias" : ""}. Nessa fase, a alimentação manual pode ter riscos sérios, como aspiração, e a orientação precisa ser individualizada por um veterinário de aves. Não é seguro indicar quantidades, intervalos ou técnica só pela idade. Qual é a espécie e ele está sendo alimentado pelos pais ou recebe papinha de uma pessoa?`,
+      contexto);
+  }
+  // O usuário pode responder "na papa" ou "só papinha" depois de uma pergunta sobre alimentação.
+  if (contexto.filhote && /^(?:so|somente|apenas|ainda|ainda so|ele esta|ela esta|esta)?\s*(?:na\s+)?(?:papa|papinha)(?:\s+mesmo)?$/.test(limpo)) {
+    contexto.etapa = "alimentacao_assistida";
+    if (!contexto.especie) return retorno("Entendi 🦜",
+      "Ele está recebendo papinha. Qual é a espécie? E quem está alimentando: os pais ou uma pessoa? Para um filhote tão novo, é importante ter acompanhamento de um veterinário de aves.", contexto);
+    return retorno("Entendi 🦜",
+      contexto.idadeDias !== null && contexto.idadeDias >= 35
+        ? `Seu ${contexto.especie} de ${contexto.idadeDias} dias ainda recebe papinha. Já demonstra interesse em alimentos sólidos? O desmame deve respeitar o desenvolvimento e acompanhamento veterinário.`
+        : `Seu ${contexto.especie}${contexto.idadeDias !== null ? " de " + contexto.idadeDias + " dias" : ""} está recebendo papinha. Quem está oferecendo a alimentação? Pergunto porque a orientação muda conforme a condição do filhote e precisa ser avaliada por um profissional.`,
+      contexto);
+  }
+  // Uma resposta curta identificando a espécie é informação, não uma nova pergunta.
+  if (/^(?:(?:e|eh|um|uma|o|a|ele e|ela e|tenho um|tenho uma|meu e|minha e)\s+)?(?:ring\s*neck|ringneck|periquito de colar|calopsita)$/.test(limpo) && contexto.especie) {
+    if (contexto.etapa === "alimentacao_assistida" || contexto.etapa === "orientacao_alimentacao") {
+      return retorno("Certo, é um " + contexto.especie + " 🦜",
+        `Agora entendi: é um filhote de ${contexto.especie}${contexto.idadeDias !== null ? " com " + contexto.idadeDias + " dias" : ""}, e estamos falando da alimentação. Ele está com os pais ou você está oferecendo a papinha? Para esta idade, evite ajustar quantidade ou modo de alimentar sem orientação veterinária.`, contexto);
+    }
+    return retorno("Certo, é um " + contexto.especie + " 🦜",
+      contexto.idadeDias !== null
+        ? "Já sei que ele tem " + contexto.idadeDias + " dias. Está com os pais ou recebe alimentação assistida?"
+        : contexto.filhote
+        ? "E quantos dias tem o filhote de " + contexto.especie + "?"
+        : "É filhote ou adulto?", contexto);
+  }
+
+  // Uma apresentação com espécie e idade já fornece esses dados.
+  if (contexto.especie && contexto.idadeDias !== null &&
+      /^(tenho|comprei|ganhei|adotei|peguei|estou com)\b/.test(limpo) &&
+      /\b(ring\s*neck|ringneck|calopsita|periquito de colar)\b/.test(limpo) &&
+      /\b\d{1,4}\s*(dias?|d)\b/.test(limpo)) {
+    contexto.etapa = "aguardando_alimentacao";
+    return retorno("Que legal, um filhote de " + contexto.especie + "! 🦜",
+      "Entendi que ele tem " + contexto.idadeDias + " dias. Ele está com os pais ou você está oferecendo papinha?", contexto);
+  }
+
+  // Fazer a conversa avançar de acordo com as informações já dadas.
+  if (/^(tenho|comprei|ganhei|adotei|peguei|estou com) (um|uma|o|a)?\s*(filhote|filhotinho|passarinho|ave|ring\s*neck|calopsita)\b/.test(limpo)) {
+    if (contexto.especie && contexto.filhote) return retorno("Que legal! 🦜",
+      contexto.idadeDias !== null
+        ? "Seu " + contexto.especie + " tem " + contexto.idadeDias + " dias. Está com os pais ou recebe alimentação assistida?"
+        : "Você está com um filhote de " + contexto.especie + "! Sabe quantos dias ele tem?", contexto);
+    if (contexto.filhote) return retorno("Que legal! 🦜", "Qual é a espécie do seu filhote? É Ring Neck, calopsita ou outra ave?", contexto);
+    return retorno("Vamos conhecer sua ave!", "Qual é a espécie dela? E você sabe se é filhote ou adulta?", contexto);
+  }
+  if (/^(e|eh|ele e|ela e|meu filhote e|minha ave e|tenho um|tenho uma|ring\s*neck|calopsita)\s*(um|uma|o|a)?\s*(ring\s*neck|ringneck|calopsita|periquito de colar)?\s*$/.test(limpo) && /ring\s*neck|ringneck|calopsita/.test(limpo)) {
+    return retorno("Entendi! 🦜", `É um ${contexto.especie}. ${contexto.filhote ? "Como ele é filhote, você sabe a idade aproximada em dias?" : "Ele é filhote ou adulto?"}`, contexto);
+  }
+  if (contexto.filhote && /^(?:(?:ele|ela|o filhote|minha ave|meu ring neck)\s+)?(?:(?:tem|esta com|ta com|com)\s+)?\d{1,4}\s*(dias?|d)$/.test(limpo)) {
+    contexto.etapa = "aguardando_alimentacao";
+    return retorno("Entendi! 🦜", "Seu " + (contexto.especie || "filhote") + " tem " + contexto.idadeDias + " dias. Ele está com os pais ou recebe papinha?", contexto);
+  }
+  // Respostas curtas e naturais às perguntas anteriores também integram o contexto.
+  if (contexto.filhote && /^(so|somente|apenas|ainda so|ainda somente|ele so|ela so)?\s*(papa|papinha|papinha ainda|na papinha)( mesmo)?$/.test(limpo)) {
+    contexto.etapa = "alimentacao_assistida";
+    return retorno("Entendi! 🦜",
+      `Seu ${contexto.especie || "filhote"}${contexto.idadeDias !== null ? " de aproximadamente " + contexto.idadeDias + " dias" : ""} ainda recebe apenas papinha. Você percebe se ele demonstra interesse por alimentos sólidos? Podemos registrar isso no diário. A transição alimentar precisa de acompanhamento profissional e não deve ser decidida somente pela idade.`,
+      contexto);
+  }
+  if (contexto.filhote && /^(so|somente|apenas)?\s*(solidos|comida solida|racao|sementes|come sozinho|se alimenta sozinho)$/.test(limpo)) {
+    contexto.etapa = "solidos_relato";
+    return retorno("Entendi! 🦜",
+      "Você está observando que a ave consome alimentos sólidos. Podemos acompanhar o peso e as observações no diário. Para confirmar a independência alimentar e qualquer mudança na papa, conte com um veterinário de aves.", contexto);
+  }
+  if (/\b(ele|ela)\b.*\b(papa|sozinh[oa]|solidos|comida)\b/.test(limpo) && contexto.filhote) {
+    return retorno("Entendi a fase que você está observando", "Podemos registrar as observações no Diário de Desenvolvimento. Mudanças na alimentação manual e no desmame devem seguir acompanhamento profissional; não é seguro definir quantidade ou frequência apenas pela idade.", contexto);
+  }
+  // Respostas introdutórias seguras para sugestões do próprio painel, mesmo com Gemini desligado.
+  if (/^(como )?acompanhar (o )?desenvolvimento(\s+da minha ave)?\??$/.test(limpo)) {
+    return retorno("Acompanhando o desenvolvimento 🦜",
+      "Você pode usar o Diário de Desenvolvimento para registrar a data, o peso medido e observações sobre atividade e alimentação. Compare as anotações ao longo do tempo; o peso isolado não indica se a ave está saudável. Se notar perda de peso, recusa de alimento ou comportamento diferente, procure um veterinário de aves.", contexto);
+  }
+  if (/^(como )?(organizar|preparar) (o )?ambiente (da|para) (minha|uma) ave\??$/.test(limpo)) {
+    return retorno("Um ambiente adequado 🦜",
+      "Comece por um espaço seguro, ventilado e protegido de fumaça, sprays, fios expostos e objetos perigosos. Disponibilize água, locais de descanso e atividades apropriadas à espécie. A organização ideal depende do tamanho e da rotina da ave. Qual espécie você tem?", contexto);
+  }
+  if (/^(quando )?(devo )?(procurar|levar|consultar) (um |o )?veterinario( de aves)?\??$/.test(limpo)) {
+    return retorno("Quando procurar um veterinário de aves?",
+      "Procure um veterinário de aves para avaliações preventivas e sempre que perceber mudanças no apetite, peso, fezes ou comportamento. Dificuldade respiratória, convulsões ou fraqueza acentuada exigem atendimento imediato. Se a ave já não está comendo normalmente, não espere uma consulta de rotina.", contexto);
+  }
+  const resposta = responderComBiblioteca({ ...perfil, especie: contexto.especie || perfil.especie }, texto);
+  if (resposta.tipo !== "informativo" || !/guia aprovado/.test(resposta.titulo)) return { resposta, contexto };
+  return retorno("Entendi sua pergunta", `Estou acompanhando nossa conversa${contexto.especie ? " sobre " + contexto.especie : ""}. Ainda não tenho informação técnica revisada para responder isso com segurança. Se quiser, me conte mais detalhes ou escolha um dos assuntos do painel. Para dúvidas fora do catálogo, a conversa livre com modelo de IA depende da integração do provedor.`, contexto);
+}
