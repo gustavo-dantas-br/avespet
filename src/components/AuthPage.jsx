@@ -11,6 +11,7 @@ import { useSEO } from "../publico/seo";
 import { comprimirEEnviarImagemPublica } from "../features/aves-perdidas/utils/comprimirImagem";
 import { PaginaGuias, PaginaGuia, PaginaVideos, GuiasEmDestaque } from "../publico/PaginasConteudo";
 import Inicio from "../publico/home/Inicio";
+import AvePerdidaIndividual from "../features/aves-perdidas/pages/AvePerdidaIndividual";
 import { AvesPerdidas } from "../features/aves-perdidas";
 import { SolicitarCampanha } from "../features/campanhas";
 
@@ -603,6 +604,8 @@ function ConteudoDaRota({ caminho, onEntrar }) {
       </div>
     );
   }
+  const aveIndividual = caminho.match(/^\/aves-perdidas\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+  if (aveIndividual) return <><SeoFixo caminho="/aves-perdidas" /><AvePerdidaIndividual key={aveIndividual[1]} id={aveIndividual[1]} /></>;
   if (caminho === "/aves-perdidas") return <><SeoFixo caminho={caminho} /><AvesPerdidas onEntrar={onEntrar} /></>;
   if (caminho === "/campanha-ave-perdida") return <><SeoFixo caminho={caminho} /><SolicitarCampanha /></>;
   if (caminho === "/achei-uma-ave") {

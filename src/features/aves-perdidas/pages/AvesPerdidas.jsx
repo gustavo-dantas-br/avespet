@@ -69,6 +69,7 @@ export default function AvesPerdidas({ onEntrar }) {
                   {data.situacao !== "reencontrado" && data.caracteristicas && <p className="mt-3 text-sm leading-6 whitespace-pre-wrap break-words" style={{color:TEMA_PUBLICO.texto}}>{data.caracteristicas}</p>}
                   {data.situacao !== "reencontrado" && data.descricao && <p className="mt-2 text-sm leading-6 whitespace-pre-wrap break-words" style={{color:TEMA_PUBLICO.texto}}>{data.descricao}</p>}
                   {data.situacao === "reencontrado" && data.depoimento && <blockquote className="mt-3 rounded-xl border border-emerald-100 bg-white p-3 text-sm italic leading-6 text-emerald-900">“{data.depoimento}”{Number(data.avaliacao)>0 && <span className="mt-2 block not-italic font-bold">{"⭐".repeat(Math.min(5,Number(data.avaliacao)))}</span>}</blockquote>}
+                  <a href={"/aves-perdidas/"+id} className="mt-4 block rounded-xl bg-emerald-800 px-4 py-3 text-center text-sm font-bold text-white">Ver busca e compartilhar</a>
                   {data.situacao !== "reencontrado" && <p className="mt-4 rounded-xl p-3 text-xs leading-5" style={{ background: TEMA_PUBLICO.fundo, color: TEMA_PUBLICO.texto }}>
                     Encontrou esta ave? Avise o Avespet. Nossa equipe fará a intermediação com o responsável.
                   </p>}
