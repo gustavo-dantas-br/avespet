@@ -2,7 +2,7 @@
 
 > Documento vivo da arquitetura. Atualizar este arquivo sempre que uma mudança estrutural, funcional ou de dados for feita.
 >
-> **Última revisão:** 20/11/2026 (adendo de campanhas)  
+> **Última revisão:** 20/11/2026 (adendo de campanhas)
 > **Estado desta revisão:** documentação alinhada ao código encontrado na branch padrão `main`. Não representa uma refatoração completa.
 
 ## 1. Objetivo arquitetural

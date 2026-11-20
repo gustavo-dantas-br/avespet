@@ -1,0 +1,11 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {metaAccountDiagnostic} from "../supabase/functions/master-meta-ads/diagnostic.mjs";
+const env=k=>({META_ACCESS_TOKEN:"test-secret",META_AD_ACCOUNT_ID:"act_123456",META_GRAPH_API_VERSION:"v27.0"})[k];
+const res=(data,status=200)=>new Response(JSON.stringify(data),{status});
+test("Meta: sem secrets não chama rede",async()=>{const r=await metaAccountDiagnostic(()=>undefined,()=>{throw Error("rede proibida")});assert.equal(r.state,"not_configured");assert.equal(r.missing.length,3)});
+test("Meta: GET fixo, token só no header e resposta filtrada",async()=>{const r=await metaAccountDiagnostic(env,async(url,opts)=>{assert.equal(new URL(url).origin,"https://graph.facebook.com");assert.equal(opts.method,"GET");assert.equal(opts.redirect,"error");assert.equal(opts.headers.Authorization,"Bearer test-secret");assert.ok(!url.includes("test-secret"));return res({id:"act_123456",account_status:1,currency:"BRL",timezone_name:"America/Sao_Paulo",token:"test-secret"})});assert.equal(r.state,"read_ready");assert.ok(!JSON.stringify(r).includes("test-secret"))});
+test("Meta: moeda diferente exige revisão",async()=>assert.equal((await metaAccountDiagnostic(env,async()=>res({id:"act_123456",account_status:1,currency:"USD"}))).state,"account_review"));
+test("Meta: token inválido não vaza erro bruto",async()=>{const r=await metaAccountDiagnostic(env,async()=>res({error:{code:190,message:"test-secret"}},400));assert.deepEqual(r,{state:"invalid_token"})});
+test("Meta: ID de outra conta é rejeitado",async()=>assert.equal((await metaAccountDiagnostic(env,async()=>res({id:"act_999999",account_status:1,currency:"BRL"}))).state,"unexpected_response"));
+test("Meta: configuração impede URL arbitrária",async()=>assert.equal((await metaAccountDiagnostic(k=>k==="META_AD_ACCOUNT_ID"?"../foo":env(k),()=>{throw Error("rede proibida")})).state,"invalid_configuration"));

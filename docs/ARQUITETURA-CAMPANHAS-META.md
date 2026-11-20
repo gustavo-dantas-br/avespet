@@ -73,3 +73,7 @@ Credenciais: configurar diretamente em Supabase Edge Function Secrets, nunca fro
 - SQL transacional com papel anon: leitura de campos públicos, rejeição de ID inexistente, bloqueio de repetição, vínculo para buscas com e sem tutor e notificações internas. Rollback sem registros de teste; push não enviado.
 - Vercel preview READY para 496660f. Produção e interface autenticada ainda não homologadas para a página individual.
 - Nenhuma criação de anúncios, cobrança ou envio de dados à Meta.
+
+## Incremento: diagnóstico somente leitura
+
+Implementado `master-meta-ads` (index.ts + diagnostic.mjs), isolado do faturamento e sem chamadas de escrita à Meta. JWT + master_admins, ação única diagnose, URL Graph fixa, timeout de 8 s, sem redirects, token Bearer no header, resposta filtrada e auditoria do estado. Configurar META_ACCESS_TOKEN, META_AD_ACCOUNT_ID e META_GRAPH_API_VERSION no Supabase Secrets; versão escolhida conforme a versão suportada no aplicativo (referência Graph Ad Account: https://developers.facebook.com/docs/graph-api/reference/ad-account/). A consulta GET retorna status, moeda e fuso, não comprova permissões de escrita. Token com ads_read e acesso ao ativo conforme configuração Meta. Nenhuma informação de tutor é enviada. Testes simulados em tests/meta-ads-diagnostic.test.js; conexão real depende dos ativos e secrets. Sem migração nova.
