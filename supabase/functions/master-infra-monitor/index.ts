@@ -109,8 +109,10 @@ Deno.serve(async (req) => {
     throw new Error("Pagination limit");
   };
   const github=async()=>{
-    if(!githubToken) return {status:"not_configured"};
-    const response=await fetch("https://api.github.com/repos/gustavo-dantas-br/avespet/commits/main",{headers:{Authorization:"Bearer "+githubToken,Accept:"application/vnd.github+json"},signal:AbortSignal.timeout(5000)});
+    // O repositório é público; token opcional apenas para limite maior ou futura mudança de visibilidade.
+    const headers: Record<string,string> = {Accept:"application/vnd.github+json","User-Agent":"Avespet-Master-Infra"};
+    if(githubToken) headers.Authorization="Bearer "+githubToken;
+    const response=await fetch("https://api.github.com/repos/gustavo-dantas-br/avespet/commits/main",{headers,signal:AbortSignal.timeout(5000)});
     if(!response.ok) throw new Error("GitHub unavailable");
     const result=await response.json();
     return {status:"ok",sha:result.sha,updatedAt:result.commit?.committer?.date};
