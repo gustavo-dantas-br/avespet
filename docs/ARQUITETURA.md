@@ -2,7 +2,7 @@
 
 > Documento vivo da arquitetura. Atualizar este arquivo sempre que uma mudança estrutural, funcional ou de dados for feita.
 >
-> **Última revisão:** 11/11/2026  
+> **Última revisão:** 20/11/2026 (adendo de campanhas)  
 > **Estado desta revisão:** documentação alinhada ao código encontrado na branch padrão `main`. Não representa uma refatoração completa.
 
 ## 1. Objetivo arquitetural
@@ -443,3 +443,8 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - A aba **Master > Aves perdidas** oferece **Testar e-mail**, com confirmação do operador. O teste chama a Edge Function existente `master-resend-test` (requer acesso Master, limita 3 testes/hora e envia exclusivamente ao endereço autenticado do administrador).
 - O botão não altera anúncios, não aprova ocorrências fictícias e não utiliza contatos dos tutores. Sua finalidade é verificar apenas o envio básico do Resend; o e-mail específico de aprovação continua dependendo de uma aprovação real e consentida.
 - Mensagens explicam que aceitar o envio pelo provedor não equivale à entrega na caixa principal; verificar spam e registros de entrega. Nenhum segredo é exposto no navegador.
+
+
+## Campanhas e Meta Ads — 20/11/2026
+
+Ver [ARQUITETURA-CAMPANHAS-META.md](./ARQUITETURA-CAMPANHAS-META.md) para o fluxo comercial, página individual, avistamentos, segurança, decisões arquiteturais e integração externa planejada. O repositório atual é `gustavo-dantas-br/avespet`. A conexão Meta ainda não está ativa. Os scripts de validação atuais incluem `npm run test:genetica`, `npm run test:painel` e `npm run build`.
