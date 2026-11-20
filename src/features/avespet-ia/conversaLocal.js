@@ -104,6 +104,19 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
   if (/\b(ele|ela)\b.*\b(papa|sozinh[oa]|solidos|comida)\b/.test(limpo) && contexto.filhote) {
     return retorno("Entendi a fase que você está observando", "Podemos registrar as observações no Diário de Desenvolvimento. Mudanças na alimentação manual e no desmame devem seguir acompanhamento profissional; não é seguro definir quantidade ou frequência apenas pela idade.", contexto);
   }
+  // Respostas introdutórias seguras para sugestões do próprio painel, mesmo com Gemini desligado.
+  if (/^(como )?acompanhar (o )?desenvolvimento(\s+da minha ave)?\??$/.test(limpo)) {
+    return retorno("Acompanhando o desenvolvimento 🦜",
+      "Você pode usar o Diário de Desenvolvimento para registrar a data, o peso medido e observações sobre atividade e alimentação. Compare as anotações ao longo do tempo; o peso isolado não indica se a ave está saudável. Se notar perda de peso, recusa de alimento ou comportamento diferente, procure um veterinário de aves.", contexto);
+  }
+  if (/^(como )?(organizar|preparar) (o )?ambiente (da|para) (minha|uma) ave\??$/.test(limpo)) {
+    return retorno("Um ambiente adequado 🦜",
+      "Comece por um espaço seguro, ventilado e protegido de fumaça, sprays, fios expostos e objetos perigosos. Disponibilize água, locais de descanso e atividades apropriadas à espécie. A organização ideal depende do tamanho e da rotina da ave. Qual espécie você tem?", contexto);
+  }
+  if (/^(quando )?(devo )?(procurar|levar|consultar) (um |o )?veterinario( de aves)?\??$/.test(limpo)) {
+    return retorno("Quando procurar um veterinário de aves?",
+      "Procure um veterinário de aves para avaliações preventivas e sempre que perceber mudanças no apetite, peso, fezes ou comportamento. Dificuldade respiratória, convulsões ou fraqueza acentuada exigem atendimento imediato. Se a ave já não está comendo normalmente, não espere uma consulta de rotina.", contexto);
+  }
   const resposta = responderComBiblioteca({ ...perfil, especie: contexto.especie || perfil.especie }, texto);
   if (resposta.tipo !== "informativo" || !/guia aprovado/.test(resposta.titulo)) return { resposta, contexto };
   return retorno("Entendi sua pergunta", `Estou acompanhando nossa conversa${contexto.especie ? " sobre " + contexto.especie : ""}. Ainda não tenho informação técnica revisada para responder isso com segurança. Se quiser, me conte mais detalhes ou escolha um dos assuntos do painel. Para dúvidas fora do catálogo, a conversa livre com modelo de IA depende da integração do provedor.`, contexto);
