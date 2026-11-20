@@ -13,6 +13,8 @@ export function extrairContexto(texto, anterior = contextoInicial()) {
   if (/\b(filhote|filhotinho|bebe|recem nascid[oa])\b/.test(limpo)) proximo.filhote = true;
   const idade = limpo.match(/\b(\d{1,4})\s*(dias?|d)\b/);
   if (idade && Number(idade[1]) <= 3000) proximo.idadeDias = Number(idade[1]);
+  // Idade de poucos dias de uma ave identificada implica filhote.
+  if (proximo.especie && proximo.idadeDias !== null && proximo.idadeDias <= 120) proximo.filhote = true;
   const nome = limpo.match(/\b(?:nome (?:dele|dela) e|chama(?:-se)?|se chama)\s+([a-z]{2,22})\b/);
   if (nome) proximo.nome = nome[1];
   return proximo;
@@ -54,22 +56,38 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
         `Agora entendi: é um filhote de ${contexto.especie}${contexto.idadeDias !== null ? " com " + contexto.idadeDias + " dias" : ""}, e estamos falando da alimentação. Ele está com os pais ou você está oferecendo a papinha? Para esta idade, evite ajustar quantidade ou modo de alimentar sem orientação veterinária.`, contexto);
     }
     return retorno("Certo, é um " + contexto.especie + " 🦜",
-      contexto.filhote
-        ? `E quantos dias tem o filhote de ${contexto.especie}?`
+      contexto.idadeDias !== null
+        ? "Já sei que ele tem " + contexto.idadeDias + " dias. Está com os pais ou recebe alimentação assistida?"
+        : contexto.filhote
+        ? "E quantos dias tem o filhote de " + contexto.especie + "?"
         : "É filhote ou adulto?", contexto);
+  }
+
+  // Uma apresentação com espécie e idade já fornece esses dados.
+  if (contexto.especie && contexto.idadeDias !== null &&
+      /^(tenho|comprei|ganhei|adotei|peguei|estou com)\b/.test(limpo) &&
+      /\b(ring\s*neck|ringneck|calopsita|periquito de colar)\b/.test(limpo) &&
+      /\b\d{1,4}\s*(dias?|d)\b/.test(limpo)) {
+    contexto.etapa = "aguardando_alimentacao";
+    return retorno("Que legal, um filhote de " + contexto.especie + "! 🦜",
+      "Entendi que ele tem " + contexto.idadeDias + " dias. Ele está com os pais ou você está oferecendo papinha?", contexto);
   }
 
   // Fazer a conversa avançar de acordo com as informações já dadas.
   if (/^(tenho|comprei|ganhei|adotei|peguei|estou com) (um|uma|o|a)?\s*(filhote|filhotinho|passarinho|ave|ring\s*neck|calopsita)\b/.test(limpo)) {
-    if (contexto.especie && contexto.filhote) return retorno("Que legal! 🦜", `Você está com um filhote de ${contexto.especie}! Sabe quantos dias ele tem ou se já se alimenta sozinho?`, contexto);
+    if (contexto.especie && contexto.filhote) return retorno("Que legal! 🦜",
+      contexto.idadeDias !== null
+        ? "Seu " + contexto.especie + " tem " + contexto.idadeDias + " dias. Está com os pais ou recebe alimentação assistida?"
+        : "Você está com um filhote de " + contexto.especie + "! Sabe quantos dias ele tem?", contexto);
     if (contexto.filhote) return retorno("Que legal! 🦜", "Qual é a espécie do seu filhote? É Ring Neck, calopsita ou outra ave?", contexto);
     return retorno("Vamos conhecer sua ave!", "Qual é a espécie dela? E você sabe se é filhote ou adulta?", contexto);
   }
   if (/^(e|eh|ele e|ela e|meu filhote e|minha ave e|tenho um|tenho uma|ring\s*neck|calopsita)\s*(um|uma|o|a)?\s*(ring\s*neck|ringneck|calopsita|periquito de colar)?\s*$/.test(limpo) && /ring\s*neck|ringneck|calopsita/.test(limpo)) {
     return retorno("Entendi! 🦜", `É um ${contexto.especie}. ${contexto.filhote ? "Como ele é filhote, você sabe a idade aproximada em dias?" : "Ele é filhote ou adulto?"}`, contexto);
   }
-  if (contexto.filhote && /\b\d{1,4}\s*(dias?|d)\b/.test(limpo) && limpo.length < 60) {
-    return retorno("Obrigado pela informação!", `Anotei na conversa que seu ${contexto.especie || "filhote"} tem cerca de ${contexto.idadeDias} dias. Você sabe se ele ainda recebe alimentação assistida, está experimentando sólidos ou já se alimenta sozinho? A idade, sozinha, não determina isso.`, contexto);
+  if (contexto.filhote && /^\d{1,4}\s*(dias?|d)$/.test(limpo)) {
+    contexto.etapa = "aguardando_alimentacao";
+    return retorno("Entendi! 🦜", "Seu " + (contexto.especie || "filhote") + " tem " + contexto.idadeDias + " dias. Ele está com os pais ou recebe papinha?", contexto);
   }
   // Respostas curtas e naturais às perguntas anteriores também integram o contexto.
   if (contexto.filhote && /^(so|somente|apenas|ainda so|ainda somente|ele so|ela so)?\s*(papa|papinha|papinha ainda|na papinha)( mesmo)?$/.test(limpo)) {
