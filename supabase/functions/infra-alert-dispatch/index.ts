@@ -1,18 +1,20 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {createClient} from "npm:@supabase/supabase-js@2";
 const reply=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
-const digest=async(s:string)=>new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s)));
-async function match(a:string,b:string){const [x,y]=await Promise.all([digest(a),digest(b)]);let diff=0;for(let i=0;i<x.length;i++)diff|=x[i]^y[i];return diff===0;}
+const digest=async(s:string)=>Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s))),b=>b.toString(16).padStart(2,"0")).join("");
 Deno.serve(async(req)=>{
  if(req.method!=="POST")return reply({error:"Method not allowed"},405);
- const secret=Deno.env.get("AVESPET_INFRA_SCHEDULER_SECRET")||"";
  const provided=req.headers.get("x-avespet-scheduler")||"";
- if(secret.length<32||provided.length>200||!(await match(secret,provided)))return reply({error:"Unauthorized"},401);
- if(Deno.env.get("AVESPET_INFRA_ALERTS_ENABLED")!=="true")return reply({enabled:false,sent:0});
- const recipient=Deno.env.get("AVESPET_INFRA_ALERT_EMAIL")||"";
+ if(!/^[a-f0-9]{64}$/.test(provided))return reply({error:"Unauthorized"},401);
  const key=Deno.env.get("RESEND_API_KEY"),url=Deno.env.get("SUPABASE_URL"),service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
- if(!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(recipient)||!key||!url||!service)return reply({error:"Configuration incomplete"},503);
+ if(!url||!service)return reply({error:"Configuration incomplete"},503);
  const admin=createClient(url,service,{auth:{persistSession:false,autoRefreshToken:false}});
+ const {data:config,error:configError}=await admin.rpc("master_infra_dispatch_config",{p_digest:await digest(provided)});
+ if(configError)return reply({error:"Configuration unavailable"},503);
+ if(!config)return reply({error:"Unauthorized"},401);
+ if(!config.enabled)return reply({enabled:false,sent:0});
+ const recipient=config.recipient||"";
+ if(!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(recipient)||!key)return reply({error:"Configuration incomplete"},503);
  let sent=0,failed=0;
  for(let i=0;i<4;i++){
   const {data:a,error}=await admin.rpc("master_infra_claim_alert");
