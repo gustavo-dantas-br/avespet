@@ -59,3 +59,20 @@ test("conversa natural mantém intenção de alimentação no filhote de 10 dias
   assert.match(c.resposta.mensagem, /alimentação/i);
   assert.doesNotMatch(c.resposta.mensagem, /guia aprovado|modelo de IA depende/i);
 });
+
+test("não repete perguntas quando usuário diz tenho ring neck de 30 dias", () => {
+  const a = conversarLocal(perfil, "Olá tudo bem", contextoInicial());
+  const b = conversarLocal(perfil, "Tenho ring neck de 30 dias", a.contexto);
+  assert.equal(b.contexto.especie, "Ring Neck");
+  assert.equal(b.contexto.idadeDias, 30);
+  assert.equal(b.contexto.filhote, true);
+  assert.match(b.resposta.mensagem, /30 dias/);
+  assert.doesNotMatch(b.resposta.mensagem, /qual é a espécie|filhote ou adulto/i);
+  const c = conversarLocal(perfil, "Ring neck", b.contexto);
+  assert.match(c.resposta.mensagem, /30 dias/);
+  assert.doesNotMatch(c.resposta.mensagem, /filhote ou adulto/i);
+  const d = conversarLocal(perfil, "30 Dias", c.contexto);
+  assert.equal(d.contexto.idadeDias, 30);
+  assert.match(d.resposta.mensagem, /30 dias/);
+  assert.doesNotMatch(d.resposta.mensagem, /guia aprovado/i);
+});
