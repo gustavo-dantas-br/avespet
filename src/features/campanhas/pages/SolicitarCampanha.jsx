@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Megaphone, CheckCircle2, CalendarDays, MapPin, Users, Heart, ArrowRight, ShieldCheck } from "lucide-react";
 import ReencontrosPublicos from "../components/ReencontrosPublicos";
-import { alcanceEstimado, formatarAlcance } from "../config/alcance";
+import { formatarAlcance } from "../config/alcance";
 import { PACOTES_CAMPANHA } from "../config/pacotes";
 import { solicitarCampanha, listarPacotesPublicos } from "../services/campanhasService";
 import { PaginaPublica, CabecalhoPublico, CartaoPublico, TEMA_PUBLICO } from "../../../publico/ComponentesPublicos";
@@ -31,7 +31,7 @@ export default function SolicitarCampanha() {
   const [form, setForm] = useState({ pacote: "cidade", nome: "", whatsapp: "", email: "", cidade: "", uf: "SP", areaAlvo: "", descricaoAve: "" });
   const [pacotes, setPacotes] = useState(null);
   useEffect(()=>{let active=true;listarPacotesPublicos().then(rows=>{if(!active)return;setPacotes(rows);if(rows.length)setForm(f=>({...f,pacote:rows.some(p=>p.code===f.pacote)?f.pacote:rows[0].code}));}).catch(()=>{if(active)setPacotes([]);});return()=>{active=false;};},[]);
-  const opcoes = pacotes?.length ? pacotes.map(p=>({id:p.code,nome:p.name,descricao:p.description,alcance:p.reach_label,dias:p.duration_days,preco:p.price_cents})) : PACOTES_CAMPANHA;
+  const opcoes = pacotes?.length ? pacotes.map(p=>({id:p.code,nome:p.name,descricao:p.description,alcance:p.reach_label,dias:p.duration_days,preco:p.price_cents,min:p.reach_min,max:p.reach_max})) : PACOTES_CAMPANHA;
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
   const [enviado, setEnviado] = useState(false);
@@ -81,7 +81,7 @@ export default function SolicitarCampanha() {
                 <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><strong>Gratuito — R$ 0,00</strong><p className="text-sm">Cadastre sua ave perdida gratuitamente, sem publicidade paga.</p><a className="mt-2 inline-block font-semibold text-emerald-800 underline" href="/aves-perdidas">Consultar anúncios e buscar minha ave</a></div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {opcoes.map((p) => {
-                    const alcance = p.preco == null ? null : alcanceEstimado(p.id, p.preco);
+                    const alcance = Number.isInteger(p.min) && Number.isInteger(p.max) && p.max>0 ? {min:p.min,max:p.max} : null;
                     const selecionado = form.pacote === p.id;
                     return <label key={p.id} className={`relative flex cursor-pointer flex-col rounded-2xl border-2 p-5 transition focus-within:ring-2 focus-within:ring-emerald-500 ${selecionado ? "border-emerald-700 bg-emerald-50 shadow-md" : "border-slate-200 bg-white"}`}>
                       <div className="flex items-start justify-between gap-2"><h3 className="text-lg font-extrabold text-emerald-950">{p.nome}</h3><input className="mt-1 h-5 w-5 shrink-0 accent-emerald-700" type="radio" name="pacote" value={p.id} checked={selecionado} onChange={() => alterar("pacote", p.id)} /></div>
