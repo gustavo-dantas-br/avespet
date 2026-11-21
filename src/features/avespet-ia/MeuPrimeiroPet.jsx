@@ -5,6 +5,8 @@ import { conversarLocal, contextoInicial } from "./conversaLocal";
 import { CHAT_GENERATIVO_ATIVO, conversarComModelo, verificarDisponibilidadeGemini } from "./chatGenerativo";
 import DiarioFilhote from "./DiarioFilhote";
 import FontesEducativas from "./FontesEducativas";
+import GuiaIniciante from "./GuiaIniciante";
+import { buscarPerguntaIniciante } from "./guiaIniciante.js";
 
 // Usa a fotografia de Ring Neck já utilizada na home pública do Avespet.
 // Não confundir esta imagem ilustrativa com a ave selecionada pelo criador.
@@ -137,6 +139,13 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
       secaoChatRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   };
+  const responderGuia = (id) => {
+    if (enviando) return;
+    const item = buscarPerguntaIniciante(id);
+    if (!item) return;
+    setHistorico(atual => [...atual, { pergunta: item.pergunta, resposta: { tipo: "conversa", titulo: "Guia para iniciantes", mensagem: item.resposta, fontes: [], aviso: "", guia: true } }].slice(-60));
+    requestAnimationFrame(() => secaoChatRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
   const abrirSugestao = (texto) => {
     setPergunta(texto);
     const campoPergunta = document.getElementById("avespet-ia-pergunta");
@@ -184,6 +193,8 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
         <span className="mt-1.5 text-[11px] leading-4 text-[#586B5F]">{descricao}</span>
       </button>)}
     </nav>
+
+    <GuiaIniciante onPergunta={responderGuia} disabled={enviando}/>
 
     <div className="grid min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.85fr)_minmax(300px,1fr)]">
       <div className="min-w-0 space-y-4">

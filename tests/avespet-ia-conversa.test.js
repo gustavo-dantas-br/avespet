@@ -176,3 +176,12 @@ test("reprodução e atualização de mutação preservam os dados do casal", ()
  assert.equal(c.contexto.filhote, false);
  assert.doesNotMatch(c.resposta.mensagem, /papinha/);
 });
+
+import { GUIA_INICIANTE, PERGUNTAS_INICIANTE, buscarPerguntaIniciante } from "../src/features/avespet-ia/guiaIniciante.js";
+test("guia iniciante possui categorias, IDs únicos e respostas prontas", () => {
+ assert.equal(GUIA_INICIANTE.length, 5);
+ assert.equal(PERGUNTAS_INICIANTE.length, 24);
+ assert.equal(new Set(PERGUNTAS_INICIANTE.map(p=>p.id)).size, PERGUNTAS_INICIANTE.length);
+ for(const p of PERGUNTAS_INICIANTE) { assert.ok(p.pergunta.length > 10 && p.resposta.length > 80); assert.equal(buscarPerguntaIniciante(p.id), p); }
+ assert.equal(buscarPerguntaIniciante("inexistente"), null);
+});
