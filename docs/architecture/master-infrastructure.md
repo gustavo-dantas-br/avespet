@@ -125,3 +125,7 @@ Sondas HTTP fixas e sem credenciais, via pg_net, a cada 15 minutos; coleta um mi
 ## Fase 2 — Histórico de deploys
 
 Ação deployment_history usa GET /v6/deployments com teamId e projectId fixos do Avespet, limite de 50 e timeout de 8s. Reutiliza AVESPET_VERCEL_READ_TOKEN somente no servidor, depois da checagem Master. Retorna metadados mínimos; interface filtra todos, produção, homologação e falhas. Não grava cópia no banco, não promove versões, não executa deploy, não expõe credenciais. Contadores se referem à amostra retornada; READY não implica domínio ativo ou ausência de falhas em execução. Atualização a cada 5 minutos com aba ativa. Histórico anterior no painel Vercel.
+
+## Fase 2 — Orçamento mensal
+
+Tabela privada monthly_budget por competência em America/Sao_Paulo, valores em centavos BRL, orçamento obrigatório somente quando configurado, previsões e gastos confirmados manuais separados por Supabase, Vercel, Gemini, Resend e Outros. Null = não informado; zero explícito não representa cobrança verificada. Sem valores padrão inventados, sem conversão cambial automática e sem contratação. RPC master_infra_budget service_role com checagem Master e validação de competência, tipos e limites; grava auditoria na mesma transação. Alertas visuais nos limiares 50/70/90/100%; parciais identificados, sem e-mail financeiro automático nesta fase. Não altera cotas nem bloqueia serviços. A competência anterior permanece armazenada; UI inicial edita apenas a atual. SQL antes da publicação.

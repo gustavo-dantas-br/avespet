@@ -79,6 +79,13 @@ Deno.serve(async (req) => {
 
 
   const body = await req.json().catch(() => ({}));
+  if(body?.action==="budget_read"||body?.action==="budget_save"){
+    const save=body.action==="budget_save";
+    if(save&&(!body.budget||typeof body.budget!=="object"||Array.isArray(body.budget)))return json({error:"Orçamento inválido"},400,origin);
+    const {data,error}=await adminClient.rpc("master_infra_budget",{p_actor:authData.user.id,p_save:save?body.budget:null});
+    if(error)return json({error:save?"Não foi possível salvar o orçamento":"Orçamento indisponível"},save?400:503,origin);
+    return json({usage:data},200,origin);
+  }
   if(body?.action==="deployment_history"){
     const key=Deno.env.get("AVESPET_VERCEL_READ_TOKEN");
     if(!key)return json({error:"Integração Vercel não configurada"},503,origin);
