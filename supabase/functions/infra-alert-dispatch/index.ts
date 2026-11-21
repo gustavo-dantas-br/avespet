@@ -12,6 +12,20 @@ Deno.serve(async(req)=>{
  const {data:config,error:configError}=await admin.rpc("master_infra_dispatch_config",{p_digest:await digest(provided)});
  if(configError)return reply({error:"Configuration unavailable"},503);
  if(!config)return reply({error:"Unauthorized"},401);
+ const body=await req.json().catch(()=>({}));
+ if(body?.action==="check_vercel"){
+  const token=Deno.env.get("AVESPET_VERCEL_READ_TOKEN");
+  if(!token)return reply({vercel:"not_configured"});
+  try{
+   const endpoint=new URL("https://api.vercel.com/v6/deployments");
+   endpoint.searchParams.set("teamId","team_U7fxAgYIeol47gm6WHtsGvVW");
+   endpoint.searchParams.set("limit","1");
+   const response=await fetch(endpoint,{headers:{Authorization:"Bearer "+token},signal:AbortSignal.timeout(8000)});
+   if(!response.ok)return reply({vercel:"unavailable",provider_status:response.status});
+   const result=await response.json();
+   return reply({vercel:Array.isArray(result.deployments)?"ok":"invalid_response",provider_status:response.status});
+  }catch{return reply({vercel:"unavailable"});}
+ }
  if(!config.enabled)return reply({enabled:false,sent:0});
  const recipient=config.recipient||"";
  if(!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(recipient)||!key)return reply({error:"Configuration incomplete"},503);
