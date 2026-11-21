@@ -99,14 +99,19 @@ export default function PerfilTab({ perfil, privado, email, onSave, onSavePrivad
     <div className="max-w-xl">
       <SectionTitle>Perfil do Criador</SectionTitle>
       <p className="ui-sans text-sm mb-5" style={{ color: "#334155" }}>
-        Nome do criatorio, cidade, UF e WhatsApp podem aparecer nos anuncios. Seu endereco completo e seu e-mail ficam privados.
+        Nome do criatório, cidade, UF e logo podem aparecer nos anúncios. Seu telefone pessoal, endereço e e-mail ficam privados. O WhatsApp comercial só será divulgado com sua autorização.
       </p>
       <Card className="p-4 sm:p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <Field label="Nome"><input style={inputStyle} value={form.nome || ""} onChange={set("nome")} /></Field>
           <Field label="Sobrenome"><input style={inputStyle} value={form.sobrenome || ""} onChange={set("sobrenome")} /></Field>
           <Field label="Nome do criatório"><input style={inputStyle} value={form.nomeCriatorio} onChange={set("nomeCriatorio")} placeholder="ex: Criatório Avespet" /></Field>
-          <Field label="WhatsApp de contato"><input style={inputStyle} value={form.whatsapp} onChange={set("whatsapp")} placeholder="ex: (11) 99999-9999" /></Field>
+          <Field label="Telefone pessoal (privado)"><input type="tel" autoComplete="tel" style={inputStyle} value={form.whatsapp || ""} onChange={set("whatsapp")} placeholder="ex: (11) 99999-9999" /></Field>
+          <Field label="WhatsApp comercial (opcional)"><input type="tel" style={inputStyle} value={form.whatsappComercial || ""} onChange={e => setForm(f => ({ ...f, whatsappComercial: e.target.value, autorizaWhatsappComercial: false }))} placeholder="Número para compradores" /></Field>
+          <label className="sm:col-span-2 flex items-start gap-2 rounded-lg border p-3 text-sm" style={{ borderColor: "#D7E4DA", color: "#294D39" }}>
+            <input type="checkbox" className="mt-1" checked={form.autorizaWhatsappComercial === true} disabled={!String(form.whatsappComercial || "").replace(/\D/g,"").match(/^(?:55)?[1-9][0-9]9?[0-9]{8}$/)} onChange={e=>setForm(f=>({...f,autorizaWhatsappComercial:e.target.checked}))}/>
+            <span>Autorizo a divulgação deste WhatsApp comercial nos meus anúncios ativos e aprovados. Compradores poderão entrar em contato diretamente comigo. Posso revogar esta autorização a qualquer momento, salvando o perfil.</span>
+          </label>
           <Field label="Cidade"><input style={inputStyle} value={form.cidade} onChange={set("cidade")} placeholder="ex: Barueri" /></Field>
           <Field label="E-mail da conta (privado)"><input style={inputStyle} type="email" value={novoEmail} onChange={(e) => setNovoEmail(e.target.value)} /></Field>
           <Field label="UF">

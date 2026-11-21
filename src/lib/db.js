@@ -34,7 +34,7 @@ export async function getPerfil(userId) {
 
 export async function savePerfil(userId, perfilData) {
   const { nomeCriatorio = "", nome = "", sobrenome = "", nomeCompleto = "", whatsapp = "", cidade = "", uf = "", logoUrl = "" } = perfilData || {};
-  const dataPublica = { nomeCriatorio, nome, sobrenome, nomeCompleto, whatsapp, cidade, uf, logoUrl };
+  const dataPublica = { nomeCriatorio, nome, sobrenome, nomeCompleto, whatsapp, cidade, uf, logoUrl, whatsappComercial: String(perfilData?.whatsappComercial || ""), autorizaWhatsappComercial: perfilData?.autorizaWhatsappComercial === true };
   const { error } = await supabase.from("perfil_criador").upsert({
     user_id: userId,
     data: dataPublica,
@@ -113,6 +113,18 @@ export async function updateAnuncioStatus(id, status) {
 // Nomes/whatsapp dos criadores - usado no painel de aprovacao pra identificar
 // quem publicou cada anuncio. A tabela perfil_criador ja tem leitura publica.
 export async function listPerfisPublicos() {
+  // Transição: manter a vitrine antiga até o vendedor legado autorizar o contato.
+  // Remover esta consulta na Fase 3, antes de restringir a tabela privada.
+  const { data, error } = await supabase.from("perfil_criador").select("user_id, data");
+  if (error) throw error;
+  return (data || []).map((r) => {
+    const p = r.data || {};
+    return { userId: r.user_id, nomeCriatorio: p.nomeCriatorio, cidade: p.cidade, uf: p.uf, logoUrl: p.logoUrl,
+      whatsapp: p.autorizaWhatsappComercial === true ? p.whatsappComercial : (Object.prototype.hasOwnProperty.call(p, "autorizaWhatsappComercial") ? "" : p.whatsapp) };
+  });
+}
+
+export async function listPerfisAdmin() {
   const { data, error } = await supabase.from("perfil_criador").select("user_id, data");
   if (error) throw error;
   return (data || []).map((r) => ({ userId: r.user_id, ...r.data }));
