@@ -79,6 +79,11 @@ Deno.serve(async (req) => {
 
 
   const body = await req.json().catch(() => ({}));
+  if(body?.action==="ia_usage"){
+    const {data,error}=await adminClient.rpc("master_infra_ia_summary",{p_actor:authData.user.id});
+    if(error)return json({error:"Consumo IA indisponível"},503,origin);
+    return json({usage:data},200,origin);
+  }
   if(body?.action==="alert_settings"){
     const save=body?.save===true;
     if(save && (typeof body.recipient!=="string" || typeof body.enabled!=="boolean" || body.recipient.length>254))return json({error:"Configuração inválida"},400,origin);
