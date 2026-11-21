@@ -113,3 +113,7 @@ A branch de custos adiciona ia_daily com agregação por dia na Califórnia, mod
 ## Fase 2 — Consumo parcial de e-mails
 
 RPC master_infra_email_summary restrita a service_role, com verificação de master_admins. Agrega três fontes locais: aprovação de ave perdida, reengajamento e fila de alertas. Mensagens aceitas são deduplicadas por provider_id, usando timestamp de envio/ tentativa; falhas e incertos são registros no mês por criação, não tentativas totais. Janela local America/Sao_Paulo. Nenhum destinatário ou conteúdo retornado. Não representa todo o Resend nem comprova entrega, custo, quota ou eventos de autenticação. A leitura não envia mensagens. API email_usage e painel na branch de custos. SQL deve preceder a publicação das funções.
+
+## Fase 2 — Visualizações públicas
+
+RPC master_infra_traffic_summary reutiliza visitas_diarias e não escreve dados novos. Retorna totais do dia, mês, 30 dias, top 10 rotas e dias com registro, em America/Sao_Paulo. Exclusiva de service_role e com checagem de master_admins. Contador público cobre apenas rotas já instrumentadas e pode receber repetições/automação; não equivale a usuários únicos, bytes transferidos ou requisições faturáveis. API traffic_usage e interface na branch de custos. Não habilitar analytics pago nem inferir faturamento. SQL deve preceder a publicação das funções.
