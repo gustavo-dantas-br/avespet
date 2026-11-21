@@ -15,6 +15,7 @@ const inicial = { nivel: "iniciante", especie: "Ring Neck", fase: "incerta", ida
 const campo = "mt-1 block w-full rounded-xl border border-[#DAE6DD] bg-white px-3 py-2.5 text-base text-[#234332] outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100";
 const temas = [
   { id: "primeiro", nome: "Meu Primeiro Pet", descricao: "Está começando agora? Vamos orientar você.", icon: Bird },
+  { id: "guia", nome: "Guia para Iniciantes", descricao: "Perguntas e respostas para cuidar da sua primeira ave.", icon: GraduationCap },
   { id: "desenvolvimento", nome: "Acompanhar desenvolvimento", descricao: "Registre o dia a dia e acompanhe o histórico.", icon: CalendarDays },
   { id: "alimentacao", nome: "Alimentação e papa", descricao: "Informações educativas e cuidados seguros.", icon: HeartHandshake },
   { id: "genetica", nome: "Genética com IA", descricao: "Entenda mutações e herança genética.", icon: Dna },
@@ -50,6 +51,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
   const [avisoModelo, setAvisoModelo] = useState("");
   const conversaRef = useRef(null);
   const secaoChatRef = useRef(null);
+  const guiaInicianteRef = useRef(null);
   const atualizarDisponibilidade = async () => {
     if (!CHAT_GENERATIVO_ATIVO) return;
     setVerificandoModelo(true);
@@ -128,7 +130,13 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
     }
   };
   const selecionarTema = (id) => {
-    if (enviando || !mensagensTema[id]) return;
+    if (enviando) return;
+    if (id === "guia") {
+      setArea(id);
+      requestAnimationFrame(() => guiaInicianteRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+      return;
+    }
+    if (!mensagensTema[id]) return;
     setArea(id);
     if (id === "desenvolvimento") setDiarioAberto(true);
     if (id === "biblioteca") setFontesAbertas(true);
@@ -185,7 +193,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
       </div>
     </div>
 
-    <nav aria-label="Áreas do Avespet IA" className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0 xl:grid-cols-5">
+    <nav aria-label="Áreas do Avespet IA" className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0 xl:grid-cols-6">
       {temas.map(({ id, nome, descricao, icon: Icon }) => <button type="button" key={id} onClick={() => selecionarTema(id)} disabled={enviando} aria-pressed={area === id}
         className={`flex min-h-[126px] w-[154px] shrink-0 snap-start flex-col items-center rounded-2xl border px-3 py-3 text-center shadow-sm transition sm:min-h-[143px] sm:w-auto sm:shrink sm:py-4 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600 ${area === id ? "border-emerald-500 bg-[#E5F9E7] ring-1 ring-emerald-300" : "border-[#DEE7DF] bg-white hover:bg-[#F7FBF7]"}`}>
         <Icon size={28} strokeWidth={1.8} className="mb-2 text-[#16834D]" />
@@ -194,7 +202,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
       </button>)}
     </nav>
 
-    <GuiaIniciante onPergunta={responderGuia} disabled={enviando}/>
+    {area === "guia" && <div ref={guiaInicianteRef} className="scroll-mt-4"><GuiaIniciante onPergunta={responderGuia} disabled={enviando}/></div>}
 
     <div className="grid min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.85fr)_minmax(300px,1fr)]">
       <div className="min-w-0 space-y-4">
