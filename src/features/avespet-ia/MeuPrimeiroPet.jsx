@@ -6,7 +6,7 @@ import { CHAT_GENERATIVO_ATIVO, conversarComModelo, verificarDisponibilidadeGemi
 import DiarioFilhote from "./DiarioFilhote";
 import FontesEducativas from "./FontesEducativas";
 import GuiaIniciante from "./GuiaIniciante";
-import { buscarPerguntaIniciante } from "./guiaIniciante.js";
+import { buscarPerguntaIniciante, respostaGuiaIniciante, contextoGuiaIniciante } from "./guiaIniciante.js";
 
 // Usa a fotografia de Ring Neck já utilizada na home pública do Avespet.
 // Não confundir esta imagem ilustrativa com a ave selecionada pelo criador.
@@ -151,7 +151,8 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
     if (enviando) return;
     const item = buscarPerguntaIniciante(id);
     if (!item) return;
-    setHistorico(atual => [...atual, { pergunta: item.pergunta, resposta: { tipo: "conversa", titulo: "Guia para iniciantes", mensagem: item.resposta, fontes: [], aviso: "", guia: true } }].slice(-60));
+    setContexto(atual => contextoGuiaIniciante(atual, item));
+    setHistorico(atual => [...atual, { pergunta: item.pergunta, resposta: respostaGuiaIniciante(item) }].slice(-60));
     requestAnimationFrame(() => secaoChatRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   };
   const abrirSugestao = (texto) => {
@@ -232,6 +233,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
                 <div className={`min-w-0 flex-1 break-words rounded-2xl rounded-tl-sm border p-3 text-[15px] shadow-sm sm:max-w-[90%] sm:flex-none sm:p-4 ${item.resposta.tipo === "urgente" ? "border-red-200 bg-red-50" : item.resposta.tipo === "atencao" ? "border-amber-200 bg-amber-50" : "border-[#E3EAE5] bg-white"}`}>
                   <strong className="block text-[#173428]">{item.resposta.titulo}</strong>
                   <p className="mt-2 whitespace-pre-wrap break-words leading-[1.7] text-[#405449]">{item.resposta.mensagem}</p>
+                  {item.resposta.guia && <button type="button" onClick={() => { setArea("guia"); requestAnimationFrame(() => guiaInicianteRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })); }} className="mt-3 rounded-lg border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-800">Ver outras perguntas do guia</button>}
                   {item.resposta.tema === "genetica" && onOpenGenetica && <button type="button" onClick={onOpenGenetica} className="mt-3 rounded-lg border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-800">Abrir calculadora genética</button>}
                   {item.resposta.tema === "desenvolvimento" && <button type="button" onClick={() => { setDiarioAberto(true); requestAnimationFrame(() => document.getElementById("avespet-ia-diario")?.scrollIntoView({ behavior: "smooth", block: "start" })); }} className="mt-3 rounded-lg border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-800">Abrir diário</button>}
                   {item.resposta.tema === "biblioteca" && <button type="button" onClick={() => { setArea("biblioteca"); setFontesAbertas(true); requestAnimationFrame(() => document.getElementById("avespet-ia-biblioteca")?.scrollIntoView({ behavior: "smooth", block: "start" })); }} className="mt-3 rounded-lg border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-800">Consultar biblioteca</button>}

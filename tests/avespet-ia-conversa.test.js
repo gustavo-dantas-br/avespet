@@ -185,3 +185,21 @@ test("guia iniciante possui categorias, IDs únicos e respostas prontas", () => 
  for(const p of PERGUNTAS_INICIANTE) { assert.ok(p.pergunta.length > 10 && p.resposta.length > 80); assert.equal(buscarPerguntaIniciante(p.id), p); }
  assert.equal(buscarPerguntaIniciante("inexistente"), null);
 });
+
+test("pergunta do guia digitada sem acentos retorna a mesma resposta sem Gemini e não inventa dados da ave", () => {
+ const r = conversarLocal(perfil, "Como saber se o filhote esta desmamado", contextoInicial());
+ assert.equal(r.localSomente, true);
+ assert.equal(r.resposta.guia, true);
+ assert.equal(r.contexto.filhote, false);
+ assert.equal(r.contexto.especie, "");
+ assert.equal(r.contexto.guiaAtual.id, "desmame");
+ assert.equal(r.resposta.mensagem, buscarPerguntaIniciante("desmame").resposta);
+});
+test("pergunta educativa sobre filhotes não altera o contexto do casal", () => {
+ const a = conversarLocal(perfil, "Tenho um casal ring neck macho violeta e femea azul de 2023", contextoInicial());
+ const b = conversarLocal(perfil, "Como saber se o filhote está desmamado?", a.contexto);
+ assert.equal(b.contexto.assunto, "casal");
+ assert.equal(b.contexto.filhote, false);
+ assert.deepEqual(b.contexto.casal, a.contexto.casal);
+ assert.equal(b.contexto.guiaAtual.id, "desmame");
+});

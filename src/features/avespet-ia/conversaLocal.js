@@ -1,6 +1,7 @@
 // Avespet IA: memória transitória de conversação. Não persiste dados e não faz diagnóstico.
 import { normalizarTexto, responderComBiblioteca } from "./respostasComFontes.js";
 import { classificarRisco, respostaEducativa } from "./motorEducativo.js";
+import { identificarPerguntaIniciante, respostaGuiaIniciante, contextoGuiaIniciante } from "./guiaIniciante.js";
 
 export function contextoInicial(perfil = {}) {
   return { especie: "", filhote: false, idadeDias: null, nome: "", etapa: "inicio", assunto: "", faseInformada: "", casal: null };
@@ -56,6 +57,8 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
   const limpo = normalizarTexto(texto);
   const risco = classificarRisco(texto);
   if (risco !== "educativo") return { resposta: { ...respostaEducativa(perfil, texto), fontes: [] }, contexto };
+  const itemGuia = identificarPerguntaIniciante(texto);
+  if (itemGuia) return { contexto: contextoGuiaIniciante(contextoAnterior, itemGuia), resposta: respostaGuiaIniciante(itemGuia), localSomente: true };
   if (saudacaoSimples(texto)) {
     const agradecimento = /^(obrigad[oa]|muito obrigad[oa]|valeu)\b/.test(limpo);
     return { ...retorno("Avespet IA", agradecimento ? "Por nada! 🦜" : "Olá! Tudo bem? 🦜 Como posso ajudar você hoje?", contexto), localSomente: true };

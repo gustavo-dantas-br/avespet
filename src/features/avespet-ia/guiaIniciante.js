@@ -153,3 +153,15 @@ export const GUIA_INICIANTE = [
 ];
 export const PERGUNTAS_INICIANTE = GUIA_INICIANTE.flatMap(grupo => grupo.perguntas);
 export function buscarPerguntaIniciante(id) { return PERGUNTAS_INICIANTE.find(item => item.id === id) || null; }
+
+export function identificarPerguntaIniciante(texto) {
+  const normalizar = valor => String(valor || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+  const chave = normalizar(texto);
+  return chave ? PERGUNTAS_INICIANTE.find(item => normalizar(item.pergunta) === chave) || null : null;
+}
+export function respostaGuiaIniciante(item) {
+  return { tipo: "conversa", titulo: "Guia para iniciantes", mensagem: item.resposta, fontes: [], aviso: "", guia: true, guiaId: item.id };
+}
+export function contextoGuiaIniciante(contexto, item) {
+  return { ...contexto, guiaAtual: { id: item.id, pergunta: item.pergunta }, etapa: "guia_iniciante" };
+}
