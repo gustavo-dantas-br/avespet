@@ -79,6 +79,11 @@ Deno.serve(async (req) => {
 
 
   const body = await req.json().catch(() => ({}));
+  if(body?.action==="email_usage"){
+    const {data,error}=await adminClient.rpc("master_infra_email_summary",{p_actor:authData.user.id});
+    if(error)return json({error:"Consumo de e-mails indisponível"},503,origin);
+    return json({usage:data},200,origin);
+  }
   if(body?.action==="ia_usage"){
     const {data,error}=await adminClient.rpc("master_infra_ia_summary",{p_actor:authData.user.id});
     if(error)return json({error:"Consumo IA indisponível"},503,origin);
