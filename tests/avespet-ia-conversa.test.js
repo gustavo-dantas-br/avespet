@@ -150,3 +150,29 @@ test("apresentação de casal de 2023 não carrega idade ou fase de filhote ante
  assert.equal(c.contexto.filhote, false);
  assert.equal(c.contexto.assunto, "casal");
 });
+
+test("casal novo não herda espécie de outra ave e mantém mutações ao responder", () => {
+ const a = conversarLocal(perfil, "Tenho uma calopsita de 30 dias", contextoInicial());
+ const b = conversarLocal(perfil, "tenho um casal macho violeta e femea azul eles saoo 2023", a.contexto);
+ assert.equal(b.contexto.especie, "");
+ const c = conversarLocal(perfil, "São ring neck", b.contexto);
+ assert.equal(c.contexto.especie, "Ring Neck");
+ assert.equal(c.contexto.casal.macho, "violeta");
+ assert.equal(c.contexto.casal.femea, "azul");
+ assert.doesNotMatch(c.resposta.mensagem, /papinha|filhote ou adulto/);
+ const d = conversarLocal(perfil, "quais filhotes podem nascer?", c.contexto);
+ assert.equal(d.contexto.etapa, "casal_genetica");
+ assert.match(d.resposta.mensagem, /calculadora genética/);
+ assert.doesNotMatch(d.resposta.mensagem, /\d+\s*%/);
+});
+test("reprodução e atualização de mutação preservam os dados do casal", () => {
+ const a = conversarLocal(perfil, "Tenho um casal ring neck macho violeta e femea azul de 2023", contextoInicial());
+ const b = conversarLocal(perfil, "a femea e cobalto", a.contexto);
+ assert.equal(b.contexto.casal.macho, "violeta");
+ assert.equal(b.contexto.casal.femea, "cobalto");
+ assert.equal(b.contexto.casal.anoNascimento, 2023);
+ const c = conversarLocal(perfil, "quando colocar o ninho?", b.contexto);
+ assert.equal(c.contexto.etapa, "casal_reproducao");
+ assert.equal(c.contexto.filhote, false);
+ assert.doesNotMatch(c.resposta.mensagem, /papinha/);
+});

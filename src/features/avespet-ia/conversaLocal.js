@@ -10,15 +10,15 @@ export function extrairContexto(texto, anterior = contextoInicial()) {
   let proximo = { ...anterior };
   const mencionaCasal = /\b(casal|casais|par reprodutor)\b/.test(limpo);
   const mencionaFilhote = /\b(filhote|filhotinho|bebe|recem nascid[oa])\b/.test(limpo);
-  const apresentaCasal = mencionaCasal && /\b(tenho|comprei|ganhei|adotei|outro|macho|femea)\b/.test(limpo) && !mencionaFilhote;
+  const apresentaCasal = mencionaCasal && /\b(tenho|comprei|ganhei|adotei|outro|novo)\b/.test(limpo) && !mencionaFilhote;
   const outraAve = /\b(tenho|comprei|ganhei|adotei|peguei|estou com)\s+(?:um|uma)\s+(?:outro|outra|novo|nova)\b/.test(limpo);
   const focoCasal = mencionaCasal && !mencionaFilhote;
   if (apresentaCasal || (focoCasal && anterior.assunto !== "casal")) {
-    proximo = { ...contextoInicial(), especie: anterior.especie, assunto: "casal", etapa: "casal" };
+    proximo = { ...contextoInicial(), assunto: "casal", etapa: "casal" };
   } else if (outraAve || (mencionaFilhote && anterior.assunto === "casal" && !mencionaCasal && /\b(tenho|comprei|ganhei|peguei|adotei)\b/.test(limpo))) {
     proximo = { ...contextoInicial(), assunto: "ave" };
   }
-  if (focoCasal) {
+  if (focoCasal || (proximo.assunto === "casal" && !mencionaFilhote && /\b(macho|femea|pai|mae)\b/.test(limpo))) {
     const cores = "violeta|azul|verde|lutino|albino|cremino|cobalto|turquesa|cinza|canela|pallid";
     const macho = limpo.match(new RegExp("\\b(?:macho|pai)\\s+(?:e\\s+)?("+cores+")\\b"));
     const femea = limpo.match(new RegExp("\\b(?:femea|mae)\\s+(?:e\\s+)?("+cores+")\\b"));
@@ -37,7 +37,7 @@ export function extrairContexto(texto, anterior = contextoInicial()) {
   else if (/\b(calopsita|calopsitas)\b/.test(limpo)) proximo.especie = "Calopsita";
   if (mencionaFilhote && proximo.assunto !== "casal") { proximo.filhote = true; proximo.faseInformada = "filhote"; }
   const idade = limpo.match(/\b(\d{1,4})\s*(dias?|d)\b/);
-  if (idade && Number(idade[1]) <= 3000) proximo.idadeDias = Number(idade[1]);
+  if (idade && proximo.assunto !== "casal" && Number(idade[1]) <= 3000) proximo.idadeDias = Number(idade[1]);
   // Idade de poucos dias de uma ave identificada implica filhote.
   if (proximo.assunto !== "casal" && proximo.especie && proximo.idadeDias !== null && proximo.idadeDias <= 120) { proximo.filhote = true; proximo.faseInformada = "filhote"; }
   const nome = limpo.match(/\b(?:nome (?:dele|dela) e|chama(?:-se)?|se chama)\s+([a-z]{2,22})\b/);
@@ -73,6 +73,28 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
     const info = [c.macho && "macho " + c.macho, c.femea && "fêmea " + c.femea].filter(Boolean).join(" e ");
     const desc = "um casal" + (contexto.especie && /\b(ring\s*neck|ringneck|calopsita)\b/.test(limpo) ? " de " + contexto.especie : "") + (info ? ", " + info : "") + (c.anoNascimento ? ", de " + c.anoNascimento : "");
     return { ...retorno("Avespet IA", "Entendi! Você tem " + desc + ". 🦜\n\nQuer conversar sobre reprodução, manejo do casal ou genética dos possíveis filhotes?", contexto), localSomente: true };
+  }
+
+  if (contexto.assunto === "casal") {
+    const c = contexto.casal || {};
+    const genetica = /\b(genetica|mutacoes?|cruzamento|cores?|nascer|portador|portadores|heranca)\b/.test(limpo);
+    const reproducao = /\b(reproducao|reproduzir|acasalar|ninho|postura|ovos?|chocar|incubacao)\b/.test(limpo) || /^(reproducao|manejo)$/.test(limpo);
+    if (genetica) {
+      contexto.etapa = "casal_genetica";
+      const pergunta = !contexto.especie ? "Qual é a espécie do casal?" :
+        !c.macho || !c.femea ? "Quais são as mutações do macho e da fêmea?" :
+        "Você conhece os portadores e, quando aplicável, os fatores simples ou duplos das duas aves?";
+      return retorno("Genética do casal", "Podemos estudar esse cruzamento na calculadora genética do Avespet. Para prever as mutações corretamente, precisamos confirmar os dados dos pais. " + pergunta, contexto);
+    }
+    if (reproducao) {
+      contexto.etapa = "casal_reproducao";
+      return retorno("Reprodução do casal", "Podemos conversar sobre o preparo do casal, comportamento, ambiente e acompanhamento dos ovos. " + (!contexto.especie ? "Qual é a espécie do casal?" : "Eles já reproduziram juntos ou será a primeira temporada?"), contexto);
+    }
+    if (/^(?:(?:sao|e|eh|um|uma|casal de)\s+)?(?:ring\s*neck|ringneck|calopsitas?)$/.test(limpo)) {
+      return retorno("Avespet IA", "Entendi, é um casal de " + contexto.especie + ". Quer conversar sobre reprodução ou genética?", contexto);
+    }
+    // Nunca enviar um casal ao fluxo de alimentação neonatal por falta de uma resposta específica.
+    return retorno("Avespet IA", "Estou acompanhando as informações do seu casal. Conte o que você gostaria de saber sobre ele, e podemos consultar os guias ou a calculadora genética.", contexto);
   }
 
   // Apresentações compostas (nome + espécie + idade + papinha) devem ser compreendidas de uma vez.
