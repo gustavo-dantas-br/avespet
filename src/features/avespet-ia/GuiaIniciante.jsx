@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { BookOpen, ChevronDown, MessageCircle, Search } from "lucide-react";
 import { GUIA_INICIANTE, PERGUNTAS_INICIANTE } from "./guiaIniciante.js";
 import { normalizarTexto } from "./respostasComFontes.js";
+import GuiaVisual from "./GuiaVisual";
 
 export default function GuiaIniciante({ onPergunta, disabled = false }) {
   const [aberto, setAberto] = useState(true);
@@ -19,6 +20,7 @@ export default function GuiaIniciante({ onPergunta, disabled = false }) {
     {aberto && <div className="space-y-3 border-t border-[#E7EDE8] p-4">
       <label className="flex items-center gap-2 rounded-xl border border-[#D7E6DA] px-3 py-2"><Search size={18} className="shrink-0 text-emerald-700"/><input value={busca} onChange={e => setBusca(e.target.value)} className="min-w-0 w-full bg-transparent text-sm outline-none" placeholder="Buscar: gaiola, alimentação, banho..." aria-label="Buscar perguntas do guia"/></label>
       <div className="flex flex-wrap gap-2" aria-label="Categorias do guia">{[{id:"todos",titulo:"Todas"},...GUIA_INICIANTE].map(g => <button key={g.id} type="button" aria-pressed={categoria===g.id} onClick={() => setCategoria(g.id)} className={"rounded-full border px-3 py-1.5 text-xs font-semibold "+(categoria===g.id ? "border-emerald-600 bg-emerald-50 text-emerald-800" : "border-[#DEE7DF] text-[#586B5F]")}>{g.titulo}</button>)}</div>
+      {!termo && ["todos","ambiente"].includes(categoria) && <GuiaVisual onPergunta={onPergunta} disabled={disabled}/>}
       <div className="max-h-[360px] space-y-3 overflow-y-auto overscroll-contain pr-1">
       {grupos.map(g => <div key={g.id}><h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-[#607366]">{g.titulo}</h3><div className="grid gap-2 sm:grid-cols-2">{g.perguntas.map(p => <button type="button" key={p.id} disabled={disabled} onClick={() => onPergunta(p.id)} className="flex items-center gap-2 rounded-xl border border-[#D7E6DA] bg-[#F9FCF9] px-3 py-3 text-left text-sm font-medium text-[#234332] hover:bg-emerald-50 disabled:opacity-50"><MessageCircle size={16} className="shrink-0 text-emerald-700"/><span>{p.pergunta}</span></button>)}</div></div>)}
       {!grupos.length && <p className="text-sm text-[#607366]">Nenhuma pergunta encontrada. Tente outro termo ou categoria.</p>}
