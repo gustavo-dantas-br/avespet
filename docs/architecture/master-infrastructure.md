@@ -121,3 +121,7 @@ RPC master_infra_traffic_summary reutiliza visitas_diarias e não escreve dados 
 ## Fase 2 — Disponibilidade interna
 
 Sondas HTTP fixas e sem credenciais, via pg_net, a cada 15 minutos; coleta um minuto depois, retenção de 90 dias. Site espera 200 com marcador Avespet; gateways Auth e REST esperam 401 sem chave (alcance do gateway apenas, não login funcional). Registra código, resultados e duração aproximada incluindo fila. Sondas sem resposta após cinco minutos tornam-se unknown; última medição com mais de 30 minutos é desatualizada na UI. Proporção das sondas bem-sucedidas não é SLA; interrupções do Supabase podem impedir a própria coleta. Dois cron jobs privados; RPC master_infra_health_summary exclusiva de service_role com checagem de master_admins. Sem credenciais, corpo de respostas ou IPs em histórico persistente. Sem alerta externo nesta fase. SQL precede função e interface.
+
+## Fase 2 — Histórico de deploys
+
+Ação deployment_history usa GET /v6/deployments com teamId e projectId fixos do Avespet, limite de 50 e timeout de 8s. Reutiliza AVESPET_VERCEL_READ_TOKEN somente no servidor, depois da checagem Master. Retorna metadados mínimos; interface filtra todos, produção, homologação e falhas. Não grava cópia no banco, não promove versões, não executa deploy, não expõe credenciais. Contadores se referem à amostra retornada; READY não implica domínio ativo ou ausência de falhas em execução. Atualização a cada 5 minutos com aba ativa. Histórico anterior no painel Vercel.

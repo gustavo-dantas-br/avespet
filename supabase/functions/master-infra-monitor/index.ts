@@ -79,6 +79,29 @@ Deno.serve(async (req) => {
 
 
   const body = await req.json().catch(() => ({}));
+  if(body?.action==="deployment_history"){
+    const key=Deno.env.get("AVESPET_VERCEL_READ_TOKEN");
+    if(!key)return json({error:"Integração Vercel não configurada"},503,origin);
+    try{
+      const endpoint=new URL("https://api.vercel.com/v6/deployments");
+      endpoint.searchParams.set("teamId","team_U7fxAgYIeol47gm6WHtsGvVW");
+      endpoint.searchParams.set("projectId","prj_2caK4ylyNyjy4HhrguTuR4V7xJ0j");
+      endpoint.searchParams.set("limit","50");
+      const response=await fetch(endpoint,{headers:{Authorization:"Bearer "+key},signal:AbortSignal.timeout(8000)});
+      if(!response.ok)throw Error("provider");
+      const result=await response.json();
+      if(!Array.isArray(result.deployments))throw Error("format");
+      const rows=result.deployments.slice(0,50).filter((d:any)=>d.name==="avespet"&&typeof (d.uid??d.id)==="string").map((d:any)=>({
+         id:d.uid??d.id,created:Number(d.created??d.createdAt)||null,
+         target:d.target==="production"?"production":"preview",
+         state:String(d.state??d.readyState??"UNKNOWN").slice(0,32),
+         branch:String(d.meta?.githubCommitRef??"").slice(0,150),
+         commit:String(d.meta?.githubCommitSha??"").slice(0,64),
+         url:typeof d.url==="string"&&/^[a-z0-9-]+\.vercel\.app$/i.test(d.url)?"https://"+d.url:null
+      }));
+      return json({usage:{rows,more:Boolean(result.pagination?.next),collected_at:new Date().toISOString()}},200,origin);
+    }catch{return json({error:"Histórico Vercel indisponível"},503,origin);}
+  }
   if(body?.action==="health_usage"){
     const {data,error}=await adminClient.rpc("master_infra_health_summary",{p_actor:authData.user.id});
     if(error)return json({error:"Disponibilidade indisponível"},503,origin);
