@@ -5,6 +5,7 @@ const AdsModeration = React.lazy(() => import("./AdsModeration"));
 const LostBirdsModeration = React.lazy(() => import("./LostBirdsModeration"));
 const BirdsManagement = React.lazy(() => import("./BirdsManagement"));
 const BillingManagement = React.lazy(() => import("./BillingManagement"));
+const InfrastructurePanel = React.lazy(() => import("./InfrastructurePanel"));
 const MasterAudit = React.lazy(() => import("./MasterAudit"));
 const SupportOperations = React.lazy(() => import("./SupportOperations"));
 const MasterInboxPanel = React.lazy(() => import("./MasterInboxPanel"));
@@ -27,6 +28,7 @@ const preloadModules = {
   support: () => import("./SupportOperations"),
   communications: () => import("./MasterInboxPanel"),
   "email-automations": () => import("./EmailAutomations"),
+  infrastructure: () => import("./InfrastructurePanel"),
   settings: () => import("./MasterAudit"),
 };
 const preloadSection = (id) => { preloadModules[id]?.().catch(() => {}); };
@@ -41,6 +43,7 @@ const navigation = [
   { id: "support", label: "Suporte operacional", icon: LifeBuoy, description: "Triagem de casos e preparação manual de e-mails de atendimento" },
   { id: "communications", label: "Central de Comunicação", icon: Mail, description: "Caixas Suporte e Financeiro, novos e-mails e respostas" },
   { id: "email-automations", label: "Automações de e-mail", icon: Workflow, description: "Reativação, inscrições, envios e conteúdos" },
+  { id: "infrastructure", label: "Infraestrutura", icon: Activity, description: "Capacidade e monitoramento técnico" },
   { id: "settings", label: "Auditoria e segurança", icon: Settings, description: "Histórico de ações administrativas" },
 ];
 
@@ -181,7 +184,7 @@ export default function MasterApp({ user, onLogout }) {
         <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "#d9b45b", color: "#182b45" }}><ShieldCheck size={22} /></div>
         <div><div className="font-bold tracking-wide text-white">AVESPET <span style={{ color: "#d9b45b" }}>MASTER</span></div><div className="mt-0.5 text-[11px] text-slate-400">Administração da plataforma</div></div>
       </div>
-      <nav className="flex-1 space-y-1 px-3 py-5" aria-label="Navegação Master">
+      <nav className="min-h-0 flex-1 overflow-y-auto space-y-1 px-3 py-5" aria-label="Navegação Master">
         <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Painel administrativo</p>
         {navigation.map((item) => {
           const Icon = item.icon;
@@ -217,6 +220,7 @@ export default function MasterApp({ user, onLogout }) {
                 : id === "birds" ? <BirdsManagement />
                 : id === "billing" ? <BillingManagement />
                 : id === "support" ? <SupportOperations onPrepareEmail={openSupportDraft} />
+                : id === "infrastructure" ? <InfrastructurePanel active={activeSection === id} />
                 : id === "settings" ? <MasterAudit />
                 : id === "communications" ? <MasterInboxPanel user={user} initialDraft={supportDraft} onDraftUsed={onDraftUsed} />
                 : id === "email-automations" ? <EmailAutomations />
@@ -265,7 +269,7 @@ export default function MasterApp({ user, onLogout }) {
                 </article>
               </section>
             </>
-          ) : (
+          ) : activeSection === "infrastructure" ? null : (
             <section className="mx-auto max-w-3xl rounded-2xl border bg-white p-6 shadow-sm sm:p-8" style={{ borderColor: "#e9edf2" }}>
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: "#eef2f7", color: "#29466b" }}>{React.createElement(selected.icon, { size: 23 })}</div>
               <p className="mt-6 text-[10px] font-bold uppercase tracking-[.2em]" style={{ color: "#a27b2e" }}>Módulo Master</p><h1 className="mt-2 text-2xl font-bold text-slate-900">{selectedPlaceholder?.title || selected.label}</h1><p className="mt-3 text-sm leading-6 text-slate-500">{selectedPlaceholder?.description || selected.description}</p>
