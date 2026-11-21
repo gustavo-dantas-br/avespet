@@ -22,7 +22,7 @@ import { criarAnuncioPerdida } from "./features/aves-perdidas/services/avesPerdi
 
 import {
   listRows, saveRow, deleteRow, uid, getPerfil, savePerfil, getPerfilPrivado, savePerfilPrivado, listAnuncios, saveAnuncio, deleteAnuncio,
-  checkIsAdmin, listTodosAnunciosParaAdmin, updateAnuncioStatus, listPerfisPublicos,
+  checkIsAdmin, listTodosAnunciosParaAdmin, updateAnuncioStatus, listPerfisAdmin,
   listPerdidas, savePerdida, deletePerdida, buscarPerdidaPorAnilha,
   listAchadosAnilha, atualizarStatusAchado,
   listAnunciosAvesPerdidasAdmin, atualizarStatusAnuncioAvePerdida,
@@ -304,7 +304,7 @@ function AppInner({ user, onLogout }) {
       if (admin) {
         const [todos, perfis, achadosData, perdidasData] = await Promise.all([
           listTodosAnunciosParaAdmin(),
-          listPerfisPublicos(),
+          listPerfisAdmin(),
           listAchadosAnilha().catch(() => []),
           listAnunciosAvesPerdidasAdmin().catch(() => []),
         ]);
