@@ -19,7 +19,7 @@ begin
  'failed_month',(select count(*) from events where status='failed' and created_at>=month_start),
  'uncertain_month',(select count(*) from events where status='uncertain' and created_at>=month_start),
  'categories',(select jsonb_agg(jsonb_build_object('category',c.category,'accepted_month',(select count(*) from accepted a where a.category=c.category and a.accepted_at>=month_start),'failed_month',(select count(*) from events e where e.category=c.category and e.status='failed' and e.created_at>=month_start)) order by c.category) from categories c),
- 'daily',(select coalesce(jsonb_agg(to_jsonb(d) order by d.day),'[]'::jsonb) from (select (accepted_at at time zone 'America/Sao_Paulo')::date day,count(*) accepted from accepted where accepted_at>=day_start-interval '29 days' group by 1) d)) into result;
+ 'daily',(select coalesce(jsonb_agg(to_jsonb(d) order by d.day_date),'[]'::jsonb) from (select (accepted_at at time zone 'America/Sao_Paulo')::date as day_date,count(*) as accepted from accepted where accepted_at>=day_start-interval '29 days' group by 1) d)) into result;
  return result;
 end $$;
 revoke all on function public.master_infra_email_summary(uuid) from public,anon,authenticated;
