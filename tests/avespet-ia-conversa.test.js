@@ -133,3 +133,20 @@ test("tremor com idade conhecida não repete fase", () => {
 test("tremor com dificuldade respiratória é urgente", () => {
  assert.equal(conversarLocal(perfil, "Meu ring neck treme e tem dificuldade para respirar", contextoInicial()).resposta.tipo,"urgente");
 });
+
+test("apresentação de casal de 2023 não carrega idade ou fase de filhote anterior", () => {
+ const a = conversarLocal(perfil, "Tenho ring neck de 30 dias", contextoInicial());
+ const b = conversarLocal(perfil, "tenho um casal macho violeta e femea azul eles saoo 2023", a.contexto);
+ assert.equal(b.contexto.assunto, "casal");
+ assert.equal(b.contexto.filhote, false);
+ assert.equal(b.contexto.idadeDias, null);
+ assert.equal(b.contexto.casal.macho, "violeta");
+ assert.equal(b.contexto.casal.femea, "azul");
+ assert.equal(b.contexto.casal.anoNascimento, 2023);
+ assert.equal(b.localSomente, true);
+ assert.match(b.resposta.mensagem, /reprodução/);
+ assert.doesNotMatch(b.resposta.mensagem, /papinha|desmame|30 dias/);
+ const c = conversarLocal(perfil, "quais filhotes podem nascer?", b.contexto);
+ assert.equal(c.contexto.filhote, false);
+ assert.equal(c.contexto.assunto, "casal");
+});

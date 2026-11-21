@@ -3,18 +3,43 @@ import { normalizarTexto, responderComBiblioteca } from "./respostasComFontes.js
 import { classificarRisco, respostaEducativa } from "./motorEducativo.js";
 
 export function contextoInicial(perfil = {}) {
-  return { especie: "", filhote: false, idadeDias: null, nome: "", etapa: "inicio" };
+  return { especie: "", filhote: false, idadeDias: null, nome: "", etapa: "inicio", assunto: "", faseInformada: "", casal: null };
 }
 export function extrairContexto(texto, anterior = contextoInicial()) {
   const limpo = normalizarTexto(texto);
-  const proximo = { ...anterior };
+  let proximo = { ...anterior };
+  const mencionaCasal = /\b(casal|casais|par reprodutor)\b/.test(limpo);
+  const mencionaFilhote = /\b(filhote|filhotinho|bebe|recem nascid[oa])\b/.test(limpo);
+  const apresentaCasal = mencionaCasal && /\b(tenho|comprei|ganhei|adotei|outro|macho|femea)\b/.test(limpo) && !mencionaFilhote;
+  const outraAve = /\b(tenho|comprei|ganhei|adotei|peguei|estou com)\s+(?:um|uma)\s+(?:outro|outra|novo|nova)\b/.test(limpo);
+  const focoCasal = mencionaCasal && !mencionaFilhote;
+  if (apresentaCasal || (focoCasal && anterior.assunto !== "casal")) {
+    proximo = { ...contextoInicial(), especie: anterior.especie, assunto: "casal", etapa: "casal" };
+  } else if (outraAve || (mencionaFilhote && anterior.assunto === "casal" && !mencionaCasal && /\b(tenho|comprei|ganhei|peguei|adotei)\b/.test(limpo))) {
+    proximo = { ...contextoInicial(), assunto: "ave" };
+  }
+  if (focoCasal) {
+    const cores = "violeta|azul|verde|lutino|albino|cremino|cobalto|turquesa|cinza|canela|pallid";
+    const macho = limpo.match(new RegExp("\\b(?:macho|pai)\\s+(?:e\\s+)?("+cores+")\\b"));
+    const femea = limpo.match(new RegExp("\\b(?:femea|mae)\\s+(?:e\\s+)?("+cores+")\\b"));
+    const ano = limpo.match(/\b(20[0-2]\d)\b/);
+    proximo.casal = { ...(proximo.casal || {}), ...(macho ? { macho: macho[1] } : {}), ...(femea ? { femea: femea[1] } : {}), ...(ano ? { anoNascimento: Number(ano[1]) } : {}) };
+    proximo.filhote = false;
+    proximo.idadeDias = null;
+    if ((ano && Number(ano[1]) <= new Date().getFullYear()-2) || /\badult[oa]s?\b/.test(limpo)) proximo.faseInformada = "adulto";
+  } else if (/\badult[oa]s?\b/.test(limpo) && !mencionaFilhote) {
+    proximo.filhote = false;
+    proximo.idadeDias = null;
+    proximo.faseInformada = "adulto";
+    proximo.etapa = "adulto";
+  }
   if (/\b(ring\s*neck|ringneck|periquito de colar)\b/.test(limpo)) proximo.especie = "Ring Neck";
   else if (/\b(calopsita|calopsitas)\b/.test(limpo)) proximo.especie = "Calopsita";
-  if (/\b(filhote|filhotinho|bebe|recem nascid[oa])\b/.test(limpo)) proximo.filhote = true;
+  if (mencionaFilhote && proximo.assunto !== "casal") { proximo.filhote = true; proximo.faseInformada = "filhote"; }
   const idade = limpo.match(/\b(\d{1,4})\s*(dias?|d)\b/);
   if (idade && Number(idade[1]) <= 3000) proximo.idadeDias = Number(idade[1]);
   // Idade de poucos dias de uma ave identificada implica filhote.
-  if (proximo.especie && proximo.idadeDias !== null && proximo.idadeDias <= 120) proximo.filhote = true;
+  if (proximo.assunto !== "casal" && proximo.especie && proximo.idadeDias !== null && proximo.idadeDias <= 120) { proximo.filhote = true; proximo.faseInformada = "filhote"; }
   const nome = limpo.match(/\b(?:nome (?:dele|dela) e|chama(?:-se)?|se chama)\s+([a-z]{2,22})\b/);
   if (nome) proximo.nome = nome[1];
   return proximo;
@@ -41,6 +66,13 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
       ? "O tremor é constante ou acontece de vez em quando?"
       : "Ele é filhote ou adulto? O tremor é constante ou acontece de vez em quando?";
     return { contexto, localSomente: true, resposta: { tipo: "atencao", titulo: "Vamos entender esse tremor", mensagem: "Tremores podem ter várias causas, como frio, medo ou problemas de saúde.\n\n" + pergunta + "\n\nSe houver fraqueza intensa, recusa de alimento ou dificuldade para respirar, procure atendimento veterinário imediatamente. Tremores persistentes também precisam de avaliação.", aviso: "", fontes: [] } };
+  }
+
+  if (contexto.assunto === "casal" && /\b(tenho|comprei|ganhei|adotei)\b.*\bcasal\b/.test(limpo) && !/\b(filhote|filhotes)\b/.test(limpo) && !/\?/.test(texto) && !/\b(como|quais|qual|quanto|quando|pode|sera)\b/.test(limpo)) {
+    const c = contexto.casal || {};
+    const info = [c.macho && "macho " + c.macho, c.femea && "fêmea " + c.femea].filter(Boolean).join(" e ");
+    const desc = "um casal" + (contexto.especie && /\b(ring\s*neck|ringneck|calopsita)\b/.test(limpo) ? " de " + contexto.especie : "") + (info ? ", " + info : "") + (c.anoNascimento ? ", de " + c.anoNascimento : "");
+    return { ...retorno("Avespet IA", "Entendi! Você tem " + desc + ". 🦜\n\nQuer conversar sobre reprodução, manejo do casal ou genética dos possíveis filhotes?", contexto), localSomente: true };
   }
 
   // Apresentações compostas (nome + espécie + idade + papinha) devem ser compreendidas de uma vez.

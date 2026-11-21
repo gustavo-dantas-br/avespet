@@ -15,7 +15,7 @@ export async function conversarComModelo({ pergunta, historico = [], contexto = 
     body: {
       mensagem: texto,
       historico: ultimas,
-      contexto: { especie: String(contexto.especie || "").slice(0, 40), filhote: contexto.filhote === true ? true : null, idadeDias: contexto.idadeDias ?? null, etapa: String(contexto.etapa || "").slice(0, 45) },
+      contexto: { especie: String(contexto.especie || "").slice(0, 40), filhote: contexto.filhote === true ? true : null, idadeDias: contexto.idadeDias ?? null, etapa: String(contexto.etapa || "").slice(0, 45), assunto: contexto.assunto || "", faseInformada: contexto.faseInformada || "", casal: contexto.casal || null },
     },
   });
   if (error) {
