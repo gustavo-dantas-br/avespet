@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Bird, BookOpen, CalendarDays, ChevronDown, ChevronRight, Dna, Egg, GraduationCap, HeartHandshake, Info, MessageCircle, Send, ShieldCheck, Sparkles, UserRound, Leaf } from "lucide-react";
 import { FASES } from "./motorEducativo";
 import PerfilMinhaAve from "./PerfilMinhaAve";
-import { PERFIL_VAZIO, idadePerfil, perfilDaAve, contextoDoPerfil, lerPerfilLocal, salvarPerfilLocal, validarEdicao, normalizarPerfil } from "./perfilAve.js";
+import { PERFIL_VAZIO, idadePerfil, perfilDaAve, contextoDoPerfil, lerPerfilLocal, lerPerfilPorAve, salvarPerfilLocal, validarEdicao, normalizarPerfil } from "./perfilAve.js";
 import { conversarLocal, contextoInicial } from "./conversaLocal";
 import { CHAT_GENERATIVO_ATIVO, conversarComModelo, verificarDisponibilidadeGemini } from "./chatGenerativo";
 import DiarioFilhote from "./DiarioFilhote";
@@ -90,7 +90,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
   const idade = idadePerfil(perfilSalvo);
   const aveAtiva = aves.find(a=>String(a.id)===aveIdSalvo)||null;
   useEffect(() => {
-    const salvo = lerPerfilLocal(userId, typeof window !== "undefined" ? window.localStorage : null);
+    let salvo=null; try {salvo=lerPerfilLocal(userId,typeof window !== "undefined"?window.localStorage:null);}catch{}
     const p = salvo?.perfil || inicial;
     setPerfil(p); setPerfilSalvo(p); setAveId(salvo?.aveId||""); setAveIdSalvo(salvo?.aveId||"");
     setContexto(salvo ? contextoDoPerfil(p) : contextoInicial()); setHistorico([]); setPerfilErro("");
@@ -100,7 +100,8 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
     if(enviando)return;
     const ave=aves.find(a=>String(a.id)===id);
     setAveId(id);
-    setPerfil(atual=>ave?perfilDaAve(ave,atual.nivel,id===aveIdSalvo?perfilSalvo:{}):{...inicial,nivel:atual.nivel});
+    let anterior={}; try {anterior=lerPerfilPorAve(userId,id,window.localStorage);}catch{}
+    setPerfil(atual=>ave?perfilDaAve(ave,atual.nivel,anterior):{...inicial,...anterior,nivel:atual.nivel});
     setPerfilErro(""); setPerfilStatus("Seleção alterada. Salve para aplicar ao chat.");
   };
   const salvarPerfil = () => {
@@ -111,7 +112,11 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
     const p=normalizarPerfil(perfil);
     try { salvarPerfilLocal(userId,p,aveId,window.localStorage); }
     catch {setPerfilErro("Não foi possível gravar neste navegador. Verifique o armazenamento e tente novamente.");return;}
-    setPerfilSalvo(p);setAveIdSalvo(aveId);setPerfil(p);setContexto(contextoDoPerfil(p));setHistorico([]);setErro("");setPerfilErro("");
+    const mudouAve=aveId!==aveIdSalvo||p.especie!==perfilSalvo.especie||p.nome!==perfilSalvo.nome;
+    setPerfilSalvo(p);setAveIdSalvo(aveId);setPerfil(p);
+    setContexto(atual=>mudouAve?contextoDoPerfil(p):{...atual,...contextoDoPerfil(p)});
+    if(mudouAve){setHistorico([]);setPergunta("");}
+    setErro("");setPerfilErro("");
     setPerfilStatus("Perfil salvo neste navegador e aplicado à conversa.");
   };
 

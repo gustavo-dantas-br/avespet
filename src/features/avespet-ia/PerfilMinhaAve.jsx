@@ -26,7 +26,7 @@ export default function PerfilMinhaAve({perfil,aves,aveId,onSelecionar,onAtualiz
    </div></div>
    {erro&&<p role="alert" className="text-xs font-semibold text-red-700">{erro}</p>}
    <button type="button" disabled={disabled} onClick={onSalvar} className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"><Save size={17}/> Salvar e usar no chat</button>
-   <p role="status" className="text-xs text-[#496754]">{status||"Ao salvar, o contexto da conversa será reiniciado para evitar misturar aves. A gravação nesta etapa é neste navegador, por conta; sincronização em outros dispositivos ainda não está ativa."}</p>
+   <p role="status" className="text-xs text-[#496754]">{status||"Ao trocar de ave e salvar, uma nova conversa é iniciada. Seus dados educativos são mantidos por ave. A gravação nesta etapa é neste navegador, por conta; sincronização em outros dispositivos ainda não está ativa."}</p>
    <p className="text-xs leading-5 text-[#607366]">O Gemini, quando autorizado, recebe mensagens e informações educativas necessárias (espécie, idade e fase). Não envie dados pessoais sensíveis. O perfil não comprova diagnóstico nem maturidade reprodutiva.</p>
   </div>}
  </section>;

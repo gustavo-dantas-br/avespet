@@ -32,9 +32,20 @@ export function lerPerfilLocal(userId, storage) {
  if(!userId||!storage)return null;
  try {const v=JSON.parse(storage.getItem("avespet:ia:perfil:v1:"+userId)||"null");return v&&v.v===1?{perfil:normalizarPerfil(v.perfil),aveId:texto(v.aveId,80)}:null;} catch{return null;}
 }
+export function lerPerfilPorAve(userId, aveId, storage) {
+ if(!userId||!storage)return {};
+ try {const v=JSON.parse(storage.getItem("avespet:ia:perfil:v1:"+userId)||"null"); return v?.perfis?.[aveId||"manual"] ? normalizarPerfil(v.perfis[aveId||"manual"]) : (v?.aveId===aveId ? normalizarPerfil(v.perfil) : {});} catch{return {};}
+}
 export function salvarPerfilLocal(userId,perfil,aveId,storage) {
  if(!userId||!storage)throw Error("Armazenamento indisponível");
- storage.setItem("avespet:ia:perfil:v1:"+userId,JSON.stringify({v:1,perfil:normalizarPerfil(perfil),aveId:texto(aveId,80)}));
+ const chave="avespet:ia:perfil:v1:"+userId;
+ let anterior=null;
+ try {anterior=JSON.parse(storage.getItem(chave)||"null");} catch{}
+ const perfis=Object.assign(Object.create(null),anterior?.perfis||{});
+ if(anterior?.v===1&&anterior?.perfil)perfis[anterior.aveId||"manual"]=normalizarPerfil(anterior.perfil);
+ const id=texto(aveId,80), p=normalizarPerfil(perfil);
+ perfis[id||"manual"]=p;
+ storage.setItem(chave,JSON.stringify({v:1,perfil:p,aveId:id,perfis}));
 }
 export function validarEdicao(p) {
  if(p.nascimento&&idadeEmDias(p.nascimento)===null)return "Informe uma data de nascimento válida, sem datas futuras.";
