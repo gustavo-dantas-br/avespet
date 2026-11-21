@@ -1,6 +1,7 @@
 // Avespet IA: memória transitória de conversação. Não persiste dados e não faz diagnóstico.
 import { normalizarTexto, responderComBiblioteca } from "./respostasComFontes.js";
 import { classificarRisco, respostaEducativa } from "./motorEducativo.js";
+import { consultaGaiola } from "./dimensoesGaiola.js";
 import { identificarPerguntaIniciante, respostaGuiaIniciante, contextoGuiaIniciante } from "./guiaIniciante.js";
 
 export function contextoInicial(perfil = {}) {
@@ -58,7 +59,9 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
   const risco = classificarRisco(texto);
   if (risco !== "educativo") return { resposta: { ...respostaEducativa(perfil, texto), fontes: [] }, contexto };
   const itemGuia = identificarPerguntaIniciante(texto);
-  if (itemGuia) return { contexto: contextoGuiaIniciante(contextoAnterior, itemGuia), resposta: respostaGuiaIniciante(itemGuia), localSomente: true };
+  if (itemGuia) return { contexto: contextoGuiaIniciante(contextoAnterior, itemGuia), resposta: respostaGuiaIniciante(itemGuia, contextoAnterior), localSomente: true };
+  const dimensoes = consultaGaiola(texto, contexto);
+  if (dimensoes) return { contexto, localSomente: true, resposta: { tipo: "conversa", titulo: "Dimensões de gaiola e viveiro", mensagem: dimensoes.mensagem, fontes: dimensoes.fontes, aviso: "" } };
   if (saudacaoSimples(texto)) {
     const agradecimento = /^(obrigad[oa]|muito obrigad[oa]|valeu)\b/.test(limpo);
     return { ...retorno("Avespet IA", agradecimento ? "Por nada! 🦜" : "Olá! Tudo bem? 🦜 Como posso ajudar você hoje?", contexto), localSomente: true };

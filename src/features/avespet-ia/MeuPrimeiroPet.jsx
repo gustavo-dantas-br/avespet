@@ -152,7 +152,7 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
     const item = buscarPerguntaIniciante(id);
     if (!item) return;
     setContexto(atual => contextoGuiaIniciante(atual, item));
-    setHistorico(atual => [...atual, { pergunta: item.pergunta, resposta: respostaGuiaIniciante(item) }].slice(-60));
+    setHistorico(atual => [...atual, { pergunta: item.pergunta, resposta: respostaGuiaIniciante(item, contexto) }].slice(-60));
     requestAnimationFrame(() => secaoChatRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   };
   const abrirSugestao = (texto) => {

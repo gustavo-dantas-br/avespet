@@ -203,3 +203,14 @@ test("pergunta educativa sobre filhotes não altera o contexto do casal", () => 
  assert.deepEqual(b.contexto.casal, a.contexto.casal);
  assert.equal(b.contexto.guiaAtual.id, "desmame");
 });
+
+import { consultaGaiola } from "../src/features/avespet-ia/dimensoesGaiola.js";
+test("gaiola por espécie usa dimensões e fontes, sem Gemini", () => {
+ const r=conversarLocal(perfil,"qual tamanho ideal de gaiola para ring neck?",contextoInicial());
+ assert.equal(r.localSomente,true);
+ assert.match(r.resposta.mensagem,/120 × 80 × 120 cm/);
+ assert.match(r.resposta.mensagem,/300 × 120 × 180 cm/);
+ assert.ok(r.resposta.fontes.length);
+ assert.match(consultaGaiola("qual a gaiola ideal para calopsita?").mensagem,/100 × 75 × 100 cm/);
+ assert.match(consultaGaiola("qual tamanho da gaiola?").mensagem,/Qual é a espécie/);
+});

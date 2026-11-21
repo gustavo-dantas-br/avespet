@@ -1,3 +1,4 @@
+import { consultaGaiola } from "./dimensoesGaiola.js";
 // Guia introdutório versionado. Conteúdo geral em revisão editorial; não equivale a protocolo clínico aprovado.
 export const GUIA_INICIANTE = [
   {
@@ -159,7 +160,8 @@ export function identificarPerguntaIniciante(texto) {
   const chave = normalizar(texto);
   return chave ? PERGUNTAS_INICIANTE.find(item => normalizar(item.pergunta) === chave) || null : null;
 }
-export function respostaGuiaIniciante(item) {
+export function respostaGuiaIniciante(item, contexto = {}) {
+  if (item.id === "gaiola") { const r = consultaGaiola(item.pergunta, contexto); return { tipo: "conversa", titulo: "Guia para iniciantes", mensagem: r.mensagem, fontes: r.fontes, aviso: "", guia: true, guiaId: item.id }; }
   return { tipo: "conversa", titulo: "Guia para iniciantes", mensagem: item.resposta, fontes: [], aviso: "", guia: true, guiaId: item.id };
 }
 export function contextoGuiaIniciante(contexto, item) {
