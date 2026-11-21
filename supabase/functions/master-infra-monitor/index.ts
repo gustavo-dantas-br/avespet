@@ -79,6 +79,13 @@ Deno.serve(async (req) => {
 
 
   const body = await req.json().catch(() => ({}));
+  if(body?.action==="monthly_report"){
+    const month=body.month??null;
+    if(month!==null&&(typeof month!=="string"||!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)))return json({error:"Competência inválida"},400,origin);
+    const {data,error}=await adminClient.rpc("master_infra_monthly_report",{p_actor:authData.user.id,p_month:month?month+"-01":null});
+    if(error)return json({error:"Relatório indisponível"},400,origin);
+    return json({usage:data},200,origin);
+  }
   if(body?.action==="budget_read"||body?.action==="budget_save"){
     const save=body.action==="budget_save";
     if(save&&(!body.budget||typeof body.budget!=="object"||Array.isArray(body.budget)))return json({error:"Orçamento inválido"},400,origin);
