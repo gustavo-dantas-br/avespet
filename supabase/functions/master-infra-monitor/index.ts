@@ -79,6 +79,11 @@ Deno.serve(async (req) => {
 
 
   const body = await req.json().catch(() => ({}));
+  if(body?.action==="health_usage"){
+    const {data,error}=await adminClient.rpc("master_infra_health_summary",{p_actor:authData.user.id});
+    if(error)return json({error:"Disponibilidade indisponível"},503,origin);
+    return json({usage:data},200,origin);
+  }
   if(body?.action==="traffic_usage"){
     const {data,error}=await adminClient.rpc("master_infra_traffic_summary",{p_actor:authData.user.id});
     if(error)return json({error:"Métricas de tráfego indisponíveis"},503,origin);
