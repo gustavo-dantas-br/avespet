@@ -1,4 +1,4 @@
-import { consultaGaiola } from "./dimensoesGaiola.js";
+import { consultaGaiola, ROTINA_PET, ENRIQUECIMENTO_PET, SEGURANCA_PET, FONTES_PET } from "./dimensoesGaiola.js";
 // Guia introdutório versionado. Conteúdo geral em revisão editorial; não equivale a protocolo clínico aprovado.
 export const GUIA_INICIANTE = [
   {
@@ -35,6 +35,21 @@ export const GUIA_INICIANTE = [
         "id": "gaiola",
         "pergunta": "Como escolher a gaiola ou viveiro?",
         "resposta": "Escolha espaço que permita abrir as asas e se movimentar sem bater nas grades ou objetos. Verifique espaçamento seguro entre grades, resistência, ausência de pontas e materiais não tóxicos. Posicione em local tranquilo, ventilado, longe de fumaça, cozinha e correntes de ar intensas."
+      },
+      {
+        "id": "gaiola-pet",
+        "pergunta": "Posso usar gaiola pet aberta apenas para dormir?",
+        "resposta": "A gaiola pet pode servir como base de descanso, alimentação e segurança. Fora dela, ofereça voo e exercício supervisionados em ambiente protegido; nunca deixe a ave solta sem segurança."
+      },
+      {
+        "id": "exercicio-pet",
+        "pergunta": "Quanto tempo minha ave precisa ficar solta?",
+        "resposta": "Ofereça diversas oportunidades de exercício e voo seguro ao longo do dia, quando houver supervisão. O tempo depende da espécie, saúde, espaço e rotina. Uma gaiola de descanso não é moradia para confinamento prolongado."
+      },
+      {
+        "id": "enriquecimento-pet",
+        "pergunta": "Quais brinquedos e atividades ajudam minha ave a se exercitar?",
+        "resposta": "Use um playground seguro com poleiros naturais, balanços, brinquedos de madeira não tratada e papel apropriado, além de atividades de busca de alimento. Alterne objetos gradualmente e evite fios desfiados, peças soltas e metais desconhecidos."
       },
       {
         "id": "poleiros",
@@ -161,6 +176,8 @@ export function identificarPerguntaIniciante(texto) {
   return chave ? PERGUNTAS_INICIANTE.find(item => normalizar(item.pergunta) === chave) || null : null;
 }
 export function respostaGuiaIniciante(item, contexto = {}) {
+  if (item.id === "gaiola-pet") { const r = consultaGaiola(item.pergunta, contexto); return { tipo: "conversa", titulo: "Gaiola pet e descanso", mensagem: r.mensagem, fontes: r.fontes, aviso: "", guia: true, guiaId: item.id }; }
+  if (["exercicio-pet","enriquecimento-pet","poleiros"].includes(item.id)) { return { tipo: "conversa", titulo: "Exercício e enriquecimento", mensagem: [ROTINA_PET, ENRIQUECIMENTO_PET, SEGURANCA_PET].join("\n\n"), fontes: FONTES_PET, aviso: "", guia: true, guiaId: item.id }; }
   if (item.id === "gaiola") { const r = consultaGaiola(item.pergunta, contexto); return { tipo: "conversa", titulo: "Guia para iniciantes", mensagem: r.mensagem, fontes: r.fontes, aviso: "", guia: true, guiaId: item.id }; }
   return { tipo: "conversa", titulo: "Guia para iniciantes", mensagem: item.resposta, fontes: [], aviso: "", guia: true, guiaId: item.id };
 }

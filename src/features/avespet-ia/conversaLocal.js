@@ -1,7 +1,7 @@
 // Avespet IA: memória transitória de conversação. Não persiste dados e não faz diagnóstico.
 import { normalizarTexto, responderComBiblioteca } from "./respostasComFontes.js";
 import { classificarRisco, respostaEducativa } from "./motorEducativo.js";
-import { consultaGaiola } from "./dimensoesGaiola.js";
+import { consultaGaiola, ENRIQUECIMENTO_PET, ROTINA_PET, SEGURANCA_PET, FONTES_PET } from "./dimensoesGaiola.js";
 import { identificarPerguntaIniciante, respostaGuiaIniciante, contextoGuiaIniciante } from "./guiaIniciante.js";
 
 export function contextoInicial(perfil = {}) {
@@ -61,7 +61,10 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
   const itemGuia = identificarPerguntaIniciante(texto);
   if (itemGuia) return { contexto: contextoGuiaIniciante(contextoAnterior, itemGuia), resposta: respostaGuiaIniciante(itemGuia, contextoAnterior), localSomente: true };
   const dimensoes = consultaGaiola(texto, contexto);
-  if (dimensoes) return { contexto, localSomente: true, resposta: { tipo: "conversa", titulo: "Dimensões de gaiola e viveiro", mensagem: dimensoes.mensagem, fontes: dimensoes.fontes, aviso: "" } };
+  if (dimensoes) return { contexto: { ...contexto, etapa: "alojamento" }, localSomente: true, resposta: { tipo: "conversa", titulo: "Dimensões de gaiola e viveiro", mensagem: dimensoes.mensagem, fontes: dimensoes.fontes, aviso: "" } };
+  if (/\b(brinquedos?|enriquecimento|forrageamento|playground)\b/.test(limpo) && /\b(qual|quais|como|recomend\w*|ideal|exemplos?|atividade|ave|ring\s*neck|calopsita|gaiola)\b/.test(limpo)) {
+    return { contexto, localSomente: true, resposta: { tipo: "conversa", titulo: "Enriquecimento ambiental e exercício", mensagem: ENRIQUECIMENTO_PET+"\n\n"+ROTINA_PET+"\n\n"+SEGURANCA_PET, fontes: FONTES_PET, aviso: "" } };
+  }
   if (saudacaoSimples(texto)) {
     const agradecimento = /^(obrigad[oa]|muito obrigad[oa]|valeu)\b/.test(limpo);
     return { ...retorno("Avespet IA", agradecimento ? "Por nada! 🦜" : "Olá! Tudo bem? 🦜 Como posso ajudar você hoje?", contexto), localSomente: true };

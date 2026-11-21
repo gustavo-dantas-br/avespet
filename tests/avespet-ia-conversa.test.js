@@ -180,7 +180,7 @@ test("reprodução e atualização de mutação preservam os dados do casal", ()
 import { GUIA_INICIANTE, PERGUNTAS_INICIANTE, buscarPerguntaIniciante } from "../src/features/avespet-ia/guiaIniciante.js";
 test("guia iniciante possui categorias, IDs únicos e respostas prontas", () => {
  assert.equal(GUIA_INICIANTE.length, 5);
- assert.equal(PERGUNTAS_INICIANTE.length, 24);
+ assert.equal(PERGUNTAS_INICIANTE.length, 27);
  assert.equal(new Set(PERGUNTAS_INICIANTE.map(p=>p.id)).size, PERGUNTAS_INICIANTE.length);
  for(const p of PERGUNTAS_INICIANTE) { assert.ok(p.pergunta.length > 10 && p.resposta.length > 80); assert.equal(buscarPerguntaIniciante(p.id), p); }
  assert.equal(buscarPerguntaIniciante("inexistente"), null);
@@ -213,4 +213,18 @@ test("gaiola por espécie usa dimensões e fontes, sem Gemini", () => {
  assert.ok(r.resposta.fontes.length);
  assert.match(consultaGaiola("qual a gaiola ideal para calopsita?").mensagem,/100 × 75 × 100 cm/);
  assert.match(consultaGaiola("qual tamanho da gaiola?").mensagem,/Qual é a espécie/);
+});
+
+test("gaiola pet de descanso prioriza exercício supervisionado e enriquecimento", () => {
+ const r=conversarLocal(perfil,"qual gaiola pet aberta para ring neck dormir?",contextoInicial());
+ assert.equal(r.localSomente,true);
+ assert.match(r.resposta.mensagem,/descanso/);
+ assert.match(r.resposta.mensagem,/supervisão/);
+ assert.match(r.resposta.mensagem,/forrageamento/);
+ assert.match(r.resposta.mensagem,/120 × 80 × 120 cm/);
+ assert.match(r.resposta.mensagem,/não substitui/);
+ assert.ok(r.resposta.fontes.some(f=>f.url.includes("ufl.edu")));
+ const b=conversarLocal(perfil,"quais brinquedos posso usar?",r.contexto);
+ assert.equal(b.localSomente,true);
+ assert.match(b.resposta.mensagem,/playground/);
 });
