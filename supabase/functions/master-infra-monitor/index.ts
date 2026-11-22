@@ -79,6 +79,63 @@ Deno.serve(async (req) => {
 
 
   const body = await req.json().catch(() => ({}));
+  if(body?.action==="monthly_report"){
+    const month=body.month??null;
+    if(month!==null&&(typeof month!=="string"||!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)))return json({error:"Competência inválida"},400,origin);
+    const {data,error}=await adminClient.rpc("master_infra_monthly_report",{p_actor:authData.user.id,p_month:month?month+"-01":null});
+    if(error)return json({error:"Relatório indisponível"},400,origin);
+    return json({usage:data},200,origin);
+  }
+  if(body?.action==="budget_read"||body?.action==="budget_save"){
+    const save=body.action==="budget_save";
+    if(save&&(!body.budget||typeof body.budget!=="object"||Array.isArray(body.budget)))return json({error:"Orçamento inválido"},400,origin);
+    const {data,error}=await adminClient.rpc("master_infra_budget",{p_actor:authData.user.id,p_save:save?body.budget:null});
+    if(error)return json({error:save?"Não foi possível salvar o orçamento":"Orçamento indisponível"},save?400:503,origin);
+    return json({usage:data},200,origin);
+  }
+  if(body?.action==="deployment_history"){
+    const key=Deno.env.get("AVESPET_VERCEL_READ_TOKEN");
+    if(!key)return json({error:"Integração Vercel não configurada"},503,origin);
+    try{
+      const endpoint=new URL("https://api.vercel.com/v6/deployments");
+      endpoint.searchParams.set("teamId","team_U7fxAgYIeol47gm6WHtsGvVW");
+      endpoint.searchParams.set("projectId","prj_2caK4ylyNyjy4HhrguTuR4V7xJ0j");
+      endpoint.searchParams.set("limit","50");
+      const response=await fetch(endpoint,{headers:{Authorization:"Bearer "+key},signal:AbortSignal.timeout(8000)});
+      if(!response.ok)throw Error("provider");
+      const result=await response.json();
+      if(!Array.isArray(result.deployments))throw Error("format");
+      const rows=result.deployments.slice(0,50).filter((d:any)=>d.name==="avespet"&&typeof (d.uid??d.id)==="string").map((d:any)=>({
+         id:d.uid??d.id,created:Number(d.created??d.createdAt)||null,
+         target:d.target==="production"?"production":"preview",
+         state:String(d.state??d.readyState??"UNKNOWN").slice(0,32),
+         branch:String(d.meta?.githubCommitRef??"").slice(0,150),
+         commit:String(d.meta?.githubCommitSha??"").slice(0,64),
+         url:typeof d.url==="string"&&/^[a-z0-9-]+\.vercel\.app$/i.test(d.url)?"https://"+d.url:null
+      }));
+      return json({usage:{rows,more:Boolean(result.pagination?.next),collected_at:new Date().toISOString()}},200,origin);
+    }catch{return json({error:"Histórico Vercel indisponível"},503,origin);}
+  }
+  if(body?.action==="health_usage"){
+    const {data,error}=await adminClient.rpc("master_infra_health_summary",{p_actor:authData.user.id});
+    if(error)return json({error:"Disponibilidade indisponível"},503,origin);
+    return json({usage:data},200,origin);
+  }
+  if(body?.action==="traffic_usage"){
+    const {data,error}=await adminClient.rpc("master_infra_traffic_summary",{p_actor:authData.user.id});
+    if(error)return json({error:"Métricas de tráfego indisponíveis"},503,origin);
+    return json({usage:data},200,origin);
+  }
+  if(body?.action==="email_usage"){
+    const {data,error}=await adminClient.rpc("master_infra_email_summary",{p_actor:authData.user.id});
+    if(error)return json({error:"Consumo de e-mails indisponível"},503,origin);
+    return json({usage:data},200,origin);
+  }
+  if(body?.action==="ia_usage"){
+    const {data,error}=await adminClient.rpc("master_infra_ia_summary",{p_actor:authData.user.id});
+    if(error)return json({error:"Consumo IA indisponível"},503,origin);
+    return json({usage:data},200,origin);
+  }
   if(body?.action==="alert_settings"){
     const save=body?.save===true;
     if(save && (typeof body.recipient!=="string" || typeof body.enabled!=="boolean" || body.recipient.length>254))return json({error:"Configuração inválida"},400,origin);

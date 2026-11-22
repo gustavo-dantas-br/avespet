@@ -80,7 +80,14 @@ Deno.serve(async (req) => {
   if (body?.consentimento !== true && !teste) return reply(origin,403,{codigo:"CONSENTIMENTO",error:"Aceite o aviso de privacidade antes de usar a IA."});
   if (!ativo) return reply(origin, 503, {codigo:"DESATIVADO", error:"Chat gerativo ainda indisponível."});
   if (!configurado) return reply(origin, 503, {codigo:"CONFIGURACAO", error:"Modelo não configurado."});
-  if (!withinLocalLimit(info.user.id)) return reply(origin, 429, {codigo:"LIMITE_LOCAL", error:"Limite temporário atingido."});
+  const record=async(outcome:string,usage?:any)=>{
+    const n=(v:unknown)=>typeof v==="number"&&Number.isInteger(v)&&v>=0&&v<=10000000?v:null;
+    try{
+      const {error}=await admin.rpc("master_infra_ia_record",{p_model:model,p_outcome:outcome,p_input:n(usage?.promptTokenCount),p_output:n(usage?.candidatesTokenCount),p_thinking:n(usage?.thoughtsTokenCount),p_total:n(usage?.totalTokenCount)});
+      if(error)console.warn("avespet-ia: telemetry unavailable");
+    }catch{console.warn("avespet-ia: telemetry unavailable");}
+  };
+  if (!withinLocalLimit(info.user.id)) {await record("local_limit");return reply(origin, 429, {codigo:"LIMITE_LOCAL", error:"Limite temporário atingido."});}
   const msg = typeof body?.mensagem === "string" ? body.mensagem.trim().slice(0,2000) : "";
   if (!msg) return reply(origin, 400, {error:"Digite sua mensagem."});
   const contexto = body.contexto && typeof body.contexto === "object" ? body.contexto : {};
@@ -93,7 +100,7 @@ Deno.serve(async (req) => {
   contents.push({role:"user", parts:[{text: `Contexto informado pelo tutor: espécie ${String(contexto.especie || "não informada").slice(0,40)}, fase ${contexto.faseInformada === "adulto" ? "adulto informado" : contexto.filhote === true ? "filhote informado" : "desconhecida"}, idade ${Number.isInteger(contexto.idadeDias) && contexto.idadeDias >= 0 && contexto.idadeDias < 30000 ? contexto.idadeDias : "não informada"}. Foco atual: ${contexto.assunto === "casal" ? "casal" : "ave ou assunto geral"}. Dados do casal relatados: ${JSON.stringify(contexto.casal || null).slice(0,250)}. Assunto anterior: ${String(contexto.etapa || "não informado").slice(0,45)}. Mensagem: ${msg}`}]});
   const {data:reserva,error:reservaErro} = await admin.rpc("avespet_ia_reservar",{p_usuario:info.user.id,p_teste:teste});
   if(reservaErro || typeof reserva!=="string") return reply(origin,503,{codigo:"CONFIGURACAO",error:"Controle de consumo indisponível."});
-  if(reserva!=="OK") return reply(origin,reserva==="SEM_ACESSO"?403:429,{codigo:reserva,error:"Limite temporário de uso atingido."});
+  if(reserva!=="OK") {if(reserva==="LIMITE_USUARIO"||reserva==="LIMITE_GLOBAL")await record(reserva==="LIMITE_USUARIO"?"user_limit":"global_limit");return reply(origin,reserva==="SEM_ACESSO"?403:429,{codigo:reserva,error:"Limite temporário de uso atingido."});}
   const abort = new AbortController();
   const timeout = setTimeout(() => abort.abort(), 12000);
   try {
@@ -105,6 +112,7 @@ Deno.serve(async (req) => {
     if (!res.ok) {
       // Apenas status e categoria de erro são registrados. Nunca registrar chave, tokens, prompt ou dados pessoais.
       console.error("avespet-ia-chat: erro do provedor", {status: res.status});
+      await record(res.status===429?"provider_limit":"provider_error");
       if (res.status === 429) return reply(origin, 429, {codigo:"COTA_GEMINI", error:"O limite de uso do Gemini foi atingido."});
       if (res.status === 401 || res.status === 403) return reply(origin, 503, {codigo:"CHAVE_GEMINI", error:"Acesso do Gemini não autorizado; verificar chave e permissões."});
       if (res.status === 404 || res.status === 400) return reply(origin, 503, {codigo:"MODELO_GEMINI", error:"Modelo Gemini indisponível para este projeto."});
@@ -112,10 +120,12 @@ Deno.serve(async (req) => {
     }
     const data = await res.json();
     const resposta = String(data?.candidates?.[0]?.content?.parts?.map((p:any)=>p.text || "").join("") || "").trim();
+    await record(resposta?"success":"empty",data?.usageMetadata);
     if (!resposta) return reply(origin, 503, {codigo:"SEM_RESPOSTA", error:"O modelo não retornou texto."});
     console.info("avespet-ia-chat: resposta gerada pelo Gemini");
     return reply(origin, 200, {mensagem:resposta.slice(0,3500)});
   } catch {
+    await record("network");
     return reply(origin, 503, {codigo:"REDE_GEMINI", error:"Falha temporária ao consultar a IA."});
   } finally {clearTimeout(timeout);}
 });
