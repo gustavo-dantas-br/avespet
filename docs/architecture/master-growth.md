@@ -9,3 +9,7 @@ UTM source reconhecida apenas em lista fechada; mantém sugestão em memória du
 ## Fase 3 — Funil de ativação da coorte atual
 
 Agrega auth.users criados no mês em Brasília, confirmação de email, último login não nulo, existência de perfil e de aves. Etapas cumulativas por mesma conta; porcentagem do total e da etapa anterior. Estado atual, não eventos de transição nem tempo até ativação. Perfis podem ser criados automaticamente e não indicam conclusão cadastral; aves excluídas e contas excluídas não contam. Sem coleta adicional ou armazenamento pessoal. Não divide cadastros por pageviews. 
+
+## Fase 4 — Engajamento e retenção (recência)
+
+Reutiliza auth.users.last_sign_in_at e email_user_activity.last_seen_at, escolhendo o mais recente. Exclui Master. Segmentos mutuamente exclusivos: até 7 dias, mais de 7 até 30, mais de 30, sem registro. Atividade 30d inclui 7d. Confirmação de e-mail e cobertura do registro de atividade são indicadores separados, não segmentos. Sem coleta adicional nem dados individuais. Não equivale a retenção histórica, MAU faturável ou autorização de marketing; a seção oferece atalho para automações existentes, sem disparar envios, alterar consentimento ou regras de elegibilidade.

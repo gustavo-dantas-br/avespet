@@ -21,6 +21,11 @@ begin
  exists(select 1 from public.aves a where a.user_id=u.id) as birds
  from auth.users u where u.created_at>=m::timestamp at time zone 'America/Sao_Paulo'
  ) select jsonb_build_object('accounts',count(*),'confirmed',count(*) filter(where confirmed),'signed_in',count(*) filter(where confirmed and signed_in),'profiles',count(*) filter(where confirmed and signed_in and profile),'birds',count(*) filter(where confirmed and signed_in and profile and birds)) from cohort),
+ 'engagement',(with base as (
+ select u.id,u.email_confirmed_at,a.last_seen_at,greatest(u.last_sign_in_at,a.last_seen_at) as last_activity
+ from auth.users u left join public.email_user_activity a on a.user_id=u.id
+ where not exists(select 1 from public.master_admins m where m.user_id=u.id)
+ ) select jsonb_build_object('accounts',count(*),'active_7d',count(*) filter(where last_activity>=now()-interval '7 days'),'active_30d',count(*) filter(where last_activity>=now()-interval '30 days'),'inactive_8_30',count(*) filter(where last_activity<now()-interval '7 days' and last_activity>=now()-interval '30 days'),'inactive_31plus',count(*) filter(where last_activity<now()-interval '30 days'),'no_activity',count(*) filter(where last_activity is null),'unconfirmed',count(*) filter(where email_confirmed_at is null),'instrumented',count(*) filter(where last_seen_at is not null)) from base),
  'subscription_records',(select count(*) from public.creator_subscriptions),
  'paid_plan_records',(select count(*) from public.creator_subscriptions s join public.platform_plans p on p.id=s.plan_id where not p.is_free),
  'plans',(select coalesce(jsonb_agg(jsonb_build_object('code',code,'name',name,'is_free',is_free,'is_active',is_active) order by sort_order),'[]'::jsonb) from public.platform_plans));
