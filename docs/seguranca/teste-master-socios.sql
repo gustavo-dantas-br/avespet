@@ -9,7 +9,6 @@ create table public.master_audit_log(id bigint generated always as identity prim
 alter table public.master_admins enable row level security;
 alter table public.master_audit_log enable row level security;
 grant usage on schema auth to service_role;
-grant select on auth.users to service_role;
 grant all on public.master_admins,public.master_audit_log to service_role;
 grant usage,select on all sequences in schema public to service_role;
 grant select,insert,update,delete on public.master_admins to authenticated,anon;
@@ -18,6 +17,7 @@ insert into public.master_admins(user_id) values ('00000000-0000-4000-8000-00000
 \ir master-socios-proposta.sql
 do $test$
 begin
+ if has_table_privilege('service_role','auth.users','SELECT') then raise exception 'Acesso desnecessario ao Auth'; end if;
  if has_function_privilege('anon','public.master_alterar_acesso(uuid,uuid,boolean,text)','execute') or has_function_privilege('authenticated','public.master_alterar_acesso(uuid,uuid,boolean,text)','execute') then raise exception 'RPC exposta'; end if;
  if has_table_privilege('authenticated','public.master_admins','INSERT') or has_table_privilege('anon','public.master_admins','DELETE') then raise exception 'Escrita direta exposta'; end if;
  if (select count(*) from public.master_admins where papel='owner')<>1 then raise exception 'Bootstrap incorreto'; end if;
@@ -47,6 +47,15 @@ begin
  if (select count(*) from public.master_admins)<>1 then raise exception 'Permissoes incorretas'; end if;
  if (select count(*) from public.master_audit_log)<>2 then raise exception 'Auditoria incorreta'; end if;
 end $test$;
+set role service_role;
+do $test$
+begin
+ begin
+   perform public.master_alterar_acesso('00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000009',true,'Conta inexistente');
+   raise exception 'TESTE_FALHOU';
+ exception when foreign_key_violation then null; end;
+end $test$;
+reset role;
 -- Simula indisponibilidade da auditoria para comprovar rollback.
 alter table public.master_audit_log add constraint reject_grants check(action <> 'master_access_granted') not valid;
 set role service_role;
