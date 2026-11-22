@@ -43,7 +43,7 @@ begin
     raise exception 'Operacao invalida';
   end if;
   if p_grant then
-    if not exists(select 1 from auth.users where id=p_target) then raise exception 'Conta inexistente'; end if;
+    -- A chave estrangeira existente master_admins_user_id_fkey valida a conta sem SELECT em auth.users.
     insert into public.master_admins(user_id,papel) values(p_target,'master');
   else
     delete from public.master_admins where user_id=p_target and papel='master';
