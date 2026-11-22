@@ -79,6 +79,13 @@ Deno.serve(async (req) => {
 
 
   const body = await req.json().catch(() => ({}));
+  if(body?.action==="growth_leads"){
+    const action=body.operation??"list";
+    if(!["list","create","update","delete"].includes(action))return json({error:"Operação inválida"},400,origin);
+    const {data,error}=await adminClient.rpc("master_growth_leads",{p_actor:authData.user.id,p_action:action,p_payload:body.payload??null});
+    if(error)return json({error:"Não foi possível concluir a operação. Confira os dados e possíveis duplicidades."},400,origin);
+    return json({usage:data},200,origin);
+  }
   if(body?.action==="growth_summary"){
     const {data,error}=await adminClient.rpc("master_growth_summary",{p_actor:authData.user.id});
     if(error)return json({error:"Indicadores indisponíveis"},503,origin);

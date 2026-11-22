@@ -13,3 +13,7 @@ Agrega auth.users criados no mês em Brasília, confirmação de email, último 
 ## Fase 4 — Engajamento e retenção (recência)
 
 Reutiliza auth.users.last_sign_in_at e email_user_activity.last_seen_at, escolhendo o mais recente. Exclui Master. Segmentos mutuamente exclusivos: até 7 dias, mais de 7 até 30, mais de 30, sem registro. Atividade 30d inclui 7d. Confirmação de e-mail e cobertura do registro de atividade são indicadores separados, não segmentos. Sem coleta adicional nem dados individuais. Não equivale a retenção histórica, MAU faturável ou autorização de marketing; a seção oferece atalho para automações existentes, sem disparar envios, alterar consentimento ou regras de elegibilidade.
+
+## Fase 5 — Leads comerciais manuais
+
+Cadastro separado de prospectos voluntariamente registrados pelo Master; não duplica solicitações de campanha, não importa contas e não altera consentimento. Cinco etapas manuais, origem, próximo retorno; sem disparos automáticos. RLS privada, RPC service_role com verificação Master, auditoria sem nome/contato, exclusão individual confirmada. Lista limitada aos últimos 200, contadores globais. Deduplicação textual básica, não identidade verificada. Conversão manual não é pagamento. Carregamento sob demanda. 
