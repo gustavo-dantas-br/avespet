@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { listarAvesPerdidas } from "../services/avesPerdidasService";
 import PerdiUmaAve from "./PerdiUmaAve";
+import ReencontrosCarousel from "../components/ReencontrosCarousel";
 import { Link } from "../../../publico/roteador";
 import { PaginaPublica, CabecalhoPublico, CartaoPublico, TEMA_PUBLICO } from "../../../publico/ComponentesPublicos";
 
@@ -25,6 +26,13 @@ export default function AvesPerdidas({ onEntrar }) {
     return () => { ativa = false; };
   }, []);
 
+  const reencontradas = lista.filter(({ data }) => data?.situacao === "reencontrado");
+  const desaparecidas = lista.filter(({ data }) => data?.situacao !== "reencontrado");
+  function abrirCadastro() {
+    setMostrarCadastro(true);
+    requestAnimationFrame(() => document.getElementById("cadastro-ave-perdida")?.scrollIntoView({ block: "start", behavior: "auto" }));
+  }
+
   return (
     <div style={{ background: TEMA_PUBLICO.fundo, minHeight: "65vh" }}>
       <PaginaPublica>
@@ -36,11 +44,17 @@ export default function AvesPerdidas({ onEntrar }) {
           destino="/achei-uma-ave"
         />
 
+        <div className="mb-5 flex flex-wrap gap-3">
+          <button type="button" onClick={abrirCadastro} className="min-h-[44px] rounded-xl bg-emerald-800 px-5 py-3 text-sm font-bold text-white">Cadastrar ave perdida gratuitamente</button>
+          <a href="#aves-em-busca" className="min-h-[44px] rounded-xl border border-emerald-700 px-5 py-3 text-sm font-semibold text-emerald-800">Ver aves desaparecidas</a>
+        </div>
+        <ReencontrosCarousel items={reencontradas} />
+        <h2 id="aves-em-busca" className="mb-4 mt-8 scroll-mt-24 text-2xl font-extrabold text-emerald-950">Aves que ainda precisam voltar para casa</h2>
         {loading ? (
           <div className="rounded-2xl p-8 text-center text-sm" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.texto }}>Carregando anúncios...</div>
         ) : erro ? (
           <div role="alert" className="rounded-2xl p-6 text-sm" style={{ background: "#FCEFEB", color: "#9A3D2C" }}>{erro}</div>
-        ) : lista.length === 0 ? (
+        ) : desaparecidas.length === 0 ? (
           <div className="rounded-2xl p-8 text-center" style={{ background: "#FFFFFF", border: `1px solid ${TEMA_PUBLICO.borda}` }}>
             <h2 className="text-lg font-bold" style={{ color: TEMA_PUBLICO.tinta }}>Nenhum anúncio publicado no momento</h2>
             <p className="mt-2 text-sm" style={{ color: TEMA_PUBLICO.texto }}>Se sua ave desapareceu, você pode registrar a ocorrência gratuitamente. Se já publicou, entre na conta utilizada no cadastro para editar seus dados.</p>
@@ -48,7 +62,7 @@ export default function AvesPerdidas({ onEntrar }) {
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {lista.map(({ id, data }) => (
+            {desaparecidas.map(({ id, data }) => (
               <CartaoPublico key={id}>
                 <div className="px-5 pt-4">
                   {data.situacao === "reencontrado" ?
@@ -79,14 +93,14 @@ export default function AvesPerdidas({ onEntrar }) {
         )}
 
         {mostrarCadastro ? (
-          <div className="mt-10 rounded-2xl p-6 md:p-8" style={{ background: TEMA_PUBLICO.verdeEscuro }}>
+          <div id="cadastro-ave-perdida" className="mt-10 scroll-mt-24 rounded-2xl p-6 md:p-8" style={{ background: TEMA_PUBLICO.verdeEscuro }}>
             <button type="button" onClick={() => setMostrarCadastro(false)} className="mb-5 rounded-lg px-3 py-2 text-sm font-semibold" style={{ background: "#D2E1D6", color: TEMA_PUBLICO.verde }}>Voltar para os anúncios</button>
             <PerdiUmaAve onEntrar={onEntrar} />
           </div>
         ) : (
           <button
             type="button"
-            onClick={() => setMostrarCadastro(true)}
+            onClick={abrirCadastro}
             className="mt-10 block w-full rounded-2xl p-6 text-left transition hover:brightness-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-green-300 md:p-8"
             style={{ background: TEMA_PUBLICO.verdeEscuro }}
           >

@@ -65,6 +65,11 @@ export default function SolicitarCampanha() {
           <div className="flex items-start gap-3"><Heart size={24} className="shrink-0 text-emerald-700"/><div><h2 className="font-bold text-emerald-950">Você não precisa esperar para começar a buscar</h2><p className="mt-1 text-sm leading-6 text-emerald-900">Cadastre sua ave sem custo, compartilhe o anúncio com pessoas próximas e informe o último local em que ela foi vista. Os pacotes pagos são opcionais.</p></div></div>
           <a href="/aves-perdidas" className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-emerald-800 px-4 py-3 text-sm font-bold text-white">Cadastrar ou consultar minha ave <ArrowRight size={16}/></a>
         </div>
+        <div className="mb-8 space-y-6">
+          <ReencontrosPublicos />
+          <EditorialStories />
+        </div>
+        <div id="opcoes-divulgacao" className="scroll-mt-24" />
         {enviado ? (
           <CartaoPublico className="p-7 text-center md:p-10">
             <CheckCircle2 size={42} className="mx-auto mb-4" color={TEMA_PUBLICO.verde} />
@@ -123,8 +128,6 @@ export default function SolicitarCampanha() {
             </form>
           </CartaoPublico>
         )}
-        <ReencontrosPublicos />
-        <EditorialStories />
         <section className="mt-6 rounded-2xl border border-emerald-200 bg-white p-5"><h2 className="flex items-center gap-2 font-bold text-emerald-950"><ShieldCheck size={21}/> Como funciona a divulgação?</h2><p className="mt-2 text-sm leading-6 text-slate-700">Após receber sua solicitação, nossa equipe avalia a área da busca, confirma os detalhes e o orçamento antes de iniciar a divulgação. Nos pacotes com mídia, os anúncios podem aparecer no Facebook e Instagram para pessoas da região que talvez não tenham visto sua postagem original. Não há garantia de recuperação, e o anúncio gratuito continua disponível.</p></section>
       </PaginaPublica>
     </div>
