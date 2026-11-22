@@ -15,6 +15,12 @@ begin
  'views_first_day',(select min(dia) from public.visitas_diarias),
  'daily',(select coalesce(jsonb_agg(jsonb_build_object('day',d.day_date,'signups',d.signups) order by d.day_date),'[]'::jsonb) from (select (created_at at time zone 'America/Sao_Paulo')::date as day_date,count(*) as signups from auth.users where created_at>=m::timestamp at time zone 'America/Sao_Paulo' group by 1) d),
  'sources_month',(select coalesce(jsonb_agg(jsonb_build_object('channel',s.channel,'accounts',s.n) order by s.n desc,s.channel),'[]'::jsonb) from (select case when raw_user_meta_data->>'growth_source_v1' in ('instagram','facebook','google','whatsapp','youtube','indicacao','outro') then raw_user_meta_data->>'growth_source_v1' else 'unknown' end as channel,count(*) as n from auth.users where created_at>=m::timestamp at time zone 'America/Sao_Paulo' group by 1) s),
+ 'cohort_funnel',(with cohort as (
+ select u.id,u.email_confirmed_at is not null as confirmed,u.last_sign_in_at is not null as signed_in,
+ exists(select 1 from public.perfil_criador p where p.user_id=u.id) as profile,
+ exists(select 1 from public.aves a where a.user_id=u.id) as birds
+ from auth.users u where u.created_at>=m::timestamp at time zone 'America/Sao_Paulo'
+ ) select jsonb_build_object('accounts',count(*),'confirmed',count(*) filter(where confirmed),'signed_in',count(*) filter(where confirmed and signed_in),'profiles',count(*) filter(where confirmed and signed_in and profile),'birds',count(*) filter(where confirmed and signed_in and profile and birds)) from cohort),
  'subscription_records',(select count(*) from public.creator_subscriptions),
  'paid_plan_records',(select count(*) from public.creator_subscriptions s join public.platform_plans p on p.id=s.plan_id where not p.is_free),
  'plans',(select coalesce(jsonb_agg(jsonb_build_object('code',code,'name',name,'is_free',is_free,'is_active',is_active) order by sort_order),'[]'::jsonb) from public.platform_plans));
