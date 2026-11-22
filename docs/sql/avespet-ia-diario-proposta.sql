@@ -21,6 +21,8 @@ create index if not exists avespet_ia_diario_user_ave_data_idx
  on public.avespet_ia_diario (user_id, ave_id, data_registro desc);
 
 alter table public.avespet_ia_diario enable row level security;
+revoke all on public.avespet_ia_diario from public, anon, authenticated;
+grant select, insert, update, delete on public.avespet_ia_diario to authenticated;
 -- Não permitir escolha arbitrária de proprietários: a ave também deve pertencer ao usuário.
 -- Aplicado tanto à leitura como à gravação. Privacidade por ave/user.
 create policy "avespet_ia_diario_select_own" on public.avespet_ia_diario
