@@ -1,0 +1,3 @@
+# Crescimento Master — fase 1
+
+Dashboard lazy-loaded, somente ao abrir a seção, com consulta agregada única via master-infra-monitor action growth_summary após autorização Master. RPC service_role exclusiva e checagem de master_admins; não coleta dados novos e não expõe identidades. Cadastros existentes, último login 30d (não MAU), perfil, aves, interseção perfil + aves, visualizações instrumentadas e estados de planos. Registros de assinatura não representam vigência, pagamento ou receita. Não inferir conversão a partir de pageviews, nem atribuir canal retroativamente. Próxima fase: UTM e atribuição de origem com minimização de dados. Sem mudanças de planos. SQL antes de publicar a função. Homologação e aprovação antes de merge.

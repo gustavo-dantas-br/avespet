@@ -5,6 +5,7 @@ const AdsModeration = React.lazy(() => import("./AdsModeration"));
 const LostBirdsModeration = React.lazy(() => import("./LostBirdsModeration"));
 const BirdsManagement = React.lazy(() => import("./BirdsManagement"));
 const BillingManagement = React.lazy(() => import("./BillingManagement"));
+const GrowthPanel = React.lazy(() => import("./GrowthPanel"));
 const InfrastructurePanel = React.lazy(() => import("./InfrastructurePanel"));
 const MasterAudit = React.lazy(() => import("./MasterAudit"));
 const SupportOperations = React.lazy(() => import("./SupportOperations"));
@@ -28,6 +29,7 @@ const preloadModules = {
   support: () => import("./SupportOperations"),
   communications: () => import("./MasterInboxPanel"),
   "email-automations": () => import("./EmailAutomations"),
+  growth: () => import("./GrowthPanel"),
   infrastructure: () => import("./InfrastructurePanel"),
   settings: () => import("./MasterAudit"),
 };
@@ -43,6 +45,7 @@ const navigation = [
   { id: "support", label: "Suporte operacional", icon: LifeBuoy, description: "Triagem de casos e preparação manual de e-mails de atendimento" },
   { id: "communications", label: "Central de Comunicação", icon: Mail, description: "Caixas Suporte e Financeiro, novos e-mails e respostas" },
   { id: "email-automations", label: "Automações de e-mail", icon: Workflow, description: "Reativação, inscrições, envios e conteúdos" },
+  { id: "growth", label: "Crescimento", icon: TrendingUp, description: "Aquisição, ativação e evolução dos usuários" },
   { id: "infrastructure", label: "Infraestrutura", icon: Activity, description: "Capacidade e monitoramento técnico" },
   { id: "settings", label: "Auditoria e segurança", icon: Settings, description: "Histórico de ações administrativas" },
 ];
@@ -220,6 +223,7 @@ export default function MasterApp({ user, onLogout }) {
                 : id === "birds" ? <BirdsManagement />
                 : id === "billing" ? <BillingManagement />
                 : id === "support" ? <SupportOperations onPrepareEmail={openSupportDraft} />
+                : id === "growth" ? <GrowthPanel active={activeSection === id} />
                 : id === "infrastructure" ? <InfrastructurePanel active={activeSection === id} />
                 : id === "settings" ? <MasterAudit />
                 : id === "communications" ? <MasterInboxPanel user={user} initialDraft={supportDraft} onDraftUsed={onDraftUsed} />
@@ -269,7 +273,7 @@ export default function MasterApp({ user, onLogout }) {
                 </article>
               </section>
             </>
-          ) : activeSection === "infrastructure" ? null : (
+          ) : ["infrastructure","growth"].includes(activeSection) ? null : (
             <section className="mx-auto max-w-3xl rounded-2xl border bg-white p-6 shadow-sm sm:p-8" style={{ borderColor: "#e9edf2" }}>
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: "#eef2f7", color: "#29466b" }}>{React.createElement(selected.icon, { size: 23 })}</div>
               <p className="mt-6 text-[10px] font-bold uppercase tracking-[.2em]" style={{ color: "#a27b2e" }}>Módulo Master</p><h1 className="mt-2 text-2xl font-bold text-slate-900">{selectedPlaceholder?.title || selected.label}</h1><p className="mt-3 text-sm leading-6 text-slate-500">{selectedPlaceholder?.description || selected.description}</p>
