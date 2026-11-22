@@ -14,6 +14,7 @@ begin
  'views_month',(select sum(total) from public.visitas_diarias where dia between m and today),
  'views_first_day',(select min(dia) from public.visitas_diarias),
  'daily',(select coalesce(jsonb_agg(jsonb_build_object('day',d.day_date,'signups',d.signups) order by d.day_date),'[]'::jsonb) from (select (created_at at time zone 'America/Sao_Paulo')::date as day_date,count(*) as signups from auth.users where created_at>=m::timestamp at time zone 'America/Sao_Paulo' group by 1) d),
+ 'sources_month',(select coalesce(jsonb_agg(jsonb_build_object('channel',s.channel,'accounts',s.n) order by s.n desc,s.channel),'[]'::jsonb) from (select case when raw_user_meta_data->>'growth_source_v1' in ('instagram','facebook','google','whatsapp','youtube','indicacao','outro') then raw_user_meta_data->>'growth_source_v1' else 'unknown' end as channel,count(*) as n from auth.users where created_at>=m::timestamp at time zone 'America/Sao_Paulo' group by 1) s),
  'subscription_records',(select count(*) from public.creator_subscriptions),
  'paid_plan_records',(select count(*) from public.creator_subscriptions s join public.platform_plans p on p.id=s.plan_id where not p.is_free),
  'plans',(select coalesce(jsonb_agg(jsonb_build_object('code',code,'name',name,'is_free',is_free,'is_active',is_active) order by sort_order),'[]'::jsonb) from public.platform_plans));
