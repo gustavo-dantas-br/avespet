@@ -58,6 +58,28 @@ export function conversarLocal(perfil, mensagem, contextoAnterior = contextoInic
   const limpo = normalizarTexto(texto);
   const risco = classificarRisco(texto);
   if (risco !== "educativo") return { resposta: { ...respostaEducativa(perfil, texto), fontes: [] }, contexto };
+  // Consultas cadastrais não precisam de IA externa. Só respondem pelo foco atual,
+  // nunca reutilizam o perfil de outra ave ou inferem informações ausentes.
+  if (contextoAnterior.assunto === "ave" && contextoAnterior.nome && !contextoAnterior.casal) {
+    const q = limpo.replace(/[?.!]+$/g,"").trim();
+    const nome = normalizarTexto(contextoAnterior.nome).replace(/[.*+?^$()|[\]\\]/g,"\\  const itemGuia = identificarPerguntaIniciante(texto);");
+    const sujeito = "(?:ele|ela|a ave|o passarinho|minha ave|meu pet|"+nome+"|do "+nome+"|da "+nome+")";
+    const idade = new RegExp("^(?:(?:qual (?:e )?a idade(?: d[eo]l[ea]| d[oa] minha ave)?|quanto(?:s)? (?:anos|dias|meses)(?: de vida)? (?:tem|ele tem|ela tem)|quantos (?:anos|dias|meses) (?:o |a )?"+nome+" tem)(?: (?:d[oa] )?"+sujeito+")?)$");
+    const nascimento = /^(quando (ele |ela )?nasceu|qual (e )?a data de nascimento)$/;
+    const sexo = /^(qual (e )?o sexo( dela| dele| da minha ave)?|ele e macho ou femea|ela e macho ou femea)$/;
+    const mutacao = /^(qual (e )?a (mutacao|cor)( dela| dele| da minha ave)?)$/;
+    const dados = /^(quais (sao )?os dados (da minha ave|dele|dela)|me fale sobre minha ave|qual e a minha ave)$/;
+    const possuiIdade=Number.isInteger(contextoAnterior.idadeDias)&&contextoAnterior.idadeDias>=0;
+    const mesmaAve=perfil.nome===contextoAnterior.nome;
+    const nomeAve=contextoAnterior.nome;
+    let msg="";
+    if(idade.test(q)) msg=possuiIdade?nomeAve+" tem "+contextoAnterior.idadeDias+" dias de vida, conforme os dados disponíveis.":"A idade de "+nomeAve+" ainda não está informada.";
+    else if(nascimento.test(q)) msg=mesmaAve&&perfil.nascimento?nomeAve+" nasceu em "+perfil.nascimento.split("-").reverse().join("/")+", conforme o perfil.":"A data de nascimento não está disponível no contexto atual.";
+    else if(sexo.test(q)) msg=nomeAve+": "+(contextoAnterior.sexo||"sexo não informado")+".";
+    else if(mutacao.test(q)) msg=nomeAve+": "+(contextoAnterior.mutacao||"mutação não informada")+".";
+    else if(dados.test(q)) msg=[nomeAve,contextoAnterior.especie||"Espécie não informada",contextoAnterior.sexo||"Sexo não informado",contextoAnterior.mutacao||"Mutação não informada",possuiIdade?contextoAnterior.idadeDias+" dias de vida":"Idade não informada"].join(" · ")+".";
+    if(msg)return {...retorno("Dados da ave em acompanhamento",msg,contextoAnterior),localSomente:true};
+  }
   const itemGuia = identificarPerguntaIniciante(texto);
   if (itemGuia) return { contexto: contextoGuiaIniciante(contextoAnterior, itemGuia), resposta: respostaGuiaIniciante(itemGuia, contextoAnterior), localSomente: true };
   const dimensoes = consultaGaiola(texto, contexto);

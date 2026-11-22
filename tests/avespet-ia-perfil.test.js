@@ -9,3 +9,12 @@ test("perfil vazio não presume ave e mantém sessão geral",()=>{assert.equal(c
 test("ao alternar aves restaura os dados educativos de cada cadastro",()=>{const m=new Map();const s={getItem:k=>m.get(k),setItem:(k,v)=>m.set(k,v)};salvarPerfilLocal("a",{...PERFIL_VAZIO,especie:"Calopsita",fase:"papa"},"ave-1",s);salvarPerfilLocal("a",{...PERFIL_VAZIO,especie:"Ring Neck",fase:"desmamada"},"ave-2",s);assert.equal(lerPerfilPorAve("a","ave-1",s).fase,"papa");assert.equal(lerPerfilPorAve("a","ave-2",s).fase,"desmamada");assert.equal(lerPerfilLocal("a",s).aveId,"ave-2");assert.deepEqual(lerPerfilPorAve("b","ave-1",s),{});});
 
 test("plantel com nascimento no formato brasileiro preenche data e idade",()=>{const p=perfilDaAve({nome:"Ave teste",especie:"Ring Neck",sexo:"Macho",corMutacao:"Azul",nascimento:"10/06/2023"});assert.equal(p.nascimento,"2023-06-10");assert.equal(idadeLegivel(p,new Date(2026,10,22)),"3 anos e 5 meses");assert.ok(contextoDoPerfil(p).idadeDias>1000);assert.equal(idadeEmDias("31/02/2023"),null);});
+
+import { conversarLocal } from "../src/features/avespet-ia/conversaLocal.js";
+test("consulta idade, nascimento, sexo e mutação da ave selecionada sem Gemini",()=>{
+ const p=perfilDaAve({nome:"Ave teste",especie:"Ring Neck",sexo:"Macho",corMutacao:"Azul",nascimento:"10/06/2023"});
+ const c=contextoDoPerfil(p);
+ for(const [q,esperado] of [["Qual é a idade?",String(c.idadeDias)],["Quando nasceu?","10/06/2023"],["Qual é o sexo?","Macho"],["Qual é a mutação?","Azul"]]){
+  const r=conversarLocal(p,q,c);assert.equal(r.localSomente,true);assert.ok(r.resposta.mensagem.includes(esperado));
+ }
+});
