@@ -17,3 +17,7 @@ Reutiliza auth.users.last_sign_in_at e email_user_activity.last_seen_at, escolhe
 ## Fase 5 — Leads comerciais manuais
 
 Cadastro separado de prospectos voluntariamente registrados pelo Master; não duplica solicitações de campanha, não importa contas e não altera consentimento. Cinco etapas manuais, origem, próximo retorno; sem disparos automáticos. RLS privada, RPC service_role com verificação Master, auditoria sem nome/contato, exclusão individual confirmada. Lista limitada aos últimos 200, contadores globais. Deduplicação textual básica, não identidade verificada. Conversão manual não é pagamento. Carregamento sob demanda. 
+
+## Fase 6 — Campanhas próprias de marketing
+
+Cadastro manual separado das solicitações de divulgação de aves perdidas. Orçamento/gasto em centavos BRL, período, canal, situação e contagens acumuladas opcionais de leads/cadastros. CPL e custo por cadastro apenas quando gasto informado e denominador positivo. Sem integração de anúncios, gasto autorizado, criação publicitária ou atribuição automática. RPC restrita service_role e Master, auditoria, RLS, lista de até 200. Sem dados pessoais adicionais.
