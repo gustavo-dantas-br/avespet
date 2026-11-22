@@ -98,7 +98,7 @@ export default function AnunciosTab({ aves, anuncios, perfil, onSave, onToggleAt
   const [criandoParaId, setCriandoParaId] = useState(null);
 
   const avesAnunciaveis = aves.filter((a) => a.status === "A venda" && !anuncios.some((an) => an.aveId === a.id));
-  const perfilIncompleto = !perfil.whatsapp?.trim();
+  const perfilIncompleto = perfil.autorizaWhatsappComercial !== true || !String(perfil.whatsappComercial || "").replace(/\D/g,"").match(/^(?:55)?[1-9][0-9]9?[0-9]{8}$/);
 
   return (
     <div>
@@ -106,7 +106,7 @@ export default function AnunciosTab({ aves, anuncios, perfil, onSave, onToggleAt
 
       {perfilIncompleto && (
         <div className="ui-sans mb-4 px-4 py-3 rounded-lg text-sm flex items-center justify-between gap-3" style={{ background: "#f5e9c8", color: "#8a6f2e", border: "1px solid #d6c39a" }}>
-          <span>Preenche seu WhatsApp no Perfil do Criador antes de publicar, pra quem se interessar saber como falar com voce.</span>
+          <span>Informe um WhatsApp comercial válido e autorize sua divulgação em Meu perfil antes de publicar. Seu telefone pessoal permanece privado.</span>
           <button onClick={() => setTab("perfil")} className="ui-sans px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0" style={{ background: "#2B1D14", color: "#F1E6D2" }}>Ir pro Perfil</button>
         </div>
       )}
@@ -121,7 +121,7 @@ export default function AnunciosTab({ aves, anuncios, perfil, onSave, onToggleAt
           {avesAnunciaveis.map((a) =>
             criandoParaId === a.id ? (
               <div key={a.id} className="sm:col-span-2">
-                <NovoAnuncioForm ave={a} onSave={(form) => { const r = onSave(form); if (r?.ok) setCriandoParaId(null); return r; }} onCancel={() => setCriandoParaId(null)} Card={Card} Field={Field} inputStyle={inputStyle} emptyAnuncio={emptyAnuncio} />
+                <NovoAnuncioForm ave={a} onSave={(form) => { if (perfilIncompleto) return { ok: false, error: "Autorize seu WhatsApp comercial no perfil antes de publicar." }; const r = onSave(form); if (r?.ok) setCriandoParaId(null); return r; }} onCancel={() => setCriandoParaId(null)} Card={Card} Field={Field} inputStyle={inputStyle} emptyAnuncio={emptyAnuncio} />
               </div>
             ) : (
               <Card key={a.id} className="p-3 flex items-center gap-3 ui-sans">

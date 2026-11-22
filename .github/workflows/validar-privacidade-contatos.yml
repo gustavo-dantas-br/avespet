@@ -1,0 +1,31 @@
+name: Validar privacidade de contatos
+on:
+  pull_request:
+    paths:
+      - 'docs/seguranca/*privacidade-contatos*.sql'
+      - '.github/workflows/validar-privacidade-contatos.yml'
+permissions:
+  contents: read
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: teste_ci_descartavel
+          POSTGRES_DB: avespet_teste
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Testar RLS em banco descartavel
+        env:
+          PGPASSWORD: teste_ci_descartavel
+        run: |
+          psql -h localhost -U postgres -d avespet_teste -v ON_ERROR_STOP=1 -f docs/seguranca/teste-privacidade-contatos.sql

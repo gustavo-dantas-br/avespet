@@ -112,7 +112,7 @@ function emptyAnuncio() {
 }
 
 function emptyPerfilCriador() {
-  return { nomeCriatorio: "", nome: "", sobrenome: "", nomeCompleto: "", cidade: "", uf: "", whatsapp: "", email: "", logoUrl: "" };
+  return { nomeCriatorio: "", nome: "", sobrenome: "", nomeCompleto: "", cidade: "", uf: "", whatsapp: "", whatsappComercial: "", autorizaWhatsappComercial: false, email: "", logoUrl: "" };
 }
 
 function emptyPerfilPrivado() {
