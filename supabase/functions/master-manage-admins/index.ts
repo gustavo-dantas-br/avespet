@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     const email=typeof body.email==="string"?body.email.trim().toLowerCase():"";
     if(email.length>254||! /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email===latest.data.user.email?.toLowerCase()) return reply({error:"Informe um e-mail válido e diferente do seu"},400);
     // O Auth recusa endereços existentes; nunca recuperar uma conta existente para promovê-la.
-    const {data:invited,error}=await admin.auth.admin.inviteUserByEmail(email,{redirectTo:"https://www.avespet.com.br"});
+    const {data:invited,error}=await admin.auth.admin.inviteUserByEmail(email,{redirectTo:"https://www.avespet.com.br/adm/convite"});
     if(error||!invited.user) return reply({error:"Convite não realizado. Verifique se a conta já existe; nenhuma promoção automática foi feita."},409);
     const {error:grantError}=await admin.rpc("master_alterar_acesso",{p_actor:actor,p_target:invited.user.id,p_grant:true,p_reason:reason});
     if(grantError) return reply({error:"Convite enviado, mas autorização não concedida. Verificação manual necessária; a conta foi preservada."},503);
