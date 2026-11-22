@@ -7,6 +7,7 @@ const BirdsManagement = React.lazy(() => import("./BirdsManagement"));
 const BillingManagement = React.lazy(() => import("./BillingManagement"));
 const InfrastructurePanel = React.lazy(() => import("./InfrastructurePanel"));
 const MasterAudit = React.lazy(() => import("./MasterAudit"));
+const MasterAdministrators = React.lazy(() => import("./MasterAdministrators"));
 const SupportOperations = React.lazy(() => import("./SupportOperations"));
 const MasterInboxPanel = React.lazy(() => import("./MasterInboxPanel"));
 const EmailAutomations = React.lazy(() => import("./EmailAutomations"));
@@ -30,6 +31,7 @@ const preloadModules = {
   "email-automations": () => import("./EmailAutomations"),
   infrastructure: () => import("./InfrastructurePanel"),
   settings: () => import("./MasterAudit"),
+  "master-admins": () => import("./MasterAdministrators"),
 };
 const preloadSection = (id) => { preloadModules[id]?.().catch(() => {}); };
 
@@ -44,6 +46,7 @@ const navigation = [
   { id: "communications", label: "Central de Comunicação", icon: Mail, description: "Caixas Suporte e Financeiro, novos e-mails e respostas" },
   { id: "email-automations", label: "Automações de e-mail", icon: Workflow, description: "Reativação, inscrições, envios e conteúdos" },
   { id: "infrastructure", label: "Infraestrutura", icon: Activity, description: "Capacidade e monitoramento técnico" },
+  { id: "master-admins", label: "Administradores Master", icon: ShieldCheck, description: "Gestão de sócios e autorizações" },
   { id: "settings", label: "Auditoria e segurança", icon: Settings, description: "Histórico de ações administrativas" },
 ];
 
@@ -221,6 +224,7 @@ export default function MasterApp({ user, onLogout }) {
                 : id === "billing" ? <BillingManagement />
                 : id === "support" ? <SupportOperations onPrepareEmail={openSupportDraft} />
                 : id === "infrastructure" ? <InfrastructurePanel active={activeSection === id} />
+                : id === "master-admins" ? <MasterAdministrators />
                 : id === "settings" ? <MasterAudit />
                 : id === "communications" ? <MasterInboxPanel user={user} initialDraft={supportDraft} onDraftUsed={onDraftUsed} />
                 : id === "email-automations" ? <EmailAutomations />

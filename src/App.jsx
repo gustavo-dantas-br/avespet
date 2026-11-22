@@ -32,6 +32,7 @@ import AuthPage from "./components/AuthPage";
 import { checkIsMaster } from "./lib/masterAccess";
 const AvespetIA = React.lazy(() => import("./features/avespet-ia/MeuPrimeiroPet"));
 const MasterApp = React.lazy(() => import("./features/master/MasterApp"));
+const MasterInvitation = React.lazy(() => import("./features/master/MasterInvitation"));
 import RequiredPasswordChange from "./components/RequiredPasswordChange";
 import NotificationsCenter from "./components/NotificationsCenter";
 const PerdiUmaAve = React.lazy(() => import("./features/aves-perdidas").then((m) => ({ default: m.PerdiUmaAve })));
@@ -1601,6 +1602,11 @@ export default function App() {
   if (session?.user?.id && passwordGate === "required") {
     return <RequiredPasswordChange onComplete={(nextSession) => { setSession(nextSession); setPasswordCheckRetry((value) => value + 1); }} />;
   }
+
+if (caminho === "/adm/convite") {
+  if (session && masterAccess === null && !masterAccessError) return <div role="status" className="p-6">Validando convite...</div>;
+  return <React.Suspense fallback={<div role="status" className="p-6">Carregando convite...</div>}><MasterInvitation session={session} authorized={masterAccess === true && !masterAccessError} /></React.Suspense>;
+}
 
 // Visitante ve a area publica; quem esta logado tambem, mas so quando abre um guia/video (links compartilhados).
 const emConteudo = /^\/(guias|videos)(\/|$)/.test(caminho);
