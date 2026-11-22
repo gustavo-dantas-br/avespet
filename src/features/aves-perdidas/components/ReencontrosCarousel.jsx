@@ -3,7 +3,7 @@ import { Bird, Heart, ChevronLeft, ChevronRight, Play, Pause, MapPin, CheckCircl
 
 const INTERVALO = 6500;
 
-export default function ReencontrosCarousel({ items = [] }) {
+export default function ReencontrosCarousel({ items = [], compact = false }) {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [hover, setHover] = useState(false);
@@ -32,21 +32,21 @@ export default function ReencontrosCarousel({ items = [] }) {
   const move = direction => setIndex(i => ((i % count) + direction + count) % count);
   return (
     <section aria-labelledby="carrossel-reencontros-titulo" aria-roledescription="carrossel" className="overflow-hidden rounded-3xl border border-emerald-200 bg-emerald-50 shadow-sm" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} onFocusCapture={() => setFocused(true)} onBlurCapture={e => { if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false); }}>
-      <div className="bg-emerald-950 px-5 py-6 text-white sm:px-8">
+      <div className={"bg-emerald-950 px-5 text-white sm:px-8 "+(compact?"py-4":"py-6")}>
         <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-200"><Heart size={18}/> Reencontros registrados</p>
-        <h2 id="carrossel-reencontros-titulo" className="mt-2 text-2xl font-extrabold sm:text-3xl">Aves que voltaram para casa</h2>
+        <h2 id="carrossel-reencontros-titulo" className={"mt-2 font-extrabold "+(compact?"text-xl sm:text-2xl":"text-2xl sm:text-3xl")}>Aves que voltaram para casa</h2>
         <p className="mt-2 text-sm leading-6 text-emerald-100">Conheça aves que já retornaram às suas famílias. Cada reencontro é uma nova esperança.</p>
       </div>
       <div className="p-4 sm:p-6">
         <article aria-live={playing && !hover && !focused && !reduced && count > 1 ? "off" : "polite"} className="grid overflow-hidden rounded-2xl border border-emerald-200 bg-white sm:grid-cols-2">
-          {d.foto ? <img src={d.foto} alt={name} loading="lazy" decoding="async" className="h-64 w-full bg-emerald-50 object-contain sm:h-full sm:min-h-[260px]"/> : <div className="flex h-64 items-center justify-center bg-emerald-50 text-emerald-800"><Bird size={58}/></div>}
+          {d.foto ? <img src={d.foto} alt={name} loading="lazy" decoding="async" className={"w-full bg-emerald-50 object-contain "+(compact?"h-48 sm:h-52":"h-64 sm:h-full sm:min-h-[260px]")}/> : <div className={"flex items-center justify-center bg-emerald-50 text-emerald-800 "+(compact?"h-48 sm:h-52":"h-64")}><Bird size={58}/></div>}
           <div className="flex min-w-0 flex-col justify-center p-5 sm:p-7">
             <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-emerald-800"><CheckCircle2 size={18}/> Reencontro registrado pelo tutor</p>
-            <h3 className="mt-3 break-words text-3xl font-extrabold text-emerald-950">{name}</h3>
+            <h3 className={"mt-3 break-words font-extrabold text-emerald-950 "+(compact?"text-xl sm:text-2xl":"text-3xl")}>{name}</h3>
             <p className="mt-1 text-sm text-slate-600">{[d.especie,d.cor].filter(Boolean).join(" · ")}</p>
             {location && <p className="mt-2 flex items-center gap-1 text-sm text-slate-600"><MapPin size={16}/>{location}</p>}
             {Number.isInteger(rating) && rating >= 1 && rating <= 5 && <div className="mt-3 flex gap-1 text-amber-600" aria-label={rating+" de 5 estrelas"}>{Array.from({length:rating},(_,i)=><Star key={i} size={18} fill="currentColor"/>)}</div>}
-            {d.depoimento && <blockquote className="mt-4 max-h-40 overflow-y-auto whitespace-pre-wrap break-words border-l-2 border-emerald-300 pl-3 text-sm leading-6 text-slate-700">“{d.depoimento}”</blockquote>}
+            {d.depoimento && <blockquote className={"mt-4 overflow-y-auto whitespace-pre-wrap break-words border-l-2 border-emerald-300 pl-3 text-sm leading-6 text-slate-700 "+(compact?"max-h-20":"max-h-40")}>“{d.depoimento}”</blockquote>}
           </div>
         </article>
         {count > 1 && <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
