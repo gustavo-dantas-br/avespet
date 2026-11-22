@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Bird, BookOpen, CalendarDays, ChevronDown, ChevronRight, Dna, Egg, GraduationCap, HeartHandshake, Info, MessageCircle, Send, ShieldCheck, Sparkles, UserRound, Leaf } from "lucide-react";
 import { FASES } from "./motorEducativo";
 import PerfilMinhaAve from "./PerfilMinhaAve";
-import { PERFIL_VAZIO, idadePerfil, perfilDaAve, contextoDoPerfil, lerPerfilLocal, lerPerfilPorAve, salvarPerfilLocal, validarEdicao, normalizarPerfil } from "./perfilAve.js";
+import { PERFIL_VAZIO, idadePerfil, idadeLegivel, perfilDaAve, contextoDoPerfil, lerPerfilLocal, lerPerfilPorAve, salvarPerfilLocal, validarEdicao, normalizarPerfil } from "./perfilAve.js";
 import { conversarLocal, contextoInicial } from "./conversaLocal";
 import { CHAT_GENERATIVO_ATIVO, conversarComModelo, verificarDisponibilidadeGemini } from "./chatGenerativo";
 import DiarioFilhote from "./DiarioFilhote";
@@ -96,6 +96,13 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
     setContexto(salvo ? contextoDoPerfil(p) : contextoInicial()); setHistorico([]); setPerfilErro("");
     setPerfilStatus(salvo ? "Perfil recuperado neste navegador." : "");
   }, [userId]);
+  // Quando o plantel chega após a montagem ou é atualizado, recupere os dados oficiais.
+  useEffect(() => {
+    if (!aveAtiva || enviando) return;
+    setPerfilSalvo(atual => perfilDaAve(aveAtiva, atual.nivel, atual));
+    if(aveId===aveIdSalvo) setPerfil(atual => perfilDaAve(aveAtiva, atual.nivel, atual));
+    setContexto(atual => atual.assunto==="ave" && !atual.casal && !atual.nome ? {...atual,...contextoDoPerfil(perfilDaAve(aveAtiva,perfilSalvo.nivel,perfilSalvo))}:atual);
+  }, [aveAtiva, aveId, aveIdSalvo, enviando]);
   const selecionarAve = id => {
     if(enviando)return;
     const ave=aves.find(a=>String(a.id)===id);
@@ -313,8 +320,8 @@ export default function MeuPrimeiroPet({ aves = [], userId = "", onOpenGenetica 
             {diarioAberto ? <ChevronDown size={18}/> : <ChevronRight size={18}/>}
           </button>
           <div className="flex items-center gap-3 border-t border-[#EBF0EC] px-4 py-3">
-            <img src={FOTO_RINGNECK} alt="Foto ilustrativa de Ring Neck" className="h-16 w-16 shrink-0 rounded-xl object-cover" loading="lazy"/>
-            <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{aveAtiva?.nome || perfilSalvo.nome || perfilSalvo.especie || "Nenhuma ave selecionada"}</p><span className="inline-flex rounded-full bg-[#C8F0D5] px-2 py-0.5 text-[11px] font-semibold text-emerald-800">{perfilSalvo.fase === "incerta" ? "Fase a identificar" : FASES.find(f=>f.id===perfilSalvo.fase)?.label}</span><p className="mt-1 text-xs text-[#607366]">{idade !== null ? `Idade informada: ${idade} dias` : "Idade não informada"}</p></div>
+            <img src={aveAtiva?.foto || FOTO_RINGNECK} alt={aveAtiva?.foto ? "Foto da ave selecionada" : "Foto ilustrativa de Ring Neck"} className="h-16 w-16 shrink-0 rounded-xl object-cover" loading="lazy"/>
+            <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{aveAtiva?.nome || perfilSalvo.nome || perfilSalvo.especie || "Nenhuma ave selecionada"}</p><span className="inline-flex rounded-full bg-[#C8F0D5] px-2 py-0.5 text-[11px] font-semibold text-emerald-800">{perfilSalvo.fase === "incerta" ? "Fase a identificar" : FASES.find(f=>f.id===perfilSalvo.fase)?.label}</span><p className="mt-1 text-xs text-[#607366]">{idade !== null ? `Idade: ${idadeLegivel(perfilSalvo)}` : "Idade não informada"}</p></div>
           </div>
           {diarioAberto && <div className="space-y-3 border-t border-[#EBF0EC] p-3">
             <p className="text-xs text-[#607366]">O diário usa a ave do perfil salvo acima. A gravação permanente do diário está em preparação.</p>

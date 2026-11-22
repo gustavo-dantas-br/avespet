@@ -3,7 +3,13 @@ export const NIVEIS = [{id:"iniciante",label:"Minha primeira ave"},{id:"intermed
 export const PERFIL_VAZIO = {nivel:"iniciante",especie:"",fase:"incerta",idadeDias:"",nascimento:"",nome:"",sexo:"",mutacao:"",etapaVida:""};
 export const ESPECIES = ["Ring Neck","Calopsita","Agapornis","Periquito-australiano","Canário","Papagaio-amazona","Outra"];
 const texto=(v,n)=>String(v??"").trim().slice(0,n);
+export function nascimentoISO(valor) {
+ const s=String(valor??"").trim();
+ const br=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+ return br?br[3]+"-"+br[2]+"-"+br[1]:s;
+}
 export function idadeEmDias(nascimento, hoje=new Date()) {
+ nascimento=nascimentoISO(nascimento);
  if (!/^\d{4}-\d{2}-\d{2}$/.test(nascimento||"")) return null;
  const [y,m,d]=nascimento.split("-").map(Number);
  const dt=new Date(Date.UTC(y,m-1,d));
@@ -17,13 +23,23 @@ export function especieCanonica(valor) {
  return a || (t ? "Outra" : "");
 }
 export function normalizarPerfil(p={}) {
- return {...PERFIL_VAZIO,nivel:NIVEIS.some(n=>n.id===p.nivel)?p.nivel:"iniciante",especie:especieCanonica(p.especie),fase:["papa","transicao","desmamada","incerta"].includes(p.fase)?p.fase:"incerta",idadeDias:/^\d{1,5}$/.test(String(p.idadeDias??""))&&Number(p.idadeDias)<=30000?String(p.idadeDias):"",nascimento:idadeEmDias(p.nascimento)!==null?p.nascimento:"",nome:texto(p.nome,60),sexo:["Macho","Fêmea","Não identificado"].includes(p.sexo)?p.sexo:"",mutacao:texto(p.mutacao,80),etapaVida:["filhote","jovem","adulto"].includes(p.etapaVida)?p.etapaVida:""};
+ return {...PERFIL_VAZIO,nivel:NIVEIS.some(n=>n.id===p.nivel)?p.nivel:"iniciante",especie:especieCanonica(p.especie),fase:["papa","transicao","desmamada","incerta"].includes(p.fase)?p.fase:"incerta",idadeDias:/^\d{1,5}$/.test(String(p.idadeDias??""))&&Number(p.idadeDias)<=30000?String(p.idadeDias):"",nascimento:idadeEmDias(p.nascimento)!==null?nascimentoISO(p.nascimento):"",nome:texto(p.nome,60),sexo:["Macho","Fêmea","Não identificado"].includes(p.sexo)?p.sexo:"",mutacao:texto(p.mutacao,80),etapaVida:["filhote","jovem","adulto"].includes(p.etapaVida)?p.etapaVida:""};
 }
 export function perfilDaAve(ave,nivel="iniciante",extra={}) {
  const sexo=texto(ave?.sexo,30).toLowerCase();
  return normalizarPerfil({...extra,nivel,nome:ave?.nome||"",especie:ave?.especie||"",nascimento:ave?.nascimento||"",idadeDias:extra.idadeDias||"",mutacao:ave?.corMutacao||"",sexo:sexo==="macho"||sexo==="m"?"Macho":sexo==="fêmea"||sexo==="femea"||sexo==="f"?"Fêmea":"Não identificado"});
 }
 export function idadePerfil(p) {return p.nascimento?idadeEmDias(p.nascimento):p.idadeDias!==""&&Number.isInteger(Number(p.idadeDias))?Number(p.idadeDias):null;}
+export function idadeLegivel(p, hoje=new Date()) {
+ const dias=p.nascimento?idadeEmDias(p.nascimento,hoje):idadePerfil(p);
+ if(dias===null)return "Idade não informada";
+ if(!p.nascimento||dias<365)return dias+" "+(dias===1?"dia":"dias");
+ const [y,m,d]=nascimentoISO(p.nascimento).split("-").map(Number);
+ let meses=(hoje.getFullYear()-y)*12+hoje.getMonth()+1-m;
+ if(hoje.getDate()<d)meses--;
+ const anos=Math.floor(meses/12), resto=meses%12;
+ return anos+" "+(anos===1?"ano":"anos")+(resto?" e "+resto+" "+(resto===1?"mês":"meses"):"");
+}
 export function contextoDoPerfil(p) {
  const fase=p.etapaVida==="adulto"?"adulto":p.etapaVida==="filhote"||["papa","transicao"].includes(p.fase)?"filhote":p.etapaVida==="jovem"?"jovem":"";
  return {especie:p.especie==="Outra"?"":p.especie,filhote:fase==="filhote",idadeDias:idadePerfil(p),nome:p.nome,etapa:"inicio",assunto:"ave",faseInformada:fase,casal:null,faseAlimentar:p.fase,nivel:p.nivel,sexo:p.sexo,mutacao:p.mutacao};
