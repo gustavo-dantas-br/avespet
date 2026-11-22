@@ -31,6 +31,29 @@ end $$;
 revoke all on function public.proteger_proprietario_master() from public, anon, authenticated;
 create trigger proteger_proprietario_master before update or delete on public.master_admins
 for each row execute function public.proteger_proprietario_master();
+-- Executável somente pelo backend service_role. Verifica o proprietário novamente dentro da transação.
+create function public.master_alterar_acesso(p_actor uuid,p_target uuid,p_grant boolean,p_reason text)
+returns void language plpgsql security invoker set search_path='' as $
+begin
+  lock table public.master_admins in share row exclusive mode;
+  if not exists(select 1 from public.master_admins where user_id=p_actor and papel='owner') then
+    raise exception 'Proprietario obrigatorio';
+  end if;
+  if p_actor=p_target or p_target is null or p_grant is null or length(trim(coalesce(p_reason,''))) < 8 then
+    raise exception 'Operacao invalida';
+  end if;
+  if p_grant then
+    if not exists(select 1 from auth.users where id=p_target) then raise exception 'Conta inexistente'; end if;
+    insert into public.master_admins(user_id,papel) values(p_target,'master');
+  else
+    delete from public.master_admins where user_id=p_target and papel='master';
+    if not found then raise exception 'Autorizacao inexistente ou protegida'; end if;
+  end if;
+  insert into public.master_audit_log(actor_user_id,action,resource_type,resource_id,metadata)
+  values(p_actor,case when p_grant then 'master_access_granted' else 'master_access_revoked' end,'master_access',p_target::text,jsonb_build_object('reason',left(trim(p_reason),500)));
+end $;
+revoke all on function public.master_alterar_acesso(uuid,uuid,boolean,text) from public,anon,authenticated;
+grant execute on function public.master_alterar_acesso(uuid,uuid,boolean,text) to service_role;
 commit;
 -- A gestão de convites e revogação deve validar o proprietário no servidor.
 -- Revogar apenas a autorização Master, nunca excluir auth.users ou dados do criador.
