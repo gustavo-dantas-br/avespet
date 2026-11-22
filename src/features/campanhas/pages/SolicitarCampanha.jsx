@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Megaphone, CheckCircle2, CalendarDays, MapPin, Users, Heart, ArrowRight, ShieldCheck } from "lucide-react";
 import ReencontrosPublicos from "../components/ReencontrosPublicos";
+import EditorialStories from "../components/EditorialStories";
 import { formatarAlcance } from "../config/alcance";
 import { PACOTES_CAMPANHA } from "../config/pacotes";
 import { solicitarCampanha, listarPacotesPublicos } from "../services/campanhasService";
@@ -123,6 +124,7 @@ export default function SolicitarCampanha() {
           </CartaoPublico>
         )}
         <ReencontrosPublicos />
+        <EditorialStories />
         <section className="mt-6 rounded-2xl border border-emerald-200 bg-white p-5"><h2 className="flex items-center gap-2 font-bold text-emerald-950"><ShieldCheck size={21}/> Como funciona a divulgação?</h2><p className="mt-2 text-sm leading-6 text-slate-700">Após receber sua solicitação, nossa equipe avalia a área da busca, confirma os detalhes e o orçamento antes de iniciar a divulgação. Nos pacotes com mídia, os anúncios podem aparecer no Facebook e Instagram para pessoas da região que talvez não tenham visto sua postagem original. Não há garantia de recuperação, e o anúncio gratuito continua disponível.</p></section>
       </PaginaPublica>
     </div>

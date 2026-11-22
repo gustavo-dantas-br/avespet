@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import ReunionReviews from "./ReunionReviews";
+import ReunionEditorial from "./ReunionEditorial";
 import { lostBirdMessage, whatsappDigits } from "./lostBirdContactTemplates";
 import { RefreshCw, CheckCircle2, XCircle, Clock3, AlertCircle, Bird, Mail, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -206,6 +207,7 @@ export default function LostBirdsModeration({ onPrepareEmail }) {
 
   return <section className="space-y-5">
     <ReunionReviews />
+    <ReunionEditorial />
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div>
         <p className="text-[10px] font-bold uppercase tracking-[.18em] text-amber-700">Controle de buscas</p>
