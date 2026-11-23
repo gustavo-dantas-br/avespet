@@ -1,0 +1,113 @@
+import React, { useEffect, useState } from "react";
+import { Bird, ChevronLeft, ChevronRight, Pause, Play, Heart } from "lucide-react";
+import { supabase } from "../../../supabaseClient";
+import { listarAvesPerdidas } from "../services/avesPerdidasService";
+
+const BUCKET = "reunion-editorial";
+const INTERVAL = 6500;
+
+// As histórias editoriais não são recuperações oficiais e nunca entram nos indicadores.
+async function carregarHistorias() {
+  const [reais, editoriais] = await Promise.allSettled([
+    listarAvesPerdidas(),
+    supabase.from("reunion_editorial_stories")
+      .select("id,title,bird_name,species,city,story,kind,photo_path,publish_at")
+      .eq("state", "scheduled")
+      .lte("publish_at", new Date().toISOString())
+      .order("publish_at", { ascending: false }).limit(12),
+  ]);
+  const recuperadas = reais.status === "fulfilled"
+    ? reais.value.filter(({data}) => data?.situacao === "reencontrado").map(({id,data}) => ({
+        id: "tutor-" + id, name: data.nomeAve || data.especie || "Ave reencontrada",
+        title: data.nomeAve || data.especie || "Ave reencontrada",
+        description: data.depoimento || "Reencontro registrado na plataforma.",
+        species: [data.especie, data.cor].filter(Boolean).join(" · "),
+        city: [data.cidade,data.uf].filter(Boolean).join("/"),
+        photo: data.foto, type: "tutor"
+      }))
+    : [];
+  const data = editoriais.status === "fulfilled" && !editoriais.value.error
+    ? (editoriais.value.data || []) : [];
+  const historias = await Promise.all(data.map(async (item) => {
+    const { data: signed, error } = await supabase.storage.from(BUCKET).createSignedUrl(item.photo_path, 300);
+    return {
+      id: "editorial-" + item.id, name: item.bird_name, title: item.title,
+      description: item.story, species: item.species, city: item.city,
+      photo: error ? null : signed?.signedUrl, type: item.kind
+    };
+  }));
+  return [...recuperadas, ...historias];
+}
+
+export default function ReencontrosVitrine({compact = false}) {
+  const [items, setItems] = useState([]);
+  const [position, setPosition] = useState(0);
+  const [pause, setPause] = useState(false);
+  const [engaged, setEngaged] = useState(false);
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    const refresh = async () => {
+      const result = await carregarHistorias();
+      if (alive) setItems(result);
+    };
+    refresh().catch(() => {});
+    const refreshTimer = window.setInterval(() => refresh().catch(() => {}), 120000);
+    return () => { alive = false; clearInterval(refreshTimer); };
+  }, []);
+  useEffect(() => {
+    const media = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (!media) return;
+    const update = () => setReduced(media.matches);
+    update(); media.addEventListener?.("change", update);
+    return () => media.removeEventListener?.("change", update);
+  }, []);
+  const count = items.length;
+  useEffect(() => {
+    if (count <= 1 || pause || engaged || reduced) return;
+    const timer = window.setInterval(() => setPosition(v => (v + 1) % count), INTERVAL);
+    return () => clearInterval(timer);
+  }, [count, pause, engaged, reduced]);
+  if (!count) return null;
+  const activeIndex = position % count;
+  const item = items[activeIndex];
+  const ficticia = item.type === "illustrative";
+  const real = item.type === "tutor";
+  const advance = delta => setPosition(i => ((i % count) + delta + count) % count);
+  return <section aria-label="Carrossel de reencontros e histórias ilustrativas"
+    onMouseEnter={() => setEngaged(true)} onMouseLeave={() => setEngaged(false)}
+    onFocusCapture={() => setEngaged(true)} onBlurCapture={e => { if (!e.currentTarget.contains(e.relatedTarget)) setEngaged(false); }}
+    className="overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-sm">
+    <div className={"px-5 text-white sm:px-8 " + (compact ? "bg-emerald-900 py-4" : "bg-emerald-950 py-6")}>
+      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-200"><Heart size={16}/> Comunidade Avespet</p>
+      <h2 className={"mt-1 font-extrabold " + (compact ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl")}>Reencontros e histórias que inspiram</h2>
+      <p className="mt-1 text-xs leading-5 text-emerald-100">Reencontros registrados e exemplos fictícios são identificados separadamente.</p>
+    </div>
+    <div className="p-4 sm:p-5">
+      <article className="grid overflow-hidden rounded-2xl border border-slate-200 sm:grid-cols-2" aria-live="off">
+        <div className={"flex items-center justify-center bg-slate-100 " + (compact ? "min-h-44 sm:min-h-52" : "min-h-56 sm:min-h-64")}>
+          {item.photo ? <img src={item.photo} alt={item.name} loading="lazy" className={"w-full object-contain " + (compact ? "h-52" : "h-64")} /> : <Bird size={60} className="text-slate-400" />}
+        </div>
+        <div className="flex min-w-0 flex-col justify-center p-5">
+          <p className={"text-xs font-extrabold uppercase tracking-wide " + (ficticia ? "text-slate-700" : "text-emerald-800")}>
+            {ficticia ? "História ilustrativa — caso fictício" : real ? "Reencontro registrado pelo tutor" : "Relato real autorizado"}
+          </p>
+          <h3 className={"mt-2 break-words font-bold text-slate-950 " + (compact ? "text-lg" : "text-2xl")}>{item.title}</h3>
+          <p className="mt-1 text-sm font-semibold text-slate-700">{item.name}</p>
+          <p className="text-sm text-slate-600">{[item.species,item.city].filter(Boolean).join(" · ")}</p>
+          <p className={"mt-3 overflow-y-auto whitespace-pre-wrap break-words text-sm leading-6 text-slate-700 " + (compact ? "max-h-24" : "max-h-36")}>{item.description}</p>
+          {ficticia && <p className="mt-3 text-xs font-semibold text-slate-700">Exemplo fictício. Imagem ilustrativa; não é depoimento de cliente nem comprovação de recuperação.</p>}
+        </div>
+      </article>
+      {count > 1 && <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <button aria-label="História anterior" type="button" onClick={() => advance(-1)} className="flex h-11 w-11 items-center justify-center rounded-full border border-emerald-200"><ChevronLeft/></button>
+          <span className="min-w-12 text-center text-sm font-semibold text-emerald-950">{activeIndex + 1} / {count}</span>
+          <button aria-label="Próxima história" type="button" onClick={() => advance(1)} className="flex h-11 w-11 items-center justify-center rounded-full border border-emerald-200"><ChevronRight/></button>
+        </div>
+        {!reduced && <button type="button" onClick={() => setPause(v => !v)} className="flex min-h-11 items-center gap-2 rounded-lg border border-emerald-200 px-3 text-sm font-semibold text-emerald-900">{pause ? <Play size={16}/> : <Pause size={16}/>} {pause ? "Reproduzir" : "Pausar"}</button>}
+      </div>}
+      <p className="mt-3 text-xs text-slate-500">Histórias não representam garantia de recuperação ou resultado de campanha paga.</p>
+    </div>
+  </section>;
+}

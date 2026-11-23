@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Megaphone, CheckCircle2, CalendarDays, MapPin, Users, Heart, ArrowRight, ShieldCheck } from "lucide-react";
-import ReencontrosPublicos from "../components/ReencontrosPublicos";
-import EditorialStories from "../components/EditorialStories";
+import ReencontrosVitrine from "../../aves-perdidas/components/ReencontrosVitrine";
 import { formatarAlcance } from "../config/alcance";
 import { PACOTES_CAMPANHA } from "../config/pacotes";
 import { solicitarCampanha, listarPacotesPublicos } from "../services/campanhasService";
@@ -66,8 +65,7 @@ export default function SolicitarCampanha() {
           <a href="/aves-perdidas" className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-emerald-800 px-4 py-3 text-sm font-bold text-white">Cadastrar ou consultar minha ave <ArrowRight size={16}/></a>
         </div>
         <div className="mb-8 space-y-6">
-          <ReencontrosPublicos />
-          <EditorialStories />
+          <ReencontrosVitrine />
         </div>
         <div id="opcoes-divulgacao" className="scroll-mt-24" />
         {enviado ? (
