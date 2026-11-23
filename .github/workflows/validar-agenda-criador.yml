@@ -1,0 +1,20 @@
+name: Validar Agenda Criador
+on:
+  pull_request:
+    paths:
+      - 'src/features/agenda/**'
+      - 'src/features/dashboard/**'
+      - 'tests/agenda-criador.test.js'
+      - '.github/workflows/validar-agenda-criador.yml'
+permissions:
+  contents: read
+jobs:
+  agenda:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Testes de datas, incubação e tarefas
+        run: node --test tests/agenda-criador.test.js tests/criador-proximas-acoes.test.js

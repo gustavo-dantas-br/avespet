@@ -44,6 +44,7 @@ const AprovacoesTab = React.lazy(() => import("./features/anuncios/components/Ap
 const CalculadoraGenetica = React.lazy(() => import("./features/genetica/components/CalculadoraGeneticaRapida"));
 const ReservasTab = React.lazy(() => import("./features/reservas/ReservasTab"));
 const DashboardTab = React.lazy(() => import("./features/dashboard/components/DashboardTab"));
+const AgendaCriador = React.lazy(() => import("./features/agenda/AgendaCriador"));
 const FinanceiroTab = React.lazy(() => import("./features/financeiro/components/FinanceiroTab"));
 const ReproducaoTab = React.lazy(() => import("./features/reproducao/components/ReproducaoTab"));
 const ClientesTab = React.lazy(() => import("./features/clientes/ClientesTab"));
@@ -1103,6 +1104,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
       { id: "form", label: "Cadastrar", icon: Plus },
       { id: "arvore", label: "Árvore genealógica", icon: GitBranch },
       { id: "reproducao", label: "Reprodução", icon: Egg },
+      { id: "agenda", label: "Agenda", icon: CalendarDays },
       { id: "mutacoes", label: "Genética", icon: Dna },
       { id: "avespet-ia", label: "Avespet IA", icon: Sparkles },
       { id: "placa", label: "Placa", icon: Tag },
@@ -1285,6 +1287,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
             <React.Suspense fallback={<div className="flex items-center gap-2 ui-sans py-6" style={{ color: "#F1E6D2" }}><Loader2 className="animate-spin" size={18} /> Carregando funcionalidade...</div>}>
             {tab === "dashboard" && <DashboardTab aves={aves} despesas={despesas} clientes={clientes} indicacoes={indicacoes} posturas={posturas} setTab={setTab} goToLista={goToLista} STATUS_PLANTEL={STATUS_PLANTEL} SectionTitle={SectionTitle} StatCard={StatCard} money={money} Card={Card} />}
 
+            {tab === "agenda" && <AgendaCriador userId={user.id} posturas={posturas} onNavigate={setTab} />}
             {tab === "avespet-ia" && <AvespetIA aves={aves} userId={user.id} onOpenGenetica={() => setTab("mutacoes")} />}
             {tab === "reproducao" && (
               <ReproducaoTab aves={aves} posturas={posturas} onSave={handleSavePostura} onDelete={handleDeletePostura} onNascimento={handleRegistrarNascimento} Card={Card} Field={Field} inputStyle={inputStyle} SectionTitle={SectionTitle} />
