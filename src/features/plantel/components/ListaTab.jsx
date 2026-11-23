@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import FichaAve from "./FichaAve";
 import { Plus, Download, Upload, Search, SlidersHorizontal, Bird } from "lucide-react";
+import { estaNoPlantel, ehSolteiroDoPlantel, agruparCasaisDoPlantel } from "../utils/filtrosPlantel";
 
 const STATUS_ABAS = [
-  { id: "plantel", label: "Aves no plantel", count: (aves) => aves.filter((a) => ["No plantel", "A venda", "Reservada"].includes(a.status || "No plantel")).length },
+  { id: "plantel", label: "Aves no plantel", count: (aves) => aves.filter((a) => estaNoPlantel(a)).length },
   { id: "A venda", label: "À venda", count: (aves) => aves.filter((a) => a.status === "A venda").length },
   { id: "Reservada", label: "Reservadas", count: (aves) => aves.filter((a) => a.status === "Reservada").length },
+  { id: "casais", label: "Casais", count: (aves) => agruparCasaisDoPlantel(aves).length },
+  { id: "solteiros", label: "Solteiros", count: (aves) => aves.filter((a) => ehSolteiroDoPlantel(a, aves)).length },
   { id: "Vendida", label: "Vendidas", count: (aves) => aves.filter((a) => a.status === "Vendida").length },
   { id: "Falecida", label: "Falecidas", count: (aves) => aves.filter((a) => a.status === "Falecida").length },
   { id: "Perdida", label: "Perdidas", count: (aves) => aves.filter((a) => a.status === "Perdida").length },
@@ -40,7 +43,7 @@ export default function ListaTab({ aves, todasAves = aves, posturas = [], search
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
         {STATUS_ABAS.map((aba) => {
           const ativa = statusFilter === aba.id;
           return (
