@@ -22,7 +22,7 @@ function AveCard({ a, onEdit, onDelete, onSync, onView }) {
     <Card className="group flex min-w-0 overflow-hidden transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <div className="relative w-24 shrink-0 self-stretch sm:w-28" style={{ background: "#EAF2EC", minHeight: 150 }}>
         {a.foto ? (
-          <img src={a.foto} alt={a.nome || "Ave do plantel"} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+          <img src={a.foto} alt={a.nome || "Ave do plantel"} loading="lazy" className="absolute inset-0 h-full w-full object-contain" />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center" style={{ color: "#7A9A84" }}><Bird size={30} strokeWidth={1.6} /></div>
         )}
