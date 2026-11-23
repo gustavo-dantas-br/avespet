@@ -6,6 +6,7 @@ import PanelErrorBoundary from "./components/ui/PanelErrorBoundary";
 import { Card, SectionTitle, inputStyle, Field } from "./components/ui/SharedUI";
 import SuporteWhatsApp from "./components/SuporteWhatsApp";
 import { compressPhoto } from "./features/plantel/utils/comprimirFoto";
+import { estaNoPlantel, ehCasalDoPlantel, ehSolteiroDoPlantel, agruparCasaisDoPlantel } from "./features/plantel/utils/filtrosPlantel";
 import { emptyAve, emptyDespesa, emptyMutacao, emptyIndicacao, emptyAnuncio, emptyPerfilCriador, emptyPerfilPrivado, emptyCliente, emptyFornecedor } from "./lib/modelos";
 import { hojeISO, primeiroDiaMesISO, ultimoDiaMesISO, primeiroDiaAnoISO, money } from "./lib/formatadores";
 import { normalizeTelefone, whatsappUrl } from "./lib/telefone";
@@ -1068,26 +1069,14 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
 
   const filtered = bySearch.filter((a) => {
     if (!statusFilter) return true;
-    if (statusFilter === "casais") return !!a.parceiroId || !!a.casalLabel?.trim();
-    if (statusFilter === "solteiros") return !a.parceiroId && !a.casalLabel?.trim();
-    if (statusFilter === "plantel") return STATUS_PLANTEL.includes(a.status);
+    if (statusFilter === "casais") return ehCasalDoPlantel(a, aves);
+    if (statusFilter === "solteiros") return ehSolteiroDoPlantel(a, aves);
+    if (statusFilter === "plantel") return estaNoPlantel(a);
     if (statusFilter === "sem-sexagem") return STATUS_PLANTEL.includes(a.status) && !a.sexado;
     return a.status === statusFilter;
   });
 
-  const casaisAgrupados = (() => {
-    if (statusFilter !== "casais") return [];
-    const usados = new Set();
-    const pares = [];
-    filtered.forEach((a) => {
-      if (usados.has(a.id)) return;
-      const parceiro = a.parceiroId ? aves.find((x) => x.id === a.parceiroId) : null;
-      usados.add(a.id);
-      if (parceiro) usados.add(parceiro.id);
-      pares.push({ a, b: parceiro, label: a.casalLabel || parceiro?.casalLabel || "" });
-    });
-    return pares;
-  })();
+  const casaisAgrupados = statusFilter === "casais" ? agruparCasaisDoPlantel(filtered) : [];
 
   const machoOptions = aves.filter((a) => a.sexo === "Macho");
   const femeaOptions = aves.filter((a) => a.sexo === "Femea");
