@@ -14,3 +14,13 @@ export function eventosCuidados(registros=[],aves=[]){
 export function registroValido(r,ids){
  return !!r.produto?.trim() && ids.has(String(r.ave_id)) && /^\d{4}-\d{2}-\d{2}$/.test(r.data_aplicacao||"") && (!r.proxima_data || r.proxima_data>=r.data_aplicacao);
 }
+
+export function prepararNovaAdministracao(registro,hoje){
+ return {ave_id:registro.ave_id,tipo:registro.tipo,produto:registro.produto,
+ data_aplicacao:hoje,proxima_data:"",quantidade_informada:"",observacao:""};
+}
+export function mesSeguinte(mes){
+ const [ano,m]=mes.split("-").map(Number);
+ const d=new Date(ano,m,1,12);
+ return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0")].join("-");
+}
