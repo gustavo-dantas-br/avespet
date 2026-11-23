@@ -27,18 +27,22 @@ const actionNames = {
   master_password_reset_requested: "Solicitação de acesso Master",
   master_password_reset_completed: "Conclusão de acesso Master",
   master_invitation_created: "Convite Master criado",
+  master_access_granted: "Acesso Master concedido",
+  master_access_revoked: "Acesso Master revogado",
 };
 const resourceNames = {
   account: "Conta", creator: "Criador", auth_user: "Usuário",
   bird: "Ave", ad: "Anúncio", platform: "Plataforma",
   platform_plan: "Plano", creator_subscription: "Assinatura",
   creator_entitlement_override: "Permissão individual",
+  master_access: "Acesso Master",
 };
 const resources = [
   ["", "Todas as áreas"], ["account", "Contas"], ["creator", "Criadores"],
   ["bird", "Aves"], ["ad", "Anúncios"], ["platform", "Plataforma"],
   ["platform_plan", "Planos"], ["creator_entitlement_override", "Permissões individuais"],
   ["creator_subscription", "Assinaturas"], ["auth_user", "Usuários"],
+  ["master_access", "Acessos Master"],
 ];
 const dateTime = (date) => {
   if (!date) return "Sem data";

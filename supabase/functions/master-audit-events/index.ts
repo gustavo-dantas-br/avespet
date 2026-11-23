@@ -7,7 +7,7 @@ const productionOrigins = new Set([
 ]);
 const allowedTypes = new Set([
   "", "account", "creator", "auth_user", "bird", "ad", "platform",
-  "platform_plan", "creator_subscription", "creator_entitlement_override",
+  "platform_plan", "creator_subscription", "creator_entitlement_override", "master_access",
 ]);
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 function allowedOrigin(origin: string | null) {
