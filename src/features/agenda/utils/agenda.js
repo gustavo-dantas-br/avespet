@@ -13,7 +13,7 @@ export function eventosReproducao(posturas=[]){
   const casal=(p.casalLabel||"Casal sem nome").trim();
   const prazo=Number(p.diasIncubacao)||24;
   for(const ovo of p.ovos||[]){
-   if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(ovo.dataPostura||""))continue;
+   if(!/^\d{4}-\d{2}-\d{2}$/.test(ovo.dataPostura||""))continue;
    if(!["Incubando","Fertil"].includes(ovo.status))continue;
    const dia=addDiasISO(ovo.dataPostura,prazo);
    events.push({id:`ovo:${p.id||"postura"}:${ovo.n}`,dia,titulo:`Eclosão estimada · ${casal} · ovo ${ovo.n}`,tipo:"eclosao",origem:"reproducao",tab:"reproducao"});
