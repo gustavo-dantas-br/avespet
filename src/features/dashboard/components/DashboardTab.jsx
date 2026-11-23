@@ -1,6 +1,7 @@
 import React from "react";
 import { resumoReproducao } from "../../reproducao/components/ReproducaoTab";
 import { computeFinanceiro } from "../../financeiro/utils/calcularFinanceiro";
+import { buildCreatorActions } from "../utils/proximasAcoes";
 
 export default function DashboardTab({ aves, despesas, clientes = [], indicacoes = [], posturas = [], setTab, goToLista, STATUS_PLANTEL, SectionTitle, StatCard, money, Card }) {
   const total = aves.length;
@@ -29,6 +30,7 @@ export default function DashboardTab({ aves, despesas, clientes = [], indicacoes
   ).length;
 
   const fin = computeFinanceiro(aves, despesas);
+  const acoes = buildCreatorActions({aves,posturas,clientes,rep,posVendasPendentes});
 
   const ultimasCadastradas = [...aves]
     .sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || ""))
@@ -37,6 +39,15 @@ export default function DashboardTab({ aves, despesas, clientes = [], indicacoes
   return (
     <div>
       <div className="mb-6"><SectionTitle>Visão geral</SectionTitle><p className="ui-sans -mt-3 text-sm" style={{ color: "#425D4B" }}>Acompanhe os principais números e atividades do seu criatório.</p></div>
+
+      <section aria-label="Próximas ações do criatório" className="mb-6 rounded-2xl border border-[#D9E5DC] bg-white p-4 sm:p-5">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div><h2 className="text-lg font-bold text-[#173D29]">Próximas ações do criatório</h2><p className="text-xs text-[#526A5B]">Sugestões baseadas nos seus registros atuais, sem envios automáticos.</p></div>
+          <span className="rounded-full bg-[#E8F2EB] px-3 py-1 text-xs font-semibold text-[#24583E]">{acoes.length} prioridade(s)</span>
+        </div>
+        {acoes.length===0?<p className="text-sm text-[#526A5B]">Nenhuma pendência identificada pelos registros atuais. Continue acompanhando seu plantel.</p>:
+        <div className="grid gap-2 sm:grid-cols-2">{acoes.map(a=><button key={a.id} type="button" onClick={()=>setTab(a.tab)} className="rounded-xl border border-[#E2EBE4] p-3 text-left transition hover:bg-[#F3FAF5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700"><span className="text-[11px] font-bold uppercase tracking-wide text-[#38724F]">{a.level==="attention"?"Atenção":a.level==="upcoming"?"Em breve":"Primeiros passos"}</span><span className="mt-1 block text-sm font-semibold text-[#173D29]">{a.title}</span><span className="mt-1 block text-xs text-[#526A5B]">{a.detail}</span><span className="mt-2 block text-xs font-semibold text-[#1D754B]">Abrir seção →</span></button>)}</div>}
+      </section>
 
       <div className="grid gap-3 mb-6" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
         <StatCard label="Total de aves" value={total} onClick={() => goToLista(null)} />
