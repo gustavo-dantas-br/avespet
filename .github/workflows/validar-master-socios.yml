@@ -5,6 +5,9 @@ on:
       - 'docs/seguranca/*master-socios*.sql'
       - 'supabase/functions/master-manage-admins/**'
       - 'src/features/master/**'
+      - 'src/lib/growthAttribution.js'
+      - 'src/components/AuthPage.jsx'
+      - 'tests/growth-attribution.test.js'
       - '.github/workflows/validar-master-socios.yml'
 permissions:
   contents: read
@@ -30,3 +33,13 @@ jobs:
         env:
           PGPASSWORD: teste_ci_descartavel
         run: psql -h localhost -U postgres -d avespet_teste -v ON_ERROR_STOP=1 -f docs/seguranca/teste-master-socios.sql
+
+  growth-attribution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Testar atribuição opcional de canais
+        run: node --test tests/growth-attribution.test.js

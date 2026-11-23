@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Feather, Loader2, Search, Phone, ArrowLeft, MessageCircle, X } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { suggestedChannel, signupAttribution } from "../lib/growthAttribution";
 import { lerCadastroPendente } from "../features/aves-perdidas/services/cadastroPendenteAvePerdida";
 import {
   buscarPerdidaPorAnilha, listAnunciosPublicos, listPerfisPublicos,
@@ -375,6 +376,8 @@ function VitrinePublica() {
 
 function LoginModal({ onFechar }) {
   const [mode, setMode] = useState("login");
+  const [source,setSource]=useState("");
+  const suggestion=suggestedChannel();
   const [email, setEmail] = useState(() => lerCadastroPendente()?.email || "");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
@@ -405,7 +408,7 @@ function LoginModal({ onFechar }) {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { nome: nome.trim(), sobrenome: sobrenome.trim(), nomeCompleto, telefone: telefone.trim(), whatsapp: telefone.trim() } },
+          options: { data: { nome: nome.trim(), sobrenome: sobrenome.trim(), nomeCompleto, telefone: telefone.trim(), whatsapp: telefone.trim(), ...signupAttribution(source) } },
         });
         if (error) throw error;
         setMessage("Conta criada! Confira o e-mail de confirmação. IMPORTANTE: a mensagem também pode estar na pasta SPAM, Lixo eletrônico ou Promoções. Se encontrar, marque como “Não é spam”. Depois de confirmar e entrar, seu perfil será criado automaticamente.");
@@ -444,6 +447,7 @@ function LoginModal({ onFechar }) {
               <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#63736A" }}>Nome</span><input style={inputStyle} autoComplete="given-name" required value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Seu nome" /></label>
               <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#63736A" }}>Sobrenome</span><input style={inputStyle} autoComplete="family-name" required value={sobrenome} onChange={(e) => setSobrenome(e.target.value)} placeholder="Seu sobrenome" /></label>
               <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#63736A" }}>Telefone de contato / WhatsApp</span><input style={inputStyle} type="tel" autoComplete="tel" required value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 99999-9999" /></label>
+              <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold" style={{color:"#63736A"}}>Como conheceu o Avespet? (opcional)</span><select style={inputStyle} value={source} onChange={e=>setSource(e.target.value)}><option value="">Prefiro não informar</option>{[["instagram","Instagram"],["facebook","Facebook"],["google","Google"],["whatsapp","WhatsApp"],["youtube","YouTube"],["indicacao","Indicação"],["outro","Outro"]].map(([k,l])=><option key={k} value={k}>{l}{suggestion===k?" (sugerido pelo link)":""}</option>)}</select><span className="text-xs text-slate-500">Usamos essa informação opcional para entender como nossa comunidade cresce.</span></label>
             </>
           )}
           <label className="ui-sans flex flex-col gap-1.5"><span className="text-xs font-semibold uppercase" style={{ color: "#63736A" }}>E-mail</span><input style={inputStyle} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></label>
