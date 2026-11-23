@@ -2,7 +2,7 @@ import React,{useEffect,useState} from "react";
 import {supabase} from "../../../supabaseClient";
 export function StoryCard({item,photo,featured=false}) {
  return <article className={"overflow-hidden rounded-2xl border border-slate-200 bg-white "+(featured?"sm:grid sm:grid-cols-2":"")}>
- {photo&&<img src={photo} alt={item.bird_name} loading="lazy" className={"w-full object-contain bg-slate-100 "+(featured?"h-64 sm:h-full sm:min-h-[260px]":"h-64")}/>}
+ {photo&&<img src={photo} alt={item.bird_name} loading="lazy" className={"w-full object-cover object-center bg-slate-100 "+(featured?"h-[320px] sm:h-[400px]":"h-[300px]")}/>}
  <div className="p-5"><p className={"text-xs font-bold "+(item.kind==="illustrative"?"text-slate-700":"text-emerald-800")}>{item.kind==="illustrative"?"História de reencontro":"Relato autorizado pelo tutor"}</p>
  <h3 className={"mt-2 font-bold tracking-tight "+(featured?"text-2xl":"text-lg")}>{item.title}</h3><p className="text-sm text-slate-600">{item.bird_name} · {item.species} · {item.city}</p><p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6">{item.story}</p>
  {item.kind==="illustrative"&&<p className="mt-3 text-xs text-slate-600">Exemplo demonstrativo: esta narrativa não representa uma recuperação registrada ou depoimento real.</p>}</div></article>;
