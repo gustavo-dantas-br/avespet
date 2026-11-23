@@ -28,9 +28,12 @@ export default function CuidadosAves({userId,aves=[],mes,onDataChange,carePrefil
  },[userId,mes,onDataChange]);
  useEffect(()=>{load()},[load]);
  useEffect(()=>{
-  if(!carePrefill?.ave_id)return;
-  setEditId(null);setForm({...blank(),ave_id:carePrefill.ave_id,tipo:carePrefill.tipo,produto:carePrefill.produto});
-  setSelectedBirds([String(carePrefill.ave_id)]);setRepeatBirds([]);
+  if(!carePrefill?.ave_id&&!carePrefill?.ave_ids?.length)return;
+  const requested=carePrefill.ave_ids||[carePrefill.ave_id];
+  const accepted=[...new Set(requested.map(String))].filter(id=>ids.has(id));
+  if(!accepted.length){setError("As aves deste lembrete não estão mais disponíveis no plantel.");return;}
+  setEditId(null);setForm({...blank(),ave_id:accepted[0],tipo:carePrefill.tipo,produto:carePrefill.produto});
+  setSelectedBirds(accepted);setRepeatBirds([]);setError("");
  },[carePrefill?.token]);
  const update=(key,value)=>setForm(s=>({...s,[key]:value}));
  const submit=async e=>{

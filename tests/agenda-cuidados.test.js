@@ -6,6 +6,14 @@ test("novo registro preserva histórico sem copiar dose nem próxima data",()=>{
 test("janela mensal cruza dezembro e fevereiro",()=>{assert.equal(mesSeguinte("2026-12"),"2027-01");assert.equal(mesSeguinte("2028-02"),"2028-03");});
 test("lote de cinco aves, apenas duas com próxima data",()=>{const ids=new Set(["a","b","c","d","e"]);const f={tipo:"vitamina",produto:"Produto teste",data_aplicacao:"2026-11-23",proxima_data:"2026-12-01",quantidade_informada:"",observacao:""};const rows=montarLoteCuidados(f,["a","b","c","d","e"],["b","d"],"usuario",ids);assert.equal(rows.length,5);assert.deepEqual(rows.filter(x=>x.proxima_data).map(x=>x.ave_id),["b","d"]);assert.deepEqual(rows.filter(x=>!x.proxima_data).map(x=>x.ave_id),["a","c","e"]);});
 test("recusa aves não administradas na seleção de retorno e ausência de data",()=>{const ids=new Set(["a","b"]);const f={tipo:"vitamina",produto:"Vitamina",data_aplicacao:"2026-11-23",proxima_data:"",quantidade_informada:"",observacao:""};assert.throws(()=>montarLoteCuidados(f,["a"],["b"],"u",ids));assert.throws(()=>montarLoteCuidados(f,["a"],["a"],"u",ids));});
-import {agruparLembretes,dateSaoPaulo} from "../src/features/agenda/utils/lembretesSino.js";
+import {agruparLembretes,dateSaoPaulo,prepararSelecaoLembrete} from "../src/features/agenda/utils/lembretesSino.js";
 test("sino agrupa mesmo produto/data e mantém ação individual por ave",()=>{const r=[{ave_id:"a",tipo:"vitamina",produto:"Vitamina A",proxima_data:"2026-11-24"},{ave_id:"b",tipo:"vitamina",produto:"vitamina a",proxima_data:"2026-11-24"},{ave_id:"c",tipo:"medicamento",produto:"Produto",proxima_data:"2026-11-25"}];const groups=agruparLembretes(r,[{id:"a",nome:"A"},{id:"b",nome:"B"}],"2026-11-23");assert.equal(groups.length,1);assert.deepEqual(groups[0].aves.map(x=>x.nome),["A","B"]);assert.equal(groups[0].days,1);});
 test("sino inclui atrasadas e dia atual, sem aviso quando faltam dois dias",()=>{const r=["2026-11-20","2026-11-23","2026-11-25"].map((dia,i)=>({ave_id:String(i),tipo:"vitamina",produto:"Produto"+i,proxima_data:dia}));assert.equal(agruparLembretes(r,[],"2026-11-23").length,2);assert.match(dateSaoPaulo(new Date("2026-11-23T14:00:00Z")),/^2026-11-23$/);});
+
+test("seleção parcial do sino só preenche as aves escolhidas e nunca confirma automaticamente",()=>{
+ const g={tipo:"vitamina",produto:"Vitamina A",aves:[{id:"a"},{id:"b"},{id:"c"}]};
+ assert.deepEqual(prepararSelecaoLembrete(g,["b","c"]),{ave_ids:["b","c"],tipo:"vitamina",produto:"Vitamina A"});
+ assert.throws(()=>prepararSelecaoLembrete(g,[]));
+ assert.throws(()=>prepararSelecaoLembrete(g,["d"]));
+ assert.deepEqual(prepararSelecaoLembrete(g,["a","a"]).ave_ids,["a"]);
+});

@@ -7,6 +7,7 @@ on:
       - 'tests/agenda-criador.test.js'
       - 'tests/agenda-cuidados.test.js'
       - 'src/components/NotificationsCenter.jsx'
+      - 'src/App.jsx'
       - 'src/features/agenda/utils/lembretesSino.js'
       - '.github/workflows/validar-agenda-criador.yml'
 permissions:
