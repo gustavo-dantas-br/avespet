@@ -19,7 +19,7 @@ export default function DashboardTab({ aves, despesas, clientes = [], indicacoes
   const disponiveis = aves.filter((a) => a.status === "A venda").length;
   const vendidas = aves.filter((a) => a.status === "Vendida").length;
   const falecidas = aves.filter((a) => a.status === "Falecida").length;
-  const semSexagem = aves.filter((a) => !a.sexado).length;
+  const semSexagem = aves.filter((a) => STATUS_PLANTEL.includes(a.status) && !a.sexado).length;
   const naoSincronizadas = aves.filter((a) => a.synced === false).length;
 
   const totalClientes = clientes.length;
@@ -81,7 +81,7 @@ export default function DashboardTab({ aves, despesas, clientes = [], indicacoes
           <div className="ui-mono text-xs mb-2" style={{ color: "#294D38" }}>ALERTAS</div>
           <div className="flex flex-col gap-1 ui-sans text-sm" style={{ color: "#2B241C" }}>
             {rep.atrasados > 0 && <div>⚠️ {rep.atrasados} {rep.atrasados === 1 ? "ovo passou" : "ovos passaram"} da data prevista de eclosao.</div>}
-            {semSexagem > 0 && <div>⚠️ {semSexagem} {semSexagem === 1 ? "ave esta" : "aves estao"} sem laudo de sexagem.</div>}
+            {semSexagem > 0 && <button type="button" onClick={() => goToLista("sem-sexagem")} className="w-fit rounded-lg px-2 py-1 text-left font-semibold text-amber-900 hover:bg-amber-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-700" aria-label={`Ver ${semSexagem} ${semSexagem === 1 ? "ave do plantel sem sexagem" : "aves do plantel sem sexagem"}`}>⚠️ {semSexagem} {semSexagem === 1 ? "ave do plantel está" : "aves do plantel estão"} sem laudo de sexagem. <span className="underline">Ver aves</span></button>}
             {naoSincronizadas > 0 && <div>⚠️ {naoSincronizadas} {naoSincronizadas === 1 ? "ave nao sincronizou" : "aves nao sincronizaram"} com o banco ainda.</div>}
           </div>
         </Card>

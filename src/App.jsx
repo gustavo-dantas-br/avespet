@@ -367,6 +367,7 @@ function AppInner({ user, onLogout }) {
 
   function goToLista(filter) {
     setStatusFilter(filter || "plantel");
+    if (filter === "sem-sexagem") setSearch("");
     setTab("lista");
   }
 
@@ -1070,6 +1071,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
     if (statusFilter === "casais") return !!a.parceiroId || !!a.casalLabel?.trim();
     if (statusFilter === "solteiros") return !a.parceiroId && !a.casalLabel?.trim();
     if (statusFilter === "plantel") return STATUS_PLANTEL.includes(a.status);
+    if (statusFilter === "sem-sexagem") return STATUS_PLANTEL.includes(a.status) && !a.sexado;
     return a.status === statusFilter;
   });
 
@@ -1422,6 +1424,7 @@ const FILTER_LABELS = {
   casais: "Casais",
   solteiros: "Solteiros (sem parceiro)",
   plantel: "Plantel (sob sua responsabilidade)",
+  "sem-sexagem": "Aves do plantel sem sexagem",
 };
 
 // ---------------------------------------------------------------------------
