@@ -30,7 +30,7 @@ export default function DashboardTab({ aves, despesas, clientes = [], indicacoes
   ).length;
 
   const fin = computeFinanceiro(aves, despesas);
-  const acoes = buildCreatorActions({aves,posturas,clientes,rep,posVendasPendentes});
+  const acoes = buildCreatorActions({aves,posturas,clientes,rep,posVendasPendentes,STATUS_PLANTEL});
 
   const ultimasCadastradas = [...aves]
     .sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || ""))
@@ -46,7 +46,7 @@ export default function DashboardTab({ aves, despesas, clientes = [], indicacoes
           <button type="button" onClick={()=>setTab("agenda")} className="rounded-full bg-[#E8F2EB] px-3 py-2 text-xs font-semibold text-[#24583E]">Abrir agenda · {acoes.length} prioridade(s)</button>
         </div>
         {acoes.length===0?<p className="text-sm text-[#526A5B]">Nenhuma pendência identificada pelos registros atuais. Continue acompanhando seu plantel.</p>:
-        <div className="grid gap-2 sm:grid-cols-2">{acoes.map(a=><button key={a.id} type="button" onClick={()=>setTab(a.tab)} className="rounded-xl border border-[#E2EBE4] p-3 text-left transition hover:bg-[#F3FAF5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700"><span className="text-[11px] font-bold uppercase tracking-wide text-[#38724F]">{a.level==="attention"?"Atenção":a.level==="upcoming"?"Em breve":"Primeiros passos"}</span><span className="mt-1 block text-sm font-semibold text-[#173D29]">{a.title}</span><span className="mt-1 block text-xs text-[#526A5B]">{a.detail}</span><span className="mt-2 block text-xs font-semibold text-[#1D754B]">Abrir seção →</span></button>)}</div>}
+        <div className="grid gap-2 sm:grid-cols-2">{acoes.map(a=><button key={a.id} type="button" onClick={()=>a.filter ? goToLista(a.filter) : setTab(a.tab)} className="rounded-xl border border-[#E2EBE4] p-3 text-left transition hover:bg-[#F3FAF5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700"><span className="text-[11px] font-bold uppercase tracking-wide text-[#38724F]">{a.level==="attention"?"Atenção":a.level==="upcoming"?"Em breve":"Primeiros passos"}</span><span className="mt-1 block text-sm font-semibold text-[#173D29]">{a.title}</span><span className="mt-1 block text-xs text-[#526A5B]">{a.detail}</span><span className="mt-2 block text-xs font-semibold text-[#1D754B]">Abrir seção →</span></button>)}</div>}
       </section>
 
       <div className="grid gap-3 mb-6" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
