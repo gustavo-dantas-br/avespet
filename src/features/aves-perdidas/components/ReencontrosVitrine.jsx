@@ -87,9 +87,9 @@ export default function ReencontrosVitrine({compact = false, variant = "standard
   const activeIndex = position % count;
   // Dimensões específicas por página: preserva a ave inteira sem recorte.
   const photoLayout = {
-    home: { columns: "md:grid-cols-[minmax(0,420px)_minmax(0,1fr)]", maxWidth: "max-w-[420px]", maxHeight: "max-h-[525px]" },
-    lost: { columns: "md:grid-cols-[minmax(0,310px)_minmax(0,1fr)]", maxWidth: "max-w-[310px]", maxHeight: "max-h-[390px]" },
-    campaign: { columns: "md:grid-cols-[minmax(0,340px)_minmax(0,1fr)]", maxWidth: "max-w-[340px]", maxHeight: "max-h-[425px]" },
+    home: { columns: "md:grid-cols-[minmax(0,420px)_minmax(0,1fr)]", maxWidth: "max-w-[420px]" },
+    lost: { columns: "md:grid-cols-[minmax(0,310px)_minmax(0,1fr)]", maxWidth: "max-w-[310px]" },
+    campaign: { columns: "md:grid-cols-[minmax(0,340px)_minmax(0,1fr)]", maxWidth: "max-w-[340px]" },
     standard: { columns: "md:grid-cols-[minmax(0,340px)_minmax(0,1fr)]", maxWidth: "max-w-[340px]", maxHeight: "max-h-[425px]" },
   }[variant] || { columns: "md:grid-cols-[minmax(0,340px)_minmax(0,1fr)]", maxWidth: "max-w-[340px]", maxHeight: "max-h-[425px]" };
   const item = items[activeIndex];
@@ -109,7 +109,7 @@ export default function ReencontrosVitrine({compact = false, variant = "standard
       <article className={"grid min-w-0 overflow-hidden rounded-2xl border border-slate-200 "+photoLayout.columns} aria-live="off">
         <div className="flex min-w-0 items-center justify-center bg-white px-2 py-3 sm:px-3">
           <div className={"flex w-full min-w-0 items-center justify-center "+photoLayout.maxWidth}>
-            {item.photo ? <img src={item.photo} alt={item.name} loading={compact ? "eager" : "lazy"} decoding="async" className={"block h-auto w-auto max-w-full object-contain object-center "+photoLayout.maxHeight} /> : <div className="flex aspect-[4/5] w-full items-center justify-center bg-slate-100"><Bird size={60} className="text-slate-400" /></div>}
+            {item.photo ? <img src={item.photo} alt={item.name} loading={compact ? "eager" : "lazy"} decoding="async" className="block h-auto w-full object-contain object-center" /> : <div className="flex aspect-[4/5] w-full items-center justify-center bg-slate-100"><Bird size={60} className="text-slate-400" /></div>}
           </div>
         </div>
         <div className="flex min-w-0 flex-col justify-center p-5">

@@ -9,7 +9,7 @@ test("cada página possui uma largura de foto proporcional própria",()=>{
   assert.match(s,/max-w-\[340px\]/);
 });
 test("poster vertical não sofre recorte ou altura forçada",()=>{
-  assert.match(s,/block h-auto w-auto max-w-full object-contain/);
+  assert.match(s,/block h-auto w-full object-contain/);
   assert.doesNotMatch(s,/object-cover/);
   assert.doesNotMatch(s,/imageHeight/);
 });
