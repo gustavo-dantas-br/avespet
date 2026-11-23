@@ -5,6 +5,7 @@ const AdsModeration = React.lazy(() => import("./AdsModeration"));
 const LostBirdsModeration = React.lazy(() => import("./LostBirdsModeration"));
 const BirdsManagement = React.lazy(() => import("./BirdsManagement"));
 const BillingManagement = React.lazy(() => import("./BillingManagement"));
+const GrowthPanel = React.lazy(() => import("./GrowthPanel"));
 const InfrastructurePanel = React.lazy(() => import("./InfrastructurePanel"));
 const MasterAudit = React.lazy(() => import("./MasterAudit"));
 const MasterAdministrators = React.lazy(() => import("./MasterAdministrators"));
@@ -29,6 +30,7 @@ const preloadModules = {
   support: () => import("./SupportOperations"),
   communications: () => import("./MasterInboxPanel"),
   "email-automations": () => import("./EmailAutomations"),
+  growth: () => import("./GrowthPanel"),
   infrastructure: () => import("./InfrastructurePanel"),
   settings: () => import("./MasterAudit"),
   "master-admins": () => import("./MasterAdministrators"),
@@ -45,6 +47,7 @@ const navigation = [
   { id: "support", label: "Suporte operacional", icon: LifeBuoy, description: "Triagem de casos e preparação manual de e-mails de atendimento" },
   { id: "communications", label: "Central de Comunicação", icon: Mail, description: "Caixas Suporte e Financeiro, novos e-mails e respostas" },
   { id: "email-automations", label: "Automações de e-mail", icon: Workflow, description: "Reativação, inscrições, envios e conteúdos" },
+  { id: "growth", label: "Crescimento", icon: TrendingUp, description: "Aquisição, ativação e evolução dos usuários" },
   { id: "infrastructure", label: "Infraestrutura", icon: Activity, description: "Capacidade e monitoramento técnico" },
   { id: "master-admins", label: "Administradores Master", icon: ShieldCheck, description: "Gestão de sócios e autorizações" },
   { id: "settings", label: "Auditoria e segurança", icon: Settings, description: "Histórico de ações administrativas" },
@@ -223,6 +226,7 @@ export default function MasterApp({ user, onLogout }) {
                 : id === "birds" ? <BirdsManagement />
                 : id === "billing" ? <BillingManagement />
                 : id === "support" ? <SupportOperations onPrepareEmail={openSupportDraft} />
+                : id === "growth" ? <GrowthPanel active={activeSection === id} onOpenReengagement={() => chooseSection("email-automations")} onOpenBilling={() => chooseSection("billing")} />
                 : id === "infrastructure" ? <InfrastructurePanel active={activeSection === id} />
                 : id === "master-admins" ? <MasterAdministrators />
                 : id === "settings" ? <MasterAudit />
