@@ -223,7 +223,7 @@ export default function MasterApp({ user, onLogout }) {
                 : id === "birds" ? <BirdsManagement />
                 : id === "billing" ? <BillingManagement />
                 : id === "support" ? <SupportOperations onPrepareEmail={openSupportDraft} />
-                : id === "growth" ? <GrowthPanel active={activeSection === id} onOpenReengagement={() => chooseSection("email-automations")} />
+                : id === "growth" ? <GrowthPanel active={activeSection === id} onOpenReengagement={() => chooseSection("email-automations")} onOpenBilling={() => chooseSection("billing")} />
                 : id === "infrastructure" ? <InfrastructurePanel active={activeSection === id} />
                 : id === "settings" ? <MasterAudit />
                 : id === "communications" ? <MasterInboxPanel user={user} initialDraft={supportDraft} onDraftUsed={onDraftUsed} />

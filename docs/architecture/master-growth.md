@@ -21,3 +21,7 @@ Cadastro separado de prospectos voluntariamente registrados pelo Master; não du
 ## Fase 6 — Campanhas próprias de marketing
 
 Cadastro manual separado das solicitações de divulgação de aves perdidas. Orçamento/gasto em centavos BRL, período, canal, situação e contagens acumuladas opcionais de leads/cadastros. CPL e custo por cadastro apenas quando gasto informado e denominador positivo. Sem integração de anúncios, gasto autorizado, criação publicitária ou atribuição automática. RPC restrita service_role e Master, auditoria, RLS, lista de até 200. Sem dados pessoais adicionais.
+
+## Fase 7 — Planos e assinaturas
+
+Somente leitura de platform_plans, creator_subscriptions e creator_entitlement_overrides. Exclui Master; vigência considera active/trialing e intervalo de datas. Contas distintas globalmente e em cada plano (planos podem sobrepor). Status são registros, não recebimentos. Ausência de registro não impede acesso gratuito; não inferir assinantes gratuitos exatos. Liberações manuais separadas. Atalho à Central Comercial. Nenhuma alteração de preços, disponibilidade, limites ou cobrança. Restrições de lançamento existentes preservadas.
