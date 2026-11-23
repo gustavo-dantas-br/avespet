@@ -41,6 +41,8 @@ async function carregarHistorias() {
 
 export default function ReencontrosVitrine({compact = false}) {
   const [items, setItems] = useState([]);
+  const [loadState, setLoadState] = useState("loading");
+  const [retryCount, setRetryCount] = useState(0);
   const [position, setPosition] = useState(0);
   const [pause, setPause] = useState(false);
   const [engaged, setEngaged] = useState(false);
@@ -48,13 +50,17 @@ export default function ReencontrosVitrine({compact = false}) {
   useEffect(() => {
     let alive = true;
     const refresh = async () => {
-      const result = await carregarHistorias();
-      if (alive) setItems(result);
+      try {
+        const result = await carregarHistorias();
+        if (alive) { setItems(result); setLoadState("ready"); }
+      } catch {
+        if (alive) setLoadState("error");
+      }
     };
     refresh().catch(() => {});
     const refreshTimer = window.setInterval(() => refresh().catch(() => {}), 120000);
     return () => { alive = false; clearInterval(refreshTimer); };
-  }, []);
+  }, [retryCount]);
   useEffect(() => {
     const media = window.matchMedia?.("(prefers-reduced-motion: reduce)");
     if (!media) return;
@@ -68,7 +74,16 @@ export default function ReencontrosVitrine({compact = false}) {
     const timer = window.setInterval(() => setPosition(v => (v + 1) % count), INTERVAL);
     return () => clearInterval(timer);
   }, [count, pause, engaged, reduced]);
-  if (!count) return null;
+  if (!count) return <section aria-label="Histórias de reencontro" className="overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-sm">
+    <div className="bg-emerald-950 px-5 py-5 text-white sm:px-8">
+      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-200">Comunidade Avespet</p>
+      <h2 className="mt-1 text-2xl font-extrabold">Histórias de reencontro</h2>
+    </div>
+    <div className="px-5 py-6 text-sm text-slate-700">
+      {loadState === "loading" ? "Carregando histórias..." : loadState === "error" ? "Não foi possível carregar as histórias agora." : "Novas histórias serão exibidas aqui quando estiverem disponíveis."}
+      {loadState === "error" && <button type="button" onClick={() => { setLoadState("loading"); setRetryCount(n => n + 1); }} className="ml-3 rounded-lg border border-emerald-500 px-3 py-2 font-semibold text-emerald-900">Tentar novamente</button>}
+    </div>
+  </section>;
   const activeIndex = position % count;
   const item = items[activeIndex];
   const ficticia = item.type === "illustrative";
@@ -80,13 +95,13 @@ export default function ReencontrosVitrine({compact = false}) {
     className="overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-sm">
     <div className={"px-5 text-white sm:px-8 " + (compact ? "bg-emerald-900 py-4" : "bg-emerald-950 py-6")}>
       <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-200"><Heart size={16}/> Comunidade Avespet</p>
-      <h2 className={"mt-1 font-extrabold " + (compact ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl")}>Reencontros e histórias que inspiram</h2>
+      <h2 className={"mt-1 font-extrabold " + (compact ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl")}>Histórias de reencontro</h2>
       <p className="mt-1 text-xs leading-5 text-emerald-100">Reencontros registrados e exemplos demonstrativos são apresentados com identificação própria.</p>
     </div>
     <div className="p-4 sm:p-5">
-      <article className="grid overflow-hidden rounded-2xl border border-slate-200 sm:grid-cols-2" aria-live="off">
-        <div className={"flex items-center justify-center bg-slate-100 " + (compact ? "min-h-44 sm:min-h-52" : "min-h-56 sm:min-h-64")}>
-          {item.photo ? <img src={item.photo} alt={item.name} loading="lazy" className={"w-full object-contain " + (compact ? "h-52" : "h-64")} /> : <Bird size={60} className="text-slate-400" />}
+      <article className="grid overflow-hidden rounded-2xl border border-slate-200 sm:grid-cols-[1.15fr_.85fr]" aria-live="off">
+        <div className={"flex items-center justify-center bg-slate-100 " + (compact ? "min-h-[280px] sm:min-h-[340px]" : "min-h-[320px] sm:min-h-[420px]")}>
+          {item.photo ? <img src={item.photo} alt={item.name} loading={compact ? "eager" : "lazy"} decoding="async" className={"w-full bg-slate-100 object-cover object-center " + (compact ? "h-[280px] sm:h-[340px]" : "h-[320px] sm:h-[420px]")} /> : <Bird size={60} className="text-slate-400" />}
         </div>
         <div className="flex min-w-0 flex-col justify-center p-5">
           <p className={"text-xs font-extrabold uppercase tracking-wide " + (ficticia ? "text-slate-700" : "text-emerald-800")}>
