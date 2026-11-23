@@ -69,7 +69,9 @@ export default function AvesPerdidas({ onEntrar }) {
                     <span className="inline-flex rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-900">🔎 Ainda desaparecida</span>}
                 </div>
                 {data.foto ? (
-                  <img src={data.foto} alt={data.nomeAve || data.especie || "Ave perdida"} loading="lazy" className="aspect-[16/10] w-full object-cover" />
+                  <div className="flex h-[280px] w-full items-center justify-center bg-slate-50 sm:h-[320px]">
+                    <img src={data.foto} alt={data.nomeAve || data.especie || "Ave perdida"} loading="lazy" decoding="async" className="block max-h-full max-w-full object-contain object-center" />
+                  </div>
                 ) : (
                   <div className="flex aspect-[16/10] items-center justify-center" style={{ background: TEMA_PUBLICO.verdeClaro, color: TEMA_PUBLICO.verde }}>Ave cadastrada</div>
                 )}
