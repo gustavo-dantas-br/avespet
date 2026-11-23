@@ -2,6 +2,7 @@ import React from "react";
 import { resumoReproducao } from "../../reproducao/components/ReproducaoTab";
 import { computeFinanceiro } from "../../financeiro/utils/calcularFinanceiro";
 import { buildCreatorActions } from "../utils/proximasAcoes";
+import { estaNoPlantel, ehSolteiroDoPlantel, agruparCasaisDoPlantel } from "../../plantel/utils/filtrosPlantel";
 
 export default function DashboardTab({ aves, despesas, clientes = [], indicacoes = [], posturas = [], setTab, goToLista, STATUS_PLANTEL, SectionTitle, StatCard, money, Card }) {
   const total = aves.length;
@@ -9,13 +10,11 @@ export default function DashboardTab({ aves, despesas, clientes = [], indicacoes
   const femeas = aves.filter((a) => a.sexo === "Femea").length;
   const indefinidos = aves.filter((a) => a.sexo === "Indefinido").length;
 
-  const paresPorParceiro = new Set();
-  aves.forEach((a) => { if (a.parceiroId) paresPorParceiro.add([a.id, a.parceiroId].sort().join("-")); });
-  const casaisSoLabel = aves.filter((a) => !a.parceiroId && a.casalLabel?.trim()).length;
-  const casais = paresPorParceiro.size + casaisSoLabel;
-  const solteiros = aves.filter((a) => !a.parceiroId && !a.casalLabel?.trim()).length;
+  const avesDoPlantel = aves.filter(estaNoPlantel);
+  const casais = agruparCasaisDoPlantel(avesDoPlantel).length;
+  const solteiros = avesDoPlantel.filter((a) => ehSolteiroDoPlantel(a, avesDoPlantel)).length;
 
-  const plantel = aves.filter((a) => STATUS_PLANTEL.includes(a.status)).length;
+  const plantel = avesDoPlantel.length;
   const disponiveis = aves.filter((a) => a.status === "A venda").length;
   const vendidas = aves.filter((a) => a.status === "Vendida").length;
   const falecidas = aves.filter((a) => a.status === "Falecida").length;
