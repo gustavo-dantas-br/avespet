@@ -6,7 +6,7 @@ import {listarAvesPerdidas} from "../../aves-perdidas/services/avesPerdidasServi
 function ReencontroCard({data:d,featured=false}){
  const name=d.nomeAve||d.especie||"Ave reencontrada";
  return <article className={"overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-sm "+(featured?"sm:grid sm:grid-cols-2":"")}>
-   {d.foto?<img src={d.foto} alt={name} loading="lazy" decoding="async" className={"w-full bg-emerald-50 object-contain "+(featured?"h-64 sm:h-full sm:min-h-[260px]":"h-52")}/>:<div className={"flex items-center justify-center bg-emerald-50 text-emerald-800 "+(featured?"h-64 sm:h-full sm:min-h-[260px]":"h-52")}><Bird size={48}/></div>}
+   {d.foto?<img src={d.foto} alt={name} loading="lazy" decoding="async" className={"w-full bg-emerald-50 object-contain object-center "+(featured?"h-[320px] sm:h-[400px]":"h-[300px]")}/>:<div className={"flex items-center justify-center bg-emerald-50 text-emerald-800 "+(featured?"h-64 sm:h-full sm:min-h-[260px]":"h-52")}><Bird size={48}/></div>}
    <div className="flex flex-col justify-center p-5 sm:p-6">
      <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-800"><CheckCircle2 size={16}/> Reencontro registrado pelo tutor</p>
      <h3 className={"mt-2 font-extrabold tracking-tight text-emerald-950 "+(featured?"text-3xl":"text-xl")}>{name}</h3>
