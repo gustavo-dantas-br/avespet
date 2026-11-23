@@ -65,7 +65,7 @@ export default function SolicitarCampanha() {
           <a href="/aves-perdidas" className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-emerald-800 px-4 py-3 text-sm font-bold text-white">Cadastrar ou consultar minha ave <ArrowRight size={16}/></a>
         </div>
         <div className="mb-8 space-y-6">
-          <ReencontrosVitrine />
+          <ReencontrosVitrine variant="campaign" />
         </div>
         <div id="opcoes-divulgacao" className="scroll-mt-24" />
         {enviado ? (

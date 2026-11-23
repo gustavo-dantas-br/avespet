@@ -39,7 +39,7 @@ async function carregarHistorias() {
   return [...recuperadas, ...historias];
 }
 
-export default function ReencontrosVitrine({compact = false}) {
+export default function ReencontrosVitrine({compact = false, variant = "standard"}) {
   const [items, setItems] = useState([]);
   const [loadState, setLoadState] = useState("loading");
   const [retryCount, setRetryCount] = useState(0);
@@ -85,6 +85,8 @@ export default function ReencontrosVitrine({compact = false}) {
     </div>
   </section>;
   const activeIndex = position % count;
+  // Dimensões específicas por página: preserva a ave inteira sem recorte.
+  const imageHeight = variant === "home" ? "h-[340px] sm:h-[410px]" : variant === "lost" ? "h-[210px] sm:h-[250px]" : "h-[260px] sm:h-[320px]";
   const item = items[activeIndex];
   const ficticia = item.type === "illustrative";
   const real = item.type === "tutor";
@@ -99,9 +101,9 @@ export default function ReencontrosVitrine({compact = false}) {
       <p className="mt-1 text-xs leading-5 text-emerald-100">Reencontros registrados e exemplos demonstrativos são apresentados com identificação própria.</p>
     </div>
     <div className="p-4 sm:p-5">
-      <article className="grid overflow-hidden rounded-2xl border border-slate-200 sm:grid-cols-[1.15fr_.85fr]" aria-live="off">
-        <div className={"flex items-center justify-center bg-slate-100 " + (compact ? "min-h-[280px] sm:min-h-[340px]" : "min-h-[320px] sm:min-h-[420px]")}>
-          {item.photo ? <img src={item.photo} alt={item.name} loading={compact ? "eager" : "lazy"} decoding="async" className={"w-full bg-slate-100 object-cover object-center " + (compact ? "h-[280px] sm:h-[340px]" : "h-[320px] sm:h-[420px]")} /> : <Bird size={60} className="text-slate-400" />}
+      <article className={"grid overflow-hidden rounded-2xl border border-slate-200 "+(variant === "home" ? "sm:grid-cols-[1.35fr_.65fr]" : "sm:grid-cols-[1fr_1fr]")} aria-live="off">
+        <div className="flex min-w-0 items-center justify-center bg-slate-100">
+          {item.photo ? <img src={item.photo} alt={item.name} loading={compact ? "eager" : "lazy"} decoding="async" className={"w-full bg-slate-100 object-contain object-center "+imageHeight} /> : <Bird size={60} className="text-slate-400" />}
         </div>
         <div className="flex min-w-0 flex-col justify-center p-5">
           <p className={"text-xs font-extrabold uppercase tracking-wide " + (ficticia ? "text-slate-700" : "text-emerald-800")}>
