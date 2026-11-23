@@ -41,6 +41,7 @@ async function carregarHistorias() {
 
 export default function ReencontrosVitrine({compact = false}) {
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [position, setPosition] = useState(0);
   const [pause, setPause] = useState(false);
   const [engaged, setEngaged] = useState(false);
@@ -48,8 +49,10 @@ export default function ReencontrosVitrine({compact = false}) {
   useEffect(() => {
     let alive = true;
     const refresh = async () => {
-      const result = await carregarHistorias();
-      if (alive) setItems(result);
+      try {
+        const result = await carregarHistorias();
+        if (alive) setItems(result);
+      } finally { if (alive) setLoading(false); }
     };
     refresh().catch(() => {});
     const refreshTimer = window.setInterval(() => refresh().catch(() => {}), 120000);
@@ -68,7 +71,10 @@ export default function ReencontrosVitrine({compact = false}) {
     const timer = window.setInterval(() => setPosition(v => (v + 1) % count), INTERVAL);
     return () => clearInterval(timer);
   }, [count, pause, engaged, reduced]);
-  if (!count) return null;
+  if (!count) return <section aria-label="Histórias de reencontro" className="overflow-hidden rounded-3xl border border-emerald-200 bg-emerald-50 p-5 sm:p-7">
+    <h2 className="text-2xl font-extrabold text-emerald-950">Histórias de reencontro</h2>
+    <p className="mt-2 text-sm text-slate-700">{loading ? "Carregando histórias de reencontro..." : "As histórias estão sendo atualizadas. Acompanhe as publicações em Aves perdidas."}</p>
+  </section>;
   const activeIndex = position % count;
   const item = items[activeIndex];
   const ficticia = item.type === "illustrative";
@@ -85,8 +91,8 @@ export default function ReencontrosVitrine({compact = false}) {
     </div>
     <div className="p-4 sm:p-5">
       <article className="grid overflow-hidden rounded-2xl border border-slate-200 sm:grid-cols-2" aria-live="off">
-        <div className={"flex items-center justify-center bg-slate-100 " + (compact ? "min-h-44 sm:min-h-52" : "min-h-56 sm:min-h-64")}>
-          {item.photo ? <img src={item.photo} alt={item.name} loading="lazy" className={"w-full object-contain " + (compact ? "h-52" : "h-64")} /> : <Bird size={60} className="text-slate-400" />}
+        <div className={"flex items-center justify-center overflow-hidden bg-slate-100 " + (compact ? "min-h-64 sm:min-h-80" : "min-h-80 sm:min-h-[380px]") }>
+          {item.photo ? <img src={item.photo} alt={item.name} loading="lazy" className={"w-full object-cover object-center " + (compact ? "h-72 sm:h-80" : "h-80 sm:h-[380px]")} /> : <Bird size={60} className="text-slate-400" />}
         </div>
         <div className="flex min-w-0 flex-col justify-center p-5">
           <p className={"text-xs font-extrabold uppercase tracking-wide " + (ficticia ? "text-slate-700" : "text-emerald-800")}>

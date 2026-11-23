@@ -47,7 +47,7 @@ export default function AvesPerdidas({ onEntrar }) {
           <button type="button" onClick={abrirCadastro} className="min-h-[44px] rounded-xl bg-emerald-800 px-5 py-3 text-sm font-bold text-white">Cadastrar ave perdida gratuitamente</button>
           <a href="#aves-em-busca" className="min-h-[44px] rounded-xl border border-emerald-700 px-5 py-3 text-sm font-semibold text-emerald-800">Ver aves desaparecidas</a>
         </div>
-        <ReencontrosVitrine />
+        <div id="historias-de-reencontro" className="scroll-mt-24"><ReencontrosVitrine /></div>
         <h2 id="aves-em-busca" className="mb-4 mt-8 scroll-mt-24 text-2xl font-extrabold text-emerald-950">Aves que ainda precisam voltar para casa</h2>
         {loading ? (
           <div className="rounded-2xl p-8 text-center text-sm" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.texto }}>Carregando anúncios...</div>
