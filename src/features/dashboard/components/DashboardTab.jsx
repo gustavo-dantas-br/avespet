@@ -43,7 +43,7 @@ export default function DashboardTab({ aves, despesas, clientes = [], indicacoes
       <section aria-label="Próximas ações do criatório" className="mb-6 rounded-2xl border border-[#D9E5DC] bg-white p-4 sm:p-5">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div><h2 className="text-lg font-bold text-[#173D29]">Próximas ações do criatório</h2><p className="text-xs text-[#526A5B]">Sugestões baseadas nos seus registros atuais, sem envios automáticos.</p></div>
-          <span className="rounded-full bg-[#E8F2EB] px-3 py-1 text-xs font-semibold text-[#24583E]">{acoes.length} prioridade(s)</span>
+          <button type="button" onClick={()=>setTab("agenda")} className="rounded-full bg-[#E8F2EB] px-3 py-2 text-xs font-semibold text-[#24583E]">Abrir agenda · {acoes.length} prioridade(s)</button>
         </div>
         {acoes.length===0?<p className="text-sm text-[#526A5B]">Nenhuma pendência identificada pelos registros atuais. Continue acompanhando seu plantel.</p>:
         <div className="grid gap-2 sm:grid-cols-2">{acoes.map(a=><button key={a.id} type="button" onClick={()=>setTab(a.tab)} className="rounded-xl border border-[#E2EBE4] p-3 text-left transition hover:bg-[#F3FAF5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700"><span className="text-[11px] font-bold uppercase tracking-wide text-[#38724F]">{a.level==="attention"?"Atenção":a.level==="upcoming"?"Em breve":"Primeiros passos"}</span><span className="mt-1 block text-sm font-semibold text-[#173D29]">{a.title}</span><span className="mt-1 block text-xs text-[#526A5B]">{a.detail}</span><span className="mt-2 block text-xs font-semibold text-[#1D754B]">Abrir seção →</span></button>)}</div>}
