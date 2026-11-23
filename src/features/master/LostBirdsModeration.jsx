@@ -207,7 +207,7 @@ export default function LostBirdsModeration({ onPrepareEmail }) {
 
   return <section className="space-y-5">
     <ReunionReviews />
-    <ReunionEditorial />
+    <div id="historias-editoriais-master" className="scroll-mt-24"><ReunionEditorial /></div>
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div>
         <p className="text-[10px] font-bold uppercase tracking-[.18em] text-amber-700">Controle de buscas</p>
@@ -219,10 +219,12 @@ export default function LostBirdsModeration({ onPrepareEmail }) {
         <button type="button" disabled={loading} onClick={load} className="inline-flex items-center gap-2 rounded-xl border bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 disabled:opacity-50"><RefreshCw size={15} className={loading ? "animate-spin" : ""}/> Atualizar</button>
       </div>
     </div>
+    <p className="text-xs text-slate-500">“Reencontradas 💚” mostra apenas recuperações confirmadas nos anúncios. Para editar o Thor e outras publicações editoriais, use “Editar histórias de reencontro”.</p>
     <p className="text-xs text-slate-500">O teste envia uma mensagem de verificação para a sua conta Master, sem alterar o status de nenhuma ave. A mensagem de aprovação só é enviada quando um anúncio verdadeiro é aprovado.</p>
     <div className="flex flex-wrap gap-2">
       {Object.entries(STATUS).map(([key, label]) => <button key={key} type="button" aria-pressed={status === key} onClick={() => { setStatus(key); setPage(1); setNotice(""); }}
         className={"rounded-xl px-4 py-2 text-xs font-semibold " + (status === key ? "bg-[#182b45] text-white" : "border bg-white text-slate-600")}>{label}</button>)}
+      <a href="#historias-editoriais-master" className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-900">Editar histórias de reencontro ↗</a>
       <span className="ml-auto self-center text-xs text-slate-500">{result.total} ocorrência(s)</span>
     </div>
     {error && <div role="alert" className="flex gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"><AlertCircle size={17} className="shrink-0"/>{error}</div>}

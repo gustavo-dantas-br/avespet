@@ -3,9 +3,9 @@ import {supabase} from "../../../supabaseClient";
 export function StoryCard({item,photo,featured=false}) {
  return <article className={"overflow-hidden rounded-2xl border border-slate-200 bg-white "+(featured?"sm:grid sm:grid-cols-2":"")}>
  {photo&&<img src={photo} alt={item.bird_name} loading="lazy" className={"w-full object-contain bg-slate-100 "+(featured?"h-64 sm:h-full sm:min-h-[260px]":"h-64")}/>}
- <div className="p-5"><p className={"text-xs font-bold "+(item.kind==="illustrative"?"text-slate-700":"text-emerald-800")}>{item.kind==="illustrative"?"História ilustrativa — caso fictício":"Relato autorizado pelo tutor"}</p>
+ <div className="p-5"><p className={"text-xs font-bold "+(item.kind==="illustrative"?"text-slate-700":"text-emerald-800")}>{item.kind==="illustrative"?"História de reencontro":"Relato autorizado pelo tutor"}</p>
  <h3 className={"mt-2 font-bold tracking-tight "+(featured?"text-2xl":"text-lg")}>{item.title}</h3><p className="text-sm text-slate-600">{item.bird_name} · {item.species} · {item.city}</p><p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6">{item.story}</p>
- {item.kind==="illustrative"&&<p className="mt-3 text-xs text-slate-600">Exemplo fictício, imagem ilustrativa. Não é depoimento de cliente nem comprovação de recuperação.</p>}</div></article>;
+ {item.kind==="illustrative"&&<p className="mt-3 text-xs text-slate-600">Exemplo demonstrativo: esta narrativa não representa uma recuperação registrada ou depoimento real.</p>}</div></article>;
 }
 export default function EditorialStories(){
  const [items,setItems]=useState([]);
@@ -17,10 +17,10 @@ export default function EditorialStories(){
   if(!rows.length)return null;
   const [first,...rest]=rows;
   const isExample=kind==="illustrative";
-  return <section aria-label={isExample?"Exemplos ilustrativos":"Relatos autorizados"} className={"overflow-hidden rounded-3xl border p-5 sm:p-6 "+(isExample?"border-slate-200 bg-slate-50":"border-emerald-200 bg-emerald-50")}>
-   <p className="text-xs font-bold uppercase tracking-widest text-slate-600">{isExample?"Conteúdo educativo — casos fictícios":"Relatos autorizados"}</p>
+  return <section aria-label={isExample?"Exemplos demonstrativos":"Relatos autorizados"} className={"overflow-hidden rounded-3xl border p-5 sm:p-6 "+(isExample?"border-slate-200 bg-slate-50":"border-emerald-200 bg-emerald-50")}>
+   <p className="text-xs font-bold uppercase tracking-widest text-slate-600">{isExample?"Histórias de reencontro":"Relatos autorizados"}</p>
    <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">{isExample?"Como um reencontro pode acontecer":"Outras histórias de reencontro"}</h2>
-   <p className="mt-2 text-sm leading-6 text-slate-600">{isExample?"Cenários fictícios que ajudam a entender os recursos de busca. Não são depoimentos nem recuperações comprovadas.":"Histórias enviadas com autorização dos responsáveis. Não representam uma garantia de resultado."}</p>
+   <p className="mt-2 text-sm leading-6 text-slate-600">{isExample?"Exemplos demonstrativos que ajudam a entender os recursos de busca. Não são depoimentos nem recuperações comprovadas.":"Histórias enviadas com autorização dos responsáveis. Não representam uma garantia de resultado."}</p>
    <div className="mt-4 space-y-4"><StoryCard item={first} photo={first.photo} featured/>{rest.length>0&&<div className="grid gap-4 sm:grid-cols-2">{rest.map(item=><StoryCard key={item.id} item={item} photo={item.photo}/>)}</div>}</div>
   </section>;
  };
