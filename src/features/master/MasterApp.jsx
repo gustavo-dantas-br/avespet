@@ -273,7 +273,7 @@ export default function MasterApp({ user, onLogout }) {
                 </article>
               </section>
             </>
-          ) : activeSection === "infrastructure" ? null : (
+          ) : Object.prototype.hasOwnProperty.call(preloadModules, activeSection) ? null : (
             <section className="mx-auto max-w-3xl rounded-2xl border bg-white p-6 shadow-sm sm:p-8" style={{ borderColor: "#e9edf2" }}>
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: "#eef2f7", color: "#29466b" }}>{React.createElement(selected.icon, { size: 23 })}</div>
               <p className="mt-6 text-[10px] font-bold uppercase tracking-[.2em]" style={{ color: "#a27b2e" }}>Módulo Master</p><h1 className="mt-2 text-2xl font-bold text-slate-900">{selectedPlaceholder?.title || selected.label}</h1><p className="mt-3 text-sm leading-6 text-slate-500">{selectedPlaceholder?.description || selected.description}</p>
