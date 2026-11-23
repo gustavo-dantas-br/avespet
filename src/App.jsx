@@ -1287,7 +1287,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
             <React.Suspense fallback={<div className="flex items-center gap-2 ui-sans py-6" style={{ color: "#F1E6D2" }}><Loader2 className="animate-spin" size={18} /> Carregando funcionalidade...</div>}>
             {tab === "dashboard" && <DashboardTab aves={aves} despesas={despesas} clientes={clientes} indicacoes={indicacoes} posturas={posturas} setTab={setTab} goToLista={goToLista} STATUS_PLANTEL={STATUS_PLANTEL} SectionTitle={SectionTitle} StatCard={StatCard} money={money} Card={Card} />}
 
-            {tab === "agenda" && <AgendaCriador userId={user.id} posturas={posturas} onNavigate={setTab} />}
+            {tab === "agenda" && <AgendaCriador userId={user.id} posturas={posturas} aves={aves} onNavigate={setTab} />}
             {tab === "avespet-ia" && <AvespetIA aves={aves} userId={user.id} onOpenGenetica={() => setTab("mutacoes")} />}
             {tab === "reproducao" && (
               <ReproducaoTab aves={aves} posturas={posturas} onSave={handleSavePostura} onDelete={handleDeletePostura} onNascimento={handleRegistrarNascimento} Card={Card} Field={Field} inputStyle={inputStyle} SectionTitle={SectionTitle} />
