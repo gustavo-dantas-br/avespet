@@ -18,7 +18,7 @@ test("próximas ações contam somente aves do plantel sem sexagem", () => {
   const actions = buildCreatorActions({aves, STATUS_PLANTEL});
   const sexing = actions.find(a => a.id === "sexing");
   assert.ok(sexing);
-  assert.match(sexing.title, /^3 ave\\(s\\) sem sexagem/);
+  assert.ok(sexing.title.startsWith("3 ave(s) sem sexagem"));
   assert.equal(sexing.filter, "sem-sexagem");
 });
 
