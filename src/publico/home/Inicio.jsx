@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "../roteador";
+import ReencontrosHome from "./ReencontrosHome";
 
 const FOTOS = {
   ringneck: "https://images.pexels.com/photos/1463295/pexels-photo-1463295.jpeg?auto=compress&cs=tinysrgb&w=1400",
@@ -172,6 +173,8 @@ export default function Inicio({ BuscaAnilha, VitrinePublica, GuiasEmDestaque, o
           <p className="mt-1 text-xs" style={{ color: texto }}>Uma pequena amostra da diversidade e das cores do universo dos psitacídeos.</p>
         </div>
       </section>
+
+      <ReencontrosHome />
 
       <section id="tutores" className="scroll-mt-8 px-5 py-14 md:px-8 md:py-20">
         <div className="mx-auto max-w-7xl">
