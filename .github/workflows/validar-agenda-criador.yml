@@ -5,6 +5,7 @@ on:
       - 'src/features/agenda/**'
       - 'src/features/dashboard/**'
       - 'tests/agenda-criador.test.js'
+      - 'tests/agenda-cuidados.test.js'
       - '.github/workflows/validar-agenda-criador.yml'
 permissions:
   contents: read
@@ -17,4 +18,4 @@ jobs:
         with:
           node-version: '24'
       - name: Testes de datas, incubação e tarefas
-        run: node --test tests/agenda-criador.test.js tests/criador-proximas-acoes.test.js
+        run: node --test tests/agenda-criador.test.js tests/criador-proximas-acoes.test.js tests/agenda-cuidados.test.js
