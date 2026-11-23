@@ -24,3 +24,14 @@ export function mesSeguinte(mes){
  const d=new Date(ano,m,1,12);
  return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0")].join("-");
 }
+
+export function montarLoteCuidados(form,avesSelecionadas,avesProximoRetorno,userId,allowed){
+ const selecionadas=[...new Set(avesSelecionadas.map(String))];
+ const proximas=new Set(avesProximoRetorno.map(String));
+ if(!selecionadas.length||!selecionadas.every(id=>allowed.has(id))||[...proximas].some(id=>!selecionadas.includes(id)))throw new Error("Seleção de aves inválida");
+ if(!registroValido({...form,ave_id:selecionadas[0]},allowed))throw new Error("Datas ou produto inválidos");
+ if(proximas.size&&!form.proxima_data)throw new Error("Informe a próxima data das aves selecionadas");
+ return selecionadas.map(ave_id=>({user_id:userId,ave_id,tipo:form.tipo,produto:form.produto.trim(),
+ data_aplicacao:form.data_aplicacao,proxima_data:proximas.has(ave_id)?form.proxima_data:null,
+ quantidade_informada:form.quantidade_informada.trim()||null,observacao:form.observacao.trim()||null}));
+}
