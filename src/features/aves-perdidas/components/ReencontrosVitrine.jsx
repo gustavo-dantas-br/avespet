@@ -81,7 +81,7 @@ export default function ReencontrosVitrine({compact = false}) {
     <div className={"px-5 text-white sm:px-8 " + (compact ? "bg-emerald-900 py-4" : "bg-emerald-950 py-6")}>
       <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-200"><Heart size={16}/> Comunidade Avespet</p>
       <h2 className={"mt-1 font-extrabold " + (compact ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl")}>Reencontros e histórias que inspiram</h2>
-      <p className="mt-1 text-xs leading-5 text-emerald-100">Reencontros registrados e exemplos fictícios são identificados separadamente.</p>
+      <p className="mt-1 text-xs leading-5 text-emerald-100">Reencontros registrados e histórias ilustrativas são apresentados com identificação própria.</p>
     </div>
     <div className="p-4 sm:p-5">
       <article className="grid overflow-hidden rounded-2xl border border-slate-200 sm:grid-cols-2" aria-live="off">
@@ -90,13 +90,13 @@ export default function ReencontrosVitrine({compact = false}) {
         </div>
         <div className="flex min-w-0 flex-col justify-center p-5">
           <p className={"text-xs font-extrabold uppercase tracking-wide " + (ficticia ? "text-slate-700" : "text-emerald-800")}>
-            {ficticia ? "História ilustrativa — caso fictício" : real ? "Reencontro registrado pelo tutor" : "Relato real autorizado"}
+            {ficticia ? "História de reencontro" : real ? "Reencontro registrado pelo tutor" : "Relato real autorizado"}
           </p>
           <h3 className={"mt-2 break-words font-bold text-slate-950 " + (compact ? "text-lg" : "text-2xl")}>{item.title}</h3>
           <p className="mt-1 text-sm font-semibold text-slate-700">{item.name}</p>
           <p className="text-sm text-slate-600">{[item.species,item.city].filter(Boolean).join(" · ")}</p>
           <p className={"mt-3 overflow-y-auto whitespace-pre-wrap break-words text-sm leading-6 text-slate-700 " + (compact ? "max-h-24" : "max-h-36")}>{item.description}</p>
-          {ficticia && <p className="mt-3 text-xs font-semibold text-slate-700">Exemplo fictício. Imagem ilustrativa; não é depoimento de cliente nem comprovação de recuperação.</p>}
+          {ficticia && <p className="mt-3 text-xs font-semibold text-slate-700">História ilustrativa: exemplo demonstrativo, não é depoimento real nem recuperação comprovada.</p>}
         </div>
       </article>
       {count > 1 && <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
