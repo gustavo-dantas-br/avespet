@@ -28,6 +28,18 @@ begin
  ) select jsonb_build_object('accounts',count(*),'active_7d',count(*) filter(where last_activity>=now()-interval '7 days'),'active_30d',count(*) filter(where last_activity>=now()-interval '30 days'),'inactive_8_30',count(*) filter(where last_activity<now()-interval '7 days' and last_activity>=now()-interval '30 days'),'inactive_31plus',count(*) filter(where last_activity<now()-interval '30 days'),'no_activity',count(*) filter(where last_activity is null),'unconfirmed',count(*) filter(where email_confirmed_at is null),'instrumented',count(*) filter(where last_seen_at is not null)) from base),
  'subscription_overview',(with eligible as (select u.id from auth.users u where not exists(select 1 from public.master_admins m where m.user_id=u.id)), current_records as (select s.* from public.creator_subscriptions s join eligible e on e.id=s.user_id where s.status in ('active','trialing') and s.starts_at<=now() and (s.ends_at is null or s.ends_at>now()))
  select jsonb_build_object('accounts', (select count(*) from eligible),'current_accounts',(select count(distinct user_id) from current_records),'without_current_record',(select count(*) from eligible e where not exists(select 1 from current_records s where s.user_id=e.id)) ,'active_overrides',(select count(*) from public.creator_entitlement_overrides o join eligible e on e.id=o.user_id where o.expires_at is null or o.expires_at>now()),'by_status',(select coalesce(jsonb_object_agg(status,n),'{}'::jsonb) from (select s.status,count(*) n from public.creator_subscriptions s join eligible e on e.id=s.user_id group by s.status) x),'by_plan',(select coalesce(jsonb_agg(jsonb_build_object('code',p.code,'name',p.name,'is_free',p.is_free,'is_active',p.is_active,'max_birds',p.max_birds,'accounts', (select count(distinct user_id) from current_records s where s.plan_id=p.id)) order by p.sort_order),'[]'::jsonb) from public.platform_plans p))),
+ 'finance',(select jsonb_build_object(
+ 'campaign_revenue_confirmed_cents',coalesce(sum(o.contracted_cents) filter(where o.payment_confirmed_at is not null),0),
+ 'campaign_confirmed_orders',count(*) filter(where o.payment_confirmed_at is not null),
+ 'campaign_confirmed_this_month_cents',coalesce(sum(o.contracted_cents) filter(where o.payment_confirmed_at >=m::timestamp at time zone 'America/Sao_Paulo'),0),
+ 'orders_without_confirmation',count(*) filter(where o.payment_confirmed_at is null),
+ 'request_count',(select count(*) from public.solicitacoes_campanhas_aves),
+ 'requests_without_value',(select count(*) from public.solicitacoes_campanhas_aves where catalog_price_cents is null and valor is null),
+ 'subscription_mrr_cents',null,
+ 'subscription_mrr_reason','Não há faturas nem confirmação de recebimentos recorrentes integradas',
+ 'subscription_payments_integrated',false,
+ 'campaign_payments_manually_confirmed',true
+ ) from public.campaign_order_operations o),
  'subscription_records',(select count(*) from public.creator_subscriptions),
  'paid_plan_records',(select count(*) from public.creator_subscriptions s join public.platform_plans p on p.id=s.plan_id where not p.is_free),
  'plans',(select coalesce(jsonb_agg(jsonb_build_object('code',code,'name',name,'is_free',is_free,'is_active',is_active) order by sort_order),'[]'::jsonb) from public.platform_plans));

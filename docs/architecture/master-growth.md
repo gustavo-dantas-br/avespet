@@ -25,3 +25,7 @@ Cadastro manual separado das solicitações de divulgação de aves perdidas. Or
 ## Fase 7 — Planos e assinaturas
 
 Somente leitura de platform_plans, creator_subscriptions e creator_entitlement_overrides. Exclui Master; vigência considera active/trialing e intervalo de datas. Contas distintas globalmente e em cada plano (planos podem sobrepor). Status são registros, não recebimentos. Ausência de registro não impede acesso gratuito; não inferir assinantes gratuitos exatos. Liberações manuais separadas. Atalho à Central Comercial. Nenhuma alteração de preços, disponibilidade, limites ou cobrança. Restrições de lançamento existentes preservadas.
+
+## Fase 8 — Financeiro
+
+Receita confirmada de campanhas de recuperação: total contratado em campaign_order_operations com payment_confirmed_at não nulo, usando mês de confirmação em São Paulo. Registro manual de confirmação não é conciliação bancária. Solicitações não representam recebíveis. Valores de reserva_pagamentos são transações dos criadores e explicitamente excluídos da receita da plataforma. MRR fica null (indisponível), não zero como afirmação de faturamento, até existir fonte de faturamento/recebimento de assinaturas. Sem novas cobranças, sem preços ativados e sem pagamentos simulados.
