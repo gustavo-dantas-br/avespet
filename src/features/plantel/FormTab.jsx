@@ -53,7 +53,7 @@ export default function FormTab({ form, setForm, onSave, onPhoto, saving, machoO
       <Card className="p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6">
           <div className="w-28 h-28 sm:w-32 sm:h-32 shrink-0 rounded-lg overflow-hidden flex items-center justify-center relative mx-auto sm:mx-0" style={{ background: "#f1e6d2", border: "1px dashed #d6c39a" }}>
-            {form.foto ? <img src={form.foto} className="w-full h-full object-cover" alt="" /> : <Bird size={28} color="#b09a78" />}
+            {form.foto ? <img src={form.foto} className="w-full h-full object-contain" alt="" /> : <Bird size={28} color="#b09a78" />}
             <label className="absolute bottom-1 right-1 p-1.5 rounded-full cursor-pointer" style={{ background: "#C69A2E" }}>
               <Upload size={13} color="#2B1D14" />
               <input type="file" accept="image/*" className="hidden" onChange={onPhoto} />
