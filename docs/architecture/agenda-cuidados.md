@@ -12,3 +12,6 @@ Testes: criadores diferentes não podem visualizar/alterar registros alheios; im
 
 ## Administração em lote e retorno parcial
 O criador informa primeiro as aves que **de fato receberam** o produto; o frontend cria um registro independente por ave em uma única inserção no banco. Para uma próxima data, seleciona um subconjunto (ou todas, ou nenhuma) das aves que receberam o produto. Apenas o subconjunto fica com `proxima_data`, gerando lembrete futuro; nenhuma administração futura é criada. Editar é individual. Registrar novamente pré-seleciona apenas a ave original. O banco já protege propriedade por ave via RLS; não é necessária nova migração.
+
+## Alertas no sino (sem push)
+RPC security invoker `agenda_lembretes_cuidados()` filtra dados por auth.uid() e RLS, retornando até 500 próximos lembretes até amanhã, inclusive atrasados, se ainda não existir administração mais recente para o mesmo produto/ave. No frontend os lembretes são agrupados por data, produto e tipo; cada ave tem atalho **Registrar aplicação**, que abre o formulário pré-preenchido **sem quantidade, data futura ou administração automática**. O aviso some após salvar novo registro, atualizar o sino ou retornar ao app. Lembrete atrasado não significa que a aplicação era clinicamente obrigatória. Sem cron, e-mail ou push; a atualização acontece com o app aberto, no foco e periodicamente.

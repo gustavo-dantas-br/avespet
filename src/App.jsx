@@ -102,6 +102,8 @@ const STATUS_ANUNCIO_LABEL = { pendente: "EM ANALISE", aprovado: "APROVADO", rej
 
 function AppInner({ user, onLogout }) {
   const [aves, setAves] = useState([]);
+  const [carePrefill,setCarePrefill]=useState(null);
+  const [careRefreshToken,setCareRefreshToken]=useState(0);
   const [despesas, setDespesas] = useState([]);
   const [reservasFinanceiro, setReservasFinanceiro] = useState([]);
   const [pagamentosReservasFinanceiro, setPagamentosReservasFinanceiro] = useState([]);
@@ -1269,7 +1271,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
           <span>{avisoCadastroPendente}</span>
           <button type="button" className="text-xs font-bold underline" onClick={() => setAvisoCadastroPendente("")}>Fechar</button>
         </div>}
-        <NotificationsCenter userId={user.id} isAdmin={isAdminUser} onNavigate={setTab} />
+        <NotificationsCenter userId={user.id} isAdmin={isAdminUser} onNavigate={setTab} aves={aves} careRefreshToken={careRefreshToken} onRegistrarCuidado={info=>{setCarePrefill({...info,token:Date.now()});setTab("agenda");}} />
         {error && (
           <div className="ui-sans mb-4 px-4 py-2.5 rounded-lg flex items-center justify-between" style={{ background: "#4a2018", color: "#f2c9c0", border: "1px solid #7a3226" }}>
             <span className="text-sm">{error}</span>
@@ -1287,7 +1289,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
             <React.Suspense fallback={<div className="flex items-center gap-2 ui-sans py-6" style={{ color: "#F1E6D2" }}><Loader2 className="animate-spin" size={18} /> Carregando funcionalidade...</div>}>
             {tab === "dashboard" && <DashboardTab aves={aves} despesas={despesas} clientes={clientes} indicacoes={indicacoes} posturas={posturas} setTab={setTab} goToLista={goToLista} STATUS_PLANTEL={STATUS_PLANTEL} SectionTitle={SectionTitle} StatCard={StatCard} money={money} Card={Card} />}
 
-            {tab === "agenda" && <AgendaCriador userId={user.id} posturas={posturas} aves={aves} onNavigate={setTab} />}
+            {tab === "agenda" && <AgendaCriador userId={user.id} posturas={posturas} aves={aves} onNavigate={setTab} carePrefill={carePrefill} onCareSaved={()=>{setCareRefreshToken(v=>v+1);setCarePrefill(null)}} />}
             {tab === "avespet-ia" && <AvespetIA aves={aves} userId={user.id} onOpenGenetica={() => setTab("mutacoes")} />}
             {tab === "reproducao" && (
               <ReproducaoTab aves={aves} posturas={posturas} onSave={handleSavePostura} onDelete={handleDeletePostura} onNascimento={handleRegistrarNascimento} Card={Card} Field={Field} inputStyle={inputStyle} SectionTitle={SectionTitle} />

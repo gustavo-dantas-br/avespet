@@ -4,7 +4,7 @@ import {diaLocal} from "./utils/agenda";
 import {registroValido,prepararNovaAdministracao,mesSeguinte,montarLoteCuidados} from "./utils/cuidados";
 const blank=()=>({ave_id:"",tipo:"vitamina",produto:"",data_aplicacao:diaLocal(),proxima_data:"",quantidade_informada:"",observacao:""});
 const br=d=>d?d.split("-").reverse().join("/"):"—";
-export default function CuidadosAves({userId,aves=[],mes,onDataChange}){
+export default function CuidadosAves({userId,aves=[],mes,onDataChange,carePrefill,onSaved}){
  const [selectedBirds,setSelectedBirds]=useState([]),[repeatBirds,setRepeatBirds]=useState([]),[filterBirds,setFilterBirds]=useState("");
  const [rows,setRows]=useState([]),[form,setForm]=useState(blank),[editId,setEditId]=useState(null),[saving,setSaving]=useState(false),[loading,setLoading]=useState(false),[error,setError]=useState("");
  const ids=new Set(aves.map(a=>String(a.id)));
@@ -27,6 +27,11 @@ export default function CuidadosAves({userId,aves=[],mes,onDataChange}){
   onDataChange?.([...merged.values()]);
  },[userId,mes,onDataChange]);
  useEffect(()=>{load()},[load]);
+ useEffect(()=>{
+  if(!carePrefill?.ave_id)return;
+  setEditId(null);setForm({...blank(),ave_id:carePrefill.ave_id,tipo:carePrefill.tipo,produto:carePrefill.produto});
+  setSelectedBirds([String(carePrefill.ave_id)]);setRepeatBirds([]);
+ },[carePrefill?.token]);
  const update=(key,value)=>setForm(s=>({...s,[key]:value}));
  const submit=async e=>{
   e.preventDefault();
@@ -44,7 +49,7 @@ export default function CuidadosAves({userId,aves=[],mes,onDataChange}){
     await supabase.from("ave_cuidados_registros").insert(payload);
   setSaving(false);
   if(r.error){setError("Não foi possível salvar todos os registros. Confira os dados.");return;}
-  setEditId(null);setForm(blank());setSelectedBirds([]);setRepeatBirds([]);await load();
+  setEditId(null);setForm(blank());setSelectedBirds([]);setRepeatBirds([]);await load();onSaved?.();
  };
  const remove=async r=>{if(!window.confirm("Excluir este registro do histórico?"))return;setSaving(true);const {error:e}=await supabase.from("ave_cuidados_registros").delete().eq("id",r.id).eq("user_id",userId);setSaving(false);if(e)setError("Não foi possível excluir o registro.");else await load();};
  const names=new Map(aves.map(a=>[String(a.id),a.nome||a.anilha||"Ave"]));

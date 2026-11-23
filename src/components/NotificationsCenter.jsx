@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Archive, Bell, CheckCheck, Loader2, RotateCcw, X } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { ativarPushDoDispositivo } from "../lib/pushNotifications";
+import { agruparLembretes,dateSaoPaulo } from "../features/agenda/utils/lembretesSino";
 
 const PAGE_SIZE = 30;
 const dataHora = (valor) => valor ? new Date(valor).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "";
@@ -12,8 +13,10 @@ const FILTROS = [
   { id: "arquivadas", label: "Arquivadas" },
 ];
 
-export default function NotificationsCenter({ userId, isAdmin, onNavigate }) {
+export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves = [], onRegistrarCuidado, careRefreshToken = 0 }) {
   const [aberto, setAberto] = useState(false);
+  const [careRows,setCareRows] = useState([]);
+  const [careError,setCareError]=useState("");
   const [itens, setItens] = useState([]);
   const [filtro, setFiltro] = useState("todas");
   const [loading, setLoading] = useState(false);
@@ -26,6 +29,21 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate }) {
   const [ativandoPush, setAtivandoPush] = useState(false);
   const [statusPush, setStatusPush] = useState("");
 
+  const atualizarCuidados = useCallback(async () => {
+    if(!userId)return;
+    const {data,error}=await supabase.rpc("agenda_lembretes_cuidados");
+    if(error){setCareError("Não foi possível carregar os lembretes de cuidados.");return;}
+    setCareRows(data||[]);setCareError("");
+  },[userId]);
+  useEffect(()=>{
+    atualizarCuidados();
+    const onFocus=()=>atualizarCuidados();
+    window.addEventListener("focus",onFocus);
+    const interval=setInterval(onFocus,5*60*1000);
+    return ()=>{window.removeEventListener("focus",onFocus);clearInterval(interval)};
+  },[atualizarCuidados,careRefreshToken]);
+  const gruposCuidados = useMemo(()=>agruparLembretes(careRows,aves,dateSaoPaulo()),[careRows,aves]);
+  const totalPendentes = gruposCuidados.reduce((n,g)=>n+g.aves.length,0);
   const atualizarContagem = useCallback(async () => {
     if (!userId) return;
     const { count, error } = await supabase.from("notificacoes")
@@ -109,10 +127,10 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate }) {
   }, [userId, filtro, itens.length]);
 
   useEffect(() => {
-    if (aberto) carregar(true);
+    if (aberto) {carregar(true);atualizarCuidados();}
   }, [aberto, filtro, userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const naoLidas = naoLidasCount;
+  const naoLidas = naoLidasCount + totalPendentes;
 
   async function marcarLida(id) {
     const agora = new Date().toISOString();
@@ -183,9 +201,22 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate }) {
             style={{ background: filtro === f.id ? "#C69A2E" : "#eee2ca", color: "#2B241C" }}>{f.label}</button>)}
         </div>
         <div className="max-h-[65vh] overflow-y-auto">
+          {gruposCuidados.length>0&&filtro!=="arquivadas"&&filtro!=="lidas"&&<section className="border-b p-3" style={{background:"#f0f7ed",borderColor:"#c9dec9"}}>
+            <strong className="block text-sm mb-1" style={{color:"#214e35"}}>Lembretes de medicamentos e vitaminas · {totalPendentes} ave(s)</strong>
+            <p className="text-xs mb-2" style={{color:"#526A5B"}}>Avisos ao abrir o Avespet: um dia antes, no dia e atrasados. Não são notificações push nem confirmação de aplicação.</p>
+            {gruposCuidados.map(g=><article key={g.id} className="rounded-lg border bg-white p-3 mb-2" style={{borderColor:"#d6e5d7"}}>
+              <p className="text-sm font-bold" style={{color:"#214e35"}}>{g.tipo==="vitamina"?"Vitamina":"Medicamento"} · {g.produto}</p>
+              <p className="text-xs mb-2" style={{color:g.days<0?"#a23a25":"#526A5B"}}>{g.days<0?"Data ultrapassada":g.days===0?"Programado para hoje":"Programado para amanhã"} · {g.dia.split("-").reverse().join("/")}</p>
+              <div className="space-y-1">{g.aves.map(a=><div key={a.id} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-2 py-2">
+                <span className="text-xs font-semibold" style={{color:"#214e35"}}>{a.nome}</span>
+                <button type="button" onClick={()=>{onRegistrarCuidado?.({ave_id:a.id,tipo:g.tipo,produto:g.produto});setAberto(false)}} className="rounded border px-2 py-1 text-xs font-semibold" style={{color:"#176B45",borderColor:"#93baa0"}}>Registrar aplicação</button>
+              </div>)}</div>
+            </article>)}
+          </section>}
+          {careError&&<p className="px-3 py-2 text-xs text-rose-700" role="alert">{careError}</p>}
           {loading && <div className="p-5 text-sm text-center" style={{ color: "#8a7a63" }}><Loader2 className="animate-spin inline mr-2" size={16} />Carregando...</div>}
           {erro && <p className="p-3 text-xs" style={{ color: "#a6402b" }}>{erro}</p>}
-          {!loading && !itens.length && !erro && <p className="p-5 text-sm text-center" style={{ color: "#8a7a63" }}>Nenhuma notificação nesta categoria.</p>}
+          {!loading && !itens.length && !erro && (!gruposCuidados.length || filtro==="arquivadas" || filtro==="lidas") && <p className="p-5 text-sm text-center" style={{ color: "#8a7a63" }}>Nenhuma notificação nesta categoria.</p>}
           {itens.map((n) => <div key={n.id} className="px-4 py-3" style={{ background: n.lida_em ? "#FAF3E6" : "#f2e7d1", borderBottom: "1px solid #e3d3b4" }}>
             <div className="flex items-start gap-2">
               {!n.lida_em && <span className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: "#b27a19" }} />}
