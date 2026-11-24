@@ -56,7 +56,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
     if (!userId) return;
     const { count, error } = await supabase.from("notificacoes")
       .select("id", { count: "exact", head: true })
-      .eq("user_id", userId).is("lida_em", null).is("arquivada_em", null);
+      .eq("user_id", userId).neq("tipo", "lembrete_cuidado").is("lida_em", null).is("arquivada_em", null);
     if (!error) setNaoLidasCount(count || 0);
   }, [userId]);
 
@@ -68,6 +68,10 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
         filter: "user_id=eq." + userId,
       }, (payload) => {
         const novo = payload.new;
+        if (payload.eventType === "INSERT" && novo?.tipo === "lembrete_cuidado") {
+          atualizarCuidados();
+          return;
+        }
         if (payload.eventType === "INSERT" && novo) {
           if (!novo.lida_em && !novo.arquivada_em) {
             setNaoLidasCount((n) => n + 1);
@@ -113,7 +117,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
     try {
       let query = supabase.from("notificacoes")
         .select("id,tipo,titulo,mensagem,referencia_tipo,referencia_id,lida_em,arquivada_em,criado_em")
-        .eq("user_id", userId).order("criado_em", { ascending: false })
+        .eq("user_id", userId).neq("tipo", "lembrete_cuidado").order("criado_em", { ascending: false })
         .range(inicio, inicio + PAGE_SIZE - 1);
       if (filtro === "arquivadas") query = query.not("arquivada_em", "is", null);
       else {
