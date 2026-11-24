@@ -1,4 +1,5 @@
 -- Gera uma notificação por criador/produto/data/fase, reaproveitando o pipeline push já existente.
+-- Os dados de identificação da ave ficam em aves.data (JSONB).
 -- Fases: véspera, dia programado e primeiro aviso de atraso. Não repete atraso diariamente.
 create or replace function public.agenda_cuidados_gerar_notificacoes()
 returns integer
@@ -18,7 +19,11 @@ begin
       c.tipo,
       c.produto,
       c.proxima_data,
-      coalesce(nullif(btrim(a.nome), ''), nullif(btrim(a.anilha), ''), 'Ave') as nome
+      coalesce(
+        nullif(btrim(a.data ->> 'nome'), ''),
+        nullif(btrim(a.data ->> 'anilha'), ''),
+        'Ave'
+      ) as nome
     from public.ave_cuidados_registros c
     join public.aves a on a.id = c.ave_id and a.user_id = c.user_id
     where c.proxima_data is not null
