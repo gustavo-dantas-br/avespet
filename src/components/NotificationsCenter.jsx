@@ -13,7 +13,7 @@ const FILTROS = [
   { id: "arquivadas", label: "Arquivadas" },
 ];
 
-export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves = [], onRegistrarCuidado, careRefreshToken = 0 }) {
+export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves = [], onRegistrarCuidado, careRefreshToken = 0, audience = null, showCareReminders = true, compact = false }) {
   const [aberto, setAberto] = useState(false);
   const [careRows,setCareRows] = useState([]);
   const [careError,setCareError]=useState("");
@@ -30,36 +30,41 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
   const [statusPush, setStatusPush] = useState("");
 
   const atualizarCuidados = useCallback(async () => {
+    if (!showCareReminders) { setCareRows([]); setCareError(""); return; }
     if(!userId)return;
     const {data,error}=await supabase.rpc("agenda_lembretes_cuidados");
     if(error){setCareError("Não foi possível carregar os lembretes de cuidados.");return;}
     setCareRows(data||[]);setCareError("");
-  },[userId]);
+  },[userId, showCareReminders]);
   useEffect(()=>{
+    if (!showCareReminders) return undefined;
     atualizarCuidados();
     const onFocus=()=>atualizarCuidados();
     window.addEventListener("focus",onFocus);
     const interval=setInterval(onFocus,5*60*1000);
     return ()=>{window.removeEventListener("focus",onFocus);clearInterval(interval)};
-  },[atualizarCuidados,careRefreshToken]);
+  },[atualizarCuidados,careRefreshToken,showCareReminders]);
   const gruposCuidados = useMemo(()=>agruparLembretes(careRows,aves,dateSaoPaulo()),[careRows,aves]);
   const totalPendentes = gruposCuidados.reduce((n,g)=>n+g.aves.length,0);
   const atualizarContagem = useCallback(async () => {
     if (!userId) return;
-    const { count, error } = await supabase.from("notificacoes")
+    let query = supabase.from("notificacoes")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId).is("lida_em", null).is("arquivada_em", null);
+    if (audience) query = query.eq("audience", audience);
+    const { count, error } = await query;
     if (!error) setNaoLidasCount(count || 0);
-  }, [userId]);
+  }, [userId, audience]);
 
   useEffect(() => {
     atualizarContagem();
-    const canal = supabase.channel("notificacoes-" + userId)
+    const canal = supabase.channel("notificacoes-" + userId + "-" + (audience || "todas"))
       .on("postgres_changes", {
         event: "*", schema: "public", table: "notificacoes",
         filter: "user_id=eq." + userId,
       }, (payload) => {
         const novo = payload.new;
+        if (audience && novo?.audience !== audience) return;
         if (payload.eventType === "INSERT" && novo) {
           if (!novo.lida_em && !novo.arquivada_em) {
             setNaoLidasCount((n) => n + 1);
@@ -74,7 +79,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
       })
       .subscribe();
     return () => { supabase.removeChannel(canal); };
-  }, [userId, atualizarContagem]);
+  }, [userId, audience, atualizarContagem]);
 
   useEffect(() => {
     if (!alerta) return undefined;
@@ -104,9 +109,10 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
     setErro("");
     try {
       let query = supabase.from("notificacoes")
-        .select("id,tipo,titulo,mensagem,referencia_tipo,referencia_id,lida_em,arquivada_em,criado_em")
+        .select("id,tipo,titulo,mensagem,referencia_tipo,referencia_id,lida_em,arquivada_em,criado_em,audience")
         .eq("user_id", userId).order("criado_em", { ascending: false })
         .range(inicio, inicio + PAGE_SIZE - 1);
+      if (audience) query = query.eq("audience", audience);
       if (filtro === "arquivadas") query = query.not("arquivada_em", "is", null);
       else {
         query = query.is("arquivada_em", null);
@@ -124,13 +130,13 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
       setLoading(false);
       setCarregandoMais(false);
     }
-  }, [userId, filtro, itens.length]);
+  }, [userId, audience, filtro, itens.length]);
 
   useEffect(() => {
-    if (aberto) {carregar(true);atualizarCuidados();}
-  }, [aberto, filtro, userId]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (aberto) { carregar(true); if (showCareReminders) atualizarCuidados(); }
+  }, [aberto, filtro, userId, showCareReminders]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const naoLidas = naoLidasCount + totalPendentes;
+  const naoLidas = naoLidasCount + (showCareReminders ? totalPendentes : 0);
 
   async function marcarLida(id) {
     const agora = new Date().toISOString();
@@ -175,7 +181,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
   }
 
   return (
-    <div className="relative ui-sans flex justify-end mb-4">
+    <div className={compact ? "relative ui-sans flex items-center justify-end" : "relative ui-sans flex justify-end mb-4"}>
       {alerta && <button onClick={() => { setAberto(true); setAlerta(null); if (alerta.referencia_tipo === "anuncio") onNavigate?.(isAdmin ? "aprovacoes" : "anuncios"); }} className="fixed right-4 top-4 z-[80] max-w-sm rounded-xl p-4 text-left shadow-2xl" style={{ background: "#FAF3E6", color: "#2B241C", border: "2px solid #C69A2E" }}><strong className="block text-sm">{alerta.titulo}</strong><span className="block text-xs mt-1">{alerta.mensagem}</span><span className="block text-[10px] mt-2 underline">Abrir agora</span></button>}
       {permissao !== "unsupported" && permissao !== "denied" && <button onClick={ativarAlertasDispositivo} disabled={ativandoPush} className="mr-2 rounded-lg px-2 py-2 text-xs font-semibold disabled:opacity-60" style={{ background: "#e8d8b9", color: "#2B241C" }}>{ativandoPush ? "Ativando..." : permissao === "granted" ? "Ativar push neste dispositivo" : "Ativar alertas no dispositivo"}</button>}
       {permissao === "denied" && <span className="mr-2 self-center text-[10px]" style={{ color: "#b09a78" }}>Alertas do dispositivo bloqueados</span> }
