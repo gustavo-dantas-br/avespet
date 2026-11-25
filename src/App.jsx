@@ -1565,8 +1565,9 @@ export default function App() {
 
   if (session === undefined) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center" style={{ background: "#174B3B" }}>
-        <Loader2 className="animate-spin" color="#C69A2E" size={28} />
+      <div role="status" aria-label="Carregando Avespet" className="min-h-screen w-full flex flex-col items-center justify-center gap-3" style={{ background: "#174B3B" }}>
+        <img src="/avespet-assinatura.png" alt="Avespet" className="w-24 h-24 object-contain" />
+        <span className="text-sm font-medium tracking-wide" style={{ color: "#FFFFFF" }}>Preparando seu ambiente...</span>
       </div>
     );
   }
@@ -1577,8 +1578,9 @@ export default function App() {
 
   if (session?.user?.id && passwordGate === "checking") {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center" style={{ background: "#174B3B" }}>
-        <Loader2 className="animate-spin" color="#C69A2E" size={28} />
+      <div role="status" aria-label="Carregando Avespet" className="min-h-screen w-full flex flex-col items-center justify-center gap-3" style={{ background: "#174B3B" }}>
+        <img src="/avespet-assinatura.png" alt="Avespet" className="w-24 h-24 object-contain" />
+        <span className="text-sm font-medium tracking-wide" style={{ color: "#FFFFFF" }}>Preparando seu ambiente...</span>
       </div>
     );
   }
@@ -1645,9 +1647,10 @@ if (masterAccessError) {
 
 if (masterAccess === null) {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center" style={{ background: "#174B3B" }}>
-      <Loader2 className="animate-spin" color="#C69A2E" size={28} />
-    </div>
+    <div role="status" aria-label="Carregando Avespet" className="min-h-screen w-full flex flex-col items-center justify-center gap-3" style={{ background: "#174B3B" }}>
+        <img src="/avespet-assinatura.png" alt="Avespet" className="w-24 h-24 object-contain" />
+        <span className="text-sm font-medium tracking-wide" style={{ color: "#FFFFFF" }}>Preparando seu ambiente...</span>
+      </div>
   );
 }
 
@@ -1666,7 +1669,7 @@ if (!isMasterRoute) {
 
 if (masterAccess) {
   return (
-    <React.Suspense fallback={<div className="min-h-screen w-full flex items-center justify-center" style={{ background: "#174B3B" }}><img src="/avespet-assinatura.png" alt="Avespet" className="w-44 max-w-[60vw] h-auto object-contain" /></div>}>
+    <React.Suspense fallback={<div role="status" aria-label="Carregando Avespet" className="min-h-screen w-full flex flex-col items-center justify-center gap-3" style={{ background: "#174B3B" }}><img src="/avespet-assinatura.png" alt="Avespet" className="w-24 h-24 object-contain" /><span className="text-sm font-medium tracking-wide" style={{ color: "#FFFFFF" }}>Preparando seu ambiente...</span></div>}>
       <MasterApp user={session.user} onLogout={() => supabase.auth.signOut()} />
     </React.Suspense>
   );
