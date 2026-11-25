@@ -20,3 +20,11 @@ export function agruparLembretes(rows=[],aves=[],today=dateSaoPaulo()){
  }
  return [...groups.values()].sort((a,b)=>a.dia.localeCompare(b.dia)||a.produto.localeCompare(b.produto));
 }
+
+// Abrir o formulário não equivale a confirmar aplicação. Apenas IDs do grupo são aceitos.
+export function prepararSelecaoLembrete(grupo, idsSelecionadas){
+ const permitidas=new Set((grupo.aves||[]).map(a=>String(a.id)));
+ const ids=[...new Set(idsSelecionadas.map(String))];
+ if(ids.length===0||ids.some(id=>!permitidas.has(id)))throw new Error("Selecione aves do lembrete.");
+ return {ave_ids:ids,tipo:grupo.tipo,produto:grupo.produto};
+}
