@@ -12,15 +12,25 @@
 }
 ::selection {
   background: #c69a2e;
-  color: #2b1d14;
+  color: #174b3b;
+}
+html,
+body,
+#root {
+  min-height: 100%;
 }
 body {
   margin: 0;
+  background: #174b3b;
 }
 
+/* Mantém o primeiro quadro de carregamento na identidade verde do Avespet.
+   O seletor só atua nos estados que exibem o ícone de carregamento. */
+#root > div:has(svg.animate-spin) {
+  background: #174b3b !important;
+}
 
-/* Melhor contraste para textos secundários dentro do conteúdo dos painéis.
-   Mantém a paleta clara da navegação e dos blocos com fundo escuro. */
+/* Melhor contraste para textos secundários dentro do conteúdo dos painéis. */
 main .text-slate-400,
 main .text-gray-400,
 main .text-zinc-400,

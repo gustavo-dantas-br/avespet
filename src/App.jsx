@@ -1565,8 +1565,9 @@ export default function App() {
 
   if (session === undefined) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center" style={{ background: "#2B1D14" }}>
-        <Loader2 className="animate-spin" color="#C69A2E" size={28} />
+      <div role="status" aria-label="Carregando Avespet" className="min-h-screen w-full flex flex-col items-center justify-center gap-3" style={{ background: "#174B3B" }}>
+        <img src="/avespet-assinatura.png" alt="Avespet" className="w-24 h-24 object-contain" />
+        <span className="text-sm font-medium tracking-wide" style={{ color: "#FFFFFF" }}>Preparando seu ambiente...</span>
       </div>
     );
   }
@@ -1577,15 +1578,16 @@ export default function App() {
 
   if (session?.user?.id && passwordGate === "checking") {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center" style={{ background: "#2B1D14" }}>
-        <Loader2 className="animate-spin" color="#C69A2E" size={28} />
+      <div role="status" aria-label="Carregando Avespet" className="min-h-screen w-full flex flex-col items-center justify-center gap-3" style={{ background: "#174B3B" }}>
+        <img src="/avespet-assinatura.png" alt="Avespet" className="w-24 h-24 object-contain" />
+        <span className="text-sm font-medium tracking-wide" style={{ color: "#FFFFFF" }}>Preparando seu ambiente...</span>
       </div>
     );
   }
 
   if (session?.user?.id && passwordGate === "error") {
     return (
-      <div className="min-h-screen flex items-center justify-center px-5" style={{ background: "#2B1D14" }}>
+      <div className="min-h-screen flex items-center justify-center px-5" style={{ background: "#174B3B" }}>
         <div className="w-full max-w-md rounded-2xl p-6 text-center" style={{ background: "#FAF3E6", color: "#2B241C" }}>
           <ShieldCheck size={30} className="mx-auto mb-3" color="#A6402B" />
           <h1 className="text-xl font-bold">Não foi possível validar sua senha</h1>
@@ -1618,7 +1620,7 @@ if (!session || emConteudo) {
 
 if (masterAccessError) {
   return (
-    <div className="min-h-screen flex items-center justify-center px-5" style={{ background: "#2B1D14" }}>
+    <div className="min-h-screen flex items-center justify-center px-5" style={{ background: "#174B3B" }}>
       <div className="w-full max-w-md rounded-2xl p-6 text-center" style={{ background: "#FAF3E6", color: "#2B241C" }}>
         <ShieldCheck size={30} className="mx-auto mb-3" color="#A6402B" />
         <h1 className="text-xl font-bold">Não foi possível validar suas permissões</h1>
@@ -1645,9 +1647,10 @@ if (masterAccessError) {
 
 if (masterAccess === null) {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center" style={{ background: "#2B1D14" }}>
-      <Loader2 className="animate-spin" color="#C69A2E" size={28} />
-    </div>
+    <div role="status" aria-label="Carregando Avespet" className="min-h-screen w-full flex flex-col items-center justify-center gap-3" style={{ background: "#174B3B" }}>
+        <img src="/avespet-assinatura.png" alt="Avespet" className="w-24 h-24 object-contain" />
+        <span className="text-sm font-medium tracking-wide" style={{ color: "#FFFFFF" }}>Preparando seu ambiente...</span>
+      </div>
   );
 }
 
@@ -1666,7 +1669,7 @@ if (!isMasterRoute) {
 
 if (masterAccess) {
   return (
-    <React.Suspense fallback={<div className="min-h-screen w-full flex items-center justify-center" style={{ background: "#2B1D14" }}><Loader2 className="animate-spin" color="#C69A2E" size={28} /></div>}>
+    <React.Suspense fallback={<div role="status" aria-label="Carregando Avespet" className="min-h-screen w-full flex flex-col items-center justify-center gap-3" style={{ background: "#174B3B" }}><img src="/avespet-assinatura.png" alt="Avespet" className="w-24 h-24 object-contain" /><span className="text-sm font-medium tracking-wide" style={{ color: "#FFFFFF" }}>Preparando seu ambiente...</span></div>}>
       <MasterApp user={session.user} onLogout={() => supabase.auth.signOut()} />
     </React.Suspense>
   );
