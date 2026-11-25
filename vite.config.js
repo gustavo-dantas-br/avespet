@@ -15,8 +15,8 @@ export default defineConfig({
         name: "Avespet",
         short_name: "Avespet",
         description: "Plataforma de gestão para criadores de aves",
-        theme_color: "#2B241C",
-        background_color: "#F5EFE4",
+        theme_color: "#174B3B",
+        background_color: "#174B3B",
         display: "standalone",
         start_url: "/",
         icons: [
