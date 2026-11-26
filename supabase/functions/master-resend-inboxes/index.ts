@@ -163,6 +163,20 @@ Deno.serve(async (req) => {
         from: str(item.from, 254), subject: str(item.subject, 200) || "(sem assunto)",
         created_at: str(item.created_at, 50), last_event: str(item.last_event, 40) || "sent",
       })).filter((item: any) => uuid.test(item.id));
+      const providerIds = emails.map((item: any) => item.id);
+      const sourceById = new Map<string, string>();
+      if (providerIds.length) {
+        const [lostRows, reengagementRows] = await Promise.all([
+          admin.from("aves_perdidas_emails_aprovacao").select("provider_id").in("provider_id", providerIds),
+          admin.from("email_reengagement_delivery").select("provider_id").in("provider_id", providerIds),
+        ]);
+        if (lostRows.error || reengagementRows.error) {
+          return reply({ error: "Não foi possível relacionar os envios às automações." }, 503, origin);
+        }
+        for (const row of lostRows.data || []) if (row.provider_id) sourceById.set(row.provider_id, "Aprovação de ave perdida");
+        for (const row of reengagementRows.data || []) if (row.provider_id) sourceById.set(row.provider_id, "Reengajamento");
+      }
+      for (const item of emails) item.source = sourceById.get(item.id) || "Outro envio pelo Resend";
       const { error: auditError } = await admin.from("master_audit_log").insert({
         actor_user_id: identity.user.id, action: "resend_sent_emails_viewed",
         resource_type: "communication", metadata: { count: emails.length, has_more: Boolean(result?.has_more) },
@@ -175,10 +189,16 @@ Deno.serve(async (req) => {
       const emailId = str(body.email_id, 50);
       if (!uuid.test(emailId)) return reply({ error: "E-mail inválido." }, 400, origin);
       const item = await resend("/emails/" + emailId, key);
+      const [lostSource, reengagementSource] = await Promise.all([
+        admin.from("aves_perdidas_emails_aprovacao").select("provider_id").eq("provider_id", emailId).maybeSingle(),
+        admin.from("email_reengagement_delivery").select("provider_id").eq("provider_id", emailId).maybeSingle(),
+      ]);
+      if (lostSource.error || reengagementSource.error) return reply({ error: "Não foi possível identificar a origem do e-mail." }, 503, origin);
       const emailDetail = {
         id: str(item?.id, 50), to: formatList(item?.to).map((v: unknown) => str(v, 254)),
         from: str(item?.from, 254), subject: str(item?.subject, 200) || "(sem assunto)",
         created_at: str(item?.created_at, 50), last_event: str(item?.last_event, 40) || "sent",
+        source: lostSource.data ? "Aprovação de ave perdida" : reengagementSource.data ? "Reengajamento" : "Outro envio pelo Resend",
         text: str(item?.text, 30000) || htmlToText(item?.html),
         message_id: str(item?.message_id, 255),
       };
