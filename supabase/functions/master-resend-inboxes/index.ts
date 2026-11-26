@@ -228,7 +228,7 @@ Deno.serve(async (req) => {
         id: str(item?.id, 50), to: formatList(item?.to).map((v: unknown) => str(v, 254)),
         from: str(item?.from, 254), subject: detailSubject,
         created_at: str(item?.created_at, 50), last_event: str(item?.last_event, 40) || "sent",
-        source: lostSource.data ? "Aprovação de ave perdida" : reengagementSource.data ? "Reengajamento" : manualRow ? sourceFromAudit(manualRow.action, manualRow.metadata as Record<string, unknown> | null) : knownSourceFromSubject(detailSubject),
+        source: lostSource.data ? "Aprovação de ave perdida" : reengagementSource.data ? "Reengajamento" : welcomeSource.data ? "Boas-vindas personalizada" : manualRow ? sourceFromAudit(manualRow.action, manualRow.metadata as Record<string, unknown> | null) : knownSourceFromSubject(detailSubject),
         text: str(item?.text, 30000) || htmlToText(item?.html),
         message_id: str(item?.message_id, 255),
       };
