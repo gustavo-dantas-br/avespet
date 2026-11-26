@@ -4,13 +4,20 @@ import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 const inbox = "suporte@avespet.com.br";
 const site = "https://www.avespet.com.br";
 const emailRe = /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/;
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, apikey, x-client-info, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Content-Type": "application/json",
+};
 const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
-  status, headers: { "Content-Type": "application/json" },
+  status, headers: corsHeaders,
 });
 const safe = (v: unknown, max = 100) => typeof v === "string" ? v.trim().slice(0, max) : "";
 const esc = (v: string) => v.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 
 Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return reply({error:"Método não permitido."},405);
   const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i,"").trim();
   if (!token) return reply({error:"Sessão não autorizada."},401);
