@@ -182,18 +182,20 @@ Deno.serve(async (req) => {
       const providerIds = emails.map((item: any) => item.id);
       const sourceById = new Map<string, string>();
       if (providerIds.length) {
-        const [lostRows, reengagementRows, manualRows] = await Promise.all([
+        const [lostRows, reengagementRows, welcomeRows, manualRows] = await Promise.all([
           admin.from("aves_perdidas_emails_aprovacao").select("provider_id").in("provider_id", providerIds),
           admin.from("email_reengagement_delivery").select("provider_id").in("provider_id", providerIds),
+          admin.from("email_welcome_delivery").select("provider_id").in("provider_id", providerIds),
           admin.from("master_audit_log").select("action, metadata")
             .in("metadata->>provider_id", providerIds)
             .in("action", ["resend_inbox_compose_sent", "resend_inbox_reply_sent"]),
         ]);
-        if (lostRows.error || reengagementRows.error || manualRows.error) {
+        if (lostRows.error || reengagementRows.error || welcomeRows.error || manualRows.error) {
           return reply({ error: "Não foi possível relacionar os envios às automações e ao atendimento." }, 503, origin);
         }
         for (const row of lostRows.data || []) if (row.provider_id) sourceById.set(row.provider_id, "Aprovação de ave perdida");
         for (const row of reengagementRows.data || []) if (row.provider_id) sourceById.set(row.provider_id, "Reengajamento");
+        for (const row of welcomeRows.data || []) if (row.provider_id) sourceById.set(row.provider_id, "Boas-vindas personalizada");
         for (const row of manualRows.data || []) {
           const providerId = str((row.metadata as Record<string, unknown> | null)?.provider_id, 50);
           if (providerId) sourceById.set(providerId, sourceFromAudit(row.action, row.metadata as Record<string, unknown> | null));
@@ -212,13 +214,14 @@ Deno.serve(async (req) => {
       const emailId = str(body.email_id, 50);
       if (!uuid.test(emailId)) return reply({ error: "E-mail inválido." }, 400, origin);
       const item = await resend("/emails/" + emailId, key);
-      const [lostSource, reengagementSource, manualSource] = await Promise.all([
+      const [lostSource, reengagementSource, welcomeSource, manualSource] = await Promise.all([
         admin.from("aves_perdidas_emails_aprovacao").select("provider_id").eq("provider_id", emailId).maybeSingle(),
         admin.from("email_reengagement_delivery").select("provider_id").eq("provider_id", emailId).maybeSingle(),
+        admin.from("email_welcome_delivery").select("provider_id").eq("provider_id", emailId).maybeSingle(),
         admin.from("master_audit_log").select("action, metadata").eq("metadata->>provider_id", emailId)
           .in("action", ["resend_inbox_compose_sent", "resend_inbox_reply_sent"]).limit(1),
       ]);
-      if (lostSource.error || reengagementSource.error || manualSource.error) return reply({ error: "Não foi possível identificar a origem do e-mail." }, 503, origin);
+      if (lostSource.error || reengagementSource.error || welcomeSource.error || manualSource.error) return reply({ error: "Não foi possível identificar a origem do e-mail." }, 503, origin);
       const manualRow = manualSource.data?.[0];
       const detailSubject = str(item?.subject, 200) || "(sem assunto)";
       const emailDetail = {
