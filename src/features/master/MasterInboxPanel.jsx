@@ -19,6 +19,11 @@ const newId = () => {
 
 export default function MasterInboxPanel({ user, initialDraft = null, onDraftUsed }) {
   const [box, setBox] = useState("suporte");
+  const [view, setView] = useState("inbox");
+  const [sentEmails, setSentEmails] = useState([]);
+  const [sentDetail, setSentDetail] = useState(null);
+  const [sentCursor, setSentCursor] = useState(null);
+  const [sentHasMore, setSentHasMore] = useState(false);
   const [threads, setThreads] = useState([]);
   const [thread, setThread] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -179,9 +184,9 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
       <div>
         <p className="text-[11px] font-bold uppercase tracking-widest text-amber-700">Avespet · Master</p>
         <h1 className="mt-1.5 text-2xl font-bold text-slate-900">Central de Comunicação</h1>
-        <p className="mt-2 text-sm text-slate-500">Atendimento pelo próprio Avespet, com as caixas de Suporte e Financeiro do Resend.</p>
+        <p className="mt-2 text-sm text-slate-500">Atendimento e histórico de mensagens enviados pelo próprio Avespet via Resend.</p>
       </div>
-      <div role="tablist" aria-label="Caixas de entrada" className="flex flex-wrap gap-2">
+      <div role="tablist" aria-label="Caixas de e-mail" className="flex flex-wrap gap-2">
         {boxes.map((item) =>
           <button key={item.key} type="button" role="tab" aria-selected={box === item.key} onClick={() => setBox(item.key)}
             className={"rounded-xl border px-4 py-3 text-left transition " + (box === item.key ? "border-slate-800 bg-slate-800 text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50")}>
@@ -190,16 +195,26 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
           </button>
         )}
       </div>
+      <div role="tablist" aria-label="Tipo de mensagem" className="flex flex-wrap gap-2">
+        <button type="button" role="tab" aria-selected={view === "inbox"} onClick={() => setView("inbox")}
+          className={"rounded-xl border px-4 py-2 text-sm font-semibold " + (view === "inbox" ? "border-slate-800 bg-slate-800 text-white" : "border-slate-200 bg-white text-slate-700")}>
+          <Inbox size={15} className="mr-2 inline"/>Caixa de entrada
+        </button>
+        <button type="button" role="tab" aria-selected={view === "sent"} onClick={() => setView("sent")}
+          className={"rounded-xl border px-4 py-2 text-sm font-semibold " + (view === "sent" ? "border-slate-800 bg-slate-800 text-white" : "border-slate-200 bg-white text-slate-700")}>
+          <Send size={15} className="mr-2 inline"/>Enviados
+        </button>
+      </div>
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4 sm:px-6">
           <div className="flex items-center gap-2 text-slate-800">
-            <Mail size={19} /><strong className="text-sm">{selected.label} · Caixa de entrada</strong>
+            <Mail size={19} /><strong className="text-sm">{view === "sent" ? "Todos os e-mails enviados · Resend" : selected.label + " · Caixa de entrada"}</strong>
           </div>
           <div className="flex items-center gap-2">
-          <button type="button" onClick={startCompose} disabled={sending} className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">
+          <button type="button" onClick={startCompose} disabled={sending || view === "sent"} className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">
             <Send size={14} /> Novo e-mail
           </button>
-          <button type="button" onClick={() => composing ? load(box) : thread ? openThread(thread) : load(box)} disabled={loading || opening || sending}
+          <button type="button" onClick={() => view === "sent" ? (sentDetail ? openSentEmail(sentDetail) : loadSent()) : (composing ? load(box) : thread ? openThread(thread) : load(box))} disabled={loading || opening || sending}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 disabled:opacity-50">
             <RefreshCw size={14} className={loading || opening ? "animate-spin" : ""} /> Atualizar
           </button>
@@ -207,7 +222,34 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
         </div>
         {error && <p role="alert" className="mx-4 mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 sm:mx-6"><AlertCircle size={18} className="shrink-0" />{error}</p>}
         {notice && <p role="status" className="mx-4 mt-4 flex items-start gap-2 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-900 sm:mx-6"><CheckCircle2 size={18} className="shrink-0" />{notice}</p>}
-        {composing ? (
+        {view === "sent" ? (
+          <div className="min-h-56">
+            {sentDetail ? (
+              <div className="p-4 sm:p-6">
+                <button type="button" onClick={() => setSentDetail(null)} className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-600"><ArrowLeft size={15}/> Voltar aos enviados</button>
+                <h2 className="break-words text-lg font-bold text-slate-900">{sentDetail.subject}</h2>
+                <dl className="mt-4 grid gap-2 rounded-xl bg-slate-50 p-4 text-xs text-slate-700">
+                  <div><dt className="inline font-semibold">De: </dt><dd className="inline break-all">{sentDetail.from}</dd></div>
+                  <div><dt className="inline font-semibold">Para: </dt><dd className="inline break-all">{(sentDetail.to || []).join(", ")}</dd></div>
+                  <div><dt className="inline font-semibold">Data: </dt><dd className="inline">{formatDate(sentDetail.created_at)}</dd></div>
+                  <div><dt className="inline font-semibold">Último evento: </dt><dd className="inline">{sentDetail.last_event}</dd></div>
+                </dl>
+                <pre className="mt-4 whitespace-pre-wrap break-words rounded-xl border border-slate-200 p-4 text-sm leading-6 text-slate-800">{sentDetail.text || "O provedor não disponibilizou o conteúdo textual deste e-mail."}</pre>
+              </div>
+            ) : loading ? <div className="p-12 text-center text-sm text-slate-500"><Loader2 size={18} className="mr-2 inline animate-spin"/> Consultando e-mails enviados...</div>
+              : sentEmails.length ? sentEmails.map(item => (
+                <button key={item.id} type="button" onClick={() => openSentEmail(item)} className="flex w-full items-start gap-3 border-b border-slate-100 p-4 text-left hover:bg-slate-50 sm:px-6">
+                  <span className="mt-1 rounded-xl bg-emerald-50 p-2 text-emerald-700"><Send size={17}/></span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap justify-between gap-2"><strong className="truncate text-sm text-slate-900">{item.subject}</strong><span className="text-xs text-slate-400">{formatDate(item.created_at)}</span></span>
+                    <span className="mt-1 block truncate text-xs text-slate-500">Para: {(item.to || []).join(", ") || "Destinatário não informado"}</span>
+                    <span className="mt-1 block text-[11px] text-slate-500">Último evento: {item.last_event}</span>
+                  </span>
+                </button>
+              )) : !error && <div className="p-12 text-center text-sm text-slate-500"><Send size={24} className="mx-auto mb-2"/>Nenhum e-mail enviado encontrado nesta conta do Resend.</div>}
+            {sentHasMore && <div className="p-4 text-center"><button type="button" disabled={loading || !sentCursor} onClick={() => loadSent(sentCursor)} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 disabled:opacity-50">Carregar mais enviados</button></div>}
+          </div>
+        ) : composing ? (
           <form onSubmit={sendNewEmail} className="space-y-4 p-4 sm:p-6">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-lg font-bold text-slate-900">Escrever novo e-mail</h2>
