@@ -36,7 +36,7 @@ Deno.serve(async req=>{
     db.from("master_support_cases").select("id,priority,created_at").eq("status","aguardando").gte("created_at",since),
     db.from("anuncios").select("id,criado_em").eq("status","pendente").gte("criado_em",since),
     db.from("anuncios_aves_perdidas").select("id,created_at").eq("status","pendente").gte("created_at",since),
-    db.schema("avespet_infra").from("alert_outbox").select("id,metric,level,pct,status,created_at").in("status",["pending","failed","uncertain"]).gte("created_at",since)
+    db.rpc("master_notifications_infra_alerts")
    ]);
    for(const x of [events,cases,ads,lost,infra])if(x.error)throw x.error;
    for(const e of list(events.data))pending.push({source_key:"support:event:"+e.id,category:e.event_type==="email_received"?"email":"support",title:e.event_type==="email_received"?"Nova resposta recebida":"Novo registro no suporte",message:str(e.summary),priority:"normal",target_section:e.event_type==="email_received"?"communications":"support",source_created_at:date(e.created_at)});
