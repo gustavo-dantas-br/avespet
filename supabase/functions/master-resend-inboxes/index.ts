@@ -76,6 +76,21 @@ function formatList(data: unknown) {
 function str(value: unknown, max = 200) {
   return typeof value === "string" ? value.slice(0, max) : "";
 }
+
+function htmlToText(html: unknown) {
+  if (typeof html !== "string") return "";
+  return html
+    .replace(/<\s*(script|style)[^>]*>[\s\S]*?<\/\s*\1\s*>/gi, " ")
+    .replace(/<\s*br\s*\/?>/gi, "\n")
+    .replace(/<\s*\/\s*(p|div|li|tr|h[1-6])\s*>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<").replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#(\d+);/g, (_m, n) => String.fromCodePoint(Number(n)))
+    .replace(/[ \t]+/g, " ").replace(/\n\s+/g, "\n").trim().slice(0, 30000);
+}
+
 class ProviderError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
@@ -169,6 +184,44 @@ Deno.serve(async (req) => {
   const email = str(body.email_id, 50);
 
   try {
+    if (action === "sent") {
+      const after = str(body.after, 50);
+      if (after && !uuid.test(after)) return reply({ error: "Cursor de paginação inválido." }, 400, origin);
+      const query = new URLSearchParams({ limit: "50" });
+      if (after) query.set("after", after);
+      const result = await resend("/emails?" + query.toString(), key);
+      const emails = formatList(result?.data).map((item: any) => ({
+        id: str(item.id, 50), to: formatList(item.to).map((v: unknown) => str(v, 254)),
+        from: str(item.from, 254), subject: str(item.subject, 200) || "(sem assunto)",
+        created_at: str(item.created_at, 50), last_event: str(item.last_event, 40) || "sent",
+      })).filter((item: any) => uuid.test(item.id));
+      const { error: auditError } = await admin.from("master_audit_log").insert({
+        actor_user_id: identity.user.id, action: "resend_sent_emails_viewed",
+        resource_type: "communication", metadata: { count: emails.length, has_more: Boolean(result?.has_more) },
+      });
+      if (auditError) return reply({ error: "Não foi possível registrar o acesso administrativo." }, 503, origin);
+      return reply({ success: true, emails, has_more: Boolean(result?.has_more),
+        next_cursor: emails.length ? emails[emails.length - 1].id : null }, 200, origin);
+    }
+    if (action === "sent_detail") {
+      const emailId = str(body.email_id, 50);
+      if (!uuid.test(emailId)) return reply({ error: "E-mail inválido." }, 400, origin);
+      const item = await resend("/emails/" + emailId, key);
+      const emailDetail = {
+        id: str(item?.id, 50), to: formatList(item?.to).map((v: unknown) => str(v, 254)),
+        from: str(item?.from, 254), subject: str(item?.subject, 200) || "(sem assunto)",
+        created_at: str(item?.created_at, 50), last_event: str(item?.last_event, 40) || "sent",
+        text: str(item?.text, 30000) || htmlToText(item?.html),
+        message_id: str(item?.message_id, 255),
+      };
+      const { error: auditError } = await admin.from("master_audit_log").insert({
+        actor_user_id: identity.user.id, action: "resend_sent_email_detail_viewed",
+        resource_type: "communication", resource_id: emailId,
+        metadata: { has_text: Boolean(emailDetail.text) },
+      });
+      if (auditError) return reply({ error: "Não foi possível registrar o acesso administrativo." }, 503, origin);
+      return reply({ success: true, email: emailDetail }, 200, origin);
+    }
     if (action === "threads") {
       // Total de não lidos permanece atualizado, sem voltar a bloquear
       // a listagem de conversas enquanto o Resend responde sobre as caixas.
