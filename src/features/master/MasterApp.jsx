@@ -15,7 +15,7 @@ import {
   LayoutDashboard, Users, Bird, Megaphone, CreditCard, LifeBuoy, Mail,
   Settings, LogOut, ShieldCheck, RefreshCw, Menu, X, Activity, Workflow,
   ChevronRight, LockKeyhole, CircleHelp, TrendingUp, Eye, Clock3,
-  CheckCircle2, AlertCircle, CalendarDays, ArrowUpRight,
+  CheckCircle2, AlertCircle, CalendarDays, ArrowUpRight, Bell, Archive, Check,
 } from "lucide-react";
 
 // Antecipação apenas do código da seção que o usuário está prestes a abrir.
@@ -129,6 +129,87 @@ function StatusPanel({ title, subtitle, items = [], loading, icon: Icon }) {
   );
 }
 
+
+function MasterNotificationBell({ onNavigate }) {
+  const [items, setItems] = useState([]);
+  const [unread, setUnread] = useState(0);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const load = useCallback(async (quiet = false) => {
+    if (!quiet) setLoading(true);
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke("master-notifications", { body: { action: "list" } });
+      if (invokeError || data?.error) throw invokeError || new Error(data?.error);
+      setItems(data?.items || []);
+      setUnread(Number(data?.unread_count || 0));
+      setError("");
+    } catch {
+      setError("Não foi possível atualizar as notificações.");
+    } finally {
+      if (!quiet) setLoading(false);
+    }
+  }, []);
+  useEffect(() => {
+    load();
+    const timer = window.setInterval(() => load(true), 45000);
+    return () => window.clearInterval(timer);
+  }, [load]);
+  const update = async (item, action) => {
+    const { data, error: invokeError } = await supabase.functions.invoke("master-notifications", { body: { action, id: item.id } });
+    if (invokeError || data?.error) { setError("Não foi possível atualizar esta notificação."); return false; }
+    if (action === "archive") setItems(current => current.filter(row => row.id !== item.id));
+    else setItems(current => current.map(row => row.id === item.id ? { ...row, read_at: new Date().toISOString() } : row));
+    if (action === "mark_read" && !item.read_at) setUnread(value => Math.max(0, value - 1));
+    if (action === "archive" && !item.read_at) setUnread(value => Math.max(0, value - 1));
+    return true;
+  };
+  const openItem = async (item) => {
+    if (!item.read_at) await update(item, "mark_read");
+    setOpen(false);
+    onNavigate(item.target_section);
+  };
+  const priority = { critical: "border-l-rose-500", high: "border-l-amber-400", normal: "border-l-slate-200" };
+  const label = { support: "Suporte", email: "E-mail", moderation: "Moderação", infrastructure: "Infraestrutura", account: "Contas" };
+  return (
+    <div className="relative">
+      <button type="button" onClick={() => { setOpen(value => !value); if (!open) load(true); }} aria-label={unread ? "Notificações Master, " + unread + " não lidas" : "Notificações Master"} aria-expanded={open} className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50">
+        <Bell size={18} />
+        {unread > 0 && <span className="absolute -right-1 -top-1 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold text-white">{unread > 99 ? "99+" : unread}</span>}
+      </button>
+      {open && <>
+        <button type="button" aria-label="Fechar notificações" className="fixed inset-0 z-30 cursor-default" onClick={() => setOpen(false)} />
+        <section className="absolute right-0 z-40 mt-2 flex max-h-[min(75vh,620px)] w-[min(92vw,410px)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3.5">
+            <div><h2 className="text-sm font-bold text-slate-900">Central de notificações</h2><p className="mt-0.5 text-xs text-slate-500">{unread} não lida(s)</p></div>
+            <button type="button" onClick={() => load()} disabled={loading} className="rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-100 disabled:opacity-50">{loading ? "Atualizando…" : "Atualizar"}</button>
+          </div>
+          {error && <p role="alert" className="border-b border-amber-100 bg-amber-50 px-4 py-2 text-xs text-amber-800">{error}</p>}
+          <div className="overflow-y-auto">
+            {items.length ? items.map(item => (
+              <article key={item.id} className={"border-b border-slate-100 border-l-[3px] px-3 py-3 " + (priority[item.priority] || priority.normal) + (!item.read_at ? " bg-sky-50/50" : " bg-white")}>
+                <div className="flex items-start gap-2">
+                  <button type="button" onClick={() => openItem(item)} className="min-w-0 flex-1 text-left">
+                    <div className="flex items-center gap-2"><span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{label[item.category] || "Sistema"}</span>{!item.read_at && <span className="h-1.5 w-1.5 rounded-full bg-sky-600" />}{item.priority === "critical" && <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-rose-700">Crítico</span>}</div>
+                    <p className="mt-1 text-[13px] font-semibold text-slate-800">{item.title}</p>
+                    {item.message && <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">{item.message}</p>}
+                    <p className="mt-1.5 text-[10px] text-slate-400">{new Date(item.source_created_at || item.created_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</p>
+                  </button>
+                  <div className="flex shrink-0 flex-col gap-1">
+                    {!item.read_at && <button type="button" title="Marcar como lida" aria-label="Marcar como lida" onClick={() => update(item, "mark_read")} className="rounded-lg p-1.5 text-slate-400 hover:bg-emerald-50 hover:text-emerald-700"><Check size={15} /></button>}
+                    <button type="button" title="Arquivar" aria-label="Arquivar notificação" onClick={() => update(item, "archive")} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><Archive size={14} /></button>
+                  </div>
+                </div>
+              </article>
+            )) : <div className="px-5 py-10 text-center"><Bell size={23} className="mx-auto text-slate-300" /><p className="mt-3 text-sm font-semibold text-slate-700">Tudo em dia</p><p className="mt-1 text-xs text-slate-400">Novos alertas aparecerão aqui.</p></div>}
+          </div>
+          <div className="border-t border-slate-100 bg-slate-50 px-4 py-2 text-[10px] text-slate-400">Atualização automática a cada 45 segundos</div>
+        </section>
+      </>}
+    </div>
+  );
+}
+
 export default function MasterApp({ user, onLogout }) {
   const [activeSection, setActiveSection] = useState("overview");
   const [summary, setSummary] = useState(null);
@@ -210,7 +291,7 @@ export default function MasterApp({ user, onLogout }) {
       <div className="min-h-screen lg:pl-[270px]">
         <header className="sticky top-0 z-20 flex items-center justify-between border-b bg-white/95 px-4 py-3.5 backdrop-blur-xl sm:px-7" style={{ borderColor: "#e8edf2" }}>
           <div className="flex items-center gap-3"><button className="rounded-lg border border-slate-200 p-2 lg:hidden" onClick={() => setMobileMenuOpen(true)} aria-label="Abrir menu"><Menu size={19} /></button><div><p className="text-[11px] text-slate-400">Avespet <span className="px-1">/</span> Master</p><p className="text-sm font-semibold text-slate-800">{selected.label}</p></div></div>
-          <div className="flex items-center gap-2"><span className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold text-emerald-700 sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Ambiente restrito</span><button type="button" onClick={loadSummary} disabled={summaryLoading} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"><RefreshCw size={14} className={summaryLoading ? "animate-spin" : ""} /><span className="hidden sm:inline">Atualizar dados</span></button></div>
+          <div className="flex items-center gap-2"><MasterNotificationBell onNavigate={chooseSection} /><span className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold text-emerald-700 sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Ambiente restrito</span><button type="button" onClick={loadSummary} disabled={summaryLoading} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"><RefreshCw size={14} className={summaryLoading ? "animate-spin" : ""} /><span className="hidden sm:inline">Atualizar dados</span></button></div>
         </header>
 
         <main className="mx-auto max-w-[1500px] px-4 py-7 sm:px-7 lg:px-9">
