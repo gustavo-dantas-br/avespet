@@ -146,45 +146,13 @@ Deno.serve(async (req) => {
   } catch { return reply({ error: "Requisição inválida." }, 400, origin); }
   const action = str(body.action, 32);
   const box = body.box;
-  if (!validBox(box)) return reply({ error: "Caixa inválida." }, 400, origin);
   const key = Deno.env.get("RESEND_INBOX_API_KEY");
-  if (!key) return reply({ error: "Integração de caixas não ativada. Configure RESEND_INBOX_API_KEY nos Secrets do Supabase." }, 503, origin);
-  // O provedor exige o ID da caixa. Reutilizamos esse identificador por até
-  // 10 minutos para não consultar /inboxes antes de toda leitura ou envio.
-  // Os indicadores de não lidos são consultados em tempo real em "threads".
-  const address = inboxes[box];
-  let selectedId: string;
-  let inboxUnread = 0;
-  let inboxLastReceived: string | null = null;
-  const cached = inboxCache.get(box);
-  const cacheHit = Boolean(cached && cached.expiresAt > Date.now());
-  if (cacheHit && cached) {
-    selectedId = cached.id;
-  } else {
-    inboxCache.delete(box);
-    try {
-      const listing = await resend("/inboxes?limit=100", key);
-      const item = formatList(listing?.data).find((entry: any) =>
-        typeof entry?.email_address === "string" &&
-        entry.email_address.toLowerCase() === address);
-      if (!item || !uuid.test(String(item.id))) {
-        return reply({ error: "Caixa " + address + " não encontrada na conta Resend desta chave." }, 503, origin);
-      }
-      selectedId = item.id;
-      inboxUnread = Number(item.unread) || 0;
-      inboxLastReceived = typeof item.last_received === "string" ? item.last_received : null;
-      inboxCache.set(box, { id: selectedId, expiresAt: Date.now() + inboxCacheTtlMs });
-    } catch (error) {
-      if (error instanceof ProviderError) return reply({ error: error.message }, error.status, origin);
-      return reply({ error: "Não foi possível localizar as caixas do Resend." }, 503, origin);
-    }
-  }
-  const base = "/inboxes/" + selectedId;
-  const thread = str(body.thread_id, 50);
-  const email = str(body.email_id, 50);
+  if (!key) return reply({ error: "Integração de e-mail não ativada. Configure RESEND_INBOX_API_KEY nos Secrets do Supabase." }, 503, origin);
 
-  try {
-    if (action === "sent") {
+  // O histórico de enviados é global à conta Resend e não depende de uma caixa de entrada.
+  if (action === "sent" || action === "sent_detail") {
+    try {
+      if (action === "sent") {
       const after = str(body.after, 50);
       if (after && !uuid.test(after)) return reply({ error: "Cursor de paginação inválido." }, 400, origin);
       const query = new URLSearchParams({ limit: "50" });
@@ -222,6 +190,49 @@ Deno.serve(async (req) => {
       if (auditError) return reply({ error: "Não foi possível registrar o acesso administrativo." }, 503, origin);
       return reply({ success: true, email: emailDetail }, 200, origin);
     }
+    } catch (error) {
+      if (error instanceof ProviderError) return reply({ error: error.message }, error.status, origin);
+      console.error("Resend sent history error", error instanceof Error ? error.message : "unknown");
+      return reply({ error: "Não foi possível consultar os e-mails enviados." }, 503, origin);
+    }
+  }
+
+  if (!validBox(box)) return reply({ error: "Caixa inválida." }, 400, origin);
+  // O provedor exige o ID da caixa. Reutilizamos esse identificador por até
+  // 10 minutos para não consultar /inboxes antes de toda leitura ou envio.
+  // Os indicadores de não lidos são consultados em tempo real em "threads".
+  const address = inboxes[box];
+  let selectedId: string;
+  let inboxUnread = 0;
+  let inboxLastReceived: string | null = null;
+  const cached = inboxCache.get(box);
+  const cacheHit = Boolean(cached && cached.expiresAt > Date.now());
+  if (cacheHit && cached) {
+    selectedId = cached.id;
+  } else {
+    inboxCache.delete(box);
+    try {
+      const listing = await resend("/inboxes?limit=100", key);
+      const item = formatList(listing?.data).find((entry: any) =>
+        typeof entry?.email_address === "string" &&
+        entry.email_address.toLowerCase() === address);
+      if (!item || !uuid.test(String(item.id))) {
+        return reply({ error: "Caixa " + address + " não encontrada na conta Resend desta chave." }, 503, origin);
+      }
+      selectedId = item.id;
+      inboxUnread = Number(item.unread) || 0;
+      inboxLastReceived = typeof item.last_received === "string" ? item.last_received : null;
+      inboxCache.set(box, { id: selectedId, expiresAt: Date.now() + inboxCacheTtlMs });
+    } catch (error) {
+      if (error instanceof ProviderError) return reply({ error: error.message }, error.status, origin);
+      return reply({ error: "Não foi possível localizar as caixas do Resend." }, 503, origin);
+    }
+  }
+  const base = "/inboxes/" + selectedId;
+  const thread = str(body.thread_id, 50);
+  const email = str(body.email_id, 50);
+
+  try {
     if (action === "threads") {
       // Total de não lidos permanece atualizado, sem voltar a bloquear
       // a listagem de conversas enquanto o Resend responde sobre as caixas.
