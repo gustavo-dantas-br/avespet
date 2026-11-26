@@ -63,6 +63,36 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
     }
   }, [invoke]);
 
+  const loadSent = useCallback(async (after = null) => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await invoke({ action: "sent", ...(after ? { after } : {}) });
+      setSentEmails(after ? (current) => [...current, ...(data.emails || [])] : (data.emails || []));
+      setSentCursor(data.next_cursor || null);
+      setSentHasMore(Boolean(data.has_more));
+    } catch (err) {
+      setSentEmails([]);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [invoke]);
+
+  async function openSentEmail(item) {
+    setOpening(true);
+    setSentDetail(null);
+    setError("");
+    try {
+      const data = await invoke({ action: "sent_detail", email_id: item.id });
+      setSentDetail(data.email);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setOpening(false);
+    }
+  }
+
   useEffect(() => {
     setThread(null);
     setMessages([]);
@@ -70,8 +100,9 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
     setComposing(false);
     setNotice("");
     setThreads([]);
-    load(box);
-  }, [box, load]);
+    setSentDetail(null);
+    if (view === "sent") loadSent(); else load(box);
+  }, [box, view, load, loadSent]);
 
   useEffect(() => {
     if (!initialDraft) return;
