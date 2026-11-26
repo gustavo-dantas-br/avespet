@@ -44,6 +44,21 @@ Deno.serve(async req=>{
    for(const a of list(ads.data))pending.push({source_key:"moderation:ad:"+a.id,category:"moderation",title:"Anúncio aguardando aprovação",message:"Um anúncio de ave está pendente de análise.",priority:"normal",target_section:"ads",source_created_at:date(a.criado_em)});
    for(const a of list(lost.data))pending.push({source_key:"moderation:lost:"+a.id,category:"moderation",title:"Ave perdida aguardando análise",message:"Um anúncio de ave perdida está pendente de análise.",priority:"high",target_section:"lost-birds",source_created_at:date(a.created_at)});
    for(const a of list(infra.data))pending.push({source_key:"infra:"+a.id,category:"infrastructure",title:"Alerta de infraestrutura",message:str(a.metric,80)+" · "+Number(a.pct).toFixed(1)+"% · "+str(a.status,20),priority:Number(a.level)>=3?"critical":Number(a.level)>=2?"high":"normal",target_section:"infrastructure",source_created_at:date(a.created_at)});
+   // Consulta somente leitura das caixas do Resend; não abre mensagens, não altera status e não envia e-mails.
+   const resendKey=Deno.env.get("RESEND_INBOX_API_KEY");
+   if(resendKey){
+    try{
+     const inboxResponse=await fetch("https://api.resend.com/inboxes?limit=100",{headers:{Authorization:"Bearer "+resendKey},signal:AbortSignal.timeout(6500)});
+     if(inboxResponse.ok){
+      const inboxData=await inboxResponse.json();
+      for(const address of ["suporte@avespet.com.br","financeiro@avespet.com.br"]){
+       const inbox=list(inboxData?.data).find((item:any)=>str(item.email_address,254).toLowerCase()===address);
+       const unread=Number(inbox?.unread)||0,last=str(inbox?.last_received,50);
+       if(unread>0)pending.push({source_key:"email:inbox:"+address+":"+(last||String(unread)),category:"email",title:"E-mails não lidos · "+(address.startsWith("suporte")?"Suporte":"Financeiro"),message:unread+" conversa(s) não lida(s) na caixa "+address+".",priority:"high",target_section:"communications",source_created_at:date(last)});
+      }
+     }
+    }catch(error){console.error("Resend inbox count unavailable",error instanceof Error?error.message:"unknown")}
+   }
    if(pending.length){const {error}=await db.from("master_notifications").upsert(pending,{onConflict:"source_key",ignoreDuplicates:true});if(error)throw error}
   }
   const {data,error}=await db.from("master_notifications").select("id,category,title,message,priority,target_section,source_created_at,read_at,archived_at,created_at").is("archived_at",null).order("source_created_at",{ascending:false}).limit(60);
