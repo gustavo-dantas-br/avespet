@@ -160,6 +160,7 @@ export default function AgendaCriador({userId,posturas=[],aves=[],onNavigate,car
     {!loading&&selectedEvents.length===0&&<p className="mt-3 text-sm text-[#526A5B]">Nenhum evento registrado neste dia.</p>}
     <div className="mt-3 space-y-2">{selectedEvents.map(item=><article key={item.id} className="rounded-xl border border-[#E2EBE4] p-3"><p className={"text-sm font-semibold "+(item.concluida?"line-through text-slate-400":"text-[#173D29]")}>{item.titulo}</p><p className="mt-1 text-xs text-[#526A5B]">{eventDescription(item)}</p>{item.origem==="tarefa"?<div className="mt-2 flex flex-wrap gap-3 text-xs"><button type="button" disabled={saving} onClick={()=>toggle(item.tarefa)} className="font-semibold text-emerald-700">{item.concluida?"Reabrir":"Concluir"}</button><button type="button" onClick={()=>{setActiveView("tarefas");editarTarefa(item.tarefa)}} className="underline">Editar</button><button type="button" disabled={saving} onClick={()=>remove(item.tarefa)} className="text-red-700">Excluir</button></div>:item.origem==="cuidados"?<button type="button" onClick={()=>setActiveView("cuidados")} className="mt-2 text-xs font-semibold text-emerald-700 underline">Abrir cuidados</button>:<button type="button" onClick={()=>onNavigate?.("reproducao")} className="mt-2 text-xs font-semibold text-emerald-700 underline">Abrir reprodução</button>}</article>)}</div>
    </div>
+   {showTaskForm&&taskForm}
   </div>
 
   <div hidden={activeView!=="tarefas"} className="space-y-4">
