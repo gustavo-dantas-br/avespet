@@ -16,6 +16,8 @@ A Edge Function `master-resend-inboxes` valida sessão e permissão em `master_a
 A lista relaciona o ID do Resend com os registros internos existentes:
 - `aves_perdidas_emails_aprovacao.provider_id` → Aprovação de ave perdida;
 - `email_reengagement_delivery.provider_id` → Reengajamento;
+- `master_audit_log.metadata.provider_id` com ações de envio manual → Envio manual — Suporte/Financeiro, Resposta manual ou Atendimento de ave perdida;
+- assuntos padrão do Supabase Auth → Confirmação de e-mail do cadastro, Recuperação de senha ou Convite de acesso;
 - sem correspondência → Outro envio pelo Resend.
 
 A origem "Outro envio pelo Resend" não significa falha. Significa apenas que o envio não está associado a uma das duas tabelas internas consultadas.
@@ -26,7 +28,9 @@ A origem "Outro envio pelo Resend" não significa falha. Significa apenas que o 
 - `last_event` é o último evento informado pelo Resend; não equivale a confirmação de leitura humana.
 - O fluxo atual de cadastro usa Supabase Auth e a confirmação de e-mail padrão. Não foi localizado um disparo personalizado de boas-vindas.
 - O e-mail de aprovação de ave perdida atualmente confirma a publicação e oferece orientações gratuitas. Ele ainda não contém uma oferta comercial de serviço de busca.
-- A identificação automática de origem para novos fluxos (boas-vindas e oferta de busca) depende de implementar e registrar esses fluxos; não deve ser inferida a partir do assunto.
+- A identificação por assunto dos templates padrão do Supabase Auth é uma classificação auxiliar; novos templates personalizados devem gravar o ID do Resend na tabela de entrega correspondente.
+- A identificação automática de origem para novos fluxos (boas-vindas e oferta de busca) depende de implementar e registrar esses fluxos; não deve ser inferida apenas a partir do assunto.
+- Envios manuais antigos sem `provider_id` no log de auditoria podem continuar classificados como "Outro envio pelo Resend".
 
 ## Testes antes de produção
 
