@@ -263,6 +263,7 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
                   <div><dt className="inline font-semibold">De: </dt><dd className="inline break-all">{sentDetail.from}</dd></div>
                   <div><dt className="inline font-semibold">Para: </dt><dd className="inline break-all">{(sentDetail.to || []).join(", ")}</dd></div>
                   <div><dt className="inline font-semibold">Data: </dt><dd className="inline">{formatDate(sentDetail.created_at)}</dd></div>
+                  <div><dt className="inline font-semibold">Origem: </dt><dd className="inline">{sentDetail.source || "Outro envio pelo Resend"}</dd></div>
                   <div><dt className="inline font-semibold">Último evento: </dt><dd className="inline">{sentDetail.last_event}</dd></div>
                 </dl>
                 <pre className="mt-4 whitespace-pre-wrap break-words rounded-xl border border-slate-200 p-4 text-sm leading-6 text-slate-800">{sentDetail.text || "O provedor não disponibilizou o conteúdo textual deste e-mail."}</pre>
@@ -274,6 +275,7 @@ export default function MasterInboxPanel({ user, initialDraft = null, onDraftUse
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap justify-between gap-2"><strong className="truncate text-sm text-slate-900">{item.subject}</strong><span className="text-xs text-slate-400">{formatDate(item.created_at)}</span></span>
                     <span className="mt-1 block truncate text-xs text-slate-500">Para: {(item.to || []).join(", ") || "Destinatário não informado"}</span>
+                    <span className="mt-1 block text-[11px] text-emerald-700">Origem: {item.source || "Outro envio pelo Resend"}</span>
                     <span className="mt-1 block text-[11px] text-slate-500">Último evento: {item.last_event}</span>
                   </span>
                 </button>
