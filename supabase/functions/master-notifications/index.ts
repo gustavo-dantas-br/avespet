@@ -33,7 +33,7 @@ Deno.serve(async req=>{
    const since=new Date(Date.now()-30*86400000).toISOString(),pending:any[]=[];
    const [events,cases,ads,lost,infra]=await Promise.all([
     db.from("master_support_events").select("id,event_type,summary,created_at").gte("created_at",since).in("event_type",["created","email_received"]),
-    db.from("master_support_cases").select("id,priority,created_at").eq("status","novo").gte("created_at",since),
+    db.from("master_support_cases").select("id,priority,created_at").eq("status","aguardando").gte("created_at",since),
     db.from("anuncios").select("id,criado_em").eq("status","pendente").gte("criado_em",since),
     db.from("anuncios_aves_perdidas").select("id,created_at").eq("status","pendente").gte("created_at",since),
     db.schema("avespet_infra").from("alert_outbox").select("id,metric,level,pct,status,created_at").in("status",["pending","failed","uncertain"]).gte("created_at",since)
