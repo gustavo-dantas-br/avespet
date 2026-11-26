@@ -162,6 +162,7 @@ Deno.serve(async (req) => {
         id: str(item.id, 50), to: formatList(item.to).map((v: unknown) => str(v, 254)),
         from: str(item.from, 254), subject: str(item.subject, 200) || "(sem assunto)",
         created_at: str(item.created_at, 50), last_event: str(item.last_event, 40) || "sent",
+        source: "Outro envio pelo Resend",
       })).filter((item: any) => uuid.test(item.id));
       const providerIds = emails.map((item: any) => item.id);
       const sourceById = new Map<string, string>();
