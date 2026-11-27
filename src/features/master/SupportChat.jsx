@@ -271,6 +271,10 @@ export default function SupportChat({ user, mode = "creator", onUnreadCountChang
                   </label>
                 : <span className={"rounded-full px-3 py-1.5 text-xs font-semibold " + (STATUS_TONES[selected.status] || STATUS_TONES.aberto)}>{statusLabel(selected.status)}</span>}
             </div>
+            <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 bg-white px-4 py-2.5 text-[10px] font-bold uppercase tracking-wide">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-sky-50 px-2.5 py-1.5 text-sky-900"><UserRound size={13} /> Criador · Cliente</span>
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-emerald-800"><Headphones size={13} /> Suporte Avespet · Equipe</span>
+            </div>
             <div className="flex h-[390px] flex-col gap-3 overflow-y-auto bg-slate-50/70 p-4 sm:p-5">
               {loadingMessages ? <div className="m-auto text-sm text-slate-500"><Loader2 className="mr-2 inline animate-spin" size={16} />Carregando conversa...</div>
                 : messages.map((message) => {
@@ -279,13 +283,17 @@ export default function SupportChat({ user, mode = "creator", onUnreadCountChang
                     <article className={"max-w-[88%] rounded-2xl px-4 py-3 shadow-sm " + (message.author_type === "support"
                       ? "rounded-br-md border border-emerald-700 bg-emerald-700 text-white"
                       : "rounded-bl-md border border-slate-200 bg-white text-slate-800")}>
-                      <div className={"mb-2 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wide " + (message.author_type === "support" ? "text-emerald-100" : "text-slate-500")}>
-                        <span className={"flex h-6 w-6 items-center justify-center rounded-full " + (message.author_type === "support" ? "bg-white/15 text-white" : "bg-slate-100 text-slate-600")}>
-                          {message.author_type === "support" ? <Headphones size={13} /> : <UserRound size={13} />}
+                      <div className={"mb-2 flex items-center gap-2 rounded-lg px-2.5 py-2 text-[11px] font-black uppercase tracking-wide " + (message.author_type === "support"
+                        ? "bg-white/15 text-white"
+                        : "bg-sky-50 text-sky-900")}>
+                        <span className={"flex h-7 w-7 shrink-0 items-center justify-center rounded-full " + (message.author_type === "support" ? "bg-white/20 text-white" : "bg-sky-100 text-sky-800")}>
+                          {message.author_type === "support" ? <Headphones size={15} /> : <UserRound size={15} />}
                         </span>
-                        <span>{message.author_type === "support"
-                          ? "Equipe Avespet · Suporte"
-                          : (isMaster ? (selected.creator_name || "Criador") : "Você · Criador")}</span>
+                        <span className="leading-tight">
+                          {message.author_type === "support"
+                            ? <>SUPORTE AVESPET <span className="block text-[9px] font-semibold tracking-normal opacity-90">EQUIPE DE ATENDIMENTO</span></>
+                            : <>{isMaster ? (selected.creator_name || "CRIADOR") : "CRIADOR · VOCÊ"} <span className="block text-[9px] font-semibold tracking-normal opacity-80">CLIENTE DO AVESPET</span></>}
+                        </span>
                       </div>
                       <p className="whitespace-pre-wrap break-words text-sm leading-6">{message.body}</p>
                       <time className={"mt-2 block text-right text-[10px] " + (mine ? "text-emerald-100" : "text-slate-400")}>{dateTime(message.created_at)}</time>
