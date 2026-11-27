@@ -1,6 +1,19 @@
 import { supabase } from "../../../supabaseClient";
 
-const TABELA = "solicitacoes_campanhas_aves";\nconst TABELA_PACOTES = "campaign_packages";\n\n// Catálogo público: o banco é a fonte oficial de preços e condições.\nexport async function listarPacotesPublicos() {\n  const { data, error } = await supabase\n    .from(TABELA_PACOTES)\n    .select("code, name, description, reach_label, duration_days, radius_km, price_cents, media_cents, reach_min, reach_max, sort_order")\n    .eq("is_published", true)\n    .order("sort_order", { ascending: true });\n  if (error) throw error;\n  return data || [];\n}\n
+const TABELA = "solicitacoes_campanhas_aves";
+const TABELA_PACOTES = "campaign_packages";
+
+// Catálogo público: o banco é a fonte oficial de preços e condições.
+export async function listarPacotesPublicos() {
+  const { data, error } = await supabase
+    .from(TABELA_PACOTES)
+    .select("code, name, description, reach_label, duration_days, radius_km, price_cents, media_cents, reach_min, reach_max, sort_order")
+    .eq("is_published", true)
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
 
 export async function solicitarCampanha(dados) {
   const { error } = await supabase.from(TABELA).insert({
