@@ -32,6 +32,7 @@ import {
 import AuthPage from "./components/AuthPage";
 import { checkIsMaster } from "./lib/masterAccess";
 const AvespetIA = React.lazy(() => import("./features/avespet-ia/MeuPrimeiroPet"));
+const SupportChatCreator = React.lazy(() => import("./features/master/SupportChat"));
 const MasterApp = React.lazy(() => import("./features/master/MasterApp"));
 const MasterInvitation = React.lazy(() => import("./features/master/MasterInvitation"));
 import RequiredPasswordChange from "./components/RequiredPasswordChange";
@@ -1112,6 +1113,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
     { title: "AVESPET", items: [
       { id: "anuncios", label: "Anúncios", icon: Megaphone },
       { id: "perdi-uma-ave", label: "Ave perdida", icon: Bird },
+      { id: "suporte", label: "Suporte", icon: MessageCircle },
     ] },
     ...(isAdminUser ? [{ title: "ADMINISTRAÇÃO", items: [
       { id: "aprovacoes", label: "Aprovações", icon: ShieldCheck },
@@ -1358,6 +1360,7 @@ Registros com o mesmo ID serao sobrescritos pelos do arquivo. Nada e apagado.`))
             )}
 
             {tab === "perdi-uma-ave" && <PerdiUmaAve userId={user.id} />}
+            {tab === "suporte" && <SupportChatCreator user={user} mode="creator" />}
 
             {tab === "anuncios" && (
               <AnunciosTab
