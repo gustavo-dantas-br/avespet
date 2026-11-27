@@ -405,7 +405,7 @@ function LoginModal({ onFechar }) {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { nome: nome.trim(), sobrenome: sobrenome.trim(), nomeCompleto, telefone: telefone.trim(), whatsapp: telefone.trim() } },
+          options: { data: { nome: nome.trim(), sobrenome: sobrenome.trim(), nomeCompleto, telefone: telefone.trim(), whatsapp: telefone.trim(), avespet_welcome_pending: true } },
         });
         if (error) throw error;
         setMessage("Conta criada! Confira o e-mail de confirmação. IMPORTANTE: a mensagem também pode estar na pasta SPAM, Lixo eletrônico ou Promoções. Se encontrar, marque como “Não é spam”. Depois de confirmar e entrar, seu perfil será criado automaticamente.");

@@ -76,6 +76,36 @@ function formatList(data: unknown) {
 function str(value: unknown, max = 200) {
   return typeof value === "string" ? value.slice(0, max) : "";
 }
+
+
+function knownSourceFromSubject(subject: string) {
+  const normalized = subject.trim().toLowerCase();
+  if (normalized === "confirm your email address" || normalized === "confirme seu endereço de e-mail") return "Confirmação de e-mail do cadastro";
+  if (normalized === "reset your password" || normalized === "redefinir sua senha") return "Recuperação de senha";
+  if (normalized === "you've been invited" || normalized === "you have been invited") return "Convite de acesso";
+  return "Outro envio pelo Resend";
+}
+function sourceFromAudit(action: string, metadata: Record<string, unknown> | null | undefined) {
+  const box = metadata?.box === "financeiro" ? "Financeiro" : "Suporte";
+  if (action === "resend_inbox_reply_sent") return "Resposta manual — " + box;
+  if (metadata?.source_id) return "Atendimento de ave perdida — " + box;
+  return "Envio manual — " + box;
+}
+
+function htmlToText(html: unknown) {
+  if (typeof html !== "string") return "";
+  return html
+    .replace(/<\s*(script|style)[^>]*>[\s\S]*?<\/\s*\1\s*>/gi, " ")
+    .replace(/<\s*br\s*\/?>/gi, "\n")
+    .replace(/<\s*\/\s*(p|div|li|tr|h[1-6])\s*>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<").replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#(\d+);/g, (_m, n) => String.fromCodePoint(Number(n)))
+    .replace(/[ \t]+/g, " ").replace(/\n\s+/g, "\n").trim().slice(0, 30000);
+}
+
 class ProviderError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
@@ -131,9 +161,93 @@ Deno.serve(async (req) => {
   } catch { return reply({ error: "Requisição inválida." }, 400, origin); }
   const action = str(body.action, 32);
   const box = body.box;
-  if (!validBox(box)) return reply({ error: "Caixa inválida." }, 400, origin);
   const key = Deno.env.get("RESEND_INBOX_API_KEY");
-  if (!key) return reply({ error: "Integração de caixas não ativada. Configure RESEND_INBOX_API_KEY nos Secrets do Supabase." }, 503, origin);
+  if (!key) return reply({ error: "Integração de e-mail não ativada. Configure RESEND_INBOX_API_KEY nos Secrets do Supabase." }, 503, origin);
+
+  // O histórico de enviados é global à conta Resend e não depende de uma caixa de entrada.
+  if (action === "sent" || action === "sent_detail") {
+    try {
+      if (action === "sent") {
+      const after = str(body.after, 50);
+      if (after && !uuid.test(after)) return reply({ error: "Cursor de paginação inválido." }, 400, origin);
+      const query = new URLSearchParams({ limit: "50" });
+      if (after) query.set("after", after);
+      const result = await resend("/emails?" + query.toString(), key);
+      const emails = formatList(result?.data).map((item: any) => ({
+        id: str(item.id, 50), to: formatList(item.to).map((v: unknown) => str(v, 254)),
+        from: str(item.from, 254), subject: str(item.subject, 200) || "(sem assunto)",
+        created_at: str(item.created_at, 50), last_event: str(item.last_event, 40) || "sent",
+        source: "Outro envio pelo Resend",
+      })).filter((item: any) => uuid.test(item.id));
+      const providerIds = emails.map((item: any) => item.id);
+      const sourceById = new Map<string, string>();
+      if (providerIds.length) {
+        const [lostRows, reengagementRows, welcomeRows, manualRows] = await Promise.all([
+          admin.from("aves_perdidas_emails_aprovacao").select("provider_id").in("provider_id", providerIds),
+          admin.from("email_reengagement_delivery").select("provider_id").in("provider_id", providerIds),
+          admin.from("email_welcome_delivery").select("provider_id").in("provider_id", providerIds),
+          admin.from("master_audit_log").select("action, metadata")
+            .in("metadata->>provider_id", providerIds)
+            .in("action", ["resend_inbox_compose_sent", "resend_inbox_reply_sent"]),
+        ]);
+        if (lostRows.error || reengagementRows.error || welcomeRows.error || manualRows.error) {
+          return reply({ error: "Não foi possível relacionar os envios às automações e ao atendimento." }, 503, origin);
+        }
+        for (const row of lostRows.data || []) if (row.provider_id) sourceById.set(row.provider_id, "Aprovação de ave perdida");
+        for (const row of reengagementRows.data || []) if (row.provider_id) sourceById.set(row.provider_id, "Reengajamento");
+        for (const row of welcomeRows.data || []) if (row.provider_id) sourceById.set(row.provider_id, "Boas-vindas personalizada");
+        for (const row of manualRows.data || []) {
+          const providerId = str((row.metadata as Record<string, unknown> | null)?.provider_id, 50);
+          if (providerId) sourceById.set(providerId, sourceFromAudit(row.action, row.metadata as Record<string, unknown> | null));
+        }
+      }
+      for (const item of emails) item.source = sourceById.get(item.id) || knownSourceFromSubject(item.subject);
+      const { error: auditError } = await admin.from("master_audit_log").insert({
+        actor_user_id: identity.user.id, action: "resend_sent_emails_viewed",
+        resource_type: "communication", metadata: { count: emails.length, has_more: Boolean(result?.has_more) },
+      });
+      if (auditError) return reply({ error: "Não foi possível registrar o acesso administrativo." }, 503, origin);
+      return reply({ success: true, emails, has_more: Boolean(result?.has_more),
+        next_cursor: emails.length ? emails[emails.length - 1].id : null }, 200, origin);
+    }
+    if (action === "sent_detail") {
+      const emailId = str(body.email_id, 50);
+      if (!uuid.test(emailId)) return reply({ error: "E-mail inválido." }, 400, origin);
+      const item = await resend("/emails/" + emailId, key);
+      const [lostSource, reengagementSource, welcomeSource, manualSource] = await Promise.all([
+        admin.from("aves_perdidas_emails_aprovacao").select("provider_id").eq("provider_id", emailId).maybeSingle(),
+        admin.from("email_reengagement_delivery").select("provider_id").eq("provider_id", emailId).maybeSingle(),
+        admin.from("email_welcome_delivery").select("provider_id").eq("provider_id", emailId).maybeSingle(),
+        admin.from("master_audit_log").select("action, metadata").eq("metadata->>provider_id", emailId)
+          .in("action", ["resend_inbox_compose_sent", "resend_inbox_reply_sent"]).limit(1),
+      ]);
+      if (lostSource.error || reengagementSource.error || welcomeSource.error || manualSource.error) return reply({ error: "Não foi possível identificar a origem do e-mail." }, 503, origin);
+      const manualRow = manualSource.data?.[0];
+      const detailSubject = str(item?.subject, 200) || "(sem assunto)";
+      const emailDetail = {
+        id: str(item?.id, 50), to: formatList(item?.to).map((v: unknown) => str(v, 254)),
+        from: str(item?.from, 254), subject: detailSubject,
+        created_at: str(item?.created_at, 50), last_event: str(item?.last_event, 40) || "sent",
+        source: lostSource.data ? "Aprovação de ave perdida" : reengagementSource.data ? "Reengajamento" : welcomeSource.data ? "Boas-vindas personalizada" : manualRow ? sourceFromAudit(manualRow.action, manualRow.metadata as Record<string, unknown> | null) : knownSourceFromSubject(detailSubject),
+        text: str(item?.text, 30000) || htmlToText(item?.html),
+        message_id: str(item?.message_id, 255),
+      };
+      const { error: auditError } = await admin.from("master_audit_log").insert({
+        actor_user_id: identity.user.id, action: "resend_sent_email_detail_viewed",
+        resource_type: "communication", resource_id: emailId,
+        metadata: { has_text: Boolean(emailDetail.text) },
+      });
+      if (auditError) return reply({ error: "Não foi possível registrar o acesso administrativo." }, 503, origin);
+      return reply({ success: true, email: emailDetail }, 200, origin);
+    }
+    } catch (error) {
+      if (error instanceof ProviderError) return reply({ error: error.message }, error.status, origin);
+      console.error("Resend sent history error", error instanceof Error ? error.message : "unknown");
+      return reply({ error: "Não foi possível consultar os e-mails enviados." }, 503, origin);
+    }
+  }
+
+  if (!validBox(box)) return reply({ error: "Caixa inválida." }, 400, origin);
   // O provedor exige o ID da caixa. Reutilizamos esse identificador por até
   // 10 minutos para não consultar /inboxes antes de toda leitura ou envio.
   // Os indicadores de não lidos são consultados em tempo real em "threads".

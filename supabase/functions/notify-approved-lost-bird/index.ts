@@ -56,12 +56,25 @@ async function senderRecipient(ad: any, admin: any) {
   }
   return "";
 }
-function compose(ad: any) {
+function compose(ad: any, packages: any[] = []) {
   const data: Record<string, unknown> = ad.data && typeof ad.data === "object" ? ad.data : {};
   const owner = plain(data.contatoNome, 90) || "Olá";
   const bird = plain(data.nomeAve, 90) || plain(data.especie, 90) || "sua ave";
   const greeting = owner === "Olá" ? "Olá!" : "Olá, " + owner + "!";
   const url = site + "/aves-perdidas";
+  const campaignUrl = site + "/campanha-ave-perdida?anuncio=" + encodeURIComponent(String(ad.id));
+  const packageLines = packages.map((p) => "- " + plain(p.name,80) + ": R$ " + (Number(p.price_cents)/100).toFixed(2).replace(".",",") + " | " + plain(p.reach_label,100) + " | " + Number(p.duration_days) + " dias").join("\n");
+  const offerText = packages.length ? [
+    "",
+    "Se desejar ampliar a divulgação, o Avespet oferece opções pagas e totalmente opcionais:",
+    packageLines,
+    "",
+    "A contratação começa por uma solicitação de orçamento. Nossa equipe confirma os detalhes antes de qualquer cobrança ou início da campanha.",
+    "A divulgação pode ampliar o alcance regional, mas não garante que a ave será localizada.",
+    "Conheça as opções: " + campaignUrl,
+  ].join("\n") : "";
+  const packageHtml = packages.map((p) => '<li style="margin:8px 0"><strong>' + escape(plain(p.name,80)) + '</strong> — ' + escape(new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(Number(p.price_cents)/100)) + '<br><span style="color:#5b6b60">' + escape(plain(p.reach_label,100)) + ' · ' + Number(p.duration_days) + ' dias</span></li>').join("");
+  const offerHtml = packages.length ? '<div style="margin-top:22px;padding:18px;border-radius:12px;background:#f0f7f1"><h3 style="margin-top:0;color:#225b3b">Quer ampliar a divulgação?</h3><p>Se desejar, conheça as opções pagas e opcionais de divulgação:</p><ul>' + packageHtml + '</ul><p style="font-size:13px;color:#526357">A contratação começa por uma solicitação de orçamento. Nossa equipe confirma os detalhes antes de qualquer cobrança ou início da campanha. A divulgação pode ampliar o alcance regional, mas não garante que a ave será localizada.</p><p><a href="' + campaignUrl + '" style="display:inline-block;background:#247346;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none">Conhecer opções de divulgação</a></p></div>' : "";
   const text = [
     greeting,
     "",
@@ -78,6 +91,7 @@ function compose(ad: any) {
     "",
     "O anúncio gratuito não exige a contratação de nenhum serviço.",
     "Caso sua ave seja encontrada, informe ao Avespet para atualizarmos a publicação.",
+    offerText,
     "",
     "Estamos torcendo por boas notícias!",
     "",
@@ -98,6 +112,7 @@ function compose(ad: any) {
     '<li>Se alguém disser que encontrou sua ave, verifique as informações e tenha cuidado com pedidos de dinheiro.</li></ul>' +
     '<p><a href="' + url + '" style="display:inline-block;background:#247346;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none">Ver aves perdidas no Avespet</a></p>' +
     '<p style="font-size:13px;color:#5b6b60">O anúncio gratuito não exige a contratação de nenhum serviço. Caso sua ave seja encontrada, avise o Avespet para atualizarmos a publicação.</p>' +
+    offerHtml +
     '<p>Estamos torcendo por boas notícias!</p>' +
     '<p style="border-top:1px solid #e4eee6;padding-top:16px;font-size:13px">Atenciosamente,<br><strong>Avespet | Suporte</strong><br>' +
     '<a href="mailto:' + inbox + '">' + inbox + '</a><br><a href="' + site + '">www.avespet.com.br</a><br>' +
@@ -168,7 +183,13 @@ Deno.serve(async (req: Request) => {
       .update({ status: "failed", failure_reason: "missing_resend_key" }).eq("anuncio_id", id);
     return answer({ success: true, approved: true, email_status: "email_not_configured" }, 200, origin);
   }
-  const signed = compose(approved);
+  const { data: packages, error: packagesError } = await admin.from("campaign_packages")
+    .select("code,name,description,reach_label,duration_days,price_cents,sort_order")
+    .eq("is_published", true).order("sort_order", { ascending: true });
+  if (packagesError) {
+    console.error("Catálogo de campanhas indisponível; mantendo e-mail transacional sem oferta.");
+  }
+  const signed = compose(approved, packagesError ? [] : (packages || []));
   let remote: Response;
   try {
     remote = await fetch("https://api.resend.com/emails", {
@@ -193,9 +214,15 @@ Deno.serve(async (req: Request) => {
     return answer({ success: true, approved: true, email_status: "delivery_uncertain" }, 200, origin);
   }
   if (!remote.ok) {
+    // Respostas 5xx podem ocorrer depois de o provedor aceitar o envio.
+    // Mantemos o estado incerto para evitar reenvio automático e duplicidade.
+    const failureStatus = remote.status >= 500 ? "uncertain" : "failed";
     await admin.from("aves_perdidas_emails_aprovacao")
-      .update({ status: "failed", failure_reason: "provider_" + remote.status }).eq("anuncio_id", id);
-    return answer({ success: true, approved: true, email_status: "provider_rejected" }, 200, origin);
+      .update({ status: failureStatus, failure_reason: "provider_" + remote.status }).eq("anuncio_id", id);
+    return answer({
+      success: true, approved: true,
+      email_status: failureStatus === "uncertain" ? "delivery_uncertain" : "provider_rejected",
+    }, 200, origin);
   }
   const provider = await remote.json().catch(() => ({}));
   await admin.from("aves_perdidas_emails_aprovacao").update({

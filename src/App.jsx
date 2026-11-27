@@ -1506,6 +1506,16 @@ export default function App() {
     };
   }, []);
 
+  // Boas-vindas personalizadas somente para contas novas, após confirmação do e-mail.
+  // A Edge Function valida o marcador, a confirmação e a idempotência no servidor.
+  useEffect(() => {
+    if (!session?.access_token || !session?.user?.id) return;
+    if (session.user.user_metadata?.avespet_welcome_pending !== true) return;
+    supabase.functions.invoke("send-welcome-email").then(({ error }) => {
+      if (error) console.warn("Não foi possível processar o e-mail de boas-vindas.");
+    }).catch(() => {});
+  }, [session?.user?.id, session?.access_token]);
+
   // Registra atividade real ao abrir o Avespet logado, sem qualquer e-mail.
   useEffect(() => {
     if (!session?.user?.id) return;
