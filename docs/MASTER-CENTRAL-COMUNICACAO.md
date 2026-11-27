@@ -32,6 +32,7 @@ A origem "Outro envio pelo Resend" não significa falha. Significa apenas que o 
 - O e-mail transacional de aprovação da ave perdida consulta `campaign_packages` em tempo de envio e apresenta somente pacotes publicados, com preço, duração, alcance e link direto para `/campanha-ave-perdida?anuncio=...`.
 - A oferta da campanha é opcional. O texto esclarece que primeiro é solicitada uma proposta, que o início depende de aprovação e pagamento, e que não existe garantia de recuperação da ave.
 - Se a consulta do catálogo falhar, o e-mail de aprovação mantém o conteúdo transacional sem oferta comercial.
+- Na aprovação, respostas 5xx do Resend e falhas de rede são registradas como `uncertain`; rejeições explícitas não-5xx ficam como `failed`. O estado incerto não deve gerar reenvio automático, para evitar mensagens duplicadas.
 - A identificação por assunto dos templates padrão do Supabase Auth é uma classificação auxiliar; novos templates personalizados devem gravar o ID do Resend na tabela de entrega correspondente.
 - A identificação automática de origem para novos fluxos (boas-vindas e oferta de busca) depende de implementar e registrar esses fluxos; não deve ser inferida apenas a partir do assunto.
 - Envios manuais antigos sem `provider_id` no log de auditoria podem continuar classificados como "Outro envio pelo Resend".
