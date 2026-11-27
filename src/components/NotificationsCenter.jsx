@@ -86,15 +86,6 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
   }, [userId, audienceScope, atualizarContagem]);
 
   useEffect(() => {
-    if (!isAdmin) return undefined;
-    const timer = window.setInterval(() => {
-      atualizarContagem();
-      if (aberto) carregar(true);
-    }, 45000);
-    return () => window.clearInterval(timer);
-  }, [isAdmin, aberto, atualizarContagem]);
-
-  useEffect(() => {
     if (!alerta) return undefined;
     const timer = setTimeout(() => setAlerta(null), 9000);
     return () => clearTimeout(timer);
@@ -159,6 +150,15 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
   useEffect(() => {
     if (aberto) {carregar(true);atualizarCuidados();}
   }, [aberto, filtro, userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!isAdmin) return undefined;
+    const timer = window.setInterval(() => {
+      atualizarContagem();
+      if (aberto) carregar(true);
+    }, 45000);
+    return () => window.clearInterval(timer);
+  }, [isAdmin, aberto, atualizarContagem]);
 
   const naoLidas = naoLidasCount + masterNaoLidasCount + totalPendentes;
 
