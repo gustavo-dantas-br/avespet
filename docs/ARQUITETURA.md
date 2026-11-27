@@ -556,8 +556,8 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - Controlador indicado para o Avespet: **NEBULA CLW LTDA**.
 - CNPJ informado: **67.073.285/0001-61**.
 - Esta identificação foi fornecida pelo responsável do projeto e ainda não foi conferida em fonte cadastral externa.
-- Endereço da sede, e-mail institucional para privacidade e canal de contato do encarregado/representante ainda não foram informados; não preencher com dados presumidos.
-- A Política de Privacidade permanece em preparação e não deve ser publicada como versão final enquanto o canal de atendimento aos titulares e os demais dados institucionais/operacionais não forem confirmados.
+- Endereço e e-mail institucional para privacidade foram informados em 27/11/2026 e registrados na seção “Política de Privacidade e autorização de publicação” abaixo.
+- A página pública inicial de Política de Privacidade foi criada na branch de desenvolvimento; a revisão jurídica e a confirmação de operadores, retenção e fluxos permanecem pendentes antes de produção.
 
 
 ## Política de Privacidade e autorização de publicação — 27/11/2026
