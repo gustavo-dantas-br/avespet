@@ -658,7 +658,8 @@ A disponibilidade HTTP e as condições de licença/atribuição de cada imagem 
 
 ### Mensagem da busca gratuita e consulta de anilha
 
-- A comunicação descreve o fluxo real: tutor cadastra a ave, aguarda aprovação, pessoa que encontra a ave consulta a anilha e o sistema compara com anúncios aprovados.
+- A comunicação descreve o fluxo real: tutor cadastra a ave, aguarda aprovação, pessoa que encontra a ave pode pesquisar no Google para identificar a espécie e depois consultar a anilha no Avespet; o sistema compara com anúncios aprovados.
+- SEO/indexação orgânica para buscas no Google é diferente de mídia paga Meta. O texto não promete posição no Google, nem afirma que Google Ads esteja contratado ou integrado.
 - A função `buscar_anuncio_perdido_por_anilha` retorna dados da ave/anúncio, sem expor telefone ou e-mail do tutor.
 - A identificação de possível titular e a intermediação do contato são tarefas internas da equipe; não anunciar que o público recebe diretamente os dados do tutor.
 - A associação de registros de achados ao anúncio aprovado é restrita e considera unicidade do possível titular; casos ambíguos precisam de conferência humana.
