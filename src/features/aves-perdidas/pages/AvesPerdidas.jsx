@@ -7,7 +7,7 @@ import { useSEO } from "../../../publico/seo";
 import { PaginaPublica, CartaoPublico, TEMA_PUBLICO } from "../../../publico/ComponentesPublicos";
 
 function dataBrasil(valor) {
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(valor || "")) return "";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(valor || "")) return "";
   const [ano, mes, dia] = valor.split("-");
   return `${dia}/${mes}/${ano}`;
 }
