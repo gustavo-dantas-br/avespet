@@ -533,3 +533,19 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - GitHub Actions não retornou workflow associado ao commit consultado; não há evidência de testes automatizados executados por Actions.
 - Não foi executado teste autenticado/anônimo ponta a ponta nem teste de envio de solicitação no Supabase.
 - A URL de preview é gerada pela integração Git da Vercel. O acesso externo automatizado à página não foi confirmado; é necessária conferência visual no navegador.
+
+
+### Retificação da validação do build — 27/11/2026
+
+- O deployment Preview da Vercel associado ao commit `a1f8aaf8d0733583d0833e2774123edce6a07546` concluiu com estado `READY`.
+- O log confirma execução de `npm run build`, Vite 5.4.21, transformação de 1.627 módulos e geração dos artefatos de produção. Portanto, a pendência anterior de build está encerrada para esse commit.
+- Permanecem avisos não bloqueantes: configuração npm `cache-dir`, script de instalação do esbuild não aprovado na configuração npm e importação estática/dinâmica simultânea de `src/features/aves-perdidas/index.js`. Não foram corrigidos nesta etapa para evitar mudanças fora do escopo.
+- O preview é `https://avespet-9b7q8enfe-gustavo-dantas.vercel.app`; ele não é o domínio de produção.
+
+### Revisão de consentimento e dados institucionais
+
+- A revisão do formulário `PerdiUmaAve.jsx` identificou avisos sobre privacidade e gratuidade, mas não encontrou no trecho de cadastro inicial um consentimento explícito e separado para publicação dos dados/imagem da ave nem link verificável para Política de Privacidade.
+- O checkbox de autorização localizado no módulo refere-se à publicação opcional de relato/nota de reencontro; não deve ser tratado como autorização geral do anúncio de ave perdida.
+- Não criar política jurídica com dados presumidos. Para redigir e publicar uma política correta, confirmar razão social/nome do controlador, CNPJ (se aplicável), endereço/canal institucional de contato, canal para solicitações de titulares e eventuais operadores/serviços terceiros envolvidos.
+- O cadastro deve distinguir: (1) tratamento necessário para receber, analisar e administrar o anúncio; (2) autorização específica e destacada para publicar a foto e os dados não sensíveis da ave/localização aproximada; (3) marketing opcional, sem condicionar o cadastro gratuito.
+- Até esses pontos serem resolvidos, manter a LP em preview e não anunciar a funcionalidade como pronta para lançamento comercial.
