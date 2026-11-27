@@ -586,3 +586,25 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - Acesso HTTP externo automatizado à rota não foi confirmado nesta sessão; a conferência visual em navegador continua pendente.
 - A versão de Política de Privacidade ainda requer revisão jurídica e validação de inventário de operadores, países de processamento, retenção e bases legais antes de produção.
 - Não houve merge, alteração no Supabase, migration ou publicação no domínio de produção.
+
+
+## Teste de retomada do cadastro de ave perdida — 27/11/2026
+
+### Fluxo revisado
+
+1. O tutor preenche os dados da ave e marca a autorização específica de publicação.
+2. Antes de criar a conta, o anúncio fica temporariamente no navegador por até 72 horas. O rascunho não armazena senha ou token de autenticação.
+3. O serviço `cadastroPendenteAvePerdida.js` preserva também o objeto `consentimentoPublicacao` (aceite, versão e timestamp ISO).
+4. Após login ou retorno de confirmação de e-mail, `PerdiUmaAve.jsx` consulta a sessão Supabase e tenta finalizar o rascunho somente se o e-mail autenticado corresponder ao e-mail do rascunho.
+5. A finalização recusa rascunhos sem consentimento válido e mantém o rascunho quando a inserção falha, permitindo nova tentativa.
+6. `criarAnuncioPerdida` valida novamente o consentimento antes de inserir em `anuncios_aves_perdidas`; novos registros permanecem com status `pendente`.
+7. Após o envio, o rascunho temporário é removido e o anúncio pode ser acompanhado na conta.
+
+### Testes
+
+- Criado `tests/cadastro-ave-perdida-consentimento.test.js`.
+- Criado o script `npm run test:aves-perdidas`, que executa os testes públicos existentes e os novos testes de retomada.
+- Os seis testes unitários do serviço de rascunho foram executados isoladamente em Node.js 22. Todos passaram: preservação do consentimento, exclusão de credenciais, manutenção do aceite ao marcar confirmação, bloqueio sem consentimento, proteção contra conta divergente, finalização/removal do rascunho e manutenção após falha.
+- Os testes isolados usam armazenamento local simulado e callback de inserção simulado. Não criam usuários, não inserem anúncios e não comprovam o fluxo real de e-mail, autenticação ou RLS do Supabase.
+- O teste ponta a ponta real ainda depende de uma conta de teste autorizada e de ambiente seguro de homologação; não usar dados reais de tutores para simulação.
+- Não foi feita alteração de schema, migration, configuração ou dados no Supabase nesta etapa.
