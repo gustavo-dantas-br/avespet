@@ -130,13 +130,16 @@ export default function SolicitarCampanha() {
                   <Megaphone size={20} color={TEMA_PUBLICO.verde} />
                   <h2 className="text-lg font-bold" style={{ color: TEMA_PUBLICO.tinta }}>1. Escolha o alcance</h2>
                 </div>
-                {carregandoPacotes && <p className="mb-3 text-xs" style={{ color: TEMA_PUBLICO.texto }}>Carregando opções publicadas...</p>}\n                {erroPacotes && <p role="status" className="mb-3 rounded-lg p-3 text-sm" style={{ background: "#FFF4DF", color: "#704614" }}>{erroPacotes}</p>}\n                <div className="grid gap-3 md:grid-cols-2">
+                {carregandoPacotes && <p className="mb-3 text-xs" style={{ color: TEMA_PUBLICO.texto }}>Carregando opções publicadas...</p>}
+                {erroPacotes && <p role="status" className="mb-3 rounded-lg p-3 text-sm" style={{ background: "#FFF4DF", color: "#704614" }}>{erroPacotes}</p>}\n                <div className="grid gap-3 md:grid-cols-2">
                   {pacotes.map((p) => (
                     <label key={p.id} className="cursor-pointer rounded-xl p-4 transition" style={{ border: form.pacote === p.id ? `2px solid ${TEMA_PUBLICO.verde}` : `1px solid ${TEMA_PUBLICO.borda}`, background: form.pacote === p.id ? TEMA_PUBLICO.verdeClaro : "#FFFFFF" }}>
                       <input type="radio" name="pacote" value={p.id} checked={form.pacote === p.id} onChange={() => alterar("pacote", p.id)} />
                       <div className="mt-2 font-bold" style={{ color: TEMA_PUBLICO.tinta }}>{p.nome}</div>
-                      <div className="mt-1 text-xs font-semibold" style={{ color: TEMA_PUBLICO.verde }}>{p.alcance || p.reach_label}</div>\n                      {p.duration_days && <div className="mt-1 text-xs" style={{ color: TEMA_PUBLICO.texto }}>{p.duration_days} dias de divulgação</div>}
-                      <p className="mt-2 text-xs leading-5" style={{ color: TEMA_PUBLICO.texto }}>{p.description || p.descricao}</p>\n                      {p.reach_min && p.reach_max && <p className="mt-2 text-xs font-semibold" style={{ color: TEMA_PUBLICO.texto }}>Alcance estimado: {Number(p.reach_min).toLocaleString("pt-BR")} a {Number(p.reach_max).toLocaleString("pt-BR")} pessoas</p>}
+                      <div className="mt-1 text-xs font-semibold" style={{ color: TEMA_PUBLICO.verde }}>{p.alcance || p.reach_label}</div>
+                      {p.duration_days && <div className="mt-1 text-xs" style={{ color: TEMA_PUBLICO.texto }}>{p.duration_days} dias de divulgação</div>}
+                      <p className="mt-2 text-xs leading-5" style={{ color: TEMA_PUBLICO.texto }}>{p.description || p.descricao}</p>
+                      {p.reach_min && p.reach_max && <p className="mt-2 text-xs font-semibold" style={{ color: TEMA_PUBLICO.texto }}>Alcance estimado: {Number(p.reach_min).toLocaleString("pt-BR")} a {Number(p.reach_max).toLocaleString("pt-BR")} pessoas</p>}
                       <div className="mt-3 text-xs font-bold" style={{ color: TEMA_PUBLICO.tinta }}>{p.price_cents != null ? `Valor publicado: ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(p.price_cents) / 100)}` : "Orçamento sob consulta"}</div>
                     </label>
                   ))}
