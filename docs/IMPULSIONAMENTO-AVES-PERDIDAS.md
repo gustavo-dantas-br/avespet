@@ -116,3 +116,16 @@ A branch `feature/impulsionamento-aves-perdidas` adiciona um catálogo centraliz
 - O catálogo confirmado no banco, na consulta de leitura desta etapa, contém: Destaque Avespet (7 dias); Alerta Local (até 5 km, 3 dias); Alerta Regional (até 10 km, 7 dias); Busca Intensiva (até 15 km, 10 dias). Preços e faixas de alcance são lidos do banco, não copiados para o frontend.
 - Pendências antes da publicação comercial: validar política de privacidade, implementar e auditar registro de consentimentos aplicáveis, testes de RLS/fluxo, build e revisão visual responsiva.
 - Não houve alteração no Supabase, deploy, merge, cobrança, disparo de e-mails ou campanha Meta.
+
+
+## Revisão funcional — 27/11/2026
+
+- O formulário de solicitação consulta o catálogo público publicado, incluindo preço, prazo, raio e estimativa de alcance.
+- A opção escolhida na LP é pré-selecionada apenas se o pacote ainda estiver publicado.
+- Sem catálogo disponível, o envio é bloqueado; não há fallback que permita solicitar pacote oculto/despublicado.
+- Os códigos de negócio permanecem `destaque`, `bairro`, `cidade`, `regional`.
+- O fluxo é de orçamento sob consulta, sem cobrança nesta etapa.
+- A rota foi confirmada no `AuthPage.jsx`; visitante sem sessão consegue acessar a LP.
+- A política de privacidade não foi localizada em rota/arquivo verificável no repositório. Não inventar URL; publicar/validar política antes da divulgação comercial.
+- Build inicial aprovado; alteração posterior causou erro de sintaxe JSX e foi corrigida. Build do último commit ainda precisa ser confirmado.
+- Testes ponta a ponta, validação de RLS em usuário anônimo e conferência visual responsiva continuam pendentes.
