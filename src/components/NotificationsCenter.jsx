@@ -28,6 +28,8 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
   const [permissao, setPermissao] = useState(() => (typeof Notification !== "undefined" ? Notification.permission : "unsupported"));
   const [ativandoPush, setAtivandoPush] = useState(false);
   const [statusPush, setStatusPush] = useState("");
+  // A mesma conta pode ter perfil de criador e acesso Master; cada painel vê somente seu público.
+  const audienceScope = isAdmin ? "admin" : "cliente";
 
   const atualizarCuidados = useCallback(async () => {
     if(!userId)return;
@@ -48,9 +50,9 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
     if (!userId) return;
     const { count, error } = await supabase.from("notificacoes")
       .select("id", { count: "exact", head: true })
-      .eq("user_id", userId).is("lida_em", null).is("arquivada_em", null);
+      .eq("user_id", userId).eq("audience", audienceScope).is("lida_em", null).is("arquivada_em", null);
     if (!error) setNaoLidasCount(count || 0);
-  }, [userId]);
+  }, [userId, audienceScope]);
 
   useEffect(() => {
     atualizarContagem();
@@ -61,6 +63,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
       }, (payload) => {
         const novo = payload.new;
         if (payload.eventType === "INSERT" && novo) {
+          if (novo.audience !== audienceScope) return;
           if (!novo.lida_em && !novo.arquivada_em) {
             setNaoLidasCount((n) => n + 1);
             setAlerta(novo);
@@ -68,13 +71,14 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
           }
           setItens((prev) => [novo, ...prev.filter((n) => n.id !== novo.id)].slice(0, PAGE_SIZE));
         } else {
+          if (novo?.audience && novo.audience !== audienceScope) return;
           atualizarContagem();
           if (novo?.id) setItens((prev) => prev.map((n) => n.id === novo.id ? { ...n, ...novo } : n));
         }
       })
       .subscribe();
     return () => { supabase.removeChannel(canal); };
-  }, [userId, atualizarContagem]);
+  }, [userId, audienceScope, atualizarContagem]);
 
   useEffect(() => {
     if (!alerta) return undefined;
@@ -105,7 +109,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
     try {
       let query = supabase.from("notificacoes")
         .select("id,tipo,titulo,mensagem,referencia_tipo,referencia_id,lida_em,arquivada_em,criado_em")
-        .eq("user_id", userId).order("criado_em", { ascending: false })
+        .eq("user_id", userId).eq("audience", audienceScope).order("criado_em", { ascending: false })
         .range(inicio, inicio + PAGE_SIZE - 1);
       if (filtro === "arquivadas") query = query.not("arquivada_em", "is", null);
       else {
@@ -124,7 +128,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
       setLoading(false);
       setCarregandoMais(false);
     }
-  }, [userId, filtro, itens.length]);
+  }, [userId, audienceScope, filtro, itens.length]);
 
   useEffect(() => {
     if (aberto) {carregar(true);atualizarCuidados();}
