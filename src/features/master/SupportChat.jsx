@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  LifeBuoy, MessageCircle, Plus, Send, RefreshCw, Loader2, ArrowLeft,
-  CheckCircle2, Clock3, AlertCircle, UserRound, Headphones,
+  LifeBuoy, MessageCircle, Plus, Send, RefreshCw, Loader2,
+  CheckCircle2, AlertCircle, UserRound, Headphones,
 } from "lucide-react";
 import { supabase } from "../../supabaseClient";
 
@@ -110,6 +110,9 @@ export default function SupportChat({ user, mode = "creator", onUnreadCountChang
       setTickets((current) => current.map((item) => item.id === ticket.id
         ? { ...item, [isMaster ? "support_unread" : "creator_unread"]: false }
         : item));
+      await supabase.from("notificacoes").update({ lida_em: new Date().toISOString() })
+        .eq("user_id", user.id).eq("referencia_tipo", "support_ticket")
+        .eq("referencia_id", ticket.id).is("lida_em", null);
       await loadTickets();
     }
   }
@@ -201,10 +204,14 @@ export default function SupportChat({ user, mode = "creator", onUnreadCountChang
             {isMaster ? "Receba chamados dos criadores, responda e acompanhe cada atendimento." : "Abra um chamado e acompanhe as respostas da equipe Avespet nesta conversa."}
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600">
-          <MessageCircle size={15} /> {tickets.length} chamado(s)
-          {unreadCount > 0 && <span className="rounded-full bg-rose-100 px-2 py-0.5 text-rose-700">{unreadCount} não lido(s)</span>}
-          <button type="button" onClick={loadTickets} className="ml-1 rounded-lg p-1 hover:bg-slate-100" aria-label="Atualizar chamados"><RefreshCw size={14} /></button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600">
+            <MessageCircle size={15} /> {tickets.length} chamado(s)
+            {unreadCount > 0 && <span className="rounded-full bg-rose-100 px-2 py-0.5 text-rose-700">{unreadCount} não lido(s)</span>}
+            <button type="button" onClick={loadTickets} className="ml-1 rounded-lg p-1 hover:bg-slate-100" aria-label="Atualizar chamados"><RefreshCw size={14} /></button>
+          </div>
+          {!isMaster && <button type="button" onClick={() => { setSelected(null); setMessages([]); setError(""); setNotice(""); setForm({ subject: "", category: "tecnico", body: "" }); }}
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800"><Plus size={15} /> Novo chamado</button>}
         </div>
       </header>
 
