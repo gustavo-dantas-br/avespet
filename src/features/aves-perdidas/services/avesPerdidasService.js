@@ -5,6 +5,11 @@ const TABELA = "anuncios_aves_perdidas";
 // Novos anúncios entram para moderação. A RLS protege os registros de cada tutor.
 export async function criarAnuncioPerdida(userId, dados) {
   if (!userId) throw new Error("Crie uma conta gratuita ou entre para cadastrar sua ave perdida.");
+  if (dados?.consentimentoPublicacao?.aceito !== true ||
+      !dados?.consentimentoPublicacao?.versao ||
+      !dados?.consentimentoPublicacao?.registradoEm) {
+    throw new Error("Confirme a autorização de publicação antes de enviar o anúncio.");
+  }
   const id = dados.id || globalThis.crypto.randomUUID();
   const { error } = await supabase.from(TABELA).insert({
     id,
