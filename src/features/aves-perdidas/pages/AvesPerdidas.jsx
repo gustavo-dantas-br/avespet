@@ -47,6 +47,26 @@ const DESTAQUES_AVES = [
     etiqueta: "Cores que ajudam a identificar",
     posicao: "center 35%",
   },
+  {
+    id: "busca-inteligente",
+    especie: "Sistema Avespet",
+    chamada: "Quem encontra uma ave precisa de um caminho para chegar até o tutor.",
+    texto: "A busca gratuita começa com o cadastro da ave. Quando alguém encontra uma ave anilhada, pode consultar a numeração no Avespet. Se houver um anúncio aprovado compatível, nossa equipe consegue identificar o possível tutor e intermediar o contato, mantendo os dados protegidos.",
+    imagem: "https://cdn.pixabay.com/photo/2021/01/18/18/17/indian-ring-necked-parakeet-5929020_1280.jpg",
+    alt: "Ring Neck em destaque representando a busca gratuita do Avespet",
+    etiqueta: "Busca gratuita + identificação por anilha",
+    posicao: "center 42%",
+  },
+  {
+    id: "alcance-pago",
+    especie: "Divulgação ampliada",
+    chamada: "Faça sua busca chegar a muito mais pessoas da região.",
+    texto: "Com uma campanha regional no Facebook e Instagram, a foto e as informações da ave podem aparecer para pessoas próximas. É uma forma de ampliar a divulgação sem depender apenas de cartazes ou panfletos porta a porta.",
+    imagem: "https://upload.wikimedia.org/wikipedia/commons/a/ac/Rainbow_larakeet.jpg",
+    alt: "Lóris-arco-íris em fotografia ilustrativa para divulgação ampliada",
+    etiqueta: "Impulsionamento regional opcional",
+    posicao: "center 35%",
+  },
 ];
 
 function dataBrasil(valor) {
@@ -114,15 +134,15 @@ export default function AvesPerdidas({ onEntrar }) {
   const [erroPlanos, setErroPlanos] = useState("");
   const [mostrarCadastro, setMostrarCadastro] = useState(false);
   const [slideAtual, setSlideAtual] = useState(0);
-  const [carrosselPausado, setCarrosselPausado] = useState(false);
+  const [carrosselPausado, setCarrosselPausado] = useState(false);\n  const [carrosselEmHover, setCarrosselEmHover] = useState(false);
 
   useEffect(() => {
-    if (carrosselPausado) return undefined;
+    if (carrosselPausado || carrosselEmHover) return undefined;
     const intervalo = window.setInterval(() => {
       setSlideAtual((atual) => (atual + 1) % DESTAQUES_AVES.length);
-    }, 6500);
+    }, 3000);
     return () => window.clearInterval(intervalo);
-  }, [carrosselPausado]);
+  }, [carrosselPausado, carrosselEmHover]);
 
   const irParaSlide = (direcao) => {
     setSlideAtual((atual) => (atual + direcao + DESTAQUES_AVES.length) % DESTAQUES_AVES.length);
@@ -187,6 +207,45 @@ export default function AvesPerdidas({ onEntrar }) {
             <p className="mt-5 max-w-2xl text-base leading-8 text-[#E1EEE5] md:text-lg">
               {DESTAQUES_AVES[slideAtual].texto}
             </p>
+            {slideAtual === 4 && (
+              <div className="mt-5 grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Etapas da busca gratuita por anilha">
+                {[
+                  ["01", "Cadastro grátis", "Tutor registra a ave"],
+                  ["02", "Ave encontrada", "Pessoa confere a anilha"],
+                  ["03", "Busca no Avespet", "Compara com anúncios aprovados"],
+                  ["04", "Contato mediado", "Equipe ajuda a localizar o tutor"],
+                ].map(([numero, titulo, detalhe]) => (
+                  <div key={numero} className="rounded-xl border border-white/20 bg-[#092D20]/65 p-3 backdrop-blur-sm">
+                    <span className="text-[10px] font-extrabold tracking-widest text-[#C6E2CB]">{numero}</span>
+                    <p className="mt-1 text-xs font-extrabold text-white">{titulo}</p>
+                    <p className="mt-1 text-[10px] leading-4 text-white/75">{detalhe}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {slideAtual === 5 && (
+              <div className="mt-5 grid max-w-3xl gap-2 sm:grid-cols-3" aria-label="Estimativa de alcance e custo dos planos regionais">
+                {planos.filter((plano) => Number(plano.radius_km) > 0 && plano.reach_min && plano.reach_max).map((plano) => {
+                  const menorCusto = Number(plano.price_cents) / Number(plano.reach_max);
+                  const maiorCusto = Number(plano.price_cents) / Number(plano.reach_min);
+                  return (
+                    <div key={plano.code} className="rounded-xl border border-white/20 bg-[#092D20]/70 p-3 backdrop-blur-sm">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#C6E2CB]">{plano.name}</p>
+                      <p className="mt-1 text-lg font-extrabold text-white">{dinheiro(plano.price_cents)}</p>
+                      <p className="text-[10px] leading-4 text-white/80">{Number(plano.reach_min).toLocaleString("pt-BR")}–{Number(plano.reach_max).toLocaleString("pt-BR")} pessoas estimadas</p>
+                      <p className="mt-2 border-t border-white/15 pt-2 text-xs font-bold text-white">
+                        {(menorCusto).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} a {(maiorCusto).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} centavos por pessoa
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {slideAtual === 5 && (
+              <p className="mt-2 max-w-3xl text-[10px] leading-4 text-white/75">
+                Cálculo ilustrativo: valor total do plano dividido pela estimativa de alcance cadastrada. Alcance real varia conforme campanha, região e entrega da plataforma; não é promessa de visualizações nem de recuperação.
+              </p>
+            )}
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <button type="button" onClick={() => { setMostrarCadastro(true); document.getElementById("cadastro-ave")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} className="rounded-xl px-6 py-4 text-sm font-extrabold shadow-xl transition hover:-translate-y-0.5 hover:brightness-105" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}>
                 Cadastrar ave gratuitamente
@@ -204,10 +263,13 @@ export default function AvesPerdidas({ onEntrar }) {
               {DESTAQUES_AVES.map((slide, indice) => (
                 <button key={slide.id} type="button" onClick={() => setSlideAtual(indice)} aria-label={`Ver destaque de ${slide.especie}`} aria-pressed={slideAtual === indice} className={`h-2.5 rounded-full transition-all ${slideAtual === indice ? "w-10 bg-white" : "w-2.5 bg-white/55 hover:bg-white/85"}`} />
               ))}
-              <span className="ml-2 text-xs font-semibold text-white/90">{String(slideAtual + 1).padStart(2, "0")} / 04</span>
+              <span className="ml-2 text-xs font-semibold text-white/90">{String(slideAtual + 1).padStart(2, "0")} / {String(DESTAQUES_AVES.length).padStart(2, "0")}</span>
             </div>
             <div className="flex items-center gap-2">
               <button type="button" onClick={() => irParaSlide(-1)} aria-label="Slide anterior" className="flex h-11 w-11 items-center justify-center rounded-full border border-white/45 bg-black/20 text-xl text-white backdrop-blur-sm transition hover:bg-white/20">‹</button>
+              <button type="button" onClick={() => setCarrosselPausado((valor) => !valor)} aria-label={carrosselPausado ? "Retomar troca automática" : "Pausar troca automática"} aria-pressed={carrosselPausado} className="flex h-11 min-w-11 items-center justify-center rounded-full border border-white/45 bg-black/20 px-3 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20">
+                {carrosselPausado ? "▶" : "Ⅱ"}
+              </button>
               <button type="button" onClick={() => irParaSlide(1)} aria-label="Próximo slide" className="flex h-11 w-11 items-center justify-center rounded-full border border-white/45 bg-black/20 text-xl text-white backdrop-blur-sm transition hover:bg-white/20">›</button>
             </div>
           </div>
