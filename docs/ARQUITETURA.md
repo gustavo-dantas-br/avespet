@@ -500,3 +500,36 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - Corrigida compatibilidade do código `destaque` e pré-seleção do pacote vindo da LP.
 - Atualizada esta documentação e `docs/IMPULSIONAMENTO-AVES-PERDIDAS.md`.
 - Não houve merge, deploy manual, migration, alteração de produção, cobrança ou campanha Meta.
+
+
+## Revisão funcional e validação — 27/11/2026
+
+### Revisão adicional do fluxo de campanha
+
+- O formulário `SolicitarCampanha.jsx` agora consulta `listarPacotesPublicos()` e apresenta nome, descrição, prazo, raio/alcance, faixa estimada e preço do catálogo publicado.
+- O plano passado por query string é pré-selecionado somente se ainda estiver publicado; caso contrário, o primeiro pacote publicado é selecionado.
+- Se não houver pacotes publicados ou se a consulta falhar, o formulário informa a indisponibilidade e desabilita o envio. Não usa mais uma lista estática para permitir solicitação de pacote que não está publicado.
+- Antes do INSERT, o frontend verifica se o código escolhido existe na lista publicada carregada. Essa validação de interface não substitui validação server-side; a tabela de solicitações ainda precisa validar o código e o snapshot de preço no servidor antes de qualquer contratação.
+- A lista de rótulos locais foi alinhada aos códigos e nomes do catálogo oficial: `destaque`, `bairro`, `cidade`, `regional`.
+- O fluxo segue sendo solicitação de orçamento, sem cobrança, checkout ou ativação automática.
+
+### Rota pública
+
+- Confirmado em `src/components/AuthPage.jsx` que `/aves-perdidas` renderiza `AvesPerdidas` e `/campanha-ave-perdida` renderiza `SolicitarCampanha`.
+- O visitante sem sessão é direcionado ao conteúdo público pelo `AuthPage`; a rota não depende de estar logado.
+- Os links internos usam o componente `Link` de `src/publico/roteador.jsx`, que atualiza a rota sem recarregar a aplicação.
+
+### Privacidade — pendência bloqueadora antes da divulgação comercial
+
+- A busca no repositório por arquivo/rota de Política de Privacidade não encontrou um destino verificável. Não foi criado link fictício.
+- A LP explica que os contatos do tutor não são exibidos e que fotos no bucket público podem ser acessadas por URL, mas isso não substitui política publicada nem coleta/registro de consentimentos.
+- Antes de liberar campanha comercial, identificar ou criar a Política de Privacidade em rota pública, revisar o texto e incluir link direto junto ao cadastro; revisar consentimento de publicação de dados/foto e eventual consentimento de marketing separado e opcional.
+- O formulário de campanha também coleta dados pessoais para contato; a finalidade, retenção, canal de atendimento e compartilhamento com plataformas de mídia precisam constar na política e nos avisos adequados.
+
+### Build e testes
+
+- O primeiro build do preview da branch passou em 27/11/2026, com avisos existentes de chunk principal acima de 500 kB e importação estática/dinâmica do módulo de aves perdidas.
+- Uma alteração posterior no formulário gerou falha de sintaxe JSX; a causa foi uma quebra de linha literal inserida no arquivo. A sintaxe foi corrigida e a branch recebeu novo commit. A validação do build do commit corrigido ainda está pendente.
+- GitHub Actions não retornou workflow associado ao commit consultado; não há evidência de testes automatizados executados por Actions.
+- Não foi executado teste autenticado/anônimo ponta a ponta nem teste de envio de solicitação no Supabase.
+- A URL de preview é gerada pela integração Git da Vercel. O acesso externo automatizado à página não foi confirmado; é necessária conferência visual no navegador.
