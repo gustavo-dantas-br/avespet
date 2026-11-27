@@ -41,7 +41,7 @@ export default function PoliticaPrivacidade() {
           <div className="space-y-7 text-sm leading-7" style={{ color: TEMA_PUBLICO.tinta }}>
             <section>
               <h2 className="text-lg font-bold">1. Quem é responsável pelos dados?</h2>
-              <p>A controladora informada do Avespet é NEBULA CLW LTDA, CNPJ 67.073.285/0001-61, no endereço acima. Para dúvidas, solicitações ou exercício de direitos relacionados a dados pessoais, entre em contato pelo e-mail <a className="font-semibold underline" href={`mailto:${EMAIL_PRIVACIDADE}`}{EMAIL_PRIVACIDADE}</a>.</p>
+              <p>A controladora informada do Avespet é NEBULA CLW LTDA, CNPJ 67.073.285/0001-61, no endereço acima. Para dúvidas, solicitações ou exercício de direitos relacionados a dados pessoais, entre em contato pelo e-mail <a className="font-semibold underline" href={`mailto:${EMAIL_PRIVACIDADE}`}>{EMAIL_PRIVACIDADE}</a>.</p>
               <p>Este canal recebe solicitações de privacidade. A indicação de um encarregado formal e seus dados de contato serão divulgados quando aplicável.</p>
             </section>
             <section>
@@ -89,7 +89,7 @@ export default function PoliticaPrivacidade() {
             <section>
               <h2 className="text-lg font-bold">8. Seus direitos</h2>
               <p>Nos termos da legislação aplicável, você pode solicitar confirmação da existência de tratamento, acesso, correção, anonimização, bloqueio ou eliminação de dados desnecessários ou tratados em desconformidade, portabilidade quando aplicável, informação sobre compartilhamentos, revisão de decisões automatizadas quando cabível, oposição e revogação de consentimento, observadas as condições legais.</p>
-              <p>Para exercer seus direitos, escreva para <a className="font-semibold underline" href={`mailto:${EMAIL_PRIVACIDADE}`}{EMAIL_PRIVACIDADE}</a>, descrevendo sua solicitação. Poderemos pedir informações razoáveis para confirmar sua identidade e proteger sua conta.</p>
+              <p>Para exercer seus direitos, escreva para <a className="font-semibold underline" href={`mailto:${EMAIL_PRIVACIDADE}`}>{EMAIL_PRIVACIDADE}</a>, descrevendo sua solicitação. Poderemos pedir informações razoáveis para confirmar sua identidade e proteger sua conta.</p>
             </section>
             <section>
               <h2 className="text-lg font-bold">9. Crianças e adolescentes</h2>
@@ -102,7 +102,7 @@ export default function PoliticaPrivacidade() {
             <section className="rounded-xl p-4" style={{ background: TEMA_PUBLICO.verdeClaro }}>
               <h2 className="flex items-center gap-2 text-lg font-bold"><Mail size={18}/> Contato sobre privacidade</h2>
               <p>NEBULA CLW LTDA — CNPJ 67.073.285/0001-61</p>
-              <p><a className="font-bold underline" href={`mailto:${EMAIL_PRIVACIDADE}`}{EMAIL_PRIVACIDADE}</a></p>
+              <p><a className="font-bold underline" href={`mailto:${EMAIL_PRIVACIDADE}`}>{EMAIL_PRIVACIDADE}</a></p>
               <p>Rua Celestino Marinelli, 10 — Parque São Domingos, São Paulo/SP — CEP 05126-120.</p>
             </section>
           </div>
