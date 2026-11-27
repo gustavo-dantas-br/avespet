@@ -608,3 +608,36 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - Os testes isolados usam armazenamento local simulado e callback de inserção simulado. Não criam usuários, não inserem anúncios e não comprovam o fluxo real de e-mail, autenticação ou RLS do Supabase.
 - O teste ponta a ponta real ainda depende de uma conta de teste autorizada e de ambiente seguro de homologação; não usar dados reais de tutores para simulação.
 - Não foi feita alteração de schema, migration, configuração ou dados no Supabase nesta etapa.
+
+
+## Carrossel visual de espécies no topo da LP — 27/11/2026
+
+### Escopo implementado
+
+- O hero textual anterior foi substituído por um carrossel de destaque fotográfico na primeira dobra da rota `/aves-perdidas`.
+- Quatro slides: Ring Neck, calopsita, Agapornis e lóris.
+- Cada slide apresenta espécie, etiqueta temática, título emocional, texto informativo e CTA para cadastro gratuito; o CTA secundário leva aos planos.
+- A fotografia ocupa o fundo com camadas de contraste em gradiente para preservar legibilidade.
+- Controles manuais: anterior/próximo e indicadores por espécie, com rótulos acessíveis e estado selecionado.
+- Avanço automático a cada 6,5 segundos, pausado ao passar o mouse ou ao navegar por foco/teclado.
+- Transição respeita a preferência de movimento reduzido do sistema (`motion-reduce`).
+- Alt text descritivo para cada fotografia; imagens não ativas ficam ocultas das tecnologias assistivas.
+- Altura responsiva com tratamento para telas menores; conteúdo textual e botões permanecem HTML/React, não incorporados às fotografias.
+- Não foram adicionadas dependências npm, tabelas, migrations ou mudanças no Supabase.
+
+### Fontes de imagem atualmente referenciadas
+
+As imagens são carregadas por URLs externas, não copiadas para o repositório:
+- Ring Neck: CDN Pixabay — `cdn.pixabay.com/photo/2021/01/18/18/17/indian-ring-necked-parakeet-5929020_1280.jpg`.
+- Calopsita: CDN Unsplash — foto `photo-1759384278288-14f680d9cae7`.
+- Agapornis: CDN Pexels — foto `30518528`, título de origem “Pair of colorful lovebirds in gentle embrace”.
+- Lóris: Wikimedia Commons — `File:Rainbow_larakeet.jpg`.
+
+A disponibilidade HTTP e as condições de licença/atribuição de cada imagem ainda devem ser verificadas antes da publicação comercial. Recomenda-se obter imagens próprias/licenciadas e armazená-las no Storage do Avespet ou em assets versionados para evitar hotlinking e mudanças de terceiros.
+
+### Validação
+
+- Commit da implementação do carrossel: `3e99d7943ec1dac3664f7b536db1e66c43f50d37`.
+- Ajuste de acessibilidade subsequente: movimento reduzido sem transição animada.
+- O build/preview gerado pela Vercel é acompanhado separadamente; não considerar o carrossel validado visualmente até conferir as quatro imagens em desktop e celular.
+- Não houve merge para `main` nem publicação no domínio de produção.
