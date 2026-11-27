@@ -36,11 +36,31 @@ Deno.serve(async (req: Request) => {
   if(user.user_metadata?.avespet_welcome_pending !== true) return reply({success:true,skipped:true,reason:"not_pending"});
   const {data:existing,error:readError}=await admin.from("email_welcome_delivery").select("status,provider_id").eq("user_id",user.id).maybeSingle();
   if(readError) return reply({error:"Não foi possível consultar o histórico."},503);
-  if(existing) return reply({success:true,already_processed:true,status:existing.status});
-  const {error:claimError}=await admin.from("email_welcome_delivery").insert({user_id:user.id,email,status:"processing"});
-  if(claimError) {
-    if(claimError.code==="23505") return reply({success:true,already_processed:true});
-    return reply({error:"Não foi possível registrar o envio."},503);
+  let attemptTimestamp: string;
+  if(existing) {
+    // Só repetimos quando o Resend recusou explicitamente o envio.
+    // Estados processing/uncertain nunca são reenviados automaticamente para evitar duplicidade.
+    if(existing.status !== "failed") {
+      if(existing.status === "sent" && user.user_metadata?.avespet_welcome_pending === true) {
+        await admin.auth.admin.updateUserById(user.id,{user_metadata:{...user.user_metadata,avespet_welcome_pending:false}});
+      }
+      return reply({success:true,already_processed:true,status:existing.status});
+    }
+    attemptTimestamp = new Date().toISOString();
+    const {data:retry,error:retryError}=await admin.from("email_welcome_delivery")
+      .update({status:"processing",failure_reason:null,updated_at:attemptTimestamp})
+      .eq("user_id",user.id).eq("status","failed").select("updated_at").maybeSingle();
+    if(retryError) return reply({error:"Não foi possível preparar uma nova tentativa."},503);
+    if(!retry) return reply({success:true,already_processed:true,status:"processing"});
+    attemptTimestamp = retry.updated_at;
+  } else {
+    attemptTimestamp = new Date().toISOString();
+    const {error:claimError}=await admin.from("email_welcome_delivery")
+      .insert({user_id:user.id,email,status:"processing",created_at:attemptTimestamp,updated_at:attemptTimestamp});
+    if(claimError) {
+      if(claimError.code==="23505") return reply({success:true,already_processed:true});
+      return reply({error:"Não foi possível registrar o envio."},503);
+    }
   }
   const name=safe(user.user_metadata?.nome || user.user_metadata?.nomeCompleto,80).split(/\s+/)[0] || "Olá";
   const greeting=name==="Olá" ? "Olá!" : "Olá, "+name+"!";
@@ -49,14 +69,16 @@ Deno.serve(async (req: Request) => {
   const html='<!doctype html><html lang="pt-BR"><body style="margin:0;padding:24px;background:#f5f8f4;color:#23342c;font-family:Arial,sans-serif"><div style="max-width:600px;margin:auto;background:#fff;padding:28px;border-radius:16px;border:1px solid #e3eae4"><h1 style="color:#26764b">Bem-vindo ao Avespet! 🦜</h1><p>'+esc(greeting)+'</p><p>Sua conta Avespet está confirmada! Agora você pode organizar seu plantel, acompanhar reprodução, registrar informações das aves e acessar as ferramentas disponíveis para criadores.</p><p><a href="'+site+'" style="display:inline-block;background:#247346;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none">Acessar o Avespet</a></p><p>Conte com a equipe Avespet quando precisar de ajuda.</p><p style="font-size:13px;color:#5b6b60">Equipe Avespet<br><a href="mailto:'+inbox+'">'+inbox+'</a></p></div></body></html>';
   let remote:Response;
   try {
-    remote=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+resend,"Content-Type":"application/json","Idempotency-Key":"avespet-welcome-"+user.id},body:JSON.stringify({from:"Avespet <"+inbox+">",to:[email],reply_to:inbox,subject,text,html})});
+    remote=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+resend,"Content-Type":"application/json","Idempotency-Key":"avespet-welcome-"+user.id+"-"+new Date(attemptTimestamp).getTime()},body:JSON.stringify({from:"Avespet <"+inbox+">",to:[email],reply_to:inbox,subject,text,html})});
   } catch {
     await admin.from("email_welcome_delivery").update({status:"uncertain",failure_reason:"network_error",updated_at:new Date().toISOString()}).eq("user_id",user.id);
     return reply({success:false,status:"uncertain"},503);
   }
   if(!remote.ok) {
-    await admin.from("email_welcome_delivery").update({status:"failed",failure_reason:"provider_"+remote.status,updated_at:new Date().toISOString()}).eq("user_id",user.id);
-    return reply({success:false,status:"failed"},502);
+    // Respostas 5xx podem ter resultado incerto no provedor; não tentar novamente automaticamente.
+    const failureStatus = remote.status >= 500 ? "uncertain" : "failed";
+    await admin.from("email_welcome_delivery").update({status:failureStatus,failure_reason:"provider_"+remote.status,updated_at:new Date().toISOString()}).eq("user_id",user.id);
+    return reply({success:false,status:failureStatus},502);
   }
   const provider=await remote.json().catch(()=>({}));
   await admin.from("email_welcome_delivery").update({status:"sent",provider_id:safe(provider?.id,120)||null,sent_at:new Date().toISOString(),updated_at:new Date().toISOString(),failure_reason:null}).eq("user_id",user.id);
