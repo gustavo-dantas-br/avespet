@@ -132,18 +132,18 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
         data = result.data || [];
       }
       let novos = data;
-      if (isAdmin && filtro !== "arquivadas") {
-        const { data: masterData, error: masterError } = await supabase.functions.invoke("master-notifications", { body: { action: "list" } });
+      if (isAdmin) {
+        const { data: masterData, error: masterError } = await supabase.functions.invoke("master-notifications", { body: { action: "list", include_archived: filtro === "arquivadas" } });
         if (masterError || masterData?.error) throw new Error(masterData?.error || "Central Master indisponível.");
         const masterItems = (masterData?.items || []).map((item) => ({
           id: "master:" + item.id, tipo: item.category, titulo: item.title, mensagem: item.message,
           referencia_tipo: "master_notification", referencia_id: item.id, target_section: item.target_section,
           lida_em: item.read_at, arquivada_em: item.archived_at, criado_em: item.source_created_at || item.created_at,
           _master: true,
-        })).filter((item) => filtro === "todas" || (filtro === "nao_lidas" ? !item.lida_em : Boolean(item.lida_em)));
+        })).filter((item) => filtro === "arquivadas" ? Boolean(item.arquivada_em) : !item.arquivada_em && (filtro === "todas" || (filtro === "nao_lidas" ? !item.lida_em : Boolean(item.lida_em))));
         setMasterNaoLidasCount(Number(masterData?.unread_count || 0));
         novos = [...novos, ...masterItems].sort((a,b) => Date.parse(b.criado_em || 0) - Date.parse(a.criado_em || 0));
-      } else if (isAdmin) setMasterNaoLidasCount(0);
+      }
       setItens((prev) => reset ? novos : [...prev, ...novos]);
       setTemMais((data || []).length === PAGE_SIZE);
     } catch (e) {
@@ -219,6 +219,13 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
   }
 
   async function restaurar(n) {
+    if (n._master) {
+      const { data, error } = await supabase.functions.invoke("master-notifications", { body: { action: "restore", id: n.referencia_id } });
+      if (error || data?.error) { setErro("Não foi possível restaurar esta notificação."); return; }
+      setItens((prev) => prev.filter((item) => item.id !== n.id));
+      if (!n.lida_em) setMasterNaoLidasCount((count) => count + 1);
+      return;
+    }
     const { error } = await supabase.from("notificacoes").update({ arquivada_em: null }).eq("id", n.id).eq("user_id", userId);
     if (error) { setErro("Não foi possível restaurar esta notificação."); return; }
     setItens((prev) => prev.filter((item) => item.id !== n.id));
