@@ -102,3 +102,17 @@ A branch `feature/impulsionamento-aves-perdidas` adiciona um catálogo centraliz
 9. Habilitação final por chave **servidor-side** após aprovação explícita; não confundir o sinal desabilitado no frontend com controle de acesso.
 
 **Nenhuma cobrança real, segredo ou alteração de Supabase/Vercel de produção foi executada.**
+
+
+## Entrega LP — primeira implementação (27/11/2026)
+
+- Branch: `feature/lp-aves-perdidas`, derivada de `feature/impulsionamento-aves-perdidas`.
+- A rota `/aves-perdidas` foi transformada em landing page com hero, CTA gratuito, benefícios, explicação da jornada, planos, formulário de cadastro, anúncios públicos, FAQ e CTA final.
+- Os planos pagos são carregados dinamicamente de `campaign_packages` por `listarPacotesPublicos()`; a policy pública existente limita a leitura aos registros publicados.
+- O cadastro gratuito aparece primeiro e não depende de um registro artificial no catálogo pago.
+- Os códigos históricos `destaque`, `bairro`, `cidade` e `regional` foram preservados. O formulário legado recebe o plano selecionado via query string e pré-seleciona a opção.
+- Solicitar um plano continua significando solicitar orçamento. Não há checkout, confirmação de pagamento ou início automático de campanha nesta etapa.
+- A LP explica que não há garantia de alcance ou reencontro e informa a privacidade dos contatos, intermediação pelo Avespet e natureza pública das fotos enviadas.
+- O catálogo confirmado no banco, na consulta de leitura desta etapa, contém: Destaque Avespet (7 dias); Alerta Local (até 5 km, 3 dias); Alerta Regional (até 10 km, 7 dias); Busca Intensiva (até 15 km, 10 dias). Preços e faixas de alcance são lidos do banco, não copiados para o frontend.
+- Pendências antes da publicação comercial: validar política de privacidade, implementar e auditar registro de consentimentos aplicáveis, testes de RLS/fluxo, build e revisão visual responsiva.
+- Não houve alteração no Supabase, deploy, merge, cobrança, disparo de e-mails ou campanha Meta.
