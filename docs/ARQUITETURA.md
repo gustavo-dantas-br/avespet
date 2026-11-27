@@ -642,3 +642,47 @@ A disponibilidade HTTP e as condições de licença/atribuição de cada imagem 
 - Build Vercel do commit final: `READY` (27/11/2026). Preview: `https://avespet-rdphakax1-gustavo-dantas.vercel.app`.
 - O build confirma compilação, mas não comprova a inspeção visual das quatro imagens em desktop e celular; a conferência visual permanece pendente.
 - Não houve merge para `main` nem publicação no domínio de produção.
+
+
+## Carrossel comercial da LP de aves perdidas — 27/11/2026
+
+### Comportamento e acessibilidade
+
+- O carrossel da primeira dobra passou de quatro para seis slides: Ring Neck, calopsita, Agapornis, lóris, busca gratuita/inteligente do Avespet e divulgação regional opcional.
+- A rotação automática ocorre a cada **3 segundos**.
+- Controles manuais: anterior, próximo, indicadores individuais e botão explícito de pausar/retomar.
+- A rotação pausa enquanto o ponteiro está sobre o carrossel ou quando o foco de teclado está dentro dele; a pausa manual é independente e persiste até o usuário retomar.
+- Contador de slides é derivado do catálogo (não fica fixo em quatro).
+- O CTA do slide comercial direciona aos planos; o slide de busca gratuita direciona ao cadastro.
+- As transições respeitam `prefers-reduced-motion`.
+
+### Mensagem da busca gratuita e consulta de anilha
+
+- A comunicação descreve o fluxo real: tutor cadastra a ave, aguarda aprovação, pessoa que encontra a ave consulta a anilha e o sistema compara com anúncios aprovados.
+- A função `buscar_anuncio_perdido_por_anilha` retorna dados da ave/anúncio, sem expor telefone ou e-mail do tutor.
+- A identificação de possível titular e a intermediação do contato são tarefas internas da equipe; não anunciar que o público recebe diretamente os dados do tutor.
+- A associação de registros de achados ao anúncio aprovado é restrita e considera unicidade do possível titular; casos ambíguos precisam de conferência humana.
+- Não afirmar que o Avespet é “uma das maiores páginas/sistemas” ou que garante reencontro sem dados de audiência e resultados auditados.
+
+### Divulgação paga e comparação ilustrativa
+
+- A mensagem comercial explica a possibilidade de planejamento de divulgação regional no Facebook/Instagram (Meta), sem sugerir que uma integração automática de campanhas já esteja ativa.
+- O catálogo publicado no Supabase foi consultado em modo somente leitura. Os valores atuais e estimativas registradas são:
+  - Alerta Local: R$ 119,90; estimativa 800–2.900 pessoas; 3 dias; raio de referência 5 km.
+  - Alerta Regional: R$ 229,90; estimativa 2.000–6.800 pessoas; 7 dias; raio de referência 10 km.
+  - Busca Intensiva: R$ 399,90; estimativa 3.900–13.100 pessoas; 10 dias; raio de referência 15 km.
+- Cálculo apresentado: preço total do plano dividido pelo limite inferior/superior da estimativa de alcance. Custo matemático aproximado por pessoa estimada:
+  - Alerta Local: R$ 0,04–R$ 0,15.
+  - Alerta Regional: R$ 0,03–R$ 0,11.
+  - Busca Intensiva: R$ 0,03–R$ 0,10.
+- Portanto, não é correto anunciar “menos de meio centavo por pessoa”: a faixa calculada com os números atuais é aproximadamente **3 a 15 centavos por pessoa estimada**. É custo por alcance estimado, não custo por pessoa única garantida, clique ou reencontro.
+- Comparação de panfletos exibida como hipótese transparente: 1.000 unidades a R$ 0,50 cada = R$ 500,00, sem contar entrega. O custo unitário de R$ 0,50 é apenas uma premissa ilustrativa, não cotação de gráfica ou preço de mercado.
+- As faixas de alcance são estimativas cadastradas no catálogo, não resultado comprovado de campanhas executadas. Não prometer impressões, visualizações, leads ou reencontro.
+- O fluxo de campanhas permanece sujeito à aprovação operacional; esta alteração não habilita checkout, cobrança, API Meta, campanha ativa ou integração Google Ads.
+
+### Validação e segurança
+
+- Os valores são carregados pelo serviço público existente `listarPacotesPublicos()`; nenhum preço ou alcance foi fixado no frontend.
+- A consulta ao Supabase foi somente leitura. Nenhuma tabela, policy, função ou registro foi alterado.
+- O CTA de cadastro continua disponível e o contato do tutor permanece protegido.
+- Build/preview da Vercel precisa ser conferido após o commit final; ainda não declarar validação visual até abrir o preview e revisar desktop/mobile.
