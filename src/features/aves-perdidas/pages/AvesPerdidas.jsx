@@ -61,7 +61,7 @@ const DESTAQUES_AVES = [
     id: "alcance-pago",
     especie: "Divulgação ampliada",
     chamada: "Faça sua busca chegar a muito mais pessoas da região.",
-    texto: "Com uma campanha regional no Facebook e Instagram, a foto e as informações da ave podem aparecer para pessoas próximas. É uma forma de ampliar a divulgação sem depender apenas de cartazes ou panfletos porta a porta.",
+    texto: "A equipe Avespet pode planejar uma divulgação regional no Facebook e Instagram, conforme o pacote e a disponibilidade operacional. A foto e as informações da ave podem chegar a pessoas próximas, ampliando a busca para além dos compartilhamentos orgânicos.",
     imagem: "https://upload.wikimedia.org/wikipedia/commons/a/ac/Rainbow_larakeet.jpg",
     alt: "Lóris-arco-íris em fotografia ilustrativa para divulgação ampliada",
     etiqueta: "Impulsionamento regional opcional",
@@ -244,14 +244,14 @@ export default function AvesPerdidas({ onEntrar }) {
             )}
             {slideAtual === 5 && (
               <p className="mt-2 max-w-3xl text-[10px] leading-4 text-white/75">
-                Cálculo ilustrativo: valor total do plano dividido pela estimativa de alcance cadastrada. Alcance real varia conforme campanha, região e entrega da plataforma; não é promessa de visualizações nem de recuperação.
+                Cálculo ilustrativo: valor total do plano dividido pela estimativa de alcance cadastrada. As campanhas Meta dependem de aprovação operacional, configuração e disponibilidade; o alcance real varia e não é promessa de visualizações nem de recuperação. Não há integração automática de anúncios nesta etapa.
               </p>
             )}
             {slideAtual === 5 && (
               <div className="mt-3 max-w-3xl rounded-xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
                 <p className="text-xs font-extrabold text-white">E se você distribuísse panfletos?</p>
                 <p className="mt-1 text-[11px] leading-5 text-white/85">
-                  Exemplo ilustrativo: 1.000 panfletos a R$ 0,50 por unidade custariam R$ 500,00, sem contar o tempo e a entrega. No Alerta Local, o investimento total cadastrado é R$ 119,90 para uma estimativa de 800 a 2.900 pessoas alcançadas na região.
+                  Exemplo ilustrativo: 1.000 panfletos a R$ 0,50 por unidade custariam R$ 500,00, sem contar o tempo e a entrega. No Alerta Local, o valor cadastrado é R$ 119,90 e a estimativa atual do catálogo é de 800 a 2.900 pessoas alcançadas na região.
                 </p>
                 <p className="mt-1 text-[10px] leading-4 text-white/70">
                   O custo do panfleto é uma hipótese para comparação, não uma cotação de gráfica. O alcance da campanha é estimado e pode variar; compare sempre a entrega real e a área de cobertura.
