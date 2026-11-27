@@ -101,7 +101,7 @@ function PlanoCard({ plano, destaque = false }) {
         {DESTAQUES_AVES.map((slide, indice) => (
           <div
             key={slide.id}
-            className={`absolute inset-0 transition-opacity duration-700 ${indice === slideAtual ? "opacity-100" : "pointer-events-none opacity-0"}`}
+            className={`absolute inset-0 transition-opacity duration-700 motion-reduce:transition-none ${indice === slideAtual ? "opacity-100" : "pointer-events-none opacity-0"}`}
             aria-hidden={indice !== slideAtual}
           >
             <img
