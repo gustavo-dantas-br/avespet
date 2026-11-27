@@ -131,7 +131,8 @@ export default function SolicitarCampanha() {
                   <h2 className="text-lg font-bold" style={{ color: TEMA_PUBLICO.tinta }}>1. Escolha o alcance</h2>
                 </div>
                 {carregandoPacotes && <p className="mb-3 text-xs" style={{ color: TEMA_PUBLICO.texto }}>Carregando opções publicadas...</p>}
-                {erroPacotes && <p role="status" className="mb-3 rounded-lg p-3 text-sm" style={{ background: "#FFF4DF", color: "#704614" }}>{erroPacotes}</p>}\n                <div className="grid gap-3 md:grid-cols-2">
+                {erroPacotes && <p role="status" className="mb-3 rounded-lg p-3 text-sm" style={{ background: "#FFF4DF", color: "#704614" }}>{erroPacotes}</p>}
+                <div className="grid gap-3 md:grid-cols-2">
                   {pacotes.map((p) => (
                     <label key={p.id} className="cursor-pointer rounded-xl p-4 transition" style={{ border: form.pacote === p.id ? `2px solid ${TEMA_PUBLICO.verde}` : `1px solid ${TEMA_PUBLICO.borda}`, background: form.pacote === p.id ? TEMA_PUBLICO.verdeClaro : "#FFFFFF" }}>
                       <input type="radio" name="pacote" value={p.id} checked={form.pacote === p.id} onChange={() => alterar("pacote", p.id)} />
