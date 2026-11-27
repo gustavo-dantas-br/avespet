@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Megaphone, CheckCircle2 } from "lucide-react";
-import { PACOTES_CAMPANHA } from "../config/pacotes";
 import { listarPacotesPublicos, solicitarCampanha } from "../services/campanhasService";
 import { listarMinhasAvesPerdidas } from "../../aves-perdidas/services/avesPerdidasService";
 import { supabase } from "../../../supabaseClient";
@@ -30,8 +29,8 @@ export default function SolicitarCampanha() {
   const parametros = new URLSearchParams(window.location.search);
   const anuncioId = parametros.get("anuncio") || "";
   const pacoteSolicitado = parametros.get("pacote") || "";
-  const [form, setForm] = useState({ pacote: PACOTES_CAMPANHA.some((p) => p.id === pacoteSolicitado) ? pacoteSolicitado : "cidade", nome: "", whatsapp: "", email: "", cidade: "", uf: "SP", areaAlvo: "", descricaoAve: "" });
-  const [loading, setLoading] = useState(false);\n  const [pacotes, setPacotes] = useState(PACOTES_CAMPANHA);\n  const [carregandoPacotes, setCarregandoPacotes] = useState(true);
+  const [form, setForm] = useState({ pacote: pacoteSolicitado, nome: "", whatsapp: "", email: "", cidade: "", uf: "SP", areaAlvo: "", descricaoAve: "" });
+  const [loading, setLoading] = useState(false);\n  const [pacotes, setPacotes] = useState([]);\n  const [erroPacotes, setErroPacotes] = useState("");\n  const [carregandoPacotes, setCarregandoPacotes] = useState(true);
   const [anuncioVerificadoId, setAnuncioVerificadoId] = useState("");
   const [avisoVinculo, setAvisoVinculo] = useState("");
 
@@ -112,7 +111,7 @@ export default function SolicitarCampanha() {
                   <Megaphone size={20} color={TEMA_PUBLICO.verde} />
                   <h2 className="text-lg font-bold" style={{ color: TEMA_PUBLICO.tinta }}>1. Escolha o alcance</h2>
                 </div>
-                {carregandoPacotes && <p className="mb-3 text-xs" style={{ color: TEMA_PUBLICO.texto }}>Atualizando opções do catálogo...</p>}\n                <div className="grid gap-3 md:grid-cols-2">
+                {carregandoPacotes && <p className="mb-3 text-xs" style={{ color: TEMA_PUBLICO.texto }}>Carregando opções publicadas...</p>}\n                {erroPacotes && <p role="status" className="mb-3 rounded-lg p-3 text-sm" style={{ background: "#FFF4DF", color: "#704614" }}>{erroPacotes}</p>}\n                <div className="grid gap-3 md:grid-cols-2">
                   {pacotes.map((p) => (
                     <label key={p.id} className="cursor-pointer rounded-xl p-4 transition" style={{ border: form.pacote === p.id ? `2px solid ${TEMA_PUBLICO.verde}` : `1px solid ${TEMA_PUBLICO.borda}`, background: form.pacote === p.id ? TEMA_PUBLICO.verdeClaro : "#FFFFFF" }}>
                       <input type="radio" name="pacote" value={p.id} checked={form.pacote === p.id} onChange={() => alterar("pacote", p.id)} />
@@ -146,7 +145,7 @@ export default function SolicitarCampanha() {
 
               {erro && <p role="alert" className="mb-4 rounded-lg p-3 text-sm" style={{ background: "#FCEFEB", color: "#9A3D2C" }}>{erro}</p>}
               <p className="mb-4 text-xs leading-5" style={{ color: TEMA_PUBLICO.texto }}>Esta etapa é apenas uma solicitação de orçamento. A campanha só será iniciada após aprovação do orçamento e confirmação do pagamento. Não há garantia de localização ou recuperação da ave.</p>
-              <button disabled={loading} className="w-full rounded-xl py-3.5 font-bold text-white transition disabled:opacity-60" style={{ background: TEMA_PUBLICO.verde }}>{loading ? "Enviando..." : "Solicitar orçamento da campanha"}</button>
+              <button disabled={loading || carregandoPacotes || pacotes.length === 0 || !form.pacote} className="w-full rounded-xl py-3.5 font-bold text-white transition disabled:opacity-60" style={{ background: TEMA_PUBLICO.verde }}>{loading ? "Enviando..." : "Solicitar orçamento da campanha"}</button>
             </form>
           </CartaoPublico>
         )}
