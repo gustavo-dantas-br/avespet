@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../supabaseClient";
+import NotificationsCenter from "../../components/NotificationsCenter";
 const CreatorManagement = React.lazy(() => import("./CreatorManagement"));
 const AdsModeration = React.lazy(() => import("./AdsModeration"));
 const LostBirdsModeration = React.lazy(() => import("./LostBirdsModeration"));
@@ -228,7 +229,7 @@ export default function MasterApp({ user, onLogout }) {
       <div className="min-h-screen lg:pl-[270px]">
         <header className="sticky top-0 z-20 flex items-center justify-between border-b bg-white/95 px-4 py-3.5 backdrop-blur-xl sm:px-7" style={{ borderColor: "#e8edf2" }}>
           <div className="flex items-center gap-3"><button className="rounded-lg border border-slate-200 p-2 lg:hidden" onClick={() => setMobileMenuOpen(true)} aria-label="Abrir menu"><Menu size={19} /></button><div><p className="text-[11px] text-slate-400">Avespet <span className="px-1">/</span> Master</p><p className="text-sm font-semibold text-slate-800">{selected.label}</p></div></div>
-          <div className="flex items-center gap-2"><span className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold text-emerald-700 sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Ambiente restrito</span><button type="button" onClick={loadSummary} disabled={summaryLoading} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"><RefreshCw size={14} className={summaryLoading ? "animate-spin" : ""} /><span className="hidden sm:inline">Atualizar dados</span></button></div>
+          <div className="flex items-center gap-2"><NotificationsCenter userId={user.id} isAdmin={true} onNavigate={chooseSection} /><span className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold text-emerald-700 sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Ambiente restrito</span><button type="button" onClick={loadSummary} disabled={summaryLoading} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"><RefreshCw size={14} className={summaryLoading ? "animate-spin" : ""} /><span className="hidden sm:inline">Atualizar dados</span></button></div>
         </header>
 
         <main className="mx-auto max-w-[1500px] px-4 py-7 sm:px-7 lg:px-9">
