@@ -58,6 +58,10 @@ export async function finalizarCadastroPendente(user, criarAnuncio) {
   const item = lerCadastroPendente();
   if (!item) return { status: "vazio" };
   if (!user?.id || norm(user.email) !== item.email) return { status: "outra_conta" };
+  const consentimento = item.anuncio?.consentimentoPublicacao;
+  if (consentimento?.aceito !== true || !consentimento?.versao || !consentimento?.registradoEm) {
+    return { status: "consentimento_ausente" };
+  }
   const id = item.anuncio.id;
   if (pending?.id === id) return pending.promise;
   const promise = (async () => {
