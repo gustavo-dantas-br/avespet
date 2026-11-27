@@ -13,6 +13,7 @@ import { PaginaGuias, PaginaGuia, PaginaVideos, GuiasEmDestaque } from "../publi
 import Inicio from "../publico/home/Inicio";
 import { AvesPerdidas } from "../features/aves-perdidas";
 import { SolicitarCampanha } from "../features/campanhas";
+import PoliticaPrivacidade from "../publico/PoliticaPrivacidade";
 
 const inputStyle = { background: "#FFFFFF", border: "1px solid #DCE7DE", color: "#1D2B25", borderRadius: 12, padding: "12px 14px", fontSize: 14, outlineColor: "#174B3B", width: "100%" };
 
@@ -548,6 +549,7 @@ function ConteudoDaRota({ caminho, onEntrar }) {
   }
   if (caminho === "/aves-perdidas") return <><SeoFixo caminho={caminho} /><AvesPerdidas onEntrar={onEntrar} /></>;
   if (caminho === "/campanha-ave-perdida") return <><SeoFixo caminho={caminho} /><SolicitarCampanha /></>;
+  if (caminho === "/privacidade") return <PoliticaPrivacidade />;
   if (caminho === "/achei-uma-ave") {
     return (
       <div style={{ background: "#F5F7F3", minHeight: "70vh" }}>
@@ -621,6 +623,7 @@ export default function AuthPage({ logado = false, redefinirSenha = false, onSen
             Criador de aves? <button onClick={onEntrar} className="underline" style={{ color: "#174B3B" }}>Cadastre seu plantel gratuitamente</button>
           </div>
         )}
+        <div className="mt-2"><Link para="/privacidade" className="underline" style={{ color: "#174B3B" }}>Política de Privacidade</Link></div>
         <div className="mt-2">
           Precisa de ajuda? <a href={SUPORTE_WHATSAPP} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#174B3B" }}>Fale com o suporte</a>
         </div>
