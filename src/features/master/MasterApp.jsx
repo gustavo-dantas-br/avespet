@@ -140,6 +140,7 @@ export default function MasterApp({ user, onLogout }) {
   const [summaryError, setSummaryError] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [supportDraft, setSupportDraft] = useState(null);
+  const [supportUnread, setSupportUnread] = useState(0);
   // Preserva os dados e a posição de cada seção já visitada.
   // Os módulos ainda não visitados não carregam nem fazem consultas.
   const [visitedSections, setVisitedSections] = useState(() => ["overview"]);
@@ -168,6 +169,20 @@ export default function MasterApp({ user, onLogout }) {
 
   useEffect(() => { loadSummary(); }, [loadSummary]);
 
+  useEffect(() => {
+    if (!user?.id) return undefined;
+    const loadUnread = async () => {
+      const { count, error } = await supabase.from("support_tickets")
+        .select("id", { count: "exact", head: true }).eq("support_unread", true);
+      if (!error) setSupportUnread(count || 0);
+    };
+    loadUnread();
+    const channel = supabase.channel("master-support-unread-" + user.id)
+      .on("postgres_changes", { event: "*", schema: "public", table: "support_tickets" }, loadUnread)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id]);
+
   const selected = useMemo(() => navigation.find((item) => item.id === activeSection) || navigation[0], [activeSection]);
   const selectedPlaceholder = comingSoon[activeSection];
   const chooseSection = (id) => {
@@ -195,7 +210,7 @@ export default function MasterApp({ user, onLogout }) {
         {navigation.map((item) => {
           const Icon = item.icon;
           const active = activeSection === item.id;
-          return <button key={item.id} type="button" onClick={() => chooseSection(item.id)} onMouseEnter={() => preloadSection(item.id)} onFocus={() => preloadSection(item.id)} aria-current={active ? "page" : undefined} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[13px] font-medium transition" style={{ background: active ? "linear-gradient(90deg,#2c4969,#263f5c)" : "transparent", color: active ? "#fff" : "#b9c5d3", boxShadow: active ? "inset 3px 0 #d9b45b" : "none" }}><Icon size={18} /><span className="flex-1">{item.label}</span>{active && <ChevronRight size={15} />}</button>;
+          return <button key={item.id} type="button" onClick={() => chooseSection(item.id)} onMouseEnter={() => preloadSection(item.id)} onFocus={() => preloadSection(item.id)} aria-current={active ? "page" : undefined} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[13px] font-medium transition" style={{ background: active ? "linear-gradient(90deg,#2c4969,#263f5c)" : "transparent", color: active ? "#fff" : "#b9c5d3", boxShadow: active ? "inset 3px 0 #d9b45b" : "none" }}><Icon size={18} /><span className="flex-1">{item.label}</span>{item.id === "support-chat" && supportUnread > 0 && <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white">{supportUnread > 99 ? "99+" : supportUnread}</span>}{active && <ChevronRight size={15} />}</button>;
         })}
       </nav>
       <div className="border-t p-4" style={{ borderColor: "#293d55" }}>
