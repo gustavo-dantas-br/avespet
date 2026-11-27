@@ -158,6 +158,7 @@ export default function SupportChat({ user, mode = "creator", onUnreadCountChang
       const { error: rpcError } = await supabase.rpc("support_ticket_send_message", {
         p_ticket_id: selected.id,
         p_body: body,
+        p_as_support: isMaster,
       });
       if (rpcError) throw rpcError;
       setDraft("");
@@ -275,10 +276,16 @@ export default function SupportChat({ user, mode = "creator", onUnreadCountChang
                 : messages.map((message) => {
                   const mine = isMaster ? message.author_type === "support" : message.author_type === "creator";
                   return <div key={message.id} className={"flex " + (mine ? "justify-end" : "justify-start")}>
-                    <article className={"max-w-[88%] rounded-2xl px-4 py-3 shadow-sm " + (mine ? "rounded-br-md bg-emerald-700 text-white" : "rounded-bl-md border border-slate-200 bg-white text-slate-800")}>
-                      <div className={"mb-1 flex items-center gap-1.5 text-[10px] font-bold " + (mine ? "text-emerald-100" : "text-slate-400")}>
-                        {mine ? <Headphones size={12} /> : <UserRound size={12} />}
-                        {message.author_type === "support" ? "Suporte Avespet" : "Criador"}
+                    <article className={"max-w-[88%] rounded-2xl px-4 py-3 shadow-sm " + (message.author_type === "support"
+                      ? "rounded-br-md border border-emerald-700 bg-emerald-700 text-white"
+                      : "rounded-bl-md border border-slate-200 bg-white text-slate-800")}>
+                      <div className={"mb-2 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wide " + (message.author_type === "support" ? "text-emerald-100" : "text-slate-500")}>
+                        <span className={"flex h-6 w-6 items-center justify-center rounded-full " + (message.author_type === "support" ? "bg-white/15 text-white" : "bg-slate-100 text-slate-600")}>
+                          {message.author_type === "support" ? <Headphones size={13} /> : <UserRound size={13} />}
+                        </span>
+                        <span>{message.author_type === "support"
+                          ? "Equipe Avespet · Suporte"
+                          : (isMaster ? (selected.creator_name || "Criador") : "Você · Criador")}</span>
                       </div>
                       <p className="whitespace-pre-wrap break-words text-sm leading-6">{message.body}</p>
                       <time className={"mt-2 block text-right text-[10px] " + (mine ? "text-emerald-100" : "text-slate-400")}>{dateTime(message.created_at)}</time>
