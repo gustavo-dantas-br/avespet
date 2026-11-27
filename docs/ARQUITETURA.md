@@ -637,7 +637,8 @@ A disponibilidade HTTP e as condições de licença/atribuição de cada imagem 
 
 ### Validação
 
-- Commit da implementação do carrossel: `3e99d7943ec1dac3664f7b536db1e66c43f50d37`.
-- Ajuste de acessibilidade subsequente: movimento reduzido sem transição animada.
-- O build/preview gerado pela Vercel é acompanhado separadamente; não considerar o carrossel validado visualmente até conferir as quatro imagens em desktop e celular.
+- Commit final da implementação e correção do carrossel: `2765e9121bbecb6c80110ab26c6a00f4ea206409`.
+- Ajuste de acessibilidade: movimento reduzido sem transição animada.
+- Build Vercel do commit final: `READY` (27/11/2026). Preview: `https://avespet-rdphakax1-gustavo-dantas.vercel.app`.
+- O build confirma compilação, mas não comprova a inspeção visual das quatro imagens em desktop e celular; a conferência visual permanece pendente.
 - Não houve merge para `main` nem publicação no domínio de produção.
