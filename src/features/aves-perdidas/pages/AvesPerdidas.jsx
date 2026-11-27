@@ -51,7 +51,7 @@ const DESTAQUES_AVES = [
     id: "busca-inteligente",
     especie: "Sistema Avespet",
     chamada: "Quem encontra uma ave precisa de um caminho para chegar até o tutor.",
-    texto: "A busca gratuita começa com o cadastro da ave. Quando alguém encontra uma ave anilhada, pode consultar a numeração no Avespet. Se houver um anúncio aprovado compatível, nossa equipe consegue identificar o possível tutor e intermediar o contato, mantendo os dados protegidos.",
+    texto: "A busca gratuita começa com o cadastro da ave. Quem encontra uma ave pode primeiro pesquisar no Google para tentar identificar a espécie. Se ela tiver anilha, pode consultar a numeração no Avespet. Se houver um anúncio aprovado compatível, nossa equipe identifica o possível tutor e intermedeia o contato, mantendo os dados protegidos.",
     imagem: "https://cdn.pixabay.com/photo/2021/01/18/18/17/indian-ring-necked-parakeet-5929020_1280.jpg",
     alt: "Ring Neck em destaque representando a busca gratuita do Avespet",
     etiqueta: "Busca gratuita + identificação por anilha",
