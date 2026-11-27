@@ -87,7 +87,20 @@ function PlanoCard({ plano, destaque = false }) {
         <div className="text-xs font-bold" style={{ color: TEMA_PUBLICO.tinta }}>{plano.reach_label}</div>
         {alcance && <p className="mt-1 text-xs leading-5" style={{ color: TEMA_PUBLICO.texto }}>{alcance}</p>}
       </div>
-      <ul className="mt-4 space-y-2 text-sm" style={{       <section
+      <ul className="mt-4 space-y-2 text-sm" style={{ color: TEMA_PUBLICO.texto }}>
+        <li>✓ Divulgação por {plano.duration_days} dias</li>
+        <li>✓ Alcance geográfico planejado</li>
+        <li>✓ Atendimento da equipe Avespet</li>
+      </ul>
+      <Link para={`/campanha-ave-perdida?pacote=${encodeURIComponent(plano.code)}`} className="mt-6 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-bold transition hover:brightness-105" style={{ background: TEMA_PUBLICO.verde, color: "#FFFFFF" }}>
+        Solicitar este plano
+      </Link>
+      <p className="mt-3 text-center text-[11px] leading-5" style={{ color: TEMA_PUBLICO.texto }}>Solicitação sujeita à análise. Nenhuma cobrança nesta etapa.</p>
+    </article>
+  );
+}
+
+
         className="relative isolate min-h-[560px] overflow-hidden bg-[#123D2E] md:min-h-[620px]"
         aria-roledescription="carrossel"
         aria-label="Destaques de aves atendidas pelo Avespet"
