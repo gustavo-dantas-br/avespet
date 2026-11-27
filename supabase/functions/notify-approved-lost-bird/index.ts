@@ -214,9 +214,15 @@ Deno.serve(async (req: Request) => {
     return answer({ success: true, approved: true, email_status: "delivery_uncertain" }, 200, origin);
   }
   if (!remote.ok) {
+    // Respostas 5xx podem ocorrer depois de o provedor aceitar o envio.
+    // Mantemos o estado incerto para evitar reenvio automático e duplicidade.
+    const failureStatus = remote.status >= 500 ? "uncertain" : "failed";
     await admin.from("aves_perdidas_emails_aprovacao")
-      .update({ status: "failed", failure_reason: "provider_" + remote.status }).eq("anuncio_id", id);
-    return answer({ success: true, approved: true, email_status: "provider_rejected" }, 200, origin);
+      .update({ status: failureStatus, failure_reason: "provider_" + remote.status }).eq("anuncio_id", id);
+    return answer({
+      success: true, approved: true,
+      email_status: failureStatus === "uncertain" ? "delivery_uncertain" : "provider_rejected",
+    }, 200, origin);
   }
   const provider = await remote.json().catch(() => ({}));
   await admin.from("aves_perdidas_emails_aprovacao").update({
