@@ -308,6 +308,13 @@ export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
       <label className="text-sm">Foto da ave (opcional)<input className="block w-full mt-1 text-sm" type="file" accept="image/*" onChange={fotoSelecionada} disabled={enviandoFoto || enviando} /></label>
       {enviandoFoto && <p className="text-sm" style={{color:"#405331"}}>Preparando e enviando a foto...</p>}
       {form.foto && <img src={form.foto} alt="Prévia da ave" className="w-28 h-28 rounded-lg object-cover" />}
+      <div className="rounded-lg border p-3" style={{ borderColor: "#B2D8BF", background: "#F1F7F2" }}>
+        <label className="flex items-start gap-2 text-sm leading-6" style={{ color: "#294D39" }}>
+          <input type="checkbox" className="mt-1" checked={autorizaPublicacao} onChange={(e) => setAutorizaPublicacao(e.target.checked)} />
+          <span>Autorizo o Avespet a publicar, após análise, as informações da ave, a fotografia enviada e a localização aproximada (bairro/cidade) para ajudar na busca. Estou ciente de que a fotografia é armazenada em endereço público acessível por URL. Não enviarei imagens de documentos, pessoas ou informações pessoais. Esta autorização é específica para este anúncio e pode ser solicitada para revogação pelo canal de privacidade.</span>
+        </label>
+        <p className="mt-2 text-xs leading-5" style={{ color: "#405D49" }}>Consulte a <a href="/privacidade" className="font-semibold underline">Política de Privacidade</a>. A autorização de publicação é separada de mensagens promocionais, que não são necessárias para cadastrar a ave.</p>
+      </div>
       <div className="border-t pt-3 mt-1" style={{ borderColor: "#e3d3b4" }}>
         <p className="font-semibold mb-2">Contato reservado ao suporte Avespet</p>
         <div className="grid sm:grid-cols-2 gap-3">
