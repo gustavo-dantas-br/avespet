@@ -134,7 +134,8 @@ export default function AvesPerdidas({ onEntrar }) {
   const [erroPlanos, setErroPlanos] = useState("");
   const [mostrarCadastro, setMostrarCadastro] = useState(false);
   const [slideAtual, setSlideAtual] = useState(0);
-  const [carrosselPausado, setCarrosselPausado] = useState(false);\n  const [carrosselEmHover, setCarrosselEmHover] = useState(false);
+  const [carrosselPausado, setCarrosselPausado] = useState(false);
+  const [carrosselEmHover, setCarrosselEmHover] = useState(false);
 
   useEffect(() => {
     if (carrosselPausado || carrosselEmHover) return undefined;
