@@ -443,3 +443,60 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - A aba **Master > Aves perdidas** oferece **Testar e-mail**, com confirmação do operador. O teste chama a Edge Function existente `master-resend-test` (requer acesso Master, limita 3 testes/hora e envia exclusivamente ao endereço autenticado do administrador).
 - O botão não altera anúncios, não aprova ocorrências fictícias e não utiliza contatos dos tutores. Sua finalidade é verificar apenas o envio básico do Resend; o e-mail específico de aprovação continua dependendo de uma aprovação real e consentida.
 - Mensagens explicam que aceitar o envio pelo provedor não equivale à entrega na caixa principal; verificar spam e registros de entrega. Nenhum segredo é exposto no navegador.
+
+
+## 18. Landing page comercial — aves perdidas (27/11/2026)
+
+### Escopo desta entrega
+
+- A rota pública existente `/aves-perdidas` foi reorganizada como landing page comercial, sem criar rota paralela nem alterar o roteador.
+- Arquivo principal: `src/features/aves-perdidas/pages/AvesPerdidas.jsx`.
+- A página apresenta hero com chamada para cadastro gratuito, explicação do fluxo, benefícios, planos pagos, cadastro, anúncios publicados, FAQ e CTA final.
+- A identidade visual utiliza os tokens de `src/publico/ComponentesPublicos.jsx` e mantém o padrão verde/branco do Avespet.
+- SEO da rota é aplicado com `useSEO` de `src/publico/seo.js`, com título, descrição, Open Graph e canonical.
+- A vitrine pública continua usando `listarAvesPerdidas()` e a RPC `listar_aves_perdidas_publicas`; não foi criada consulta direta dos dados privados dos tutores.
+
+### Catálogo de planos e compatibilidade
+
+- A fonte oficial dos planos e preços publicados é `public.campaign_packages`.
+- O serviço `listarPacotesPublicos()` em `src/features/campanhas/services/campanhasService.js` consulta somente campos de apresentação, filtra `is_published = true` e ordena por `sort_order`.
+- A policy RLS existente `catalogo publicado somente leitura` autoriza SELECT público apenas quando `is_published = true`. A página não recebe permissões de escrita no catálogo.
+- Os códigos persistidos e aceitos no schema legado são `destaque`, `bairro`, `cidade` e `regional`. Não substituir esses identificadores por slugs comerciais como `local` ou `intensiva` sem migração compatível.
+- `src/features/campanhas/config/pacotes.js` recebeu a opção histórica `destaque`, pois esse código já é aceito pela constraint da tabela de solicitações.
+- O CTA dos cards envia o código do plano em `/campanha-ave-perdida?pacote=<code>`; `SolicitarCampanha.jsx` lê o parâmetro e pré-seleciona a opção correspondente.
+- O formulário de campanhas continua sendo uma solicitação de orçamento/contato, não uma contratação nem um checkout. A RLS existente exige `status = solicitada`, `valor IS NULL` e campos de contato dentro dos limites. A interface informa que nenhuma cobrança ocorre nessa etapa.
+- O preço apresentado na LP é lido do catálogo publicado; não é enviado como preço confiável pelo navegador. A solicitação atual ainda não grava `catalog_price_cents` nem `catalog_snapshot`; isso deve ser implementado em fluxo servidor-side antes de qualquer contratação com preço fixo.
+
+### Dados públicos, privacidade e LGPD
+
+- A página informa que telefone, e-mail e anilha não são exibidos na vitrine pública e que o contato é intermediado pelo Avespet.
+- A página informa expressamente que as fotos do bucket público podem ser acessadas por URL e orienta enviar somente fotografia da ave, sem documentos, rostos ou informações pessoais.
+- A localização exibida é aproximada, conforme projeção pública já utilizada.
+- Este aviso de interface não equivale a uma auditoria jurídica ou a um registro completo de consentimento. Antes da publicação comercial definitiva, validar a Política de Privacidade publicada, base legal e finalidade de cada tratamento, consentimento específico quando aplicável para divulgação de imagem/localização e consentimento de marketing separado e opcional.
+- O formulário atual de cadastro continua sendo o existente em `PerdiUmaAve.jsx`; não houve alteração de autenticação, upload, Storage ou persistência de dados nesta entrega.
+
+### Banco e infraestrutura
+
+- Consultas realizadas em modo de leitura confirmaram as tabelas `campaign_packages`, `solicitacoes_campanhas_aves`, `anuncios_aves_perdidas`, `campaign_order_operations` e `campaign_order_events`.
+- RLS está habilitada nas tabelas consultadas. A policy pública do catálogo restringe leitura a pacotes publicados; solicitações públicas permitem INSERT controlado, sem SELECT público; anúncios mantêm leitura pública por RPC e leitura do tutor/admin conforme policies existentes.
+- Nenhuma tabela, policy, função, trigger, bucket ou dado do Supabase foi alterado.
+- Nenhuma variável, domínio, configuração ou deployment da Vercel foi alterado. O projeto Vercel consultado é `avespet`, framework Vite, com domínios `avespet.com.br` e `www.avespet.com.br`.
+- A branch de trabalho desta entrega é `feature/lp-aves-perdidas`, criada a partir de `feature/impulsionamento-aves-perdidas`.
+
+### Validação pendente
+
+- [ ] Executar `npm run build` e testes automatizados na branch.
+- [ ] Validar visualmente em desktop e celular.
+- [ ] Testar leitura pública do catálogo com usuário anônimo e indisponibilidade do catálogo.
+- [ ] Testar pré-seleção dos quatro códigos e envio de solicitação de orçamento sem cobrança.
+- [ ] Validar a URL e o conteúdo da Política de Privacidade.
+- [ ] Definir e implementar registro de consentimentos aplicáveis, sem misturar consentimento de marketing com tratamento necessário ao serviço.
+- [ ] Conferir métricas de alcance e sua comunicação como estimativas, não garantias.
+
+### Histórico de implementação — 27/11/2026
+
+- Criada branch `feature/lp-aves-perdidas`.
+- Transformada a página pública existente em landing page e conectada a consulta pública do catálogo.
+- Corrigida compatibilidade do código `destaque` e pré-seleção do pacote vindo da LP.
+- Atualizada esta documentação e `docs/IMPULSIONAMENTO-AVES-PERDIDAS.md`.
+- Não houve merge, deploy manual, migration, alteração de produção, cobrança ou campanha Meta.
