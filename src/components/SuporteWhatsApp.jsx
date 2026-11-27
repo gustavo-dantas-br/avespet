@@ -7,44 +7,24 @@ function SuporteWhatsApp({ showSupportChat = false }) {
     window.dispatchEvent(new Event("avespet:abrir-chat-suporte"));
   }
 
-  const buttonBase = {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "9px",
-    padding: "13px 17px",
-    borderRadius: "999px",
-    color: "#FFFFFF",
-    fontWeight: 700,
-    fontSize: "14px",
-    textDecoration: "none",
-    boxShadow: "0 4px 14px rgba(0,0,0,0.22)",
-    whiteSpace: "nowrap",
-    minHeight: "48px",
-  };
+  const buttonBase =
+    "inline-flex min-h-12 min-w-12 items-center justify-center gap-2 rounded-full px-4 text-sm font-bold text-white no-underline shadow-lg transition-transform hover:scale-[1.03] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:min-w-0";
 
   return (
-    <div style={{
-      position: "fixed",
-      right: "20px",
-      bottom: "20px",
-      zIndex: 9999,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "flex-end",
-      flexWrap: "wrap",
-      gap: "10px",
-      maxWidth: "calc(100vw - 32px)",
-    }}>
+    <div
+      className="fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] right-3 z-[9999] flex max-w-[calc(100vw-24px)] flex-col-reverse items-end gap-2 sm:bottom-5 sm:right-5 sm:flex-row sm:items-center sm:gap-2.5"
+      aria-label="Canais de atendimento Avespet"
+    >
       {showSupportChat && (
         <button
           type="button"
           onClick={abrirChatSuporte}
           aria-label="Abrir chat de suporte Avespet"
-          style={{ ...buttonBase, border: "none", cursor: "pointer", background: "#174B3B" }}
+          title="Chat de suporte"
+          className={`${buttonBase} h-12 w-12 border-0 bg-[#174B3B] p-0 sm:h-auto sm:w-auto sm:px-4 sm:py-3`}
         >
-          <Headphones size={21} />
-          Chat de suporte
+          <Headphones size={21} aria-hidden="true" />
+          <span className="hidden sm:inline">Chat de suporte</span>
         </button>
       )}
       <a
@@ -52,10 +32,11 @@ function SuporteWhatsApp({ showSupportChat = false }) {
         target="_blank"
         rel="noreferrer"
         aria-label="Falar com o Avespet pelo WhatsApp"
-        style={{ ...buttonBase, background: "#25D366" }}
+        title="WhatsApp"
+        className={`${buttonBase} h-12 w-12 bg-[#25D366] p-0 sm:h-auto sm:w-auto sm:px-4 sm:py-3`}
       >
-        <MessageCircle size={22} />
-        WhatsApp
+        <MessageCircle size={22} aria-hidden="true" />
+        <span className="hidden sm:inline">WhatsApp</span>
       </a>
     </div>
   );
