@@ -5,7 +5,7 @@ const TTL = 72 * 60 * 60 * 1000;
 const FIELDS = [
   "id", "criadoEm", "nomeAve", "especie", "cor", "sexo", "idadeAproximada",
   "caracteristicas", "anilha", "cidade", "uf", "dataPerda", "descricao",
-  "contatoNome", "whatsapp", "bairro", "foto",
+  "contatoNome", "whatsapp", "bairro", "foto", "consentimentoPublicacao",
 ];
 let pending = null;
 
