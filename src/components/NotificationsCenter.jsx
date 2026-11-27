@@ -49,10 +49,12 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
   const totalPendentes = gruposCuidados.reduce((n,g)=>n+g.aves.length,0);
   const atualizarContagem = useCallback(async () => {
     if (!userId) return;
-    const { count, error } = await supabase.from("notificacoes")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId).eq("audience", audienceScope).is("lida_em", null).is("arquivada_em", null);
-    if (!error) setNaoLidasCount(count || 0);
+    if (!isAdmin) {
+      const { count, error } = await supabase.from("notificacoes")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId).eq("audience", audienceScope).is("lida_em", null).is("arquivada_em", null);
+      if (!error) setNaoLidasCount(count || 0);
+    } else setNaoLidasCount(0);
     if (isAdmin) {
       const { data: masterData } = await supabase.functions.invoke("master-notifications", { body: { action: "list" } });
       if (masterData?.success) setMasterNaoLidasCount(Number(masterData.unread_count || 0));
@@ -61,6 +63,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
 
   useEffect(() => {
     atualizarContagem();
+    if (isAdmin) return undefined;
     const canal = supabase.channel("notificacoes-" + userId)
       .on("postgres_changes", {
         event: "*", schema: "public", table: "notificacoes",
@@ -83,7 +86,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
       })
       .subscribe();
     return () => { supabase.removeChannel(canal); };
-  }, [userId, audienceScope, atualizarContagem]);
+  }, [userId, audienceScope, atualizarContagem, isAdmin]);
 
   useEffect(() => {
     if (!alerta) return undefined;
@@ -112,19 +115,23 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
     reset ? setLoading(true) : setCarregandoMais(true);
     setErro("");
     try {
-      let query = supabase.from("notificacoes")
-        .select("id,tipo,titulo,mensagem,referencia_tipo,referencia_id,lida_em,arquivada_em,criado_em")
-        .eq("user_id", userId).eq("audience", audienceScope).order("criado_em", { ascending: false })
-        .range(inicio, inicio + PAGE_SIZE - 1);
-      if (filtro === "arquivadas") query = query.not("arquivada_em", "is", null);
-      else {
-        query = query.is("arquivada_em", null);
-        if (filtro === "nao_lidas") query = query.is("lida_em", null);
-        if (filtro === "lidas") query = query.not("lida_em", "is", null);
+      let data = [];
+      if (!isAdmin) {
+        let query = supabase.from("notificacoes")
+          .select("id,tipo,titulo,mensagem,referencia_tipo,referencia_id,lida_em,arquivada_em,criado_em")
+          .eq("user_id", userId).eq("audience", audienceScope).order("criado_em", { ascending: false })
+          .range(inicio, inicio + PAGE_SIZE - 1);
+        if (filtro === "arquivadas") query = query.not("arquivada_em", "is", null);
+        else {
+          query = query.is("arquivada_em", null);
+          if (filtro === "nao_lidas") query = query.is("lida_em", null);
+          if (filtro === "lidas") query = query.not("lida_em", "is", null);
+        }
+        const result = await query;
+        if (result.error) throw result.error;
+        data = result.data || [];
       }
-      const { data, error } = await query;
-      if (error) throw error;
-      let novos = data || [];
+      let novos = data;
       if (isAdmin && filtro !== "arquivadas") {
         const { data: masterData, error: masterError } = await supabase.functions.invoke("master-notifications", { body: { action: "list" } });
         if (masterError || masterData?.error) throw new Error(masterData?.error || "Central Master indisponível.");
