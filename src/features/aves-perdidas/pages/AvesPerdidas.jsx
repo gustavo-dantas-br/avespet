@@ -6,6 +6,49 @@ import { Link } from "../../../publico/roteador";
 import { useSEO } from "../../../publico/seo";
 import { PaginaPublica, CartaoPublico, TEMA_PUBLICO } from "../../../publico/ComponentesPublicos";
 
+const DESTAQUES_AVES = [
+  {
+    id: "ring-neck",
+    especie: "Ring Neck",
+    chamada: "Seu Ring Neck merece uma busca que não pare.",
+    texto: "Cor, mutação, anilha e local do último avistamento: cada detalhe pode ajudar alguém a reconhecer sua ave.",
+    imagem: "https://cdn.pixabay.com/photo/2021/01/18/18/17/indian-ring-necked-parakeet-5929020_1280.jpg",
+    alt: "Ring Neck azul e verde pousados lado a lado",
+    etiqueta: "Identificação por detalhes",
+    posicao: "center 45%",
+  },
+  {
+    id: "calopsita",
+    especie: "Calopsita",
+    chamada: "Topete, bochechas e cores. Cada detalhe conta.",
+    texto: "Uma boa fotografia e uma descrição cuidadosa ajudam a comunidade a identificar uma calopsita desaparecida.",
+    imagem: "https://images.unsplash.com/photo-1759384278288-14f680d9cae7?auto=format&fit=crop&fm=jpg&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&ixlib=rb-4.1.0&q=80&w=2400",
+    alt: "Calopsita com topete amarelo e bochecha alaranjada",
+    etiqueta: "Uma foto faz diferença",
+    posicao: "center 38%",
+  },
+  {
+    id: "agapornis",
+    especie: "Agapornis",
+    chamada: "Pequeno no tamanho. Gigante no coração.",
+    texto: "Registre o desaparecimento, conte como reconhecer seu Agapornis e ajude a informação a chegar mais longe.",
+    imagem: "https://images.pexels.com/photos/30518528/pexels-photo-30518528/free-photo-of-pair-of-colorful-lovebirds-in-gentle-embrace.jpeg?auto=compress&dpr=1&h=1200&w=2000",
+    alt: "Dois Agapornis verdes aconchegados em um galho",
+    etiqueta: "Compartilhe a informação",
+    posicao: "center 45%",
+  },
+  {
+    id: "loris",
+    especie: "Lóris",
+    chamada: "Uma ave cheia de cores merece ser reconhecida.",
+    texto: "Descreva as cores da plumagem, envie uma fotografia e conte com o cadastro gratuito para iniciar a busca.",
+    imagem: "https://upload.wikimedia.org/wikipedia/commons/a/ac/Rainbow_larakeet.jpg",
+    alt: "Lóris-arco-íris com plumagem azul, verde e laranja",
+    etiqueta: "Cores que ajudam a identificar",
+    posicao: "center 35%",
+  },
+];
+
 function dataBrasil(valor) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(valor || "")) return "";
   const [ano, mes, dia] = valor.split("-");
@@ -44,59 +87,92 @@ function PlanoCard({ plano, destaque = false }) {
         <div className="text-xs font-bold" style={{ color: TEMA_PUBLICO.tinta }}>{plano.reach_label}</div>
         {alcance && <p className="mt-1 text-xs leading-5" style={{ color: TEMA_PUBLICO.texto }}>{alcance}</p>}
       </div>
-      <ul className="mt-4 space-y-2 text-sm" style={{ color: TEMA_PUBLICO.texto }}>
-        <li>✓ Divulgação por {plano.duration_days} dias</li>
-        <li>✓ Alcance geográfico planejado</li>
-        <li>✓ Atendimento da equipe Avespet</li>
-      </ul>
-      <Link para={`/campanha-ave-perdida?pacote=${encodeURIComponent(plano.code)}`} className="mt-6 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-bold transition hover:brightness-105" style={{ background: TEMA_PUBLICO.verde, color: "#FFFFFF" }}>
-        Solicitar este plano
-      </Link>
-      <p className="mt-3 text-center text-[11px] leading-5" style={{ color: TEMA_PUBLICO.texto }}>Solicitação sujeita à análise. Nenhuma cobrança nesta etapa.</p>
-    </article>
-  );
-}
+      <ul className="mt-4 space-y-2 text-sm" style={{       <section
+        className="relative isolate min-h-[560px] overflow-hidden bg-[#123D2E] md:min-h-[620px]"
+        aria-roledescription="carrossel"
+        aria-label="Destaques de aves atendidas pelo Avespet"
+        onMouseEnter={() => setCarrosselPausado(true)}
+        onMouseLeave={() => setCarrosselPausado(false)}
+        onFocusCapture={() => setCarrosselPausado(true)}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setCarrosselPausado(false);
+        }}
+      >
+        {DESTAQUES_AVES.map((slide, indice) => (
+          <div
+            key={slide.id}
+            className={`absolute inset-0 transition-opacity duration-700 ${indice === slideAtual ? "opacity-100" : "pointer-events-none opacity-0"}`}
+            aria-hidden={indice !== slideAtual}
+          >
+            <img
+              src={slide.imagem}
+              alt={indice === slideAtual ? slide.alt : ""}
+              className="absolute inset-0 h-full w-full object-cover"
+              style={{ objectPosition: slide.posicao }}
+              loading={indice === 0 ? "eager" : "lazy"}
+              fetchPriority={indice === 0 ? "high" : "auto"}
+            />
+          </div>
+        ))}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#092D20]/95 via-[#0B3827]/75 to-[#0B3827]/15" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#092D20]/65 via-transparent to-[#092D20]/10" />
 
-export default function AvesPerdidas({ onEntrar }) {
-  useSEO({
-    titulo: "Aves perdidas — ajude sua ave a voltar para casa",
-    descricao: "Cadastre gratuitamente uma ave perdida no Avespet. Consulte anúncios, compartilhe a busca e conheça opções de divulgação ampliada.",
-    caminho: "/aves-perdidas",
-  });
-  const [lista, setLista] = useState([]);
-  const [planos, setPlanos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingPlanos, setLoadingPlanos] = useState(true);
-  const [erro, setErro] = useState("");
-  const [erroPlanos, setErroPlanos] = useState("");
-  const [mostrarCadastro, setMostrarCadastro] = useState(false);
-
-  useEffect(() => {
-    let ativa = true;
-    listarAvesPerdidas()
-      .then((dados) => ativa && setLista(dados))
-      .catch(() => ativa && setErro("Não foi possível carregar os anúncios agora. Tente novamente em instantes."))
-      .finally(() => ativa && setLoading(false));
-    listarPacotesPublicos()
-      .then((dados) => ativa && setPlanos(dados))
-      .catch(() => ativa && setErroPlanos("Os planos não puderam ser carregados agora. O cadastro gratuito continua disponível."))
-      .finally(() => ativa && setLoadingPlanos(false));
-    return () => { ativa = false; };
-  }, []);
-
-  return (
-    <div style={{ background: TEMA_PUBLICO.fundo, minHeight: "65vh" }}>
-      <section className="relative overflow-hidden" style={{ background: TEMA_PUBLICO.verdeEscuro }}>
-        <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full opacity-20" style={{ background: "#8BB99A", filter: "blur(2px)" }} />
-        <div className="pointer-events-none absolute -bottom-32 left-1/3 h-72 w-72 rounded-full opacity-10" style={{ background: "#D7E8D9" }} />
-        <div className="relative mx-auto grid max-w-7xl gap-10 px-5 py-14 md:grid-cols-[1.15fr_.85fr] md:items-center md:px-8 md:py-20">
-          <div>
-            <span className="inline-flex rounded-full px-4 py-2 text-xs font-bold tracking-wide" style={{ background: "rgba(232,241,233,.14)", color: "#DCEBE0" }}>REDE DE APOIO AVESPET</span>
-            <h1 className="mt-6 max-w-3xl text-4xl font-bold leading-[1.08] tracking-tight text-white md:text-6xl" style={{ fontFamily: "'Fraunces', Georgia, serif" }}>
-              Uma busca não precisa ser feita <span style={{ color: "#B9D8BE" }}>sozinha.</span>
+        <div className="relative mx-auto flex min-h-[560px] max-w-7xl flex-col justify-center px-5 pb-28 pt-16 md:min-h-[620px] md:px-8 md:pb-32">
+          <div className="max-w-3xl">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-extrabold uppercase tracking-[.16em] text-white backdrop-blur-sm">
+              <span className="h-2 w-2 rounded-full bg-[#B9D8BE]" />
+              Rede de apoio Avespet
+            </span>
+            <p className="mt-7 text-sm font-extrabold uppercase tracking-[.2em] text-[#C6E2CB]">
+              {DESTAQUES_AVES[slideAtual].especie} · {DESTAQUES_AVES[slideAtual].etiqueta}
+            </p>
+            <h1 className="mt-4 max-w-3xl text-4xl font-bold leading-[1.08] tracking-tight text-white md:text-6xl" style={{ fontFamily: "'Fraunces', Georgia, serif" }}>
+              {DESTAQUES_AVES[slideAtual].chamada}
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 md:text-lg" style={{ color: "#D4E2D8" }}>
-              Registre gratuitamente o desaparecimento da sua ave, compartilhe as informações e conte com uma rede que ajuda a aproximar quem procura de quem pode encontrar.
+            <p className="mt-5 max-w-2xl text-base leading-8 text-[#E1EEE5] md:text-lg">
+              {DESTAQUES_AVES[slideAtual].texto}
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => { setMostrarCadastro(true); document.getElementById("cadastro-ave")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+                className="rounded-xl px-6 py-4 text-sm font-extrabold shadow-xl transition hover:-translate-y-0.5 hover:brightness-105"
+                style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}
+              >
+                Cadastrar ave gratuitamente
+              </button>
+              <a href="#planos" className="rounded-xl border border-white/50 bg-white/10 px-6 py-4 text-center text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20">
+                Conhecer planos de divulgação
+              </a>
+            </div>
+            <p className="mt-4 text-xs text-[#D1E2D6]">Cadastro gratuito. Planos pagos são opcionais e não garantem o reencontro.</p>
+          </div>
+        </div>
+
+        <div className="absolute inset-x-0 bottom-0">
+          <div className="mx-auto flex max-w-7xl items-end justify-between gap-4 px-5 pb-6 md:px-8 md:pb-8">
+            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Escolher espécie em destaque">
+              {DESTAQUES_AVES.map((slide, indice) => (
+                <button
+                  key={slide.id}
+                  type="button"
+                  onClick={() => setSlideAtual(indice)}
+                  aria-label={`Ver destaque de ${slide.especie}`}
+                  aria-pressed={slideAtual === indice}
+                  className={`h-2.5 rounded-full transition-all ${slideAtual === indice ? "w-10 bg-white" : "w-2.5 bg-white/55 hover:bg-white/85"}`}
+                />
+              ))}
+              <span className="ml-2 text-xs font-semibold text-white/90">{String(slideAtual + 1).padStart(2, "0")} / 04</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => irParaSlide(-1)} aria-label="Slide anterior" className="flex h-11 w-11 items-center justify-center rounded-full border border-white/45 bg-black/20 text-xl text-white backdrop-blur-sm transition hover:bg-white/20">‹</button>
+              <button type="button" onClick={() => irParaSlide(1)} aria-label="Próximo slide" className="flex h-11 w-11 items-center justify-center rounded-full border border-white/45 bg-black/20 text-xl text-white backdrop-blur-sm transition hover:bg-white/20">›</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+cimento da sua ave, compartilhe as informações e conte com uma rede que ajuda a aproximar quem procura de quem pode encontrar.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <button type="button" onClick={() => { setMostrarCadastro(true); document.getElementById("cadastro-ave")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} className="rounded-xl px-6 py-4 text-sm font-extrabold shadow-lg transition hover:brightness-105" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}>
