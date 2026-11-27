@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../supabaseClient";
+import NotificationsCenter from "../../components/NotificationsCenter";
 const CreatorManagement = React.lazy(() => import("./CreatorManagement"));
 const AdsModeration = React.lazy(() => import("./AdsModeration"));
 const LostBirdsModeration = React.lazy(() => import("./LostBirdsModeration"));
@@ -11,8 +12,9 @@ const MasterAdministrators = React.lazy(() => import("./MasterAdministrators"));
 const SupportOperations = React.lazy(() => import("./SupportOperations"));
 const MasterInboxPanel = React.lazy(() => import("./MasterInboxPanel"));
 const EmailAutomations = React.lazy(() => import("./EmailAutomations"));
+const SupportChat = React.lazy(() => import("./SupportChat"));
 import {
-  LayoutDashboard, Users, Bird, Megaphone, CreditCard, LifeBuoy, Mail,
+  LayoutDashboard, Users, Bird, Megaphone, CreditCard, LifeBuoy, Mail, MessageCircle,
   Settings, LogOut, ShieldCheck, RefreshCw, Menu, X, Activity, Workflow,
   ChevronRight, LockKeyhole, CircleHelp, TrendingUp, Eye, Clock3,
   CheckCircle2, AlertCircle, CalendarDays, ArrowUpRight,
@@ -29,6 +31,7 @@ const preloadModules = {
   support: () => import("./SupportOperations"),
   communications: () => import("./MasterInboxPanel"),
   "email-automations": () => import("./EmailAutomations"),
+  "support-chat": () => import("./SupportChat"),
   infrastructure: () => import("./InfrastructurePanel"),
   settings: () => import("./MasterAudit"),
   "master-admins": () => import("./MasterAdministrators"),
@@ -42,7 +45,8 @@ const navigation = [
   { id: "ads", label: "Anúncios e moderação", icon: Megaphone, description: "Aprovação e situação dos anúncios de aves" },
   { id: "lost-birds", label: "Aves perdidas", icon: Bird, description: "Moderação de aves perdidas e confirmação por e-mail" },
   { id: "billing", label: "Central comercial", icon: CreditCard, description: "Assinaturas e pacotes de divulgação" },
-  { id: "support", label: "Suporte operacional", icon: LifeBuoy, description: "Triagem de casos e preparação manual de e-mails de atendimento" },
+  { id: "support", label: "Suporte operacional", icon: LifeBuoy, description: "Triagem interna de casos e providências operacionais" },
+  { id: "support-chat", label: "Chamados dos criadores", icon: MessageCircle, description: "Chat de atendimento, respostas e histórico dos criadores" },
   { id: "communications", label: "Central de Comunicação", icon: Mail, description: "Caixas Suporte e Financeiro, novos e-mails e respostas" },
   { id: "email-automations", label: "Automações de e-mail", icon: Workflow, description: "Reativação, inscrições, envios e conteúdos" },
   { id: "infrastructure", label: "Infraestrutura", icon: Activity, description: "Capacidade e monitoramento técnico" },
@@ -137,6 +141,7 @@ export default function MasterApp({ user, onLogout }) {
   const [summaryError, setSummaryError] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [supportDraft, setSupportDraft] = useState(null);
+  const [supportUnread, setSupportUnread] = useState(0);
   // Preserva os dados e a posição de cada seção já visitada.
   // Os módulos ainda não visitados não carregam nem fazem consultas.
   const [visitedSections, setVisitedSections] = useState(() => ["overview"]);
@@ -165,6 +170,20 @@ export default function MasterApp({ user, onLogout }) {
 
   useEffect(() => { loadSummary(); }, [loadSummary]);
 
+  useEffect(() => {
+    if (!user?.id) return undefined;
+    const loadUnread = async () => {
+      const { count, error } = await supabase.from("support_tickets")
+        .select("id", { count: "exact", head: true }).eq("support_unread", true);
+      if (!error) setSupportUnread(count || 0);
+    };
+    loadUnread();
+    const channel = supabase.channel("master-support-unread-" + user.id)
+      .on("postgres_changes", { event: "*", schema: "public", table: "support_tickets" }, loadUnread)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id]);
+
   const selected = useMemo(() => navigation.find((item) => item.id === activeSection) || navigation[0], [activeSection]);
   const selectedPlaceholder = comingSoon[activeSection];
   const chooseSection = (id) => {
@@ -192,7 +211,7 @@ export default function MasterApp({ user, onLogout }) {
         {navigation.map((item) => {
           const Icon = item.icon;
           const active = activeSection === item.id;
-          return <button key={item.id} type="button" onClick={() => chooseSection(item.id)} onMouseEnter={() => preloadSection(item.id)} onFocus={() => preloadSection(item.id)} aria-current={active ? "page" : undefined} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[13px] font-medium transition" style={{ background: active ? "linear-gradient(90deg,#2c4969,#263f5c)" : "transparent", color: active ? "#fff" : "#b9c5d3", boxShadow: active ? "inset 3px 0 #d9b45b" : "none" }}><Icon size={18} /><span className="flex-1">{item.label}</span>{active && <ChevronRight size={15} />}</button>;
+          return <button key={item.id} type="button" onClick={() => chooseSection(item.id)} onMouseEnter={() => preloadSection(item.id)} onFocus={() => preloadSection(item.id)} aria-current={active ? "page" : undefined} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[13px] font-medium transition" style={{ background: active ? "linear-gradient(90deg,#2c4969,#263f5c)" : "transparent", color: active ? "#fff" : "#b9c5d3", boxShadow: active ? "inset 3px 0 #d9b45b" : "none" }}><Icon size={18} /><span className="flex-1">{item.label}</span>{item.id === "support-chat" && supportUnread > 0 && <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white">{supportUnread > 99 ? "99+" : supportUnread}</span>}{active && <ChevronRight size={15} />}</button>;
         })}
       </nav>
       <div className="border-t p-4" style={{ borderColor: "#293d55" }}>
@@ -210,7 +229,7 @@ export default function MasterApp({ user, onLogout }) {
       <div className="min-h-screen lg:pl-[270px]">
         <header className="sticky top-0 z-20 flex items-center justify-between border-b bg-white/95 px-4 py-3.5 backdrop-blur-xl sm:px-7" style={{ borderColor: "#e8edf2" }}>
           <div className="flex items-center gap-3"><button className="rounded-lg border border-slate-200 p-2 lg:hidden" onClick={() => setMobileMenuOpen(true)} aria-label="Abrir menu"><Menu size={19} /></button><div><p className="text-[11px] text-slate-400">Avespet <span className="px-1">/</span> Master</p><p className="text-sm font-semibold text-slate-800">{selected.label}</p></div></div>
-          <div className="flex items-center gap-2"><span className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold text-emerald-700 sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Ambiente restrito</span><button type="button" onClick={loadSummary} disabled={summaryLoading} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"><RefreshCw size={14} className={summaryLoading ? "animate-spin" : ""} /><span className="hidden sm:inline">Atualizar dados</span></button></div>
+          <div className="flex items-center gap-2"><NotificationsCenter userId={user.id} isAdmin={true} onNavigate={chooseSection} /><span className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold text-emerald-700 sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Ambiente restrito</span><button type="button" onClick={loadSummary} disabled={summaryLoading} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"><RefreshCw size={14} className={summaryLoading ? "animate-spin" : ""} /><span className="hidden sm:inline">Atualizar dados</span></button></div>
         </header>
 
         <main className="mx-auto max-w-[1500px] px-4 py-7 sm:px-7 lg:px-9">
@@ -223,6 +242,7 @@ export default function MasterApp({ user, onLogout }) {
                 : id === "birds" ? <BirdsManagement />
                 : id === "billing" ? <BillingManagement />
                 : id === "support" ? <SupportOperations onPrepareEmail={openSupportDraft} />
+                : id === "support-chat" ? <SupportChat user={user} mode="master" />
                 : id === "infrastructure" ? <InfrastructurePanel active={activeSection === id} />
                 : id === "master-admins" ? <MasterAdministrators />
                 : id === "settings" ? <MasterAudit />
