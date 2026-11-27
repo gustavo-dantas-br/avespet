@@ -165,7 +165,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
       else atualizarContagem();
     }, 45000);
     return () => window.clearInterval(timer);
-  }, [isAdmin, aberto, atualizarContagem]);
+  }, [isAdmin, aberto, atualizarContagem, carregar]);
 
   const naoLidas = naoLidasCount + masterNaoLidasCount + totalPendentes;
 
@@ -175,7 +175,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
       const { data, error } = await supabase.functions.invoke("master-notifications", { body: { action: "mark_read", id: item.referencia_id } });
       if (error || data?.error) { setErro("Não foi possível marcar como lida."); return false; }
       setItens((prev) => prev.map((n) => n.id === id ? { ...n, lida_em: new Date().toISOString() } : n));
-      setMasterNaoLidasCount((n) => Math.max(0, n - 1));
+      if (!item.arquivada_em) setMasterNaoLidasCount((n) => Math.max(0, n - 1));
       return true;
     }
     const agora = new Date().toISOString();
