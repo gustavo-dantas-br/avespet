@@ -4,6 +4,7 @@ import { listarPacotesPublicos, solicitarCampanha } from "../services/campanhasS
 import { listarMinhasAvesPerdidas } from "../../aves-perdidas/services/avesPerdidasService";
 import { supabase } from "../../../supabaseClient";
 import { PaginaPublica, CabecalhoPublico, CartaoPublico, TEMA_PUBLICO } from "../../../publico/ComponentesPublicos";
+import { Link } from "../../../publico/roteador";
 
 const input = {
   width: "100%",
@@ -167,6 +168,7 @@ export default function SolicitarCampanha() {
               </div>
 
               {erro && <p role="alert" className="mb-4 rounded-lg p-3 text-sm" style={{ background: "#FCEFEB", color: "#9A3D2C" }}>{erro}</p>}
+              <p className="mb-3 text-xs leading-5" style={{ color: TEMA_PUBLICO.texto }}>Ao enviar, seus dados serão usados para analisar e responder a esta solicitação. Consulte a <Link para="/privacidade" className="font-semibold underline">Política de Privacidade</Link>.</p>
               <p className="mb-4 text-xs leading-5" style={{ color: TEMA_PUBLICO.texto }}>Esta etapa é apenas uma solicitação de orçamento. A campanha só será iniciada após aprovação do orçamento e confirmação do pagamento. Não há garantia de localização ou recuperação da ave.</p>
               <button disabled={loading || carregandoPacotes || pacotes.length === 0 || !form.pacote} className="w-full rounded-xl py-3.5 font-bold text-white transition disabled:opacity-60" style={{ background: TEMA_PUBLICO.verde }}>{loading ? "Enviando..." : "Solicitar orçamento da campanha"}</button>
             </form>
