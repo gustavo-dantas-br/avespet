@@ -100,7 +100,49 @@ function PlanoCard({ plano, destaque = false }) {
   );
 }
 
+export default function AvesPerdidas({ onEntrar }) {
+  useSEO({
+    titulo: "Aves perdidas — ajude sua ave a voltar para casa",
+    descricao: "Cadastre gratuitamente uma ave perdida no Avespet. Consulte anúncios, compartilhe a busca e conheça opções de divulgação ampliada.",
+    caminho: "/aves-perdidas",
+  });
+  const [lista, setLista] = useState([]);
+  const [planos, setPlanos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingPlanos, setLoadingPlanos] = useState(true);
+  const [erro, setErro] = useState("");
+  const [erroPlanos, setErroPlanos] = useState("");
+  const [mostrarCadastro, setMostrarCadastro] = useState(false);
+  const [slideAtual, setSlideAtual] = useState(0);
+  const [carrosselPausado, setCarrosselPausado] = useState(false);
 
+  useEffect(() => {
+    if (carrosselPausado) return undefined;
+    const intervalo = window.setInterval(() => {
+      setSlideAtual((atual) => (atual + 1) % DESTAQUES_AVES.length);
+    }, 6500);
+    return () => window.clearInterval(intervalo);
+  }, [carrosselPausado]);
+
+  const irParaSlide = (direcao) => {
+    setSlideAtual((atual) => (atual + direcao + DESTAQUES_AVES.length) % DESTAQUES_AVES.length);
+  };
+
+  useEffect(() => {
+    let ativa = true;
+    listarAvesPerdidas()
+      .then((dados) => ativa && setLista(dados))
+      .catch(() => ativa && setErro("Não foi possível carregar os anúncios agora. Tente novamente em instantes."))
+      .finally(() => ativa && setLoading(false));
+    listarPacotesPublicos()
+      .then((dados) => ativa && setPlanos(dados))
+      .catch(() => ativa && setErroPlanos("Os planos não puderam ser carregados agora. O cadastro gratuito continua disponível."))
+      .finally(() => ativa && setLoadingPlanos(false));
+    return () => { ativa = false; };
+  }, []);
+
+  return (
+    <div style={{ background: TEMA_PUBLICO.fundo, minHeight: "65vh" }}>
       <section
         className="relative isolate min-h-[560px] overflow-hidden bg-[#123D2E] md:min-h-[620px]"
         aria-roledescription="carrossel"
@@ -130,7 +172,6 @@ function PlanoCard({ plano, destaque = false }) {
         ))}
         <div className="absolute inset-0 bg-gradient-to-r from-[#092D20]/95 via-[#0B3827]/75 to-[#0B3827]/15" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#092D20]/65 via-transparent to-[#092D20]/10" />
-
         <div className="relative mx-auto flex min-h-[560px] max-w-7xl flex-col justify-center px-5 pb-28 pt-16 md:min-h-[620px] md:px-8 md:pb-32">
           <div className="max-w-3xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-extrabold uppercase tracking-[.16em] text-white backdrop-blur-sm">
@@ -147,12 +188,7 @@ function PlanoCard({ plano, destaque = false }) {
               {DESTAQUES_AVES[slideAtual].texto}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => { setMostrarCadastro(true); document.getElementById("cadastro-ave")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
-                className="rounded-xl px-6 py-4 text-sm font-extrabold shadow-xl transition hover:-translate-y-0.5 hover:brightness-105"
-                style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}
-              >
+              <button type="button" onClick={() => { setMostrarCadastro(true); document.getElementById("cadastro-ave")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} className="rounded-xl px-6 py-4 text-sm font-extrabold shadow-xl transition hover:-translate-y-0.5 hover:brightness-105" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}>
                 Cadastrar ave gratuitamente
               </button>
               <a href="#planos" className="rounded-xl border border-white/50 bg-white/10 px-6 py-4 text-center text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20">
@@ -162,61 +198,17 @@ function PlanoCard({ plano, destaque = false }) {
             <p className="mt-4 text-xs text-[#D1E2D6]">Cadastro gratuito. Planos pagos são opcionais e não garantem o reencontro.</p>
           </div>
         </div>
-
         <div className="absolute inset-x-0 bottom-0">
           <div className="mx-auto flex max-w-7xl items-end justify-between gap-4 px-5 pb-6 md:px-8 md:pb-8">
             <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Escolher espécie em destaque">
               {DESTAQUES_AVES.map((slide, indice) => (
-                <button
-                  key={slide.id}
-                  type="button"
-                  onClick={() => setSlideAtual(indice)}
-                  aria-label={`Ver destaque de ${slide.especie}`}
-                  aria-pressed={slideAtual === indice}
-                  className={`h-2.5 rounded-full transition-all ${slideAtual === indice ? "w-10 bg-white" : "w-2.5 bg-white/55 hover:bg-white/85"}`}
-                />
+                <button key={slide.id} type="button" onClick={() => setSlideAtual(indice)} aria-label={`Ver destaque de ${slide.especie}`} aria-pressed={slideAtual === indice} className={`h-2.5 rounded-full transition-all ${slideAtual === indice ? "w-10 bg-white" : "w-2.5 bg-white/55 hover:bg-white/85"}`} />
               ))}
               <span className="ml-2 text-xs font-semibold text-white/90">{String(slideAtual + 1).padStart(2, "0")} / 04</span>
             </div>
             <div className="flex items-center gap-2">
               <button type="button" onClick={() => irParaSlide(-1)} aria-label="Slide anterior" className="flex h-11 w-11 items-center justify-center rounded-full border border-white/45 bg-black/20 text-xl text-white backdrop-blur-sm transition hover:bg-white/20">‹</button>
               <button type="button" onClick={() => irParaSlide(1)} aria-label="Próximo slide" className="flex h-11 w-11 items-center justify-center rounded-full border border-white/45 bg-black/20 text-xl text-white backdrop-blur-sm transition hover:bg-white/20">›</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-cimento da sua ave, compartilhe as informações e conte com uma rede que ajuda a aproximar quem procura de quem pode encontrar.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <button type="button" onClick={() => { setMostrarCadastro(true); document.getElementById("cadastro-ave")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} className="rounded-xl px-6 py-4 text-sm font-extrabold shadow-lg transition hover:brightness-105" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}>
-                Cadastrar ave gratuitamente
-              </button>
-              <a href="#planos" className="rounded-xl border px-6 py-4 text-center text-sm font-bold transition hover:bg-white/10" style={{ borderColor: "rgba(255,255,255,.35)", color: "#FFFFFF" }}>
-                Conhecer planos de divulgação
-              </a>
-            </div>
-            <p className="mt-4 text-xs" style={{ color: "#B9CEC0" }}>Cadastro gratuito. Planos pagos são opcionais e não garantem o reencontro.</p>
-          </div>
-          <div className="rounded-3xl p-5 md:p-7" style={{ background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.16)" }}>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl text-2xl" style={{ background: "rgba(255,255,255,.13)" }}>🦜</div>
-              <div>
-                <p className="text-sm font-bold text-white">A primeira atitude é simples</p>
-                <p className="text-xs" style={{ color: "#C5D8CB" }}>Comece sem pagar nada.</p>
-              </div>
-            </div>
-            <div className="mt-6 space-y-3">
-              {[
-                ["01", "Registre a ave", "Informe as características e onde foi vista pela última vez."],
-                ["02", "Acompanhe a análise", "Nossa equipe revisa as informações antes da publicação."],
-                ["03", "Amplie se desejar", "Conheça opções extras de divulgação depois do cadastro."],
-              ].map(([n, titulo, descricao]) => (
-                <div key={n} className="flex gap-4 rounded-2xl p-4" style={{ background: "rgba(255,255,255,.07)" }}>
-                  <span className="text-sm font-extrabold" style={{ color: "#B9D8BE" }}>{n}</span>
-                  <div><p className="text-sm font-bold text-white">{titulo}</p><p className="mt-1 text-xs leading-5" style={{ color: "#C5D8CB" }}>{descricao}</p></div>
-                </div>
-              ))}
             </div>
           </div>
         </div>
