@@ -39,6 +39,7 @@ export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
   const [reencontroId, setReencontroId] = useState(null);
   const [reencontro, setReencontro] = useState({ data: new Date().toISOString().slice(0,10), relato: "", nota: "", autoriza: false });
   const [salvandoReencontro, setSalvandoReencontro] = useState(false);
+  const [autorizaPublicacao, setAutorizaPublicacao] = useState(false);
   const alterar = (campo, valor) => setForm((atual) => ({ ...atual, [campo]: valor }));
 
   useEffect(() => {
@@ -115,8 +116,20 @@ export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
       setErro("Aguarde o carregamento da foto antes de salvar.");
       return;
     }
+    if (!autorizaPublicacao) {
+      setErro("Para enviar o anúncio, confirme a autorização específica de publicação das informações da ave.");
+      return;
+    }
     setEnviando(true);
     try {
+      const dadosComConsentimento = {
+        ...form,
+        consentimentoPublicacao: {
+          aceito: true,
+          versao: "2026-11-27",
+          registradoEm: new Date().toISOString(),
+        },
+      };
       if (!userId) {
         // O anúncio só será enviado quando existir uma conta autenticada.
         // Guarda o rascunho temporário sem armazenar a senha.
@@ -129,7 +142,7 @@ export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
         }
         const anterior = lerCadastroPendente();
         const novoId = anterior?.email === email ? anterior.anuncio.id : globalThis.crypto.randomUUID();
-        guardarCadastroPendente(email, { ...form, id: novoId, criadoEm: new Date().toISOString() });
+        guardarCadastroPendente(email, { ...dadosComConsentimento, id: novoId, criadoEm: new Date().toISOString() });
         if (modoConta === "entrar") {
           const { error: signInError } = await supabase.auth.signInWithPassword({
             email, password: contaSenha
@@ -167,17 +180,18 @@ export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
         return;
       }
       if (edicaoId) {
-        await atualizarMeuAnuncioPerdida(userId, edicaoId, { ...form, id: edicaoId });
+        await atualizarMeuAnuncioPerdida(userId, edicaoId, { ...dadosComConsentimento, id: edicaoId });
         setAnuncioCriadoId("");
         setMensagem("Atualização enviada! O anúncio ficará temporariamente fora da página pública enquanto nossa equipe revisa as alterações.");
       } else {
         const novoId = globalThis.crypto.randomUUID();
-        await criarAnuncioPerdida(userId || null, { ...form, id: novoId, criadoEm: new Date().toISOString() });
+        await criarAnuncioPerdida(userId || null, { ...dadosComConsentimento, id: novoId, criadoEm: new Date().toISOString() });
         setAnuncioCriadoId(novoId);
         setMensagem("Recebemos seu anúncio! Ele ficará aguardando análise e só aparecerá na página pública depois da aprovação.");
       }
       setForm({ ...FORM_INICIAL });
       setEdicaoId(null);
+      setAutorizaPublicacao(false);
       if (userId) await carregarAnuncios();
     } catch (e) {
       const excess = e?.status === 429 || e?.code === "over_email_send_rate_limit" ||
