@@ -143,6 +143,12 @@ function AppInner({ user, onLogout }) {
   const mobileMenuButtonRef = useRef(null);
 
   useEffect(() => {
+    const abrirSuporte = () => setTab("suporte");
+    window.addEventListener("avespet:abrir-chat-suporte", abrirSuporte);
+    return () => window.removeEventListener("avespet:abrir-chat-suporte", abrirSuporte);
+  }, []);
+
+  useEffect(() => {
     if (!mobileMenuOpen) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -1665,7 +1671,7 @@ if (!isMasterRoute) {
         user={session.user}
         onLogout={() => supabase.auth.signOut()}
       />
-      <SuporteWhatsApp />
+      <SuporteWhatsApp showSupportChat />
     </>
   );
 }
