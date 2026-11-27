@@ -101,6 +101,7 @@ function PlanoCard({ plano, destaque = false }) {
 }
 
 
+      <section
         className="relative isolate min-h-[560px] overflow-hidden bg-[#123D2E] md:min-h-[620px]"
         aria-roledescription="carrossel"
         aria-label="Destaques de aves atendidas pelo Avespet"
