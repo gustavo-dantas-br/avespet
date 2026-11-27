@@ -687,3 +687,24 @@ A disponibilidade HTTP e as condições de licença/atribuição de cada imagem 
 - A consulta ao Supabase foi somente leitura. Nenhuma tabela, policy, função ou registro foi alterado.
 - O CTA de cadastro continua disponível e o contato do tutor permanece protegido.
 - Build/preview da Vercel precisa ser conferido após o commit final; ainda não declarar validação visual até abrir o preview e revisar desktop/mobile.
+
+
+## Reorganização da narrativa da LP de aves perdidas — 27/11/2026
+
+### Objetivo de comunicação
+
+- Simplificar a primeira dobra e evitar misturar conteúdo educativo com oferta comercial nos três primeiros slides.
+- Nova sequência de oito slides:
+  1. **Cadastro gratuito:** orientar o tutor a começar registrando a ave desaparecida.
+  2. **Detalhes para identificação:** fotografia nítida, espécie, cores/mutações, anilha, data, local e características individuais.
+  3. **Busca gratuita:** explicar em linguagem simples a consulta da anilha no Avespet, a correspondência com anúncio aprovado e a intermediação protegida pela equipe.
+  4. Ring Neck — exemplo de espécie e características.
+  5. Calopsita — exemplo de espécie e características.
+  6. Agapornis — exemplo de espécie e características.
+  7. Lóris — exemplo de espécie e características.
+  8. **Divulgação ampliada:** apresentar campanha regional e estimativas de alcance como opção paga, depois de explicar a busca gratuita.
+- Nos três primeiros slides não aparecem preços, comparação com panfletos ou chamada para contratar plano. A chamada principal é cadastrar a ave gratuitamente.
+- A mensagem comercial e a comparação ilustrativa de custo permanecem apenas no último slide, com avisos de que alcance é estimado e não há garantia de reencontro.
+- A rotação automática permanece em 3 segundos, com pausa/retomada, navegação manual e pausa por hover/foco.
+- Catálogo de slides e controles usam índice dinâmico; não fixar contador no número anterior de slides.
+- A organização é apenas de interface e conteúdo. Não altera cadastro, regras de aprovação, busca por anilha, dados do tutor, tabelas, RLS, pagamentos ou integração Meta.
