@@ -549,3 +549,12 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - Não criar política jurídica com dados presumidos. Para redigir e publicar uma política correta, confirmar razão social/nome do controlador, CNPJ (se aplicável), endereço/canal institucional de contato, canal para solicitações de titulares e eventuais operadores/serviços terceiros envolvidos.
 - O cadastro deve distinguir: (1) tratamento necessário para receber, analisar e administrar o anúncio; (2) autorização específica e destacada para publicar a foto e os dados não sensíveis da ave/localização aproximada; (3) marketing opcional, sem condicionar o cadastro gratuito.
 - Até esses pontos serem resolvidos, manter a LP em preview e não anunciar a funcionalidade como pronta para lançamento comercial.
+
+
+### Identificação do controlador — informação fornecida pelo responsável do projeto (27/11/2026)
+
+- Controlador indicado para o Avespet: **NEBULA CLW LTDA**.
+- CNPJ informado: **67.073.285/0001-61**.
+- Esta identificação foi fornecida pelo responsável do projeto e ainda não foi conferida em fonte cadastral externa.
+- Endereço da sede, e-mail institucional para privacidade e canal de contato do encarregado/representante ainda não foram informados; não preencher com dados presumidos.
+- A Política de Privacidade permanece em preparação e não deve ser publicada como versão final enquanto o canal de atendimento aos titulares e os demais dados institucionais/operacionais não forem confirmados.
