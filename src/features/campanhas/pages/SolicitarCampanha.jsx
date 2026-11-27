@@ -30,9 +30,27 @@ export default function SolicitarCampanha() {
   const anuncioId = parametros.get("anuncio") || "";
   const pacoteSolicitado = parametros.get("pacote") || "";
   const [form, setForm] = useState({ pacote: pacoteSolicitado, nome: "", whatsapp: "", email: "", cidade: "", uf: "SP", areaAlvo: "", descricaoAve: "" });
-  const [loading, setLoading] = useState(false);\n  const [pacotes, setPacotes] = useState([]);\n  const [erroPacotes, setErroPacotes] = useState("");\n  const [carregandoPacotes, setCarregandoPacotes] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [pacotes, setPacotes] = useState([]);
+  const [erroPacotes, setErroPacotes] = useState("");
+  const [carregandoPacotes, setCarregandoPacotes] = useState(true);
   const [anuncioVerificadoId, setAnuncioVerificadoId] = useState("");
   const [avisoVinculo, setAvisoVinculo] = useState("");
+
+  useEffect(() => {
+    let ativo = true;
+    listarPacotesPublicos()
+      .then((dados) => {
+        if (!ativo) return;
+        const catalogo = dados.map((p) => ({ ...p, id: p.code, nome: p.name, alcance: p.reach_label }));
+        setPacotes(catalogo);
+        setForm((atual) => ({ ...atual, pacote: catalogo.some((p) => p.id === pacoteSolicitado) ? pacoteSolicitado : (catalogo[0]?.id || "") }));
+        if (!catalogo.length) setErroPacotes("Não há planos publicados disponíveis no momento. O cadastro gratuito da ave continua disponível.");
+      })
+      .catch(() => { if (ativo) setErroPacotes("Não foi possível carregar o catálogo de planos. Tente novamente mais tarde."); })
+      .finally(() => ativo && setCarregandoPacotes(false));
+    return () => { ativo = false; };
+  }, []);
 
   useEffect(() => {
     if (!anuncioId) return;
@@ -78,6 +96,7 @@ export default function SolicitarCampanha() {
     setErro("");
     setLoading(true);
     try {
+      if (!pacotes.some((p) => p.id === form.pacote)) throw new Error("Selecione um plano publicado disponível.");
       await solicitarCampanha({ ...form, anuncioId: anuncioVerificadoId });
       setEnviado(true);
     } catch (err) {
