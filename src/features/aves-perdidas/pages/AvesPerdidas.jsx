@@ -167,11 +167,11 @@ export default function AvesPerdidas({ onEntrar }) {
         className="relative isolate min-h-[560px] overflow-hidden bg-[#123D2E] md:min-h-[620px]"
         aria-roledescription="carrossel"
         aria-label="Destaques de aves atendidas pelo Avespet"
-        onMouseEnter={() => setCarrosselPausado(true)}
-        onMouseLeave={() => setCarrosselPausado(false)}
-        onFocusCapture={() => setCarrosselPausado(true)}
+        onMouseEnter={() => setCarrosselEmHover(true)}
+        onMouseLeave={() => setCarrosselEmHover(false)}
+        onFocusCapture={() => setCarrosselEmHover(true)}
         onBlurCapture={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget)) setCarrosselPausado(false);
+          if (!event.currentTarget.contains(event.relatedTarget)) setCarrosselEmHover(false);
         }}
       >
         {DESTAQUES_AVES.map((slide, indice) => (
@@ -234,7 +234,7 @@ export default function AvesPerdidas({ onEntrar }) {
                       <p className="mt-1 text-lg font-extrabold text-white">{dinheiro(plano.price_cents)}</p>
                       <p className="text-[10px] leading-4 text-white/80">{Number(plano.reach_min).toLocaleString("pt-BR")}–{Number(plano.reach_max).toLocaleString("pt-BR")} pessoas estimadas</p>
                       <p className="mt-2 border-t border-white/15 pt-2 text-xs font-bold text-white">
-                        {(menorCusto).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} a {(maiorCusto).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} centavos por pessoa
+                        {(menorCusto / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} a {(maiorCusto / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} por pessoa estimada
                       </p>
                     </div>
                   );
@@ -246,12 +246,26 @@ export default function AvesPerdidas({ onEntrar }) {
                 Cálculo ilustrativo: valor total do plano dividido pela estimativa de alcance cadastrada. Alcance real varia conforme campanha, região e entrega da plataforma; não é promessa de visualizações nem de recuperação.
               </p>
             )}
+            {slideAtual === 5 && (
+              <div className="mt-3 max-w-3xl rounded-xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
+                <p className="text-xs font-extrabold text-white">E se você distribuísse panfletos?</p>
+                <p className="mt-1 text-[11px] leading-5 text-white/85">
+                  Exemplo ilustrativo: 1.000 panfletos a R$ 0,50 por unidade custariam R$ 500,00, sem contar o tempo e a entrega. No Alerta Local, o investimento total cadastrado é R$ 119,90 para uma estimativa de 800 a 2.900 pessoas alcançadas na região.
+                </p>
+                <p className="mt-1 text-[10px] leading-4 text-white/70">
+                  O custo do panfleto é uma hipótese para comparação, não uma cotação de gráfica. O alcance da campanha é estimado e pode variar; compare sempre a entrega real e a área de cobertura.
+                </p>
+              </div>
+            )}
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <button type="button" onClick={() => { setMostrarCadastro(true); document.getElementById("cadastro-ave")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} className="rounded-xl px-6 py-4 text-sm font-extrabold shadow-xl transition hover:-translate-y-0.5 hover:brightness-105" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}>
-                Cadastrar ave gratuitamente
+              <button type="button" onClick={() => {
+                if (slideAtual === 5) document.getElementById("planos")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                else { setMostrarCadastro(true); document.getElementById("cadastro-ave")?.scrollIntoView({ behavior: "smooth", block: "start" }); }
+              }} className="rounded-xl px-6 py-4 text-sm font-extrabold shadow-xl transition hover:-translate-y-0.5 hover:brightness-105" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}>
+                {slideAtual === 5 ? "Comparar planos e alcance" : "Cadastrar ave gratuitamente"}
               </button>
-              <a href="#planos" className="rounded-xl border border-white/50 bg-white/10 px-6 py-4 text-center text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20">
-                Conhecer planos de divulgação
+              <a href={slideAtual === 5 ? "#cadastro-ave" : "#planos"} className="rounded-xl border border-white/50 bg-white/10 px-6 py-4 text-center text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20">
+                {slideAtual === 5 ? "Começar pela busca gratuita" : "Conhecer planos de divulgação"}
               </a>
             </div>
             <p className="mt-4 text-xs text-[#D1E2D6]">Cadastro gratuito. Planos pagos são opcionais e não garantem o reencontro.</p>
