@@ -24,9 +24,9 @@ Deno.serve(async req=>{
  let body:any;try{const raw=await req.text();if(raw.length>3000)throw 0;body=JSON.parse(raw);if(!body||Array.isArray(body)||typeof body!=="object")throw 0}catch{return response({error:"Requisição inválida."},400,origin)}
  const action=str(body.action,20);
  try{
-  if(action==="mark_read"||action==="archive"){
+  if(action==="mark_read"||action==="archive"||action==="restore"){
    const id=str(body.id,40);if(!/^[0-9a-f-]{36}$/i.test(id))return response({error:"Identificador inválido."},400,origin);
-   const {error}=await db.from("master_notifications").update(action==="mark_read"?{read_at:new Date().toISOString()}:{archived_at:new Date().toISOString()}).eq("id",id);
+   const {error}=await db.from("master_notifications").update(action==="mark_read"?{read_at:new Date().toISOString()}:action==="archive"?{archived_at:new Date().toISOString()}:{archived_at:null}).eq("id",id);
    if(error)throw error;
   }else if(action!=="list")return response({error:"Ação inválida."},400,origin);
   if(action==="list"){
@@ -65,8 +65,10 @@ Deno.serve(async req=>{
    }
    if(pending.length){const {error}=await db.from("master_notifications").upsert(pending,{onConflict:"source_key",ignoreDuplicates:true});if(error)throw error}
   }
-  const {data,error}=await db.from("master_notifications").select("id,category,title,message,priority,target_section,source_created_at,read_at,archived_at,created_at").is("archived_at",null).order("source_created_at",{ascending:false}).limit(60);
+  let notificationQuery=db.from("master_notifications").select("id,category,title,message,priority,target_section,source_created_at,read_at,archived_at,created_at");
+  notificationQuery=body.include_archived===true?notificationQuery.not("archived_at","is",null):notificationQuery.is("archived_at",null);
+  const {data,error}=await notificationQuery.order("source_created_at",{ascending:false}).limit(60);
   if(error)throw error;
-  const items=list(data);return response({success:true,items,unread_count:items.filter(x=>!x.read_at).length},200,origin);
+  const items=list(data);return response({success:true,items,unread_count:items.filter(x=>!x.read_at&&!x.archived_at).length},200,origin);
  }catch(e){console.error("master-notifications",e instanceof Error?e.message:"unknown");return response({error:"Não foi possível carregar as notificações."},503,origin)}
 });
