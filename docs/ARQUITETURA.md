@@ -558,3 +558,19 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - Esta identificação foi fornecida pelo responsável do projeto e ainda não foi conferida em fonte cadastral externa.
 - Endereço da sede, e-mail institucional para privacidade e canal de contato do encarregado/representante ainda não foram informados; não preencher com dados presumidos.
 - A Política de Privacidade permanece em preparação e não deve ser publicada como versão final enquanto o canal de atendimento aos titulares e os demais dados institucionais/operacionais não forem confirmados.
+
+
+## Política de Privacidade e autorização de publicação — 27/11/2026
+
+- Controlador informado pelo responsável do projeto: NEBULA CLW LTDA, CNPJ 67.073.285/0001-61.
+- Endereço informado: Rua Celestino Marinelli, 10 — Parque São Domingos, São Paulo/SP — CEP 05126-120.
+- Canal informado para privacidade: contato@nebulaclw.com.
+- Criada a página pública `/privacidade` em `src/publico/PoliticaPrivacidade.jsx`, com identificação do controlador, categorias de dados, finalidades, exposição pública, imagens, compartilhamento, retenção, direitos e contato.
+- A rota é renderizada em `src/components/AuthPage.jsx` e o link está no rodapé público.
+- Os formulários de cadastro de ave e de solicitação de campanha passaram a apontar para a Política de Privacidade.
+- No formulário de ave perdida, a autorização específica para publicar dados da ave, fotografia e localização aproximada é exigida antes do envio. O registro é incluído no JSON `anuncios_aves_perdidas.data.consentimentoPublicacao`, com versão `2026-11-27` e timestamp ISO, junto ao anúncio. O aceite não é consentimento de marketing.
+- A autorização cobre publicação do anúncio e imagem em bucket público. O usuário é avisado de que a URL da fotografia pode ser acessada por terceiros; recomenda-se não enviar documentos, rostos ou conteúdo pessoal.
+- A solicitação de campanha informa finalidade de contato e liga para a política; não há checkbox de marketing nem contratação automática.
+- A política é uma versão inicial informativa, não um parecer jurídico. Antes de produção, revisar com assessoria jurídica e confirmar operadores/suboperadores, países de processamento, prazos concretos de retenção, procedimentos de incidentes, canal do encarregado quando aplicável e texto final de bases legais.
+- Nenhuma migration ou mudança de schema foi necessária: o consentimento do anúncio é guardado no campo JSON `data` já existente. Não foi alterada a configuração do Supabase.
+- Endereço, CNPJ e e-mail foram informados pelo responsável do projeto; não houve validação cadastral externa.
