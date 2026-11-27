@@ -11,6 +11,7 @@ const MasterAdministrators = React.lazy(() => import("./MasterAdministrators"));
 const SupportOperations = React.lazy(() => import("./SupportOperations"));
 const MasterInboxPanel = React.lazy(() => import("./MasterInboxPanel"));
 const EmailAutomations = React.lazy(() => import("./EmailAutomations"));
+const SupportChat = React.lazy(() => import("./SupportChat"));
 import {
   LayoutDashboard, Users, Bird, Megaphone, CreditCard, LifeBuoy, Mail,
   Settings, LogOut, ShieldCheck, RefreshCw, Menu, X, Activity, Workflow,
@@ -29,6 +30,7 @@ const preloadModules = {
   support: () => import("./SupportOperations"),
   communications: () => import("./MasterInboxPanel"),
   "email-automations": () => import("./EmailAutomations"),
+  "support-chat": () => import("./SupportChat"),
   infrastructure: () => import("./InfrastructurePanel"),
   settings: () => import("./MasterAudit"),
   "master-admins": () => import("./MasterAdministrators"),
@@ -42,7 +44,8 @@ const navigation = [
   { id: "ads", label: "Anúncios e moderação", icon: Megaphone, description: "Aprovação e situação dos anúncios de aves" },
   { id: "lost-birds", label: "Aves perdidas", icon: Bird, description: "Moderação de aves perdidas e confirmação por e-mail" },
   { id: "billing", label: "Central comercial", icon: CreditCard, description: "Assinaturas e pacotes de divulgação" },
-  { id: "support", label: "Suporte operacional", icon: LifeBuoy, description: "Triagem de casos e preparação manual de e-mails de atendimento" },
+  { id: "support", label: "Suporte operacional", icon: LifeBuoy, description: "Triagem interna de casos e providências operacionais" },
+  { id: "support-chat", label: "Chamados dos criadores", icon: MessageCircle, description: "Chat de atendimento, respostas e histórico dos criadores" },
   { id: "communications", label: "Central de Comunicação", icon: Mail, description: "Caixas Suporte e Financeiro, novos e-mails e respostas" },
   { id: "email-automations", label: "Automações de e-mail", icon: Workflow, description: "Reativação, inscrições, envios e conteúdos" },
   { id: "infrastructure", label: "Infraestrutura", icon: Activity, description: "Capacidade e monitoramento técnico" },
@@ -223,6 +226,7 @@ export default function MasterApp({ user, onLogout }) {
                 : id === "birds" ? <BirdsManagement />
                 : id === "billing" ? <BillingManagement />
                 : id === "support" ? <SupportOperations onPrepareEmail={openSupportDraft} />
+                : id === "support-chat" ? <SupportChat user={user} mode="master" />
                 : id === "infrastructure" ? <InfrastructurePanel active={activeSection === id} />
                 : id === "master-admins" ? <MasterAdministrators />
                 : id === "settings" ? <MasterAudit />
