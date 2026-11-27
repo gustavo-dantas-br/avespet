@@ -161,8 +161,8 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
   useEffect(() => {
     if (!isAdmin) return undefined;
     const timer = window.setInterval(() => {
-      atualizarContagem();
       if (aberto) carregar(true);
+      else atualizarContagem();
     }, 45000);
     return () => window.clearInterval(timer);
   }, [isAdmin, aberto, atualizarContagem]);
