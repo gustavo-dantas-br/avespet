@@ -24,6 +24,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
   const [temMais, setTemMais] = useState(false);
   const [erro, setErro] = useState("");
   const [naoLidasCount, setNaoLidasCount] = useState(0);
+  const [masterNaoLidasCount, setMasterNaoLidasCount] = useState(0);
   const [alerta, setAlerta] = useState(null);
   const [permissao, setPermissao] = useState(() => (typeof Notification !== "undefined" ? Notification.permission : "unsupported"));
   const [ativandoPush, setAtivandoPush] = useState(false);
@@ -52,7 +53,11 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId).eq("audience", audienceScope).is("lida_em", null).is("arquivada_em", null);
     if (!error) setNaoLidasCount(count || 0);
-  }, [userId, audienceScope]);
+    if (isAdmin) {
+      const { data: masterData } = await supabase.functions.invoke("master-notifications", { body: { action: "list" } });
+      if (masterData?.success) setMasterNaoLidasCount(Number(masterData.unread_count || 0));
+    } else setMasterNaoLidasCount(0);
+  }, [userId, audienceScope, isAdmin]);
 
   useEffect(() => {
     atualizarContagem();
@@ -79,6 +84,15 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
       .subscribe();
     return () => { supabase.removeChannel(canal); };
   }, [userId, audienceScope, atualizarContagem]);
+
+  useEffect(() => {
+    if (!isAdmin) return undefined;
+    const timer = window.setInterval(() => {
+      atualizarContagem();
+      if (aberto) carregar(true);
+    }, 45000);
+    return () => window.clearInterval(timer);
+  }, [isAdmin, aberto, atualizarContagem]);
 
   useEffect(() => {
     if (!alerta) return undefined;
@@ -119,24 +133,44 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
       }
       const { data, error } = await query;
       if (error) throw error;
-      const novos = data || [];
+      let novos = data || [];
+      if (isAdmin && filtro !== "arquivadas") {
+        const { data: masterData, error: masterError } = await supabase.functions.invoke("master-notifications", { body: { action: "list" } });
+        if (masterError || masterData?.error) throw new Error(masterData?.error || "Central Master indisponível.");
+        const masterItems = (masterData?.items || []).map((item) => ({
+          id: "master:" + item.id, tipo: item.category, titulo: item.title, mensagem: item.message,
+          referencia_tipo: "master_notification", referencia_id: item.id, target_section: item.target_section,
+          lida_em: item.read_at, arquivada_em: item.archived_at, criado_em: item.source_created_at || item.created_at,
+          _master: true,
+        })).filter((item) => filtro === "todas" || (filtro === "nao_lidas" ? !item.lida_em : Boolean(item.lida_em)));
+        setMasterNaoLidasCount(Number(masterData?.unread_count || 0));
+        novos = [...novos, ...masterItems].sort((a,b) => Date.parse(b.criado_em || 0) - Date.parse(a.criado_em || 0));
+      } else if (isAdmin) setMasterNaoLidasCount(0);
       setItens((prev) => reset ? novos : [...prev, ...novos]);
-      setTemMais(novos.length === PAGE_SIZE);
+      setTemMais((data || []).length === PAGE_SIZE);
     } catch (e) {
       setErro("Não foi possível carregar as notificações. " + (e?.message || ""));
     } finally {
       setLoading(false);
       setCarregandoMais(false);
     }
-  }, [userId, audienceScope, filtro, itens.length]);
+  }, [userId, audienceScope, filtro, itens.length, isAdmin]);
 
   useEffect(() => {
     if (aberto) {carregar(true);atualizarCuidados();}
   }, [aberto, filtro, userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const naoLidas = naoLidasCount + totalPendentes;
+  const naoLidas = naoLidasCount + masterNaoLidasCount + totalPendentes;
 
   async function marcarLida(id) {
+    const item = itens.find((n) => n.id === id);
+    if (item?._master) {
+      const { data, error } = await supabase.functions.invoke("master-notifications", { body: { action: "mark_read", id: item.referencia_id } });
+      if (error || data?.error) { setErro("Não foi possível marcar como lida."); return false; }
+      setItens((prev) => prev.map((n) => n.id === id ? { ...n, lida_em: new Date().toISOString() } : n));
+      setMasterNaoLidasCount((n) => Math.max(0, n - 1));
+      return true;
+    }
     const agora = new Date().toISOString();
     const { error } = await supabase.from("notificacoes").update({ lida_em: agora }).eq("id", id).eq("user_id", userId);
     if (error) { setErro("Não foi possível marcar como lida."); return false; }
@@ -146,16 +180,29 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
   }
 
   async function marcarTodas() {
-    const ids = itens.filter((n) => !n.lida_em && !n.arquivada_em).map((n) => n.id);
-    if (!ids.length) return;
+    const ids = itens.filter((n) => !n._master && !n.lida_em && !n.arquivada_em).map((n) => n.id);
+    const masterItems = itens.filter((n) => n._master && !n.lida_em && !n.arquivada_em);
+    if (!ids.length && !masterItems.length) return;
     const agora = new Date().toISOString();
-    const { error } = await supabase.from("notificacoes").update({ lida_em: agora }).in("id", ids).eq("user_id", userId);
-    if (error) { setErro("Não foi possível marcar todas como lidas."); return; }
-    setItens((prev) => prev.map((n) => ids.includes(n.id) ? { ...n, lida_em: agora } : n));
+    if (ids.length) {
+      const { error } = await supabase.from("notificacoes").update({ lida_em: agora }).in("id", ids).eq("user_id", userId);
+      if (error) { setErro("Não foi possível marcar todas como lidas."); return; }
+    }
+    const masterResults = await Promise.all(masterItems.map((item) => supabase.functions.invoke("master-notifications", { body: { action: "mark_read", id: item.referencia_id } })));
+    if (masterResults.some((result) => result.error || result.data?.error)) { setErro("Algumas notificações Master não puderam ser marcadas como lidas."); return; }
+    setItens((prev) => prev.map((n) => ids.includes(n.id) || masterItems.some((item) => item.id === n.id) ? { ...n, lida_em: agora } : n));
     setNaoLidasCount((n) => Math.max(0, n - ids.length));
+    setMasterNaoLidasCount((n) => Math.max(0, n - masterItems.length));
   }
 
   async function arquivar(n) {
+    if (n._master) {
+      const { data, error } = await supabase.functions.invoke("master-notifications", { body: { action: "archive", id: n.referencia_id } });
+      if (error || data?.error) { setErro("Não foi possível arquivar esta notificação."); return; }
+      setItens((prev) => prev.filter((item) => item.id !== n.id));
+      if (!n.lida_em) setMasterNaoLidasCount((count) => Math.max(0, count - 1));
+      return;
+    }
     const agora = new Date().toISOString();
     const atualizacao = { arquivada_em: agora, ...(!n.lida_em ? { lida_em: agora } : {}) };
     const { error } = await supabase.from("notificacoes").update(atualizacao).eq("id", n.id).eq("user_id", userId);
@@ -172,7 +219,8 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
 
   async function abrirNotificacao(n) {
     if (!n.lida_em) await marcarLida(n.id);
-    if (n.referencia_tipo === "achado_anilha") onNavigate?.(isAdmin ? "achados" : "perdi-uma-ave");
+    if (n._master) onNavigate?.(n.target_section);
+    else if (n.referencia_tipo === "achado_anilha") onNavigate?.(isAdmin ? "achados" : "perdi-uma-ave");
     else if (n.referencia_tipo === "anuncio_ave_perdida") onNavigate?.(isAdmin ? "aves-perdidas-admin" : "perdi-uma-ave");
     else if (n.referencia_tipo === "anuncio") onNavigate?.(isAdmin ? "aprovacoes" : "anuncios");
     else if (n.referencia_tipo === "support_ticket") onNavigate?.(isAdmin ? "support-chat" : "suporte");
