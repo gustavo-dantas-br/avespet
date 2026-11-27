@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { atualizarMeuAnuncioPerdida, criarAnuncioPerdida, listarMinhasAvesPerdidas, confirmarReencontro } from "../services/avesPerdidasService";
 import { comprimirEEnviarImagemPublica } from "../utils/comprimirImagem";
 import { supabase } from "../../../supabaseClient";
-import { guardarCadastroPendente, lerCadastroPendente, marcarConfirmacaoSolicitada } from "../services/cadastroPendenteAvePerdida";
+import { guardarCadastroPendente, lerCadastroPendente, marcarConfirmacaoSolicitada, finalizarCadastroPendente } from "../services/cadastroPendenteAvePerdida";
 
 const input = { width: "100%", padding: "12px", borderRadius: 8, border: "1px solid #e3d3b4", background: "#fff", color: "#2B241C" };
 const STATUS = {
@@ -64,6 +64,23 @@ export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
   }, [userId]);
 
   useEffect(() => { if (userId !== undefined) carregarAnuncios(); }, [carregarAnuncios, userId]);
+  useEffect(() => {
+    if (!userId) return;
+    let ativa = true;
+    (async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data?.user || data.user.id !== userId) return;
+      const resultado = await finalizarCadastroPendente(data.user, criarAnuncioPerdida);
+      if (!ativa || resultado.status !== "salvo") return;
+      setAguardandoConfirmacao(false);
+      setAnuncioCriadoId(resultado.id);
+      setMensagem("E-mail confirmado e anúncio enviado para análise. Você pode acompanhar o andamento nesta página.");
+      await carregarAnuncios();
+    })().catch((e) => {
+      if (ativa) setErro(e?.message || "Não foi possível concluir o envio do anúncio salvo.");
+    });
+    return () => { ativa = false; };
+  }, [userId, carregarAnuncios]);
   useEffect(() => {
     if (!userId) return;
     const atualizar = () => carregarAnuncios();
@@ -144,10 +161,11 @@ export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
         const novoId = anterior?.email === email ? anterior.anuncio.id : globalThis.crypto.randomUUID();
         guardarCadastroPendente(email, { ...dadosComConsentimento, id: novoId, criadoEm: new Date().toISOString() });
         if (modoConta === "entrar") {
-          const { error: signInError } = await supabase.auth.signInWithPassword({
+          const { data, error: signInError } = await supabase.auth.signInWithPassword({
             email, password: contaSenha
           });
           if (signInError) throw new Error("Não foi possível entrar. Confira e-mail e senha ou recupere a senha no login.");
+          setUserId(data.user?.id || null);
           setMensagem("Conta identificada. Estamos vinculando o anúncio ao seu perfil.");
         } else {
           const nomeCompleto = form.contatoNome.trim();
@@ -168,6 +186,7 @@ export default function PerdiUmaAve({ userId: userIdInicial, onEntrar }) {
           });
           if (signupError) throw signupError;
           if (data?.session) {
+            setUserId(data.user?.id || null);
             setMensagem("Conta criada. Estamos enviando seu anúncio para análise.");
           } else {
             marcarConfirmacaoSolicitada(email);
