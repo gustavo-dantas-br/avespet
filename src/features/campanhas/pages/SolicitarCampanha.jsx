@@ -27,7 +27,9 @@ const label = {
 };
 
 export default function SolicitarCampanha() {
-  const parametros = new URLSearchParams(window.location.search);\n  const anuncioId = parametros.get("anuncio") || "";\n  const pacoteSolicitado = parametros.get("pacote") || "";
+  const parametros = new URLSearchParams(window.location.search);
+  const anuncioId = parametros.get("anuncio") || "";
+  const pacoteSolicitado = parametros.get("pacote") || "";
   const [form, setForm] = useState({ pacote: PACOTES_CAMPANHA.some((p) => p.id === pacoteSolicitado) ? pacoteSolicitado : "cidade", nome: "", whatsapp: "", email: "", cidade: "", uf: "SP", areaAlvo: "", descricaoAve: "" });
   const [loading, setLoading] = useState(false);
   const [anuncioVerificadoId, setAnuncioVerificadoId] = useState("");
