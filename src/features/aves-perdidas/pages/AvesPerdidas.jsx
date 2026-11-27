@@ -8,10 +8,40 @@ import { PaginaPublica, CartaoPublico, TEMA_PUBLICO } from "../../../publico/Com
 
 const DESTAQUES_AVES = [
   {
+    id: "cadastre-sua-ave",
+    especie: "Primeiro passo",
+    chamada: "Sua ave desapareceu? Comece pelo cadastro gratuito.",
+    texto: "Registre o desaparecimento e deixe as informações da sua ave organizadas em um só lugar. O cadastro é o primeiro passo para iniciar a busca.",
+    imagem: "https://cdn.pixabay.com/photo/2021/01/18/18/17/indian-ring-necked-parakeet-5929020_1280.jpg",
+    alt: "Ring Neck azul e verde em fotografia ilustrativa",
+    etiqueta: "Registre a ocorrência",
+    posicao: "center 45%",
+  },
+  {
+    id: "detalhes-importam",
+    especie: "Prepare as informações",
+    chamada: "Cada detalhe pode ajudar alguém a reconhecer sua ave.",
+    texto: "Informe a espécie, as cores e mutações, características marcantes, data e local do desaparecimento. Envie uma foto nítida e, se houver, informe o número completo da anilha.",
+    imagem: "https://images.unsplash.com/photo-1759384278288-14f680d9cae7?auto=format&fit=crop&fm=jpg&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&ixlib=rb-4.1.0&q=80&w=2400",
+    alt: "Calopsita com topete amarelo e bochecha alaranjada",
+    etiqueta: "Foto + características + anilha",
+    posicao: "center 38%",
+  },
+  {
+    id: "busca-gratuita",
+    especie: "Como a busca funciona",
+    chamada: "A anilha pode ser uma pista importante para chegar até você.",
+    texto: "Quem encontra uma ave pode pesquisar a espécie e consultar a numeração da anilha no Avespet. Se houver um cadastro aprovado compatível, nossa equipe confere as informações e intermedeia o contato com o tutor.",
+    imagem: "https://images.pexels.com/photos/30518528/pexels-photo-30518528/free-photo-of-pair-of-colorful-lovebirds-in-gentle-embrace.jpeg?auto=compress&dpr=1&h=1200&w=2000",
+    alt: "Casal de Agapornis em um galho",
+    etiqueta: "Consulta gratuita e contato protegido",
+    posicao: "center 45%",
+  },
+  {
     id: "ring-neck",
     especie: "Ring Neck",
-    chamada: "Seu Ring Neck merece uma busca que não pare.",
-    texto: "Cor, mutação, anilha e local do último avistamento: cada detalhe pode ajudar alguém a reconhecer sua ave.",
+    chamada: "Ajude as pessoas a reconhecer seu Ring Neck.",
+    texto: "Cor, mutação, formato do bico, anilha e marcas individuais: descreva o que torna sua ave única.",
     imagem: "https://cdn.pixabay.com/photo/2021/01/18/18/17/indian-ring-necked-parakeet-5929020_1280.jpg",
     alt: "Ring Neck azul e verde pousados lado a lado",
     etiqueta: "Identificação por detalhes",
@@ -21,7 +51,7 @@ const DESTAQUES_AVES = [
     id: "calopsita",
     especie: "Calopsita",
     chamada: "Topete, bochechas e cores. Cada detalhe conta.",
-    texto: "Uma boa fotografia e uma descrição cuidadosa ajudam a comunidade a identificar uma calopsita desaparecida.",
+    texto: "Uma fotografia nítida e uma descrição cuidadosa ajudam outras pessoas a reconhecer uma calopsita desaparecida.",
     imagem: "https://images.unsplash.com/photo-1759384278288-14f680d9cae7?auto=format&fit=crop&fm=jpg&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&ixlib=rb-4.1.0&q=80&w=2400",
     alt: "Calopsita com topete amarelo e bochecha alaranjada",
     etiqueta: "Uma foto faz diferença",
@@ -31,40 +61,30 @@ const DESTAQUES_AVES = [
     id: "agapornis",
     especie: "Agapornis",
     chamada: "Pequeno no tamanho. Gigante no coração.",
-    texto: "Registre o desaparecimento, conte como reconhecer seu Agapornis e ajude a informação a chegar mais longe.",
+    texto: "Registre as cores, as marcas e os detalhes que ajudam a diferenciar seu Agapornis.",
     imagem: "https://images.pexels.com/photos/30518528/pexels-photo-30518528/free-photo-of-pair-of-colorful-lovebirds-in-gentle-embrace.jpeg?auto=compress&dpr=1&h=1200&w=2000",
     alt: "Dois Agapornis verdes aconchegados em um galho",
-    etiqueta: "Compartilhe a informação",
+    etiqueta: "Características que identificam",
     posicao: "center 45%",
   },
   {
     id: "loris",
     especie: "Lóris",
     chamada: "Uma ave cheia de cores merece ser reconhecida.",
-    texto: "Descreva as cores da plumagem, envie uma fotografia e conte com o cadastro gratuito para iniciar a busca.",
+    texto: "Descreva as cores da plumagem e envie uma fotografia para facilitar a identificação.",
     imagem: "https://upload.wikimedia.org/wikipedia/commons/a/ac/Rainbow_larakeet.jpg",
     alt: "Lóris-arco-íris com plumagem azul, verde e laranja",
     etiqueta: "Cores que ajudam a identificar",
     posicao: "center 35%",
   },
   {
-    id: "busca-inteligente",
-    especie: "Sistema Avespet",
-    chamada: "Quem encontra uma ave precisa de um caminho para chegar até o tutor.",
-    texto: "A busca gratuita começa com o cadastro da ave. Quem encontra uma ave pode primeiro pesquisar no Google para tentar identificar a espécie. Se ela tiver anilha, pode consultar a numeração no Avespet. Se houver um anúncio aprovado compatível, nossa equipe identifica o possível tutor e intermedeia o contato, mantendo os dados protegidos.",
-    imagem: "https://cdn.pixabay.com/photo/2021/01/18/18/17/indian-ring-necked-parakeet-5929020_1280.jpg",
-    alt: "Ring Neck em destaque representando a busca gratuita do Avespet",
-    etiqueta: "Busca gratuita + identificação por anilha",
-    posicao: "center 42%",
-  },
-  {
     id: "alcance-pago",
     especie: "Divulgação ampliada",
-    chamada: "Faça sua busca chegar a muito mais pessoas da região.",
-    texto: "A equipe Avespet pode planejar uma divulgação regional no Facebook e Instagram, conforme o pacote e a disponibilidade operacional. A foto e as informações da ave podem chegar a pessoas próximas, ampliando a busca para além dos compartilhamentos orgânicos.",
+    chamada: "Se quiser ampliar a busca, conheça a divulgação regional.",
+    texto: "Campanhas planejadas para Facebook e Instagram podem levar a foto e as informações da ave a pessoas próximas. É uma opção adicional: você pode começar e continuar pela busca gratuita.",
     imagem: "https://upload.wikimedia.org/wikipedia/commons/a/ac/Rainbow_larakeet.jpg",
-    alt: "Lóris-arco-íris em fotografia ilustrativa para divulgação ampliada",
-    etiqueta: "Impulsionamento regional opcional",
+    alt: "Lóris-arco-íris em fotografia ilustrativa para divulgação regional",
+    etiqueta: "Plano opcional de divulgação",
     posicao: "center 35%",
   },
 ];
@@ -208,13 +228,30 @@ export default function AvesPerdidas({ onEntrar }) {
             <p className="mt-5 max-w-2xl text-base leading-8 text-[#E1EEE5] md:text-lg">
               {DESTAQUES_AVES[slideAtual].texto}
             </p>
-            {slideAtual === 4 && (
-              <div className="mt-5 grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Etapas da busca gratuita por anilha">
+            {slideAtual === 1 && (
+              <div className="mt-5 grid max-w-2xl grid-cols-2 gap-2 sm:grid-cols-3">
                 {[
-                  ["01", "Cadastro grátis", "Tutor registra a ave"],
-                  ["02", "Ave encontrada", "Pessoa confere a anilha"],
-                  ["03", "Busca no Avespet", "Compara com anúncios aprovados"],
-                  ["04", "Contato mediado", "Equipe ajuda a localizar o tutor"],
+                  ["Foto nítida", "Mostre bem a ave"],
+                  ["Espécie e cores", "Inclua mutações e marcas"],
+                  ["Anilha", "Digite a numeração completa"],
+                  ["Data", "Quando foi vista pela última vez"],
+                  ["Local", "Bairro e cidade do desaparecimento"],
+                  ["Características", "Conte o que a diferencia"],
+                ].map(([titulo, detalhe]) => (
+                  <div key={titulo} className="rounded-xl border border-white/20 bg-[#092D20]/65 p-3 backdrop-blur-sm">
+                    <p className="text-xs font-extrabold text-white">{titulo}</p>
+                    <p className="mt-1 text-[10px] leading-4 text-white/75">{detalhe}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {slideAtual === 2 && (
+              <div className="mt-5 grid max-w-2xl grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Etapas da busca gratuita por anilha">
+                {[
+                  ["01", "Cadastre", "Registre sua ave"],
+                  ["02", "Encontrou?", "A pessoa confere a anilha"],
+                  ["03", "Consulte", "Busca no Avespet"],
+                  ["04", "Aproximamos", "Equipe intermedeia o contato"],
                 ].map(([numero, titulo, detalhe]) => (
                   <div key={numero} className="rounded-xl border border-white/20 bg-[#092D20]/65 p-3 backdrop-blur-sm">
                     <span className="text-[10px] font-extrabold tracking-widest text-[#C6E2CB]">{numero}</span>
@@ -224,7 +261,7 @@ export default function AvesPerdidas({ onEntrar }) {
                 ))}
               </div>
             )}
-            {slideAtual === 5 && (
+            {slideAtual === 7 && (
               <div className="mt-5 grid max-w-3xl gap-2 sm:grid-cols-3" aria-label="Estimativa de alcance e custo dos planos regionais">
                 {planos.filter((plano) => Number(plano.radius_km) > 0 && plano.reach_min && plano.reach_max).map((plano) => {
                   const menorCusto = Number(plano.price_cents) / Number(plano.reach_max);
@@ -242,39 +279,44 @@ export default function AvesPerdidas({ onEntrar }) {
                 })}
               </div>
             )}
-            {slideAtual === 5 && (
-              <p className="mt-2 max-w-3xl text-[10px] leading-4 text-white/75">
-                Cálculo ilustrativo: valor total do plano dividido pela estimativa de alcance cadastrada. As campanhas Meta dependem de aprovação operacional, configuração e disponibilidade; o alcance real varia e não é promessa de visualizações nem de recuperação. Não há integração automática de anúncios nesta etapa.
-              </p>
-            )}
-            {slideAtual === 5 && (
+            {slideAtual === 7 && (
               <div className="mt-3 max-w-3xl rounded-xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
-                <p className="text-xs font-extrabold text-white">E se você distribuísse panfletos?</p>
+                <p className="text-xs font-extrabold text-white">Uma comparação para visualizar o investimento</p>
                 <p className="mt-1 text-[11px] leading-5 text-white/85">
-                  Exemplo ilustrativo: 1.000 panfletos a R$ 0,50 por unidade custariam R$ 500,00, sem contar o tempo e a entrega. No Alerta Local, o valor cadastrado é R$ 119,90 e a estimativa atual do catálogo é de 800 a 2.900 pessoas alcançadas na região.
+                  Exemplo: 1.000 panfletos a R$ 0,50 por unidade custariam R$ 500,00, sem contar a distribuição. O Alerta Local está cadastrado por R$ 119,90, com estimativa de 800 a 2.900 pessoas na região.
                 </p>
                 <p className="mt-1 text-[10px] leading-4 text-white/70">
-                  O custo do panfleto é uma hipótese para comparação, não uma cotação de gráfica. O alcance da campanha é estimado e pode variar; compare sempre a entrega real e a área de cobertura.
+                  O custo do panfleto é uma hipótese ilustrativa, não uma cotação. O alcance dos anúncios é estimado, varia conforme a campanha e não garante visualizações nem reencontro.
                 </p>
               </div>
             )}
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <button type="button" onClick={() => {
-                if (slideAtual === 5) document.getElementById("planos")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                else { setMostrarCadastro(true); document.getElementById("cadastro-ave")?.scrollIntoView({ behavior: "smooth", block: "start" }); }
-              }} className="rounded-xl px-6 py-4 text-sm font-extrabold shadow-xl transition hover:-translate-y-0.5 hover:brightness-105" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}>
-                {slideAtual === 5 ? "Comparar planos e alcance" : "Cadastrar ave gratuitamente"}
-              </button>
-              <a href={slideAtual === 5 ? "#cadastro-ave" : "#planos"} className="rounded-xl border border-white/50 bg-white/10 px-6 py-4 text-center text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20">
-                {slideAtual === 5 ? "Começar pela busca gratuita" : "Conhecer planos de divulgação"}
-              </a>
+              {slideAtual === 7 ? (
+                <>
+                  <a href="#planos" className="rounded-xl px-6 py-4 text-center text-sm font-extrabold shadow-xl transition hover:-translate-y-0.5 hover:brightness-105" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}>
+                    Conhecer planos de divulgação
+                  </a>
+                  <a href="#cadastro-ave" className="rounded-xl border border-white/50 bg-white/10 px-6 py-4 text-center text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20">
+                    Começar pela busca gratuita
+                  </a>
+                </>
+              ) : (
+                <>
+                  <button type="button" onClick={() => { setMostrarCadastro(true); document.getElementById("cadastro-ave")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} className="rounded-xl px-6 py-4 text-sm font-extrabold shadow-xl transition hover:-translate-y-0.5 hover:brightness-105" style={{ background: "#FFFFFF", color: TEMA_PUBLICO.verde }}>
+                    Cadastrar ave gratuitamente
+                  </button>
+                  <a href="#como-funciona" className="rounded-xl border border-white/50 bg-white/10 px-6 py-4 text-center text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20">
+                    Entender como funciona
+                  </a>
+                </>
+              )}
             </div>
-            <p className="mt-4 text-xs text-[#D1E2D6]">Cadastro gratuito. Planos pagos são opcionais e não garantem o reencontro.</p>
+            {slideAtual < 3 ? <p className="mt-4 text-xs text-[#D1E2D6]">O cadastro é gratuito. Quanto mais completas as informações, melhor a identificação.</p> : slideAtual === 7 ? <p className="mt-4 text-xs text-[#D1E2D6]">Divulgação paga é opcional e não garante o reencontro.</p> : null}
           </div>
         </div>
         <div className="absolute inset-x-0 bottom-0">
           <div className="mx-auto flex max-w-7xl items-end justify-between gap-4 px-5 pb-6 md:px-8 md:pb-8">
-            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Escolher espécie em destaque">
+            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Navegar pelos destaques do Avespet">
               {DESTAQUES_AVES.map((slide, indice) => (
                 <button key={slide.id} type="button" onClick={() => setSlideAtual(indice)} aria-label={`Ver destaque de ${slide.especie}`} aria-pressed={slideAtual === indice} className={`h-2.5 rounded-full transition-all ${slideAtual === indice ? "w-10 bg-white" : "w-2.5 bg-white/55 hover:bg-white/85"}`} />
               ))}
