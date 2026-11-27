@@ -14,7 +14,7 @@ const MasterInboxPanel = React.lazy(() => import("./MasterInboxPanel"));
 const EmailAutomations = React.lazy(() => import("./EmailAutomations"));
 const SupportChat = React.lazy(() => import("./SupportChat"));
 import {
-  LayoutDashboard, Users, Bird, Megaphone, CreditCard, LifeBuoy, Mail,
+  LayoutDashboard, Users, Bird, Megaphone, CreditCard, LifeBuoy, Mail, MessageCircle,
   Settings, LogOut, ShieldCheck, RefreshCw, Menu, X, Activity, Workflow,
   ChevronRight, LockKeyhole, CircleHelp, TrendingUp, Eye, Clock3,
   CheckCircle2, AlertCircle, CalendarDays, ArrowUpRight,
