@@ -171,6 +171,7 @@ export default function NotificationsCenter({ userId, isAdmin, onNavigate, aves 
     if (n.referencia_tipo === "achado_anilha") onNavigate?.(isAdmin ? "achados" : "perdi-uma-ave");
     else if (n.referencia_tipo === "anuncio_ave_perdida") onNavigate?.(isAdmin ? "aves-perdidas-admin" : "perdi-uma-ave");
     else if (n.referencia_tipo === "anuncio") onNavigate?.(isAdmin ? "aprovacoes" : "anuncios");
+    else if (n.referencia_tipo === "support_ticket") onNavigate?.("suporte");
     setAberto(false);
   }
 
