@@ -574,3 +574,15 @@ Esta alteração é apenas código em branch; **sem deploy na Vercel, sem altera
 - A política é uma versão inicial informativa, não um parecer jurídico. Antes de produção, revisar com assessoria jurídica e confirmar operadores/suboperadores, países de processamento, prazos concretos de retenção, procedimentos de incidentes, canal do encarregado quando aplicável e texto final de bases legais.
 - Nenhuma migration ou mudança de schema foi necessária: o consentimento do anúncio é guardado no campo JSON `data` já existente. Não foi alterada a configuração do Supabase.
 - Endereço, CNPJ e e-mail foram informados pelo responsável do projeto; não houve validação cadastral externa.
+
+
+### Validação do preview com Política de Privacidade — 27/11/2026
+
+- O commit `bdc7ff3564e8ae1eb90ca37250dba628c24c4142` concluiu build na Vercel com estado `READY`.
+- O log registra `npm run build`, Vite 5.4.21, transformação dos módulos e geração do service worker/PWA. Build concluído sem erro.
+- Preview: `https://avespet-fpo8v1kgu-gustavo-dantas.vercel.app`.
+- A rota `/privacidade` foi adicionada ao roteamento público. O rodapé inclui link para a política.
+- O build apresenta aviso de chunk principal acima de 500 kB (594,55 kB minificado), além dos avisos de configuração npm já registrados; não bloqueiam a compilação.
+- Acesso HTTP externo automatizado à rota não foi confirmado nesta sessão; a conferência visual em navegador continua pendente.
+- A versão de Política de Privacidade ainda requer revisão jurídica e validação de inventário de operadores, países de processamento, retenção e bases legais antes de produção.
+- Não houve merge, alteração no Supabase, migration ou publicação no domínio de produção.
